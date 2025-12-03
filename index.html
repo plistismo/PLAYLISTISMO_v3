@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -74,11 +75,11 @@
     </div>
 
     <!-- Main Container -->
-    <div class="relative z-10 w-full max-w-7xl flex flex-col items-center justify-center pt-2 md:pt-4">
+    <div class="relative z-10 w-full max-w-[90rem] flex flex-col lg:flex-row items-start lg:items-center justify-center gap-8 pt-2 md:pt-4">
 
         <!-- TV UNIT -->
         <!-- Mobile: Removed heavy padding and 3D tilt for better fit -->
-        <div id="tv-unit" class="relative w-full max-w-4xl transition-transform duration-500 md:perspective-[1500px] group">
+        <div id="tv-unit" class="relative w-full max-w-4xl transition-transform duration-500 md:perspective-[1500px] group order-1">
             
             <!-- TV Chassis -->
             <div class="relative bg-[#1a1a1a] texture-plastic rounded-[16px] md:rounded-[24px] p-2 md:p-8 md:pb-12 shadow-[0_10px_20px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10">
@@ -215,8 +216,33 @@
             </div>
         </div>
 
+        <!-- INFO PANEL (Last.fm Data) - Right Side -->
+        <div id="info-panel" class="hidden lg:block w-80 min-h-[400px] bg-[#111] border-2 border-amber-900/50 rounded-lg p-6 relative shadow-[0_0_30px_rgba(0,0,0,0.8)] font-vt323 opacity-0 translate-x-10 transition-all duration-700 order-2">
+            
+            <!-- Screen Glare -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none rounded-lg z-10"></div>
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center border-b border-amber-900/50 pb-2 mb-4">
+                <h3 class="text-amber-500/80 text-xl tracking-widest font-bold">DATA MODULE</h3>
+                <div class="w-2 h-2 bg-amber-600 rounded-full animate-pulse"></div>
+            </div>
+
+            <!-- Content -->
+            <div id="info-content" class="text-amber-400/80 text-lg leading-relaxed space-y-4 opacity-80 h-[350px] overflow-y-auto custom-scrollbar pr-2">
+                <div class="flex flex-col items-center justify-center h-full text-amber-900/50">
+                    <span class="animate-pulse">AWAITING SIGNAL...</span>
+                </div>
+            </div>
+
+            <!-- Decorative Lines -->
+            <div class="absolute bottom-4 right-4 text-[10px] text-amber-900/40 font-mono">
+                DBX-1000 // REV. A
+            </div>
+        </div>
+
     </div>
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

@@ -1,5 +1,4 @@
 
-
 /* Custom Fonts & Base */
 body {
     font-family: 'VT323', monospace;
@@ -31,6 +30,14 @@ body {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #ffe600; 
+}
+
+/* Amber Scrollbar for Info Panel */
+#info-content::-webkit-scrollbar-thumb {
+    background: #d97706; /* Amber-600 */
+}
+#info-content::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.5);
 }
 
 /* CRT & 3D Effects */
@@ -124,23 +131,23 @@ body {
 /* --- CREDITS OVERLAY (MTV STYLE) --- */
 /* Modified to fit inside the TV Screen absolute positioning */
 .credits-overlay {
-    position: absolute; /* Changed from fixed to absolute */
-    bottom: 20px; /* Adjusted for smaller screens */
+    position: absolute; 
+    bottom: 20px; 
     left: 20px;
     color: rgba(255, 255, 255, 0.9);
     text-shadow: 2px 2px 0px #000000;
-    font-family: 'Jost', sans-serif; /* Keep original font for credits */
-    font-size: 14px; /* Slightly smaller base */
+    font-family: 'Jost', sans-serif; 
+    font-size: 14px; 
     line-height: 1.4;
-    opacity: 0; /* Começa invisível */
-    transition: opacity 2.5s ease-in-out; 
-    background: rgba(0,0,0,0.9); /* Darker background */
+    opacity: 0; 
+    transition: opacity 0.8s ease-in-out; /* Speed up transition so it's visible in 1.5s window */
+    background: rgba(0,0,0,0.9); 
     padding: 10px;
     border-radius: 4px;
     border-left: 4px solid #fff;
     pointer-events: none; 
-    z-index: 25; /* Between OSD and Scanlines */
-    transform: perspective(500px) rotateY(2deg); /* Slight 3D tilt */
+    z-index: 25; 
+    transform: perspective(500px) rotateY(2deg); 
 }
 
 @media (min-width: 768px) {
@@ -176,4 +183,19 @@ body {
     text-align: center;
     margin-right: 5px;
     font-size: 14px;
+}
+
+/* --- YOUTUBE UI HIDING HACK --- */
+#player {
+    /* Scale the video larger than container to crop off the top Title Bar */
+    transform: scale(1.35); 
+    transform-origin: center center;
+    /* Disable mouse interaction so title/pause overlay doesn't appear on hover */
+    pointer-events: none; 
+}
+
+/* Info Panel Visibility State */
+#info-panel.active {
+    opacity: 1;
+    transform: translateX(0);
 }

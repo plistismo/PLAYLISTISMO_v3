@@ -1,4 +1,5 @@
 
+import { fetchTrackDetails } from './lastFmAPI.js';
 
 // --- CONFIGURAÇÃO API YOUTUBE ---
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
@@ -42,6 +43,10 @@ const els = {
     ventContainer: document.querySelector('.vent-container'),
     speakerGrids: document.querySelectorAll('.speaker-grid'),
     
+    // Last.FM Info Panel
+    infoPanel: document.getElementById('info-panel'),
+    infoContent: document.getElementById('info-content'),
+    
     credits: {
         container: document.getElementById('video-credits'),
         artist: document.getElementById('artist-name'),
@@ -72,96 +77,6 @@ async function init() {
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 }
-
-// --- DATA ENRICHMENT LOGIC (SUPABASE <-> YOUTUBE) ---
-// Função para ser chamada manualmente via Console para popular o banco de dados
-window.enrichDatabaseWithVideoLinks = async function() {
-    console.log("🚀 Iniciando sincronização do Banco de Dados com YouTube...");
-    
-    // 1. Buscar músicas do Banco que não têm video_id
-    // Nota: A coluna video_id deve ser criada com o script SQL fornecido
-    const { data: dbMusics, error } = await supabase
-        .from('musicas')
-        .select('*')
-        .is('video_id', null);
-
-    if (error) {
-        console.error("Erro ao buscar músicas do Supabase:", error);
-        return;
-    }
-
-    if (!dbMusics || dbMusics.length === 0) {
-        console.log("✅ Todas as músicas no banco já possuem video_id ou tabela vazia.");
-        return;
-    }
-
-    console.log(`📋 Encontradas ${dbMusics.length} músicas sem link. Buscando vídeos no YouTube...`);
-
-    // 2. Buscar TODOS os vídeos de TODAS as playlists do canal para comparação
-    // Isso é feito iterando sobre as playlists já carregadas ou carregando-as
-    let allYoutubeVideos = [];
-    
-    if (state.playlists.length === 0) {
-        await fetchChannelPlaylists();
-    }
-
-    console.log("⏳ Buscando vídeos de todas as playlists... (Isso pode demorar)");
-    for (const playlist of state.playlists) {
-        // Log para acompanhar progresso
-        // console.log(`  - Lendo playlist: ${playlist.snippet.title}`);
-        const videos = await fetchAllVideosFromPlaylist(playlist.id);
-        allYoutubeVideos = [...allYoutubeVideos, ...videos];
-    }
-
-    console.log(`🎥 Total de vídeos encontrados no canal: ${allYoutubeVideos.length}`);
-
-    // 3. Cruzamento de Dados (Fuzzy Matching simples)
-    let updates = 0;
-
-    for (const dbRow of dbMusics) {
-        const artist = dbRow.artista ? dbRow.artista.toLowerCase().trim() : "";
-        const song = dbRow.musica ? dbRow.musica.toLowerCase().trim() : "";
-        
-        // Filtra vídeos que contenham o Artista E a Música no título
-        const matches = allYoutubeVideos.filter(ytVid => {
-            const title = ytVid.snippet.title.toLowerCase();
-            // Remove coisas comuns para melhorar a busca
-            const cleanTitle = title
-                .replace(/official video/g, '')
-                .replace(/video oficial/g, '')
-                .replace(/videoclipe/g, '')
-                .replace(/[({\[]/g, '')
-                .replace(/[)}\]]/g, '');
-            
-            return cleanTitle.includes(artist) && cleanTitle.includes(song);
-        });
-
-        // REGRA: Se houver apenas 1 match exato (ou muito provável), atualiza.
-        // Se for 0, não achou. Se for > 1, é ambíguo, não mexe.
-        if (matches.length === 1) {
-            const videoId = matches[0].snippet.resourceId.videoId;
-            console.log(`✅ MATCH: "${dbRow.artista} - ${dbRow.musica}" => https://youtu.be/${videoId}`);
-            
-            // Atualiza Supabase
-            const { error: updateError } = await supabase
-                .from('musicas')
-                .update({ video_id: videoId })
-                .eq('id', dbRow.id);
-
-            if (updateError) {
-                console.error(`❌ Erro ao atualizar ID ${dbRow.id}:`, updateError);
-            } else {
-                updates++;
-            }
-        } else if (matches.length > 1) {
-            console.warn(`⚠️ AMBÍGUO (${matches.length} resultados) para: "${dbRow.artista} - ${dbRow.musica}". Ignorado.`);
-        } else {
-            console.log(`🚫 NÃO ENCONTRADO: "${dbRow.artista} - ${dbRow.musica}"`);
-        }
-    }
-
-    console.log(`🏁 Sincronização finalizada. ${updates} registros atualizados.`);
-};
 
 // Helper para buscar paginação completa de uma playlist
 async function fetchAllVideosFromPlaylist(playlistId) {
@@ -418,6 +333,7 @@ window.onYouTubeIframeAPIReady = function() {
             'rel': 0,
             'disablekb': 1,
             'fs': 0,
+            'iv_load_policy': 3, // Ocultar anotações
             'listType': 'playlist',
         },
         events: {
@@ -560,6 +476,7 @@ function togglePower() {
         }
         clearAllTimers();
         hideCredits();
+        hideInfoPanel();
     }
 }
 
@@ -619,17 +536,19 @@ function onPlayerStateChange(event) {
         handleCreditsForVideo(videoId, duration);
     } else if (event.data == YT.PlayerState.ENDED) {
         hideCredits();
+        hideInfoPanel();
     }
 }
 
 async function handleCreditsForVideo(videoId, duration) {
     clearAllTimers();
     hideCredits();
+    hideInfoPanel(); // Reseta painel antigo
 
-    // 1. Dados iniciais de Fallback (Vêm do cache da playlist do YouTube)
+    // 1. Dados iniciais de Fallback
     let finalData = currentPlaylistVideos[videoId];
     
-    // Fallback secundário se nem o cache existir
+    // Fallback secundário
     if (!finalData) {
         const playerTitle = player.getVideoData().title;
         const playerAuthor = player.getVideoData().author;
@@ -644,17 +563,15 @@ async function handleCreditsForVideo(videoId, duration) {
     }
 
     // 2. Consulta ao Banco de Dados Supabase
-    // Procura por informações enriquecidas usando o ID do vídeo atual
     try {
         const { data: dbData, error } = await supabase
             .from('musicas')
             .select('artista, musica, album, ano, direcao')
             .eq('video_id', videoId)
-            .maybeSingle(); // maybeSingle evita erro se não achar
+            .maybeSingle();
 
         if (dbData) {
-            // Se encontrou no banco, sobrescreve com os dados oficiais
-            console.log("★ Dados enriquecidos encontrados no Supabase:", dbData);
+            console.log("★ Dados Supabase:", dbData);
             finalData = {
                 artist: dbData.artista || finalData.artist,
                 song: dbData.musica || finalData.song,
@@ -662,39 +579,44 @@ async function handleCreditsForVideo(videoId, duration) {
                 year: dbData.ano ? dbData.ano.toString() : finalData.year,
                 director: dbData.direcao || finalData.director
             };
-        } else {
-            console.log("Video não cadastrado no banco, usando dados do YouTube.");
         }
     } catch (err) {
-        console.warn("Erro ao consultar Supabase (usando fallback):", err);
+        console.warn("Erro Supabase:", err);
     }
 
-    // 3. Atualiza a tela com os dados finais
+    // 3. Atualiza Créditos (TV)
     updateCreditsDOM(finalData);
 
-    // Lógica de Timers (Duração Estendida)
-    const showAtStart = 6000; // Começa a aparecer aos 6s
-    const displayDuration = 15000; 
+    // Timers de Créditos
+    const showAtStart = 2000;
+    const displayDuration = 1500;
     
-    const hideAtStart = showAtStart + displayDuration;
-    
-    if (duration > 30) {
-        // Créditos iniciais
-        currentTimers.push(setTimeout(() => showCredits(), showAtStart));
-        currentTimers.push(setTimeout(() => hideCredits(), hideAtStart));
+    currentTimers.push(setTimeout(() => showCredits(), showAtStart));
+    currentTimers.push(setTimeout(() => hideCredits(), showAtStart + displayDuration));
 
-        // Créditos finais
-        if (duration > 60) {
-            const showAtEnd = (duration - 25) * 1000; // 25s antes de acabar
-            const hideAtEnd = (duration - 5) * 1000;
-            currentTimers.push(setTimeout(() => showCredits(), showAtEnd));
-            currentTimers.push(setTimeout(() => hideCredits(), hideAtEnd));
-        }
-    } else {
-        // Vídeo curto
-        currentTimers.push(setTimeout(() => showCredits(), 2000));
-        currentTimers.push(setTimeout(() => hideCredits(), duration * 1000 - 1000));
+    if (duration > 60) {
+        currentTimers.push(setTimeout(() => showCredits(), (duration - 30) * 1000));
+        currentTimers.push(setTimeout(() => hideCredits(), (duration - 5) * 1000));
     }
+
+    // 4. CHAMADA LAST.FM (Painel Lateral)
+    // Pequeno delay para não sobrecarregar início
+    setTimeout(async () => {
+        // Limpa texto anterior
+        els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">SEARCHING DB...</span></div>';
+        
+        const lastFmData = await fetchTrackDetails(finalData.artist, finalData.song);
+        
+        if (lastFmData && lastFmData.curiosidade) {
+            updateInfoPanel(lastFmData);
+            showInfoPanel();
+        } else {
+            // Se não achar nada, apenas limpa ou mostra placeholder sutil
+            els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/30"><span>NO DATA FOUND</span></div>';
+            // Opcional: Não mostrar o painel se não tiver dados
+            // hideInfoPanel(); 
+        }
+    }, 3000); 
 }
 
 function updateCreditsDOM(data) {
@@ -715,12 +637,48 @@ function updateCreditsDOM(data) {
     setText(els.credits.director, data.director);
 }
 
+function updateInfoPanel(data) {
+    if(!els.infoContent) return;
+    
+    let html = '';
+    
+    // Titulo
+    html += `<div class="mb-4">
+        <h4 class="text-amber-500 font-bold text-2xl leading-none uppercase">${data.titulo}</h4>
+        <span class="text-amber-700 text-sm uppercase">${data.artista}</span>
+    </div>`;
+
+    // Tags
+    if (data.tags && data.tags.length) {
+        html += `<div class="flex flex-wrap gap-2 mb-4">
+            ${data.tags.map(tag => `<span class="px-2 py-0.5 border border-amber-900/60 text-amber-600 text-xs uppercase rounded">${tag}</span>`).join('')}
+        </div>`;
+    }
+
+    // Bio/Curiosidade
+    if (data.curiosidade) {
+        html += `<div class="text-amber-300/90 text-base border-l-2 border-amber-900/50 pl-3">
+            ${data.curiosidade}
+        </div>`;
+    }
+
+    els.infoContent.innerHTML = html;
+}
+
 function showCredits() {
     if(els.credits.container) els.credits.container.classList.add('visible');
 }
 
 function hideCredits() {
     if(els.credits.container) els.credits.container.classList.remove('visible');
+}
+
+function showInfoPanel() {
+    if(els.infoPanel) els.infoPanel.classList.add('active');
+}
+
+function hideInfoPanel() {
+    if(els.infoPanel) els.infoPanel.classList.remove('active');
 }
 
 function clearAllTimers() {
