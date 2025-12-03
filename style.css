@@ -2,6 +2,7 @@
 /* Custom Fonts & Base */
 body {
     font-family: 'VT323', monospace;
+    background-color: #050505;
 }
 
 .font-pixel {
@@ -14,22 +15,23 @@ body {
 
 /* Texture Classes */
 .texture-plastic {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+    background-color: #1a1a1a;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.07'/%3E%3C/svg%3E");
 }
 
 /* Scrollbar Customization for Guide */
 .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 12px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.2); 
+    background: #000; 
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #ffcc00; 
-    border-radius: 2px;
+    background: #fff; 
+    border: 2px solid #000;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #ffe600; 
+    background: #ffff00; 
 }
 
 /* Amber Scrollbar for Info Panel */
@@ -51,6 +53,59 @@ body {
 
 .rotate-x-20 {
     transform: rotateX(20deg);
+}
+
+/* --- CRT ANIMATIONS --- */
+
+/* Warm-up Animation (Ligar a TV) */
+@keyframes turn-on {
+    0% {
+        transform: scale(1, 0.002) scaleX(0);
+        opacity: 0;
+        filter: brightness(30);
+    }
+    30% {
+        transform: scale(1, 0.002) scaleX(1);
+        opacity: 1;
+        filter: brightness(30);
+    }
+    60% {
+        transform: scale(1, 0.002) scaleX(1);
+        opacity: 1;
+        filter: brightness(30);
+    }
+    100% {
+        transform: scale(1, 1) scaleX(1);
+        opacity: 1;
+        filter: brightness(1);
+    }
+}
+
+.crt-turn-on {
+    animation: turn-on 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* Turn Off Animation */
+@keyframes turn-off {
+    0% {
+        transform: scale(1, 1) scaleX(1);
+        opacity: 1;
+        filter: brightness(1);
+    }
+    60% {
+        transform: scale(1, 0.002) scaleX(1);
+        opacity: 1;
+        filter: brightness(10);
+    }
+    100% {
+        transform: scale(0, 0) scaleX(0);
+        opacity: 0;
+        filter: brightness(0);
+    }
+}
+
+.crt-turn-off {
+    animation: turn-off 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 /* CRT Flicker Animation */
@@ -87,10 +142,19 @@ body {
         to bottom,
         rgba(255,255,255,0),
         rgba(255,255,255,0) 50%,
-        rgba(0,0,0,0.4) 50%,
-        rgba(0,0,0,0.4)
+        rgba(0,0,0,0.5) 50%,
+        rgba(0,0,0,0.5)
     );
     background-size: 100% 4px;
+    pointer-events: none;
+}
+
+/* Barrel Distortion Simulation (Curved Screen Edge) */
+.crt-overlay {
+    background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.4) 90%, rgba(0,0,0,1) 100%);
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.7);
+    pointer-events: none;
+    z-index: 50;
 }
 
 /* VHS Noise */
@@ -121,8 +185,8 @@ body {
 }
 
 #static-overlay.active {
-    opacity: 0.8;
-    animation: static-anim 0.1s linear infinite;
+    opacity: 0.9;
+    animation: static-anim 0.05s linear infinite;
 }
 
 /* Tracking Lines */
@@ -158,33 +222,34 @@ body {
 }
 
 /* --- CREDITS OVERLAY (MTV STYLE) --- */
-/* Modified to fit inside the TV Screen absolute positioning */
 .credits-overlay {
     position: absolute; 
-    bottom: 20px; 
-    left: 20px;
+    bottom: 30px; 
+    left: 40px;
     color: rgba(255, 255, 255, 0.95);
     text-shadow: 2px 2px 0px #000000;
     font-family: 'Jost', sans-serif; 
-    font-size: 14px; 
+    font-size: 16px; 
     line-height: 1.4;
     opacity: 0; 
-    transition: opacity 0.5s ease-in-out; /* Standard transition, visibility controlled via JS timers */
+    transition: opacity 0.5s ease-in-out;
     background: rgba(0,0,0,0.85); 
-    padding: 10px;
-    border-radius: 4px;
-    border-left: 5px solid #fff; /* Slightly thicker */
+    padding: 12px 16px;
+    border-radius: 2px;
+    border-left: 6px solid #facc15; /* MTV Yellow */
     pointer-events: none; 
     z-index: 25; 
-    transform: perspective(500px) rotateY(2deg); 
+    transform: perspective(600px) rotateY(5deg);
+    box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
 }
 
-@media (min-width: 768px) {
+@media (max-width: 768px) {
     .credits-overlay {
-        bottom: 30px;
-        left: 30px;
-        font-size: 17px;
-        padding: 14px;
+        bottom: 20px;
+        left: 20px;
+        font-size: 14px;
+        padding: 10px;
+        border-left-width: 4px;
     }
 }
 
@@ -214,12 +279,43 @@ body {
     font-size: 14px;
 }
 
+/* --- TELETEXT GUIDE STYLES --- */
+.teletext-bg {
+    background-color: #0000aa; /* Authentic Teletext Blue */
+}
+
+.teletext-header {
+    background-color: #ffff00; /* Teletext Yellow */
+    color: #0000aa;
+    text-shadow: none;
+}
+
+.teletext-link {
+    color: #00ffff; /* Cyan */
+    font-family: 'VT323', monospace;
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    display: block;
+    padding: 2px 0;
+    text-decoration: none;
+}
+.teletext-link:hover {
+    background-color: #fff;
+    color: #000;
+    cursor: pointer;
+}
+
+.teletext-link span {
+    color: #ffff00; /* Yellow numbers */
+}
+.teletext-link:hover span {
+    color: #000;
+}
+
 /* --- YOUTUBE UI HIDING HACK --- */
 #player {
-    /* Scale the video larger than container to crop off the top Title Bar */
     transform: scale(1.35); 
     transform-origin: center center;
-    /* Disable mouse interaction so title/pause overlay doesn't appear on hover */
     pointer-events: none; 
 }
 
@@ -227,4 +323,31 @@ body {
 #info-panel.active {
     opacity: 1;
     transform: translateX(0);
+}
+
+/* --- VCR BUTTON STYLES --- */
+.vcr-btn {
+    background: #2a2a2a;
+    border-top: 1px solid #444;
+    border-left: 1px solid #444;
+    border-right: 2px solid #111;
+    border-bottom: 2px solid #111;
+    color: #aaa;
+    transition: all 0.1s;
+}
+.vcr-btn:active {
+    border-top: 2px solid #000;
+    border-left: 2px solid #000;
+    border-right: 1px solid #333;
+    border-bottom: 1px solid #333;
+    transform: translateY(1px);
+    color: #fff;
+}
+.vcr-btn-rec {
+    background: #300;
+    color: #f00;
+}
+.vcr-btn-rec:active {
+    background: #500;
+    color: #fff;
 }

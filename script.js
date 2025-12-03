@@ -3,11 +3,11 @@ import { fetchTrackDetails } from './lastFmAPI.js';
 
 // --- CONFIGURAÇÃO API YOUTUBE ---
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
-const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA'; // Exemplo: Canal provisório (troque pelo seu)
+const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA';
 
 // --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
-const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M'; // Usando a publishable key fornecida
+const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M';
 const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
 // --- ESTADO & UI ---
@@ -39,10 +39,11 @@ const els = {
     
     // Fullscreen Guide Elements
     internalGuide: document.getElementById('tv-internal-guide'),
-    closeGuideBtn: document.getElementById('close-guide-btn'),
+    closeGuideBtn: document.getElementById('close-guide-btn'), // Now virtual or handled by toggle
     channelGuideContainer: document.getElementById('channel-guide-container'),
     channelSearch: document.getElementById('channel-search'),
     guideNowPlaying: document.getElementById('guide-now-playing'),
+    guideClock: document.getElementById('guide-clock'),
     
     // Now Playing Info in Menu
     npTitle: document.getElementById('np-title'),
@@ -112,7 +113,7 @@ async function fetchAllVideosFromPlaylist(playlistId) {
 }
 
 
-// --- API FETCHING (APP NORMAL) ---
+// --- API FETCHING ---
 
 async function fetchChannelPlaylists() {
     let allPlaylists = [];
@@ -138,7 +139,7 @@ async function fetchChannelPlaylists() {
         } else {
             console.error("Nenhuma playlist encontrada.");
             if(els.channelGuideContainer) {
-                els.channelGuideContainer.innerHTML = '<div class="text-white/50 text-center mt-4">NO SIGNAL</div>';
+                els.channelGuideContainer.innerHTML = '<div class="text-white text-2xl mt-4 font-vt323">SEM SINAL</div>';
             }
         }
     } catch (error) {
@@ -199,7 +200,7 @@ function renderChannelGuide(playlists) {
     playlists.forEach((playlist, index) => {
         const title = playlist.snippet.title;
         const lowerTitle = title.toLowerCase();
-        const num = (index + 1).toString().padStart(2, '0');
+        const num = (index + 1).toString().padStart(3, '0'); // P100 style
         
         let category = 'OTHERS';
 
@@ -215,10 +216,10 @@ function renderChannelGuide(playlists) {
             category = 'GENRES';
         }
 
-        // Store object for rendering
         groups[category].push({
             id: playlist.id,
-            display: `CH ${num}: ${title}`
+            display: title,
+            num: num
         });
     });
 
@@ -226,32 +227,27 @@ function renderChannelGuide(playlists) {
     
     renderOrder.forEach(cat => {
         if (groups[cat].length > 0) {
-            // Category Header
+            // Teletext Header
             const header = document.createElement('div');
-            header.className = "text-yellow-400 text-lg md:text-xl font-bold border-b border-white/20 mt-6 mb-2 px-1 uppercase tracking-widest guide-category";
-            header.textContent = `[ ${cat} ]`;
+            header.className = "teletext-header text-xl md:text-2xl font-bold mb-1 px-1 uppercase tracking-wider col-span-full mt-4";
+            header.textContent = `${cat}`;
             els.channelGuideContainer.appendChild(header);
 
-            // List Container
-            const list = document.createElement('div');
-            list.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3";
-            
+            // List Items (Teletext Links)
             groups[cat].forEach(item => {
                 const btn = document.createElement('button');
-                btn.className = "guide-item text-left bg-blue-900/50 hover:bg-yellow-400 hover:text-black text-white p-3 font-mono truncate transition-all border border-blue-700 rounded shadow-md group";
+                btn.className = "teletext-link w-full text-left truncate guide-item";
                 
-                // Formata o texto para parecer teletexto
-                btn.innerHTML = `<span class="text-yellow-200 group-hover:text-black font-bold mr-2">${item.display.split(':')[0]}</span> ${item.display.split(':')[1]}`;
+                // Formato Teletext: Num (Amarelo) + Nome (Ciano/Branco)
+                btn.innerHTML = `<span>${item.num}</span> ${item.display}`;
                 
                 btn.dataset.id = item.id;
-                btn.dataset.name = item.display; // for search
+                btn.dataset.name = item.display;
                 
-                btn.addEventListener('click', () => changeChannel(item.id, item.display));
+                btn.addEventListener('click', () => changeChannel(item.id, `CH ${item.num}`));
                 
-                list.appendChild(btn);
+                els.channelGuideContainer.appendChild(btn);
             });
-            
-            els.channelGuideContainer.appendChild(list);
         }
     });
 }
@@ -264,7 +260,6 @@ function filterChannels(searchTerm) {
     let count = 0;
 
     items.forEach(item => {
-        // Search in dataset name
         if(item.dataset.name.toLowerCase().includes(term)) {
             item.style.display = 'block';
             count++;
@@ -277,20 +272,14 @@ function filterChannels(searchTerm) {
 
 async function changeChannel(playlistId, displayText) {
     state.currentPlaylistId = playlistId;
-    triggerStatic(); // Efeito de chiado ao trocar
+    triggerStatic(); 
     
-    // Close Search Menu if open
     if(state.isSearchOpen) {
         toggleSearchMode();
     }
 
     // Update OSD Channel Text
-    const channelMatch = displayText.match(/CH \d+/);
-    if(channelMatch) {
-        els.osdChannel.innerText = channelMatch[0];
-    } else {
-         els.osdChannel.innerText = "CH --";
-    }
+    els.osdChannel.innerText = displayText;
 
     if(state.isOn) {
         showStatus("TUNING...");
@@ -328,7 +317,9 @@ function populateDecorations() {
 function startClock() {
     setInterval(() => {
         const now = new Date();
-        els.osdClock.innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        els.osdClock.innerText = timeStr;
+        if(els.guideClock) els.guideClock.innerText = timeStr;
     }, 1000);
 }
 
@@ -338,7 +329,7 @@ function triggerStatic() {
         els.staticOverlay.classList.add('active');
         setTimeout(() => {
             els.staticOverlay.classList.remove('active');
-        }, 1000); // 1 segundo de chiado
+        }, 1000); 
     }
 }
 
@@ -355,7 +346,7 @@ window.onYouTubeIframeAPIReady = function() {
             'rel': 0,
             'disablekb': 1,
             'fs': 0,
-            'iv_load_policy': 3, // Ocultar anotações
+            'iv_load_policy': 3, 
             'listType': 'playlist',
         },
         events: {
@@ -379,13 +370,11 @@ function onPlayerError(event) {
 
 // --- EVENTS & LISTENERS ---
 
-// Search Listener
 if(els.channelSearch) {
     els.channelSearch.addEventListener('input', (e) => {
         filterChannels(e.target.value);
     });
     
-    // Enter key to select first result
     els.channelSearch.addEventListener('keydown', (e) => {
         if(e.key === 'Enter') {
             const visibleItem = Array.from(els.channelGuideContainer.querySelectorAll('.guide-item')).find(item => item.style.display !== 'none');
@@ -403,16 +392,15 @@ if(els.closeGuideBtn) {
 // --- CONTROLS & LOGIC ---
 
 function setupControls() {
-    // Search / Menu Toggle
+    // Search / Guide
     if(els.btnSearch) {
         els.btnSearch.onclick = () => {
-             // Only works if TV is ON
              if(!state.isOn) return;
              toggleSearchMode();
         };
     }
 
-    // Next Track / Channel
+    // Next Track
     if(els.btnNext) {
         els.btnNext.onclick = () => {
             if(!state.isOn) return;
@@ -421,7 +409,7 @@ function setupControls() {
             triggerStatic();
 
             if(player && typeof player.nextVideo === 'function') {
-                showStatus("NEXT TRACK >>|");
+                showStatus("FF >>|");
                 player.nextVideo();
                 setTimeout(hideStatus, 1500);
             } else {
@@ -430,7 +418,7 @@ function setupControls() {
         };
     }
 
-    // Previous Track / Channel
+    // Previous Track
     if(els.btnPrev) {
         els.btnPrev.onclick = () => {
             if(!state.isOn) return;
@@ -439,7 +427,7 @@ function setupControls() {
             triggerStatic();
 
             if(player && typeof player.previousVideo === 'function') {
-                showStatus("|<< PREV TRACK");
+                showStatus("|<< REW");
                 player.previousVideo();
                 setTimeout(hideStatus, 1500);
             } else {
@@ -453,17 +441,16 @@ function toggleSearchMode() {
     state.isSearchOpen = !state.isSearchOpen;
 
     if(state.isSearchOpen) {
-        // OPEN MENU (Fullscreen)
+        // OPEN MENU (Teletext Mode)
         if(player && typeof player.pauseVideo === 'function') {
             player.pauseVideo();
         }
 
-        // UPDATE "NOW PLAYING" INFO IN MENU
+        // UPDATE "NOW PLAYING"
         if(player && player.getVideoData) {
             const videoData = player.getVideoData();
             const currentVidId = videoData.video_id;
             
-            // Tenta pegar dados limpos, senão usa os do YouTube
             const displayData = currentPlaylistVideos[currentVidId] || { 
                 artist: videoData.author, 
                 song: videoData.title 
@@ -473,9 +460,8 @@ function toggleSearchMode() {
             els.npTitle.textContent = `${displayData.artist} - ${displayData.song}`;
             els.npId.textContent = `ID: ${currentVidId}`;
             
-            // Nome da playlist atual
             const currentListObj = state.playlists.find(p => p.id === state.currentPlaylistId);
-            els.npPlaylist.textContent = `PLAYLIST: ${currentListObj ? currentListObj.snippet.title : 'UNKNOWN'}`;
+            els.npPlaylist.textContent = `LIST: ${currentListObj ? currentListObj.snippet.title : '???'}`;
         }
 
         els.internalGuide.classList.remove('hidden');
@@ -496,6 +482,27 @@ function toggleSearchMode() {
 function togglePower() {
     state.isOn = !state.isOn;
     
+    // Animação de ligar/desligar CRT
+    if (state.isOn) {
+        els.screenOn.classList.remove('hidden');
+        els.screenOn.classList.add('crt-turn-on');
+        els.screenOn.classList.remove('crt-turn-off');
+        
+        // Remove a classe de animação após o fim para economizar recursos, mas mantém visível
+        setTimeout(() => {
+             els.screenOn.classList.remove('crt-turn-on');
+        }, 500);
+
+    } else {
+        els.screenOn.classList.add('crt-turn-off');
+        els.screenOn.classList.remove('crt-turn-on');
+        
+        setTimeout(() => {
+            if(!state.isOn) els.screenOn.classList.add('hidden');
+            els.screenOn.classList.remove('crt-turn-off');
+        }, 350);
+    }
+    
     updateUI();
     
     if (state.isOn) {
@@ -512,7 +519,7 @@ function togglePower() {
 
     } else {
         hideStatus();
-        if(state.isSearchOpen) toggleSearchMode(); // Reset search if off
+        if(state.isSearchOpen) toggleSearchMode(); 
         if(player && player.pauseVideo) {
             player.pauseVideo();
         }
@@ -541,18 +548,12 @@ function updateUI() {
         els.powerLed.classList.add('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.remove('bg-red-900');
         els.screenOff.classList.add('opacity-0');
-        els.screenOn.classList.remove('hidden');
     } else {
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.add('bg-red-900');
         els.screenOff.classList.remove('opacity-0');
         
-        // Ensure menu is closed visually
         if(els.internalGuide) els.internalGuide.classList.add('hidden');
-
-        setTimeout(() => {
-            if(!state.isOn) els.screenOn.classList.add('hidden');
-        }, 300);
     }
 }
 
@@ -569,15 +570,12 @@ function hideStatus() {
     }
 }
 
-// --- CRÉDITOS ---
+// --- CRÉDITOS & LAST.FM ---
 
 function onPlayerStateChange(event) {
-    // Gerenciamento do OSD Fade Out
     if (event.data == YT.PlayerState.PLAYING) {
-        // Mostra OSD
         els.osdLayer.classList.remove('fade-out');
         
-        // Agenda sumiço em 3 segundos
         if (osdTimer) clearTimeout(osdTimer);
         osdTimer = setTimeout(() => {
             els.osdLayer.classList.add('fade-out');
@@ -588,7 +586,6 @@ function onPlayerStateChange(event) {
         handleCreditsForVideo(videoId, duration);
 
     } else {
-        // Se pausar, parar ou bufferizar, mostra OSD novamente
         els.osdLayer.classList.remove('fade-out');
         if (osdTimer) clearTimeout(osdTimer);
 
@@ -603,9 +600,9 @@ function onPlayerStateChange(event) {
 function cleanStringForApi(str) {
     if (!str) return "";
     return str
-        .replace(/\(.*\)/g, '')   // Remove coisas em parenteses (Official Video)
-        .replace(/\[.*\]/g, '')   // Remove coisas em colchetes [HD]
-        .replace(/ft\..*/i, '')   // Remove feat
+        .replace(/\(.*\)/g, '')   
+        .replace(/\[.*\]/g, '')   
+        .replace(/ft\..*/i, '')   
         .replace(/feat\..*/i, '')
         .replace(/official video/gi, '')
         .replace(/video oficial/gi, '')
@@ -617,12 +614,11 @@ function cleanStringForApi(str) {
 async function handleCreditsForVideo(videoId, duration) {
     clearAllTimers();
     hideCredits();
-    hideInfoPanel(); // Reseta painel antigo
+    hideInfoPanel(); 
 
     // 1. Dados iniciais de Fallback
     let finalData = currentPlaylistVideos[videoId];
     
-    // Fallback secundário
     if (!finalData) {
         const playerTitle = player.getVideoData().title;
         const playerAuthor = player.getVideoData().author;
@@ -660,7 +656,6 @@ async function handleCreditsForVideo(videoId, duration) {
     // 3. Atualiza Créditos (TV)
     updateCreditsDOM(finalData);
 
-    // Timers de Créditos (Ajuste: 4s start, 2.5s duration)
     const showAtStart = 4000;
     const displayDuration = 2500;
     
@@ -672,13 +667,10 @@ async function handleCreditsForVideo(videoId, duration) {
         currentTimers.push(setTimeout(() => hideCredits(), (duration - 5) * 1000));
     }
 
-    // 4. CHAMADA LAST.FM (Painel Lateral)
-    // Pequeno delay para não sobrecarregar início
+    // 4. CHAMADA LAST.FM
     setTimeout(async () => {
-        // Limpa texto anterior
         els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">SEARCHING DB...</span></div>';
         
-        // Limpa os termos para aumentar chance de sucesso na API
         const cleanArtist = cleanStringForApi(finalData.artist);
         const cleanSong = cleanStringForApi(finalData.song);
 
@@ -690,10 +682,9 @@ async function handleCreditsForVideo(videoId, duration) {
             updateInfoPanel(lastFmData);
             showInfoPanel();
         } else {
-            // Se não achar nada, apenas limpa ou mostra placeholder sutil
             els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/30"><span>NO DATA FOUND</span></div>';
         }
-    }, 4500); // Sincronizado para aparecer logo apos os créditos
+    }, 4500); 
 }
 
 function updateCreditsDOM(data) {
@@ -719,20 +710,17 @@ function updateInfoPanel(data) {
     
     let html = '';
     
-    // Titulo
     html += `<div class="mb-4">
         <h4 class="text-amber-500 font-bold text-2xl leading-none uppercase">${data.titulo}</h4>
         <span class="text-amber-700 text-sm uppercase">${data.artista}</span>
     </div>`;
 
-    // Tags
     if (data.tags && data.tags.length) {
         html += `<div class="flex flex-wrap gap-2 mb-4">
             ${data.tags.map(tag => `<span class="px-2 py-0.5 border border-amber-900/60 text-amber-600 text-xs uppercase rounded">${tag}</span>`).join('')}
         </div>`;
     }
 
-    // Bio/Curiosidade
     if (data.curiosidade) {
         html += `<div class="text-amber-300/90 text-base border-l-2 border-amber-900/50 pl-3">
             ${data.curiosidade}
