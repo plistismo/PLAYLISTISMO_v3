@@ -1,37 +1,17 @@
-// --- BANCO DE DADOS ---
-const PLAYLIST_DATA = {
-    'folkzone': {
-        youtubePlaylistId: 'PL_FolkZone_Playlist_ID_Here', 
-        videos: {
-            'TTBDfpPHsak': { artist: 'Rozi Plain', song: 'Help', album: 'Prize', year: '2022', director: 'Noriko Okaku' },
-            'gFdUFVz5Z6M': { artist: 'Field Music', song: 'Orion From The Street', album: 'Flat White Moon', year: '2021', director: 'Kevin Dosdale' },
-            'qFxhHFD2LBE': { artist: 'Gengahr', song: 'Carrion', album: 'Where Wildness Grows', year: '2017', director: 'Dan Jacobs' },
-            'QRGqsPBu73I': { artist: 'The Besnard Lakes', song: 'Feuds With Guns', album: 'The Last of the Great Thunderstorm...', year: '2020', director: 'Jordan "Dr.Cool" Minkoff' },
-            'zUCtZNoj_ww': { artist: 'Suuns', song: 'Watch You, Watch Me', album: 'Felt', year: '2018', director: 'RUFFMERCY' },
-            'xmKEd8E9QY0': { artist: 'Cráneo', song: 'NASA', album: 'single', year: '2018', director: 'Cráneo' },
-            'MCPfywB_lVs': { artist: 'Nathy Peluso', song: 'Esmeralda', album: 'single', year: '2017', director: 'Cráneo' },
-            'TOy95MU2a80': { artist: 'Angelo De Augustine', song: 'Another Universe', album: 'Toil and Trouble', year: '2023', director: 'Angelo De Augustine' }
-        },
-        defaultList: ['TTBDfpPHsak', 'gFdUFVz5Z6M', 'qFxhHFD2LBE', 'QRGqsPBu73I']
-    },
-    'trip_hop': {
-        videos: {}, 
-        defaultList: ['zUCtZNoj_ww', 'xmKEd8E9QY0'] 
-    },
-    'mid_pop': {
-        videos: {},
-        defaultList: ['MCPfywB_lVs']
-    },
-    'sepia': {
-        videos: {},
-        defaultList: ['TOy95MU2a80']
-    }
-};
+// --- CONFIGURAÇÃO API YOUTUBE ---
+const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
 
-// --- TV STATE & UI ELEMENTS ---
+// IMPORTANTE: Como estamos usando apenas uma API Key (e não login OAuth),
+// precisamos do ID do canal para buscar as playlists públicas dele.
+// Substitua o ID abaixo pelo SEU ID de canal (ex: UCxxxxxxxxxxxx).
+// Para encontrar seu ID: Vá em YouTube > Configurações > Configurações Avançadas.
+const CHANNEL_ID = 'UC18w5-0p3F8D7oGJO9Hwb6w'; // Exemplo: Canal provisório (troque pelo seu)
+
+// --- ESTADO & UI ---
 const state = {
-    isOn: false, // Starts OFF
-    currentPlaylist: 'folkzone'
+    isOn: false,
+    currentPlaylistId: null, // Agora usamos o ID real do YouTube
+    playlists: [] // Será preenchido pela API
 };
 
 const els = {
@@ -47,20 +27,32 @@ const els = {
     playlistSelector: document.getElementById('playlist-selector'),
     osdChannel: document.getElementById('osd-channel'),
     ventContainer: document.querySelector('.vent-container'),
-    speakerGrids: document.querySelectorAll('.speaker-grid')
+    speakerGrids: document.querySelectorAll('.speaker-grid'),
+    credits: {
+        container: document.getElementById('video-credits'),
+        artist: document.getElementById('artist-name'),
+        song: document.getElementById('song-name'),
+        album: document.getElementById('album-name'),
+        year: document.getElementById('release-year'),
+        director: document.getElementById('director-name')
+    }
 };
 
-// --- CONFIGURAÇÃO PLAYER ---
 let player;
 let currentTimers = [];
+// Cache local dos vídeos da playlist atual para os créditos
+let currentPlaylistVideos = {};
 
 // --- INICIALIZAÇÃO ---
 
-function init() {
+async function init() {
     populateDecorations();
     startClock();
     setupEventListeners();
     
+    // Tenta carregar as playlists do canal
+    await fetchChannelPlaylists();
+
     // Carrega o script da API do YouTube
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
@@ -68,7 +60,91 @@ function init() {
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 }
 
-// Populate Vents & Speakers (Visual)
+// --- API FETCHING ---
+
+async function fetchChannelPlaylists() {
+    try {
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}`);
+        const data = await response.json();
+
+        if (data.items) {
+            state.playlists = data.items;
+            populatePlaylistSelector(data.items);
+            
+            // Define a primeira playlist como padrão se houver
+            if (data.items.length > 0) {
+                state.currentPlaylistId = data.items[0].id;
+            }
+        } else {
+            console.error("Nenhuma playlist encontrada ou erro na API:", data);
+            showStatus("API ERROR");
+        }
+    } catch (error) {
+        console.error("Erro ao buscar playlists:", error);
+        showStatus("NETWORK ERROR");
+    }
+}
+
+async function fetchPlaylistItems(playlistId) {
+    try {
+        // Busca até 50 vídeos da playlist
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}`);
+        const data = await response.json();
+
+        if (data.items) {
+            // Limpa cache anterior
+            currentPlaylistVideos = {};
+
+            // Mapeia os dados para nosso formato de créditos
+            data.items.forEach(item => {
+                const snippet = item.snippet;
+                const videoId = snippet.resourceId.videoId;
+                
+                // Parser simples de Título para extrair Artista - Música
+                // Espera formato "Artista - Música" no título do vídeo
+                let artist = snippet.videoOwnerChannelTitle || snippet.channelTitle;
+                let song = snippet.title;
+                let album = "-"; 
+                
+                if (snippet.title.includes('-')) {
+                    const parts = snippet.title.split('-');
+                    artist = parts[0].trim();
+                    song = parts.slice(1).join('-').trim();
+                }
+
+                currentPlaylistVideos[videoId] = {
+                    artist: artist,
+                    song: song,
+                    album: album, // A API não retorna álbum, deixamos genérico
+                    year: snippet.publishedAt ? snippet.publishedAt.substring(0, 4) : "-",
+                    director: "-" // A API não retorna diretor
+                };
+            });
+            
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error("Erro ao buscar vídeos:", error);
+        return false;
+    }
+}
+
+function populatePlaylistSelector(playlists) {
+    els.playlistSelector.innerHTML = '';
+    
+    playlists.forEach((playlist, index) => {
+        const option = document.createElement('option');
+        option.value = playlist.id;
+        // Formato CH 01: NOME DA PLAYLIST
+        const num = (index + 1).toString().padStart(2, '0');
+        option.textContent = `CH ${num}: ${playlist.snippet.title}`;
+        els.playlistSelector.appendChild(option);
+    });
+}
+
+// --- VISUAL SETUP ---
+
 function populateDecorations() {
     if(els.ventContainer) {
         els.ventContainer.innerHTML = '';
@@ -98,55 +174,65 @@ function startClock() {
 
 // --- YOUTUBE API CALLBACK ---
 window.onYouTubeIframeAPIReady = function() {
-    const initialList = PLAYLIST_DATA[state.currentPlaylist].defaultList;
-    
     player = new YT.Player('player', {
         height: '100%',
         width: '100%',
         playerVars: {
             'playsinline': 1,
-            'autoplay': 0, // Starts paused because TV is off
-            'controls': 0, // Hide default controls for TV look
+            'autoplay': 0, 
+            'controls': 0, 
             'modestbranding': 1,
             'rel': 0,
             'disablekb': 1,
-            'fs': 0
+            'fs': 0,
+            'listType': 'playlist', // Configuração inicial genérica
         },
         events: {
             'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
+            'onStateChange': onPlayerStateChange,
+            'onError': onPlayerError
         }
     });
 };
 
 function onPlayerReady(event) {
-    // Se a TV estivesse ligada por padrão, carregaríamos aqui.
-    // Como começa desligada, apenas preparamos a lista.
-    player.cuePlaylist(PLAYLIST_DATA[state.currentPlaylist].defaultList);
+    // Se já temos uma playlist selecionada (fetch terminou antes do player), preparamos
+    if (state.currentPlaylistId) {
+        player.cuePlaylist({listType: 'playlist', list: state.currentPlaylistId});
+    }
+}
+
+function onPlayerError(event) {
+    console.log("YouTube Player Error:", event.data);
+    // Erro 150/101 significa restrição de embed. Pula para o próximo.
+    if (event.data === 150 || event.data === 101) {
+        player.nextVideo();
+    }
 }
 
 // --- CONTROLE DE PLAYLIST ---
-els.playlistSelector.addEventListener('change', (e) => {
-    state.currentPlaylist = e.target.value;
+els.playlistSelector.addEventListener('change', async (e) => {
+    state.currentPlaylistId = e.target.value;
     
-    // Update OSD Channel Text
+    // Atualiza Texto do Canal na TV
     const channelIndex = e.target.selectedIndex + 1;
     els.osdChannel.innerText = `CH 0${channelIndex}`;
 
-    // Change Content
-    loadPlaylist(state.currentPlaylist);
-});
+    showStatus("TUNING...");
+    
+    // Busca os metadados dos vídeos para os créditos
+    await fetchPlaylistItems(state.currentPlaylistId);
 
-function loadPlaylist(playlistKey) {
-    const playlistData = PLAYLIST_DATA[playlistKey];
-    if (playlistData && playlistData.defaultList.length > 0 && player && player.loadPlaylist) {
-        if(state.isOn) {
-             player.loadPlaylist(playlistData.defaultList);
+    if (player && player.loadPlaylist) {
+        if (state.isOn) {
+            player.loadPlaylist({listType: 'playlist', list: state.currentPlaylistId});
+            hideStatus();
         } else {
-             player.cuePlaylist(playlistData.defaultList);
+            player.cuePlaylist({listType: 'playlist', list: state.currentPlaylistId});
+            hideStatus();
         }
     }
-}
+});
 
 // --- TV POWER LOGIC ---
 function togglePower() {
@@ -158,12 +244,17 @@ function togglePower() {
         // Turn ON
         showStatus("INITIALIZING...");
         setTimeout(() => showStatus("TUNING..."), 800);
-        setTimeout(() => {
-            hideStatus();
-            if(player && player.playVideo) {
-                player.playVideo();
-            }
-        }, 1600);
+        
+        // Garante que temos os metadados da playlist atual
+        if (state.currentPlaylistId && Object.keys(currentPlaylistVideos).length === 0) {
+            fetchPlaylistItems(state.currentPlaylistId).then(() => {
+                // Só dá play depois de tentar buscar metadados
+                triggerPlay();
+            });
+        } else {
+            triggerPlay();
+        }
+
     } else {
         // Turn OFF
         hideStatus();
@@ -173,6 +264,21 @@ function togglePower() {
         clearAllTimers();
         hideCredits();
     }
+}
+
+function triggerPlay() {
+    setTimeout(() => {
+        hideStatus();
+        if(player && player.playVideo) {
+            // Se o player ainda não carregou a lista (primeiro boot), carrega agora
+            const playlistNow = player.getPlaylistId();
+            if (playlistNow !== state.currentPlaylistId && state.currentPlaylistId) {
+                 player.loadPlaylist({listType: 'playlist', list: state.currentPlaylistId});
+            } else {
+                 player.playVideo();
+            }
+        }
+    }, 1600);
 }
 
 function updateUI() {
@@ -189,28 +295,32 @@ function updateUI() {
         els.screenOff.classList.remove('opacity-0');
         setTimeout(() => {
             if(!state.isOn) els.screenOn.classList.add('hidden');
-        }, 300); // Wait for transition
+        }, 300);
     }
 }
 
 function showStatus(msg) {
-    els.statusText.innerText = msg;
-    els.statusMessage.classList.remove('hidden');
+    if (els.statusText && els.statusMessage) {
+        els.statusText.innerText = msg;
+        els.statusMessage.classList.remove('hidden');
+    }
 }
 
 function hideStatus() {
-    els.statusMessage.classList.add('hidden');
+    if (els.statusMessage) {
+        els.statusMessage.classList.add('hidden');
+    }
 }
 
-// --- LÓGICA DE CRÉDITOS (Original) ---
+// --- LÓGICA DE CRÉDITOS ---
 
 function onPlayerStateChange(event) {
     if (event.data == YT.PlayerState.PLAYING) {
         const videoId = player.getVideoData().video_id;
         const duration = player.getDuration();
         handleCreditsForVideo(videoId, duration);
-    } else if (event.data == YT.PlayerState.ENDED || event.data == YT.PlayerState.PAUSED) {
-        // Optional logic when paused/ended
+    } else if (event.data == YT.PlayerState.ENDED) {
+        hideCredits();
     }
 }
 
@@ -218,46 +328,50 @@ function handleCreditsForVideo(videoId, duration) {
     clearAllTimers();
     hideCredits();
 
-    const data = findVideoData(videoId);
-    if (!data) return;
+    // Tenta pegar do nosso cache da API, ou cria um fallback com dados básicos do player
+    let data = currentPlaylistVideos[videoId];
+    
+    if (!data) {
+        // Fallback: Tenta pegar o título direto do player se a API falhou
+        const playerTitle = player.getVideoData().title;
+        const playerAuthor = player.getVideoData().author;
+        
+        data = {
+            artist: playerAuthor || "Unknown",
+            song: playerTitle || "Unknown Track",
+            album: "-",
+            year: "-",
+            director: "-"
+        };
+    }
 
     updateCreditsDOM(data);
 
-    const showAtStart = 6000; // 6 seconds in
-    const hideAtStart = 20000; // 20 seconds in
-    const showAtEnd = (duration - 30) * 1000;
-    const hideAtEnd = (duration - 5) * 1000;
+    // Timings
+    const showAtStart = 6000; // 6s
+    const hideAtStart = 20000; // 20s
+    
+    // Safety check para vídeos muito curtos
+    if (duration > 30) {
+        currentTimers.push(setTimeout(() => showCredits(), showAtStart));
+        currentTimers.push(setTimeout(() => hideCredits(), hideAtStart));
 
-    currentTimers.push(setTimeout(() => showCredits(), showAtStart));
-    currentTimers.push(setTimeout(() => hideCredits(), hideAtStart));
-
-    if (duration > 40) {
-        currentTimers.push(setTimeout(() => showCredits(), showAtEnd));
-        currentTimers.push(setTimeout(() => hideCredits(), hideAtEnd));
-    }
-}
-
-function findVideoData(videoId) {
-    if (PLAYLIST_DATA[state.currentPlaylist].videos[videoId]) {
-        return PLAYLIST_DATA[state.currentPlaylist].videos[videoId];
-    }
-    for (const key in PLAYLIST_DATA) {
-        if (PLAYLIST_DATA[key].videos[videoId]) {
-            return PLAYLIST_DATA[key].videos[videoId];
+        if (duration > 60) {
+            const showAtEnd = (duration - 30) * 1000;
+            const hideAtEnd = (duration - 5) * 1000;
+            currentTimers.push(setTimeout(() => showCredits(), showAtEnd));
+            currentTimers.push(setTimeout(() => hideCredits(), hideAtEnd));
         }
+    } else {
+        // Vídeos curtos mostram logo e ficam menos tempo
+        currentTimers.push(setTimeout(() => showCredits(), 2000));
+        currentTimers.push(setTimeout(() => hideCredits(), duration * 1000 - 1000));
     }
-    return {
-        artist: "Desconhecido",
-        song: "Sinal Não Identificado",
-        album: "-",
-        year: "-",
-        director: "-"
-    };
 }
 
 function updateCreditsDOM(data) {
-    const setText = (id, text) => {
-        const el = document.getElementById(id);
+    const setText = (el, text) => {
+        if (!el) return;
         if (text && (text.includes('ft.') || text.includes('&') || text.includes('OST'))) {
              el.className = 'light';
         } else {
@@ -266,19 +380,19 @@ function updateCreditsDOM(data) {
         el.textContent = text || '';
     };
 
-    setText('artist-name', data.artist);
-    setText('song-name', data.song);
-    setText('album-name', data.album);
-    setText('release-year', data.year);
-    setText('director-name', data.director);
+    setText(els.credits.artist, data.artist);
+    setText(els.credits.song, data.song);
+    setText(els.credits.album, data.album);
+    setText(els.credits.year, data.year);
+    setText(els.credits.director, data.director);
 }
 
 function showCredits() {
-    document.getElementById('video-credits').classList.add('visible');
+    if(els.credits.container) els.credits.container.classList.add('visible');
 }
 
 function hideCredits() {
-    document.getElementById('video-credits').classList.remove('visible');
+    if(els.credits.container) els.credits.container.classList.remove('visible');
 }
 
 function clearAllTimers() {
