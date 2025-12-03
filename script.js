@@ -5,6 +5,24 @@ import { fetchTrackDetails } from './lastFmAPI.js';
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
 const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA';
 
+// --- DADOS DE FALLBACK (SINAL DE EMERGÊNCIA) ---
+// Usado caso a API do YouTube falhe (Cota excedida, Erro de rede)
+const FALLBACK_PLAYLISTS = [
+    { id: 'PL_FALLBACK_1', snippet: { title: 'Folk Zone (Backup)', channelTitle: 'System' } },
+    { id: 'PL_FALLBACK_2', snippet: { title: 'Trip Hop Zone (Backup)', channelTitle: 'System' } },
+    { id: 'PL_FALLBACK_3', snippet: { title: 'Brasil Classics (Backup)', channelTitle: 'System' } },
+    { id: 'PL_FALLBACK_4', snippet: { title: 'Uploads Recentes (Backup)', channelTitle: 'System' } }
+];
+
+const FALLBACK_VIDEOS = {
+    'PL_FALLBACK_1': [
+        { snippet: { resourceId: { videoId: 'TTBDfpPHsak' }, title: 'Rozi Plain - Help', videoOwnerChannelTitle: 'Rozi Plain', publishedAt: '2022-01-01' } },
+        { snippet: { resourceId: { videoId: 'gFdUFVz5Z6M' }, title: 'Field Music - Orion From The Street', videoOwnerChannelTitle: 'Field Music', publishedAt: '2021-01-01' } }
+    ],
+    // Adiciona vídeos genéricos para os outros fallbacks se necessário para teste
+};
+
+
 // --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
 const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M';
@@ -39,9 +57,6 @@ function initDevConsole() {
         output.appendChild(line);
         output.scrollTop = output.scrollHeight;
         
-        // Auto-show se estiver escondido (opcional, pode ser irritante)
-        // panel.classList.remove('hidden');
-        
         // Alerta visual no botão
         if(trigger) {
             trigger.classList.add('animate-pulse', 'bg-red-500');
@@ -66,6 +81,16 @@ function initDevConsole() {
     console.error = function(...args) {
         originalError.apply(console, args);
         logToPanel(`LOG: ${args.join(' ')}`);
+    };
+    
+    // Capture console.log para debug da API
+    const originalLog = console.log;
+    console.log = function(...args) {
+        originalLog.apply(console, args);
+        // Filtra logs muito barulhentos se necessário
+        if(args[0] && typeof args[0] === 'string' && args[0].includes('[Script]')) {
+             logToPanel(`INFO: ${args.join(' ')}`);
+        }
     };
 }
 
@@ -98,7 +123,7 @@ const els = {
     
     // Fullscreen Guide Elements
     internalGuide: document.getElementById('tv-internal-guide'),
-    closeGuideBtn: document.getElementById('close-guide-btn'), // Now virtual or handled by toggle
+    closeGuideBtn: document.getElementById('close-guide-btn'), 
     channelGuideContainer: document.getElementById('channel-guide-container'),
     channelSearch: document.getElementById('channel-search'),
     guideNowPlaying: document.getElementById('guide-now-playing'),
@@ -135,7 +160,7 @@ let osdTimer = null;
 // --- INICIALIZAÇÃO ---
 
 async function init() {
-    initDevConsole(); // Iniciar interceptador de erros imediatamente
+    initDevConsole(); 
     
     populateDecorations();
     startClock();
@@ -151,101 +176,134 @@ async function init() {
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 }
 
-// Helper para buscar paginação completa de uma playlist
-async function fetchAllVideosFromPlaylist(playlistId) {
-    let videos = [];
-    let nextPageToken = '';
-    
-    try {
-        do {
-            const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.items) {
-                videos = [...videos, ...data.items];
-            }
-            nextPageToken = data.nextPageToken || '';
-        } while (nextPageToken);
-    } catch (e) {
-        console.error(`Erro ao buscar items da playlist ${playlistId}:`, e);
-    }
-    return videos;
-}
-
-
 // --- API FETCHING ---
 
 async function fetchChannelPlaylists() {
     let allPlaylists = [];
     let nextPageToken = '';
     
+    console.log("[Script] Buscando playlists...");
+    
     try {
         do {
             const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
             const response = await fetch(url);
+            
+            if (!response.ok) {
+                console.error(`[API Error] Status: ${response.status}`);
+                const errData = await response.json();
+                console.error("YouTube Error Details:", JSON.stringify(errData));
+                break; 
+            }
+
             const data = await response.json();
             
             if (data.items) {
                 allPlaylists = [...allPlaylists, ...data.items];
+            } else {
+                 console.warn("[API Warning] Resposta sem itens:", data);
             }
             
             nextPageToken = data.nextPageToken || '';
         } while (nextPageToken);
 
         if (allPlaylists.length > 0) {
+            console.log(`[Script] ${allPlaylists.length} playlists carregadas da API.`);
             state.playlists = allPlaylists;
             renderChannelGuide(allPlaylists);
             state.currentPlaylistId = allPlaylists[0].id;
         } else {
-            console.error("Nenhuma playlist encontrada.");
-            if(els.channelGuideContainer) {
-                els.channelGuideContainer.innerHTML = '<div class="text-white text-2xl mt-4 font-vt323">SEM SINAL</div>';
-            }
+            throw new Error("Nenhuma playlist encontrada na API.");
         }
+
     } catch (error) {
-        console.error("Erro ao buscar playlists:", error);
+        console.error("FALHA CRÍTICA NA API. Ativando Modo de Segurança (Fallback).", error);
+        
+        // ATIVAR FALLBACK
+        state.playlists = FALLBACK_PLAYLISTS;
+        renderChannelGuide(FALLBACK_PLAYLISTS);
+        state.currentPlaylistId = FALLBACK_PLAYLISTS[0].id;
+        
+        if(els.channelGuideContainer) {
+            const warning = document.createElement('div');
+            warning.className = "text-red-500 font-mono text-xs mt-2 px-4";
+            warning.innerText = "⚠ MODO DE SEGURANÇA: API OFFLINE";
+            els.channelGuideContainer.prepend(warning);
+        }
     }
 }
 
 async function fetchPlaylistItems(playlistId) {
+    // Verifica se é uma playlist de fallback
+    if (playlistId.startsWith('PL_FALLBACK')) {
+        console.log("[Script] Carregando dados de fallback para playlist:", playlistId);
+        const fallbackItems = FALLBACK_VIDEOS[playlistId] || FALLBACK_VIDEOS['PL_FALLBACK_1'];
+        processPlaylistItems(fallbackItems);
+        return true;
+    }
+
     try {
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}`);
-        const data = await response.json();
+        let allItems = [];
+        let nextPageToken = '';
+        
+        // Loop simples para pegar páginas (limite 2 páginas para não estourar cota no play)
+        let pageCount = 0;
+        
+        do {
+            const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`);
+            const data = await response.json();
 
-        if (data.items) {
-            currentPlaylistVideos = {};
+            if (data.error) {
+                console.error("[API Error] Erro ao buscar itens:", data.error.message);
+                return false;
+            }
 
-            data.items.forEach(item => {
-                const snippet = item.snippet;
-                const videoId = snippet.resourceId.videoId;
-                
-                // Tenta extrair Artista - Música do título
-                let artist = snippet.videoOwnerChannelTitle || snippet.channelTitle;
-                let song = snippet.title;
-                let album = "-"; 
-                
-                if (snippet.title.includes('-')) {
-                    const parts = snippet.title.split('-');
-                    artist = parts[0].trim();
-                    song = parts.slice(1).join('-').trim();
-                }
+            if (data.items) {
+                allItems = [...allItems, ...data.items];
+            }
+            nextPageToken = data.nextPageToken || '';
+            pageCount++;
+        } while(nextPageToken && pageCount < 2);
 
-                currentPlaylistVideos[videoId] = {
-                    artist: artist,
-                    song: song,
-                    album: album,
-                    year: snippet.publishedAt ? snippet.publishedAt.substring(0, 4) : "-",
-                    director: "-" 
-                };
-            });
+        if (allItems.length > 0) {
+            processPlaylistItems(allItems);
             return true;
         }
         return false;
+
     } catch (error) {
         console.error("Erro ao buscar vídeos:", error);
         return false;
     }
+}
+
+function processPlaylistItems(items) {
+    currentPlaylistVideos = {};
+
+    items.forEach(item => {
+        const snippet = item.snippet;
+        const videoId = snippet.resourceId.videoId;
+        
+        // Tenta extrair Artista - Música do título
+        let artist = snippet.videoOwnerChannelTitle || snippet.channelTitle || "Desconhecido";
+        let song = snippet.title;
+        let album = "-"; 
+        
+        // Lógica de parser de título simples
+        if (snippet.title && snippet.title.includes('-')) {
+            const parts = snippet.title.split('-');
+            artist = parts[0].trim();
+            song = parts.slice(1).join('-').trim();
+        }
+
+        currentPlaylistVideos[videoId] = {
+            artist: artist,
+            song: song,
+            album: album,
+            year: snippet.publishedAt ? snippet.publishedAt.substring(0, 4) : "-",
+            director: "-" 
+        };
+    });
 }
 
 // --- NEW GUIDE RENDERING (TELETEXT STYLE) ---
@@ -344,10 +402,21 @@ async function changeChannel(playlistId, displayText) {
 
     if(state.isOn) {
         showStatus("TUNING...");
+        
+        // Carrega itens da nova playlist (API ou Fallback)
         await fetchPlaylistItems(state.currentPlaylistId);
 
         if (player && player.loadPlaylist) {
-            player.loadPlaylist({listType: 'playlist', list: state.currentPlaylistId});
+            // Se for fallback, precisamos carregar os vídeos manualmente um por um ou playlist custom
+            // Como o player do YouTube não aceita ID de playlist falsa, verificamos:
+            if (playlistId.startsWith('PL_FALLBACK')) {
+                 // Para fallback, carregamos a lista de IDs de vídeo que temos no FALLBACK_VIDEOS
+                 const fallbackVids = FALLBACK_VIDEOS[playlistId] || FALLBACK_VIDEOS['PL_FALLBACK_1'];
+                 const videoIds = fallbackVids.map(v => v.snippet.resourceId.videoId);
+                 player.loadPlaylist(videoIds);
+            } else {
+                 player.loadPlaylist({listType: 'playlist', list: state.currentPlaylistId});
+            }
             hideStatus();
         }
     }
@@ -595,7 +664,13 @@ function triggerPlay() {
         hideStatus();
         if(player && player.playVideo) {
             const playlistNow = player.getPlaylistId();
-            if (playlistNow !== state.currentPlaylistId && state.currentPlaylistId) {
+            
+            // Check if current playlist is a real YT playlist or fallback
+            if (state.currentPlaylistId.startsWith('PL_FALLBACK')) {
+                 const fallbackVids = FALLBACK_VIDEOS[state.currentPlaylistId] || FALLBACK_VIDEOS['PL_FALLBACK_1'];
+                 const videoIds = fallbackVids.map(v => v.snippet.resourceId.videoId);
+                 player.loadPlaylist(videoIds);
+            } else if (playlistNow !== state.currentPlaylistId && state.currentPlaylistId) {
                  player.loadPlaylist({listType: 'playlist', list: state.currentPlaylistId});
             } else {
                  player.playVideo();
@@ -657,13 +732,12 @@ function onPlayerStateChange(event) {
     }
 }
 
-// Limpeza de string para API Last.FM (Refatorado para melhor match)
+// Limpeza de string para API Last.FM
 function cleanStringForApi(str) {
     if (!str) return "";
     return str
         .replace(/\(.*\)/g, '')   
         .replace(/\[.*\]/g, '')
-        // Remove delimitadores comuns de vídeo
         .replace(/\|.*$/g, '') 
         .replace(/- topic$/i, '')
         .replace(/ft\..*/i, '')   
@@ -675,8 +749,8 @@ function cleanStringForApi(str) {
         .replace(/lyric video/gi, '')
         .replace(/videoclipe/gi, '')
         .replace(/full album/gi, '')
-        .replace(/"/g, '') // remove aspas
-        .replace(/\s+/g, ' ') // remove espaços duplos
+        .replace(/"/g, '') 
+        .replace(/\s+/g, ' ') 
         .trim();
 }
 
