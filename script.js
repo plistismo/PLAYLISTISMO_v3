@@ -1,3 +1,4 @@
+
 // --- CONFIGURAÇÃO API YOUTUBE ---
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
 
@@ -35,7 +36,11 @@ const els = {
         album: document.getElementById('album-name'),
         year: document.getElementById('release-year'),
         director: document.getElementById('director-name')
-    }
+    },
+    // Debug Console Elements
+    debugOverlay: document.getElementById('debug-overlay'),
+    debugContent: document.getElementById('debug-content'),
+    closeDebugBtn: document.getElementById('close-debug-btn')
 };
 
 let player;
@@ -67,6 +72,15 @@ async function fetchChannelPlaylists() {
         const response = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}`);
         const data = await response.json();
 
+        // --- DEBUG CONSOLE LOGIC ---
+        // Popula o modal de debug com o resultado da requisição
+        if (els.debugOverlay && els.debugContent) {
+            els.debugOverlay.classList.remove('hidden');
+            els.debugOverlay.classList.add('flex');
+            els.debugContent.textContent = JSON.stringify(data, null, 2);
+        }
+        // ---------------------------
+
         if (data.items) {
             state.playlists = data.items;
             populatePlaylistSelector(data.items);
@@ -81,6 +95,16 @@ async function fetchChannelPlaylists() {
         }
     } catch (error) {
         console.error("Erro ao buscar playlists:", error);
+        
+        // --- DEBUG ERROR ---
+        if (els.debugOverlay && els.debugContent) {
+            els.debugOverlay.classList.remove('hidden');
+            els.debugOverlay.classList.add('flex');
+            els.debugContent.textContent = "FATAL ERROR:\n" + error.toString();
+            els.debugContent.classList.add('text-red-500');
+        }
+        // -------------------
+
         showStatus("NETWORK ERROR");
     }
 }
@@ -403,6 +427,16 @@ function clearAllTimers() {
 function setupEventListeners() {
     els.tvPowerBtn.addEventListener('click', togglePower);
     if(els.remotePowerBtn) els.remotePowerBtn.addEventListener('click', togglePower);
+
+    // Debug Close Listener
+    if (els.closeDebugBtn) {
+        els.closeDebugBtn.addEventListener('click', () => {
+            if (els.debugOverlay) {
+                els.debugOverlay.classList.add('hidden');
+                els.debugOverlay.classList.remove('flex');
+            }
+        });
+    }
 }
 
 // Start
