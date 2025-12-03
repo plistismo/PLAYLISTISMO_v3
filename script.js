@@ -4,6 +4,11 @@
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
 const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA'; // Exemplo: Canal provisório (troque pelo seu)
 
+// --- CONFIGURAÇÃO SUPABASE ---
+const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
+const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M'; // Usando a publishable key do prompt
+const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+
 // --- ESTADO & UI ---
 const state = {
     isOn: false,
@@ -67,6 +72,109 @@ async function init() {
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 }
+
+// --- DATA ENRICHMENT LOGIC (SUPABASE <-> YOUTUBE) ---
+// Função para ser chamada manualmente via Console para popular o banco de dados
+window.enrichDatabaseWithVideoLinks = async function() {
+    console.log("🚀 Iniciando sincronização do Banco de Dados com YouTube...");
+    
+    // 1. Buscar músicas do Banco que não têm video_id
+    const { data: dbMusics, error } = await supabase
+        .from('musicas')
+        .select('*')
+        .is('video_id', null);
+
+    if (error) {
+        console.error("Erro ao buscar músicas do Supabase:", error);
+        return;
+    }
+
+    if (!dbMusics || dbMusics.length === 0) {
+        console.log("✅ Todas as músicas no banco já possuem video_id ou tabela vazia.");
+        return;
+    }
+
+    console.log(`📋 Encontradas ${dbMusics.length} músicas sem link. Buscando vídeos no YouTube...`);
+
+    // 2. Buscar TODOS os vídeos de TODAS as playlists do canal
+    // Nota: Isso pode demorar e consumir cota de API.
+    let allYoutubeVideos = [];
+    
+    if (state.playlists.length === 0) {
+        await fetchChannelPlaylists();
+    }
+
+    for (const playlist of state.playlists) {
+        console.log(`🔍 Escaneando playlist: ${playlist.snippet.title}...`);
+        const videos = await fetchAllVideosFromPlaylist(playlist.id);
+        allYoutubeVideos = [...allYoutubeVideos, ...videos];
+    }
+
+    console.log(`🎥 Total de vídeos encontrados no canal: ${allYoutubeVideos.length}`);
+
+    // 3. Cruzamento de Dados (Fuzzy Matching simples)
+    let updates = 0;
+
+    for (const dbRow of dbMusics) {
+        const artist = dbRow.artista ? dbRow.artista.toLowerCase().trim() : "";
+        const song = dbRow.musica ? dbRow.musica.toLowerCase().trim() : "";
+        
+        // Filtra vídeos que contenham o Artista E a Música no título
+        const matches = allYoutubeVideos.filter(ytVid => {
+            const title = ytVid.snippet.title.toLowerCase();
+            // Remove coisas comuns como "official video", "videoclipe", etc para melhorar match
+            const cleanTitle = title.replace(/official video|video oficial|videoclipe/g, '');
+            
+            return cleanTitle.includes(artist) && cleanTitle.includes(song);
+        });
+
+        // REGRA: Se houver apenas 1 match exato, atualiza. Se houver 0 ou >1, ignora.
+        if (matches.length === 1) {
+            const videoId = matches[0].snippet.resourceId.videoId;
+            console.log(`✅ MATCH ÚNICO: ${dbRow.artista} - ${dbRow.musica} => ${videoId}`);
+            
+            // Atualiza Supabase
+            const { error: updateError } = await supabase
+                .from('musicas')
+                .update({ video_id: videoId })
+                .eq('id', dbRow.id);
+
+            if (updateError) {
+                console.error(`❌ Erro ao atualizar ID ${dbRow.id}:`, updateError);
+            } else {
+                updates++;
+            }
+        } else if (matches.length > 1) {
+            console.warn(`⚠️ Múltiplos resultados (${matches.length}) para: ${dbRow.artista} - ${dbRow.musica}. Ignorando.`);
+        } else {
+            console.log(`🚫 Nenhum resultado para: ${dbRow.artista} - ${dbRow.musica}`);
+        }
+    }
+
+    console.log(`🏁 Sincronização finalizada. ${updates} registros atualizados.`);
+};
+
+async function fetchAllVideosFromPlaylist(playlistId) {
+    let videos = [];
+    let nextPageToken = '';
+    
+    try {
+        do {
+            const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.items) {
+                videos = [...videos, ...data.items];
+            }
+            nextPageToken = data.nextPageToken || '';
+        } while (nextPageToken);
+    } catch (e) {
+        console.error("Erro ao buscar items da playlist:", e);
+    }
+    return videos;
+}
+
 
 // --- API FETCHING ---
 
