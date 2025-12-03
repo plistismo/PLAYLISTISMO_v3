@@ -5,8 +5,8 @@
  */
 
 const CONFIG = {
-    API_KEY: 'd1cee856747316883bdfc15adcb51342',
-    BASE_URL: 'https://ws.audioscrobbler.com/2.0/', // HTTPS obrigatório para GitHub Pages
+    API_KEY: 'd1cee856747316883bdfc15adcb51342', // Nota: Recomenda-se usar sua própria chave se esta falhar por limite de uso.
+    BASE_URL: 'https://ws.audioscrobbler.com/2.0/',
     FORMAT: 'json'
 };
 
@@ -15,13 +15,14 @@ const CONFIG = {
  */
 const cleanText = (text) => {
     if (!text) return '';
-    // Remove links do Last.fm que costumam vir no texto "Read more on Last.fm"
+    
+    // Remove links do Last.fm e tags HTML
     let cleaned = text.replace(/<a[^>]*>.*?<\/a>/ig, ""); 
     cleaned = cleaned.replace(/Read more on Last.fm.*/, "");
     
     return cleaned
-        .replace(/<[^>]*>?/gm, '') // Remove tags HTML restantes
-        .replace(/\s+/g, ' ')      // Remove quebras múltiplas
+        .replace(/<[^>]*>?/gm, '') 
+        .replace(/\s+/g, ' ')
         .trim();
 };
 
@@ -34,47 +35,64 @@ export async function fetchTrackDetails(artist, track) {
     if (!artist || !track) return null;
 
     try {
+        console.log(`[LastFM] Buscando: ${artist} - ${track}`);
+
         const params = new URLSearchParams({
             method: 'track.getInfo',
             api_key: CONFIG.API_KEY,
             artist: artist,
             track: track,
             format: CONFIG.FORMAT,
-            autocorrect: 1,
+            autocorrect: 1, // Tenta corrigir erros de digitação automaticamente
             lang: 'pt' 
         });
 
         const response = await fetch(`${CONFIG.BASE_URL}?${params}`);
 
-        if (!response.ok) return null;
+        if (!response.ok) {
+            console.warn(`[LastFM] Erro HTTP: ${response.status}`);
+            return null;
+        }
 
         const data = await response.json();
 
-        if (data.error || !data.track) {
+        if (data.error) {
+            console.warn(`[LastFM] API Error: ${data.message}`);
+            return null;
+        }
+
+        if (!data.track) {
+            console.warn(`[LastFM] Faixa não encontrada.`);
             return null;
         }
 
         const song = data.track;
         const hasWiki = song.wiki && song.wiki.content;
-        const hasTags = song.toptags && song.toptags.tag && song.toptags.tag.length > 0;
-
-        // Se não tiver wiki nem tags, consideramos "sem dados relevantes" para mostrar na TV
-        if (!hasWiki && !hasTags) return null;
+        
+        // UX DECISION: Removemos a checagem estrita (!hasWiki && !hasTags).
+        // Se a música existe, mostramos o que tiver, mesmo que seja só a capa e tags.
 
         const bioText = hasWiki ? cleanText(song.wiki.summary || song.wiki.content) : null;
+        
+        // Pega a maior imagem disponível
+        const image = song.album?.image?.find(img => img.size === 'extralarge')?.['#text'] 
+                      || song.album?.image?.find(img => img.size === 'large')?.['#text']
+                      || null;
 
-        // Retorna DTO simplificado
-        return {
+        const result = {
             titulo: song.name,
             artista: song.artist.name,
-            album: song.album ? song.album.title : null,
-            tags: song.toptags?.tag?.map(t => t.name).slice(0, 3) || [],
-            capa: song.album?.image?.find(img => img.size === 'extralarge')?.['#text'] || null,
-            curiosidade: bioText && bioText.length > 10 ? bioText : null
+            album: song.album ? song.album.title : "Single / Desconhecido",
+            tags: song.toptags?.tag?.map(t => t.name).slice(0, 5) || [], // Aumentado para 5 tags
+            capa: image,
+            curiosidade: bioText && bioText.length > 5 ? bioText : "Informações biográficas indisponíveis no momento."
         };
 
+        console.log(`[LastFM] Dados recebidos com sucesso.`);
+        return result;
+
     } catch (error) {
-        console.warn('Last.fm API Error:', error);
+        console.error('[LastFM] Falha na requisição:', error);
         return null;
     }
 }

@@ -596,18 +596,26 @@ function onPlayerStateChange(event) {
     }
 }
 
-// Limpeza de string para API Last.FM
+// Limpeza de string para API Last.FM (Refatorado para melhor match)
 function cleanStringForApi(str) {
     if (!str) return "";
     return str
         .replace(/\(.*\)/g, '')   
-        .replace(/\[.*\]/g, '')   
+        .replace(/\[.*\]/g, '')
+        // Remove delimitadores comuns de vídeo
+        .replace(/\|.*$/g, '') 
+        .replace(/- topic$/i, '')
         .replace(/ft\..*/i, '')   
         .replace(/feat\..*/i, '')
+        .replace(/featuring.*/i, '')
         .replace(/official video/gi, '')
         .replace(/video oficial/gi, '')
+        .replace(/music video/gi, '')
         .replace(/lyric video/gi, '')
         .replace(/videoclipe/gi, '')
+        .replace(/full album/gi, '')
+        .replace(/"/g, '') // remove aspas
+        .replace(/\s+/g, ' ') // remove espaços duplos
         .trim();
 }
 
@@ -669,20 +677,23 @@ async function handleCreditsForVideo(videoId, duration) {
 
     // 4. CHAMADA LAST.FM
     setTimeout(async () => {
-        els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">SEARCHING DB...</span></div>';
+        // Estado visual de "carregando"
+        if(els.infoContent) els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">TUNING DATA...</span></div>';
         
         const cleanArtist = cleanStringForApi(finalData.artist);
         const cleanSong = cleanStringForApi(finalData.song);
 
-        console.log(`LastFM Query: Artist[${cleanArtist}] Song[${cleanSong}]`);
+        console.log(`[Script] Query LastFM: Artist='${cleanArtist}' Song='${cleanSong}'`);
 
         const lastFmData = await fetchTrackDetails(cleanArtist, cleanSong);
         
-        if (lastFmData && lastFmData.curiosidade) {
+        if (lastFmData) {
             updateInfoPanel(lastFmData);
             showInfoPanel();
         } else {
-            els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/30"><span>NO DATA FOUND</span></div>';
+            console.log("[Script] LastFM: Sem dados para exibir.");
+            // Opcional: mostrar mensagem de erro na UI ou apenas esconder
+            if(els.infoContent) els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/30"><span>DATA UNAVAILABLE</span></div>';
         }
     }, 4500); 
 }
@@ -724,6 +735,11 @@ function updateInfoPanel(data) {
     if (data.curiosidade) {
         html += `<div class="text-amber-300/90 text-base border-l-2 border-amber-900/50 pl-3">
             ${data.curiosidade}
+        </div>`;
+    } else {
+        // Fallback visual se não houver texto de curiosidade
+        html += `<div class="text-amber-900/50 text-sm italic border-l-2 border-amber-900/20 pl-3">
+            ARCHIVE DATA: BIOGRAPHY MISSING.
         </div>`;
     }
 
