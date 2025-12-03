@@ -28,11 +28,15 @@
 <body class="bg-[#050505] min-h-screen overflow-x-hidden flex flex-col items-center justify-center p-2 selection:bg-yellow-400 selection:text-black font-sans">
 
     <!-- DEV CONSOLE TRIGGER & PANEL -->
-    <button id="dev-debug-trigger" class="fixed top-2 right-2 z-[9999] bg-red-900/80 text-white p-2 rounded-full hover:bg-red-600 transition-colors border border-white/20 shadow-lg" title="Abrir Console de Erros">
+    <button id="dev-debug-trigger" class="fixed top-2 right-2 z-[9999] bg-red-900/80 text-white p-2 rounded-full hover:bg-red-600 transition-colors border border-white/20 shadow-lg hidden" title="Abrir Console de Erros">
         🐞
     </button>
+
+    <div class="text-[#00ffff] text-xl mb-1">V1</div>
+
     
-    <div id="dev-debug-console" class="fixed top-0 right-0 bg-black/95 border-l-2 border-b-2 border-red-500 z-[10000] hidden flex flex-col font-mono text-[10px] shadow-2xl">
+    
+    <div id="dev-debug-console" class="fixed top-0 right-0 bg-black/95 border-l-2 border-b-2 border-red-500 z-[10000] hidden flex flex-col font-mono text-sm shadow-2xl">
         <div class="bg-red-900/50 text-red-200 px-2 py-1 flex justify-between items-center border-b border-red-500/30">
             <span class="font-bold">ERROR LOG</span>
             <button id="dev-console-clear" class="hover:text-white px-1">⊘</button>

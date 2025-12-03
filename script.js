@@ -37,6 +37,9 @@ function initDevConsole() {
     const output = document.getElementById('dev-console-output');
 
     if (trigger && panel) {
+        // Mostra o botão apenas quando o console é inicializado
+        trigger.classList.remove('hidden');
+
         trigger.addEventListener('click', () => {
             panel.classList.toggle('hidden');
         });
@@ -92,6 +95,8 @@ function initDevConsole() {
              logToPanel(`INFO: ${args.join(' ')}`);
         }
     };
+    
+    console.log("[System] Debug Console Initialized & Active");
 }
 
 // --- ESTADO & UI ---
@@ -160,7 +165,10 @@ let osdTimer = null;
 // --- INICIALIZAÇÃO ---
 
 async function init() {
-    initDevConsole(); 
+    // Inicializa o console após 2 segundos para otimização
+    setTimeout(() => {
+        initDevConsole();
+    }, 2000);
     
     populateDecorations();
     startClock();

@@ -44,10 +44,10 @@ body {
 
 /* DEV CONSOLE STYLES */
 #dev-debug-console {
-    width: 15vw;
-    height: 15vh;
-    max-width: 15vw;
-    max-height: 15vh;
+    width: 37.5vw;
+    height: 37.5vh;
+    max-width: 37.5vw;
+    max-height: 37.5vh;
 }
 
 /* CRT & 3D Effects */
