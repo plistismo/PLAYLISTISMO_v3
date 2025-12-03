@@ -616,7 +616,7 @@ async function handleCreditsForVideo(videoId, duration) {
             // Opcional: Não mostrar o painel se não tiver dados
             // hideInfoPanel(); 
         }
-    }, 3000); 
+    }, 10000); 
 }
 
 function updateCreditsDOM(data) {
