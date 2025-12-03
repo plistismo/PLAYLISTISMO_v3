@@ -28,6 +28,26 @@ const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
 const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M';
 const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
+// --- AUTH GUARD (PROTEÇÃO DE ROTA) ---
+async function checkAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        console.warn("[Auth] No session found. Redirecting to login.");
+        window.location.href = 'login.html';
+    } else {
+        console.log("[Auth] Session valid. User:", session.user.email);
+        init(); // Só inicia o app se estiver logado
+    }
+}
+
+async function handleLogout() {
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+        window.location.href = 'login.html';
+    }
+}
+
+
 // --- DEV CONSOLE LOGIC ---
 function initDevConsole() {
     const trigger = document.getElementById('dev-debug-trigger');
@@ -647,6 +667,15 @@ function toggleSearchMode() {
         // Atualiza relógio do guia
         updateGuideClock();
         
+        // Adiciona botão de logout ao footer se não existir
+        const guideFooter = document.querySelector('#tv-internal-guide div:last-child');
+        if (guideFooter && !document.getElementById('logout-btn-guide')) {
+            const logoutSpan = document.createElement('span');
+            logoutSpan.innerHTML = ' | <span class="text-purple-500 font-bold cursor-pointer" id="logout-btn-guide">SAIR (LOGOUT)</span>';
+            guideFooter.appendChild(logoutSpan);
+            document.getElementById('logout-btn-guide').addEventListener('click', handleLogout);
+        }
+        
     } else {
         els.internalGuide.classList.add('hidden');
         if (player && state.currentPlaylistId) player.playVideo();
@@ -728,5 +757,5 @@ function setupEventListeners() {
     });
 }
 
-// Inicia
-init();
+// Check Auth BEFORE Init
+checkAuth();
