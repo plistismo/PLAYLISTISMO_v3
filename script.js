@@ -5,22 +5,15 @@ import { fetchTrackDetails } from './lastFmAPI.js';
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
 const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA';
 
-// --- DADOS DE FALLBACK (SINAL DE EMERGÊNCIA) ---
-// Usado caso a API do YouTube falhe (Cota excedida, Erro de rede)
+// --- CONFIGURAÇÃO PEXELS API (FALLBACK VISUAL) ---
+const PEXELS_KEY = '9RNNrjxwbKyc4KHDfVSZ51TXiRnl3TLgUUuS64ZlvtAo9Kw5BW9eVd0Y';
+
+// --- DADOS DE FALLBACK (LEGACY) ---
+// Mantido para compatibilidade, mas o sistema priorizará o Pexels em falha catastrófica
 const FALLBACK_PLAYLISTS = [
     { id: 'PL_FALLBACK_1', snippet: { title: 'Folk Zone (Backup)', channelTitle: 'System' } },
     { id: 'PL_FALLBACK_2', snippet: { title: 'Trip Hop Zone (Backup)', channelTitle: 'System' } },
-    { id: 'PL_FALLBACK_3', snippet: { title: 'Brasil Classics (Backup)', channelTitle: 'System' } },
-    { id: 'PL_FALLBACK_4', snippet: { title: 'Uploads Recentes (Backup)', channelTitle: 'System' } }
 ];
-
-const FALLBACK_VIDEOS = {
-    'PL_FALLBACK_1': [
-        { snippet: { resourceId: { videoId: 'TTBDfpPHsak' }, title: 'Rozi Plain - Help', videoOwnerChannelTitle: 'Rozi Plain', publishedAt: '2022-01-01' } },
-        { snippet: { resourceId: { videoId: 'gFdUFVz5Z6M' }, title: 'Field Music - Orion From The Street', videoOwnerChannelTitle: 'Field Music', publishedAt: '2021-01-01' } }
-    ],
-    // Adiciona vídeos genéricos para os outros fallbacks se necessário para teste
-};
 
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -110,7 +103,6 @@ function initDevConsole() {
     const originalLog = console.log;
     console.log = function(...args) {
         originalLog.apply(console, args);
-        // Filtra logs muito barulhentos se necessário
         if(args[0] && typeof args[0] === 'string' && args[0].includes('[Script]')) {
              logToPanel(`INFO: ${args.join(' ')}`);
         }
@@ -126,10 +118,12 @@ const state = {
     currentPlaylistId: null,
     playlists: [],
     currentPlaylistVideos: [],
-    currentPlayerIndex: 0
+    isAuxPlayerActive: false, // Indica se estamos usando o Pexels
+    currentSearchTerm: ''
 };
 
-let player;
+let player; // YouTube
+let auxPlayer; // Pexels
 let creditTimers = [];
 
 // Elementos
@@ -139,6 +133,11 @@ const els = {
     powerLed: document.getElementById('power-led'),
     tvPowerBtn: document.getElementById('tv-power-btn'),
     
+    // Players
+    youtubeContainer: document.getElementById('player'),
+    auxContainer: document.getElementById('aux-player-container'),
+    auxVideo: document.getElementById('aux-video'),
+
     // Static Noise
     staticOverlay: document.getElementById('static-overlay'),
     
@@ -185,6 +184,7 @@ const els = {
 // --- INICIALIZAÇÃO ---
 function init() {
     console.log("[Script] Initializing RetroTV System...");
+    auxPlayer = els.auxVideo;
     populateDecorations();
     startClocks();
     
@@ -236,14 +236,22 @@ function onPlayerReady(event) {
 
 function onPlayerError(event) {
     console.error(`[Player] Error: ${event.data}`);
-    showStatus("NO SIGNAL", true);
+    // Se der erro no player do YT, ativa o Pexels Fallback
+    const currentTitle = state.currentSearchTerm || "Abstract art";
+    console.warn(`[System] YouTube Error. Engaging Pexels Fallback for: ${currentTitle}`);
+    
+    // Tenta pegar o nome da música que falhou (se disponível)
+    activateAuxPlayer(currentTitle, true);
 }
 
 function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
+        // Desativa o player auxiliar se o YT funcionar
+        disableAuxPlayer();
+        
         showStatus("", false);
         const data = player.getVideoData();
-        const duration = player.getDuration();
+        state.currentSearchTerm = data.title; // Salva para fallback
         
         console.log(`[Player] Playing: ${data.title} (${data.video_id})`);
         
@@ -261,12 +269,85 @@ function onPlayerStateChange(event) {
             }
         }, 3000);
 
-    } else if (event.data === YT.PlayerState.ENDED) {
-        // Auto-advance na playlist manual (já que carregamos via loadPlaylist com array, o YT tenta gerenciar, mas se falhar, forçamos)
-        // Se estivermos usando loadPlaylist, o YT deve ir pro próximo.
-        // Se for o último, volta pro início ou para
-        console.log("[Player] Video Ended.");
     }
+}
+
+// --- LOGICA DE FALLBACK (PEXELS) ---
+
+async function fetchPexelsVideo(query) {
+    // Limpa a query para ter melhores resultados
+    const cleanQuery = cleanStringForApi(query).split(' ').slice(0, 3).join(' '); // Pega só as primeiras 3 palavras
+    console.log(`[Pexels] Searching for: "${cleanQuery}"`);
+    
+    const url = `https://api.pexels.com/videos/search?query=${encodeURIComponent(cleanQuery)}&per_page=5&orientation=landscape`;
+    
+    try {
+        const response = await fetch(url, {
+            headers: { Authorization: PEXELS_KEY }
+        });
+        
+        if (!response.ok) throw new Error("Pexels API Error");
+        
+        const data = await response.json();
+        
+        if (data.videos && data.videos.length > 0) {
+            // Pega um video aleatório dos resultados
+            const randomVideo = data.videos[Math.floor(Math.random() * data.videos.length)];
+            const videoFile = randomVideo.video_files.find(v => v.quality === 'hd') || randomVideo.video_files[0];
+            return videoFile.link;
+        }
+        return null;
+    } catch (err) {
+        console.error("[Pexels] Fetch failed:", err);
+        return null;
+    }
+}
+
+async function activateAuxPlayer(searchTerm, showWarning = false) {
+    console.log(`[System] Switching to AUX PLAYER (Pexels)...`);
+    
+    if (showWarning) showStatus("SIGNAL LOST - AUX", true);
+    
+    const videoUrl = await fetchPexelsVideo(searchTerm);
+    
+    if (videoUrl) {
+        state.isAuxPlayerActive = true;
+        
+        // Pausa YT se estiver rodando
+        if (player && typeof player.pauseVideo === 'function') {
+            try { player.pauseVideo(); } catch(e){}
+        }
+
+        // Configura Aux Player
+        auxPlayer.src = videoUrl;
+        auxPlayer.play();
+        
+        // UI
+        els.auxContainer.classList.remove('opacity-0', 'pointer-events-none');
+        els.auxContainer.classList.add('opacity-100', 'pointer-events-auto');
+        els.youtubeContainer.classList.add('opacity-0');
+        
+        // Atualiza Créditos Falsos/Genéricos
+        updateCreditsDOM("AUX SIGNAL", searchTerm.substring(0,20), "Pexels Database", "2024", "System");
+        showCredits();
+        
+        els.npTitle.textContent = "AUX: " + searchTerm;
+        els.npId.textContent = "SOURCE: PEXELS";
+    } else {
+        showStatus("NO SIGNAL", true);
+    }
+}
+
+function disableAuxPlayer() {
+    if (!state.isAuxPlayerActive) return;
+    
+    console.log(`[System] Switching back to MAIN PLAYER (YouTube)...`);
+    state.isAuxPlayerActive = false;
+    auxPlayer.pause();
+    
+    els.auxContainer.classList.add('opacity-0', 'pointer-events-none');
+    els.auxContainer.classList.remove('opacity-100', 'pointer-events-auto');
+    els.youtubeContainer.classList.remove('opacity-0');
 }
 
 // --- LOGICA DE PLAYLISTS (LAZY LOADING) ---
@@ -281,6 +362,9 @@ async function fetchChannelPlaylists() {
             const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
             const response = await fetch(url);
             
+            if (response.status === 403 || response.status === 429) {
+                throw new Error("Quota Exceeded");
+            }
             if (!response.ok) {
                 throw new Error(`API Error: ${response.status}`);
             }
@@ -297,26 +381,34 @@ async function fetchChannelPlaylists() {
         console.log(`[API] Loaded ${state.playlists.length} playlists.`);
     } catch (error) {
         console.error("[API] Failed to fetch playlists:", error);
-        console.warn("[System] Activating FALLBACK Protocol...");
-        state.playlists = FALLBACK_PLAYLISTS; // Fallback
+        console.warn("[System] Activating FALLBACK Protocol (Offline Mode)...");
+        // Se a listagem falhar, carregamos os fallbacks manuais para tentar usar o embed
+        state.playlists = FALLBACK_PLAYLISTS;
     }
 }
 
 // Busca vídeos APENAS quando o canal é selecionado (Lazy)
-async function fetchPlaylistItems(playlistId) {
+async function fetchPlaylistItems(playlistId, playlistTitle) {
     console.log(`[API] Fetching videos for playlist ${playlistId}...`);
     let videos = [];
     let nextPageToken = '';
     
-    // Verifica se é Fallback
+    // Verifica se é Fallback Manual
     if (playlistId.startsWith('PL_FALLBACK')) {
-        return FALLBACK_VIDEOS[playlistId] || [];
+        return [];
     }
 
     try {
         do {
             const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
             const response = await fetch(url);
+            
+             // FAILOVER INTERCEPT
+             if (response.status === 403 || response.status === 429) {
+                 console.error("[API] YouTube Quota Exceeded. Engaging Pexels Fallback.");
+                 activateAuxPlayer(playlistTitle, true);
+                 return []; // Retorna vazio para impedir loadPlaylist do YT
+             }
              if (!response.ok) throw new Error(`API Error: ${response.status}`);
              
             const data = await response.json();
@@ -326,6 +418,8 @@ async function fetchPlaylistItems(playlistId) {
         return videos;
     } catch (error) {
         console.error(`[API] Failed to load videos for ${playlistId}`, error);
+        // Se falhar a lista, ativa o fallback com o nome da playlist
+        activateAuxPlayer(playlistTitle, true);
         return [];
     }
 }
@@ -390,7 +484,7 @@ function renderChannelGuide() {
                 state.currentPlaylistId = pl.id;
                 els.osdChannel.innerText = `CH ${chNum}`;
                 els.npPlaylist.innerText = `PLAYLIST: ${pl.snippet.title}`;
-                changeChannel(pl.id);
+                changeChannel(pl.id, pl.snippet.title);
                 toggleSearchMode(); // Fecha o guia
             };
             
@@ -426,18 +520,21 @@ els.channelSearch.addEventListener('keydown', (e) => {
 
 // --- CONTROLE DE CANAL & VÍDEO ---
 
-async function changeChannel(playlistId) {
-    if (!player) return;
-    
+async function changeChannel(playlistId, playlistTitle) {
     showStatus("TUNING...", true);
     triggerStatic();
+    
+    // Reseta estado do aux
+    disableAuxPlayer();
 
     // Carrega vídeos da playlist selecionada (Lazy Load)
-    const videos = await fetchPlaylistItems(playlistId);
+    // Passamos o título para que, se der erro, o Pexels busque por esse tema
+    const videos = await fetchPlaylistItems(playlistId, playlistTitle);
+    
     state.currentPlaylistVideos = videos;
     state.currentPlayerIndex = 0;
 
-    if (videos.length > 0) {
+    if (videos.length > 0 && player) {
         // Extrai apenas os IDs para carregar no player
         const videoIds = videos.map(v => v.snippet.resourceId.videoId);
         
@@ -446,21 +543,31 @@ async function changeChannel(playlistId) {
         player.setLoop(true); // Loop na playlist
         
     } else {
-        showStatus("EMPTY CHANNEL", true);
+        // Se videos veio vazio, é porque deu erro e o Fallback Pexels já foi ativado no fetchPlaylistItems
+        if (!state.isAuxPlayerActive) {
+             showStatus("EMPTY CHANNEL", true);
+        }
     }
 }
 
 // Comandos do Controle (TV Chassis)
 function nextVideo() {
-    if (player && player.nextVideo) {
-        triggerStatic();
+    triggerStatic();
+    if (state.isAuxPlayerActive) {
+        // No modo Pexels, "Next" significa buscar outro vídeo similar
+        const term = state.currentSearchTerm || "Abstract art";
+        activateAuxPlayer(term); // Recarrega
+    } else if (player && player.nextVideo) {
         player.nextVideo();
     }
 }
 
 function prevVideo() {
-    if (player && player.previousVideo) {
-        triggerStatic();
+    triggerStatic();
+    if (state.isAuxPlayerActive) {
+        const term = state.currentSearchTerm || "Abstract art";
+        activateAuxPlayer(term);
+    } else if (player && player.previousVideo) {
         player.previousVideo();
     }
 }
@@ -474,6 +581,7 @@ function cleanStringForApi(str) {
         .replace(/[\(\[\{].*?[\)\]\}]/g, '') // Remove (Official Video), [HD], etc
         .replace(/official video/gi, '')
         .replace(/video oficial/gi, '')
+        .replace(/videoclipe/gi, '')
         .replace(/ft\./gi, '')
         .replace(/feat\./gi, '')
         .replace(/,/g, '')
@@ -546,8 +654,6 @@ async function handleCreditsForVideo(videoId, ytTitle) {
     
     creditTimers.push(setTimeout(() => showCredits(), showDelay));
     creditTimers.push(setTimeout(() => hideCredits(), showDelay + duration));
-
-    // Agenda final (30s antes do fim, opcional, mantido simples por agora)
 }
 
 function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
@@ -631,12 +737,14 @@ function togglePower() {
         
         showStatus("INITIALIZING...", true);
         
-        // REMOVIDO: Abertura automática do guia. A TV agora liga em 'Neve' ou 'Tela Azul' se não tiver vídeo.
-        // if (!state.currentPlaylistId) { setTimeout(() => toggleSearchMode(), 1500); }
+        // Se Pexels estiver ativo, da play nele
+        if (state.isAuxPlayerActive && auxPlayer) auxPlayer.play();
 
     } else {
         // Desligar
-        if (player) player.stopVideo();
+        if (player && typeof player.stopVideo === 'function') player.stopVideo();
+        if (auxPlayer) auxPlayer.pause();
+
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.add('bg-red-900');
         
@@ -660,7 +768,9 @@ function toggleSearchMode() {
     state.isSearchOpen = !state.isSearchOpen;
 
     if (state.isSearchOpen) {
-        if (player) player.pauseVideo();
+        if (player && typeof player.pauseVideo === 'function') player.pauseVideo();
+        if (auxPlayer) auxPlayer.pause();
+        
         els.internalGuide.classList.remove('hidden');
         els.channelSearch.focus();
         
@@ -678,7 +788,11 @@ function toggleSearchMode() {
         
     } else {
         els.internalGuide.classList.add('hidden');
-        if (player && state.currentPlaylistId) player.playVideo();
+        if (state.isAuxPlayerActive) {
+            auxPlayer.play();
+        } else if (player && state.currentPlaylistId) {
+            player.playVideo();
+        }
     }
 }
 
