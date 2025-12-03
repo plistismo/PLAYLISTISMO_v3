@@ -1,0 +1,2124 @@
+>> SYSTEM_DIAGNOSTICS
+[ CLOSE CONSOLE ]
+GET /youtube/v3/playlists
+{
+  "kind": "youtube#playlistListResponse",
+  "etag": "af_ceKeO6812CYsVZiV1iK6O_Jg",
+  "nextPageToken": "CDIQAA",
+  "pageInfo": {
+    "totalResults": 286,
+    "resultsPerPage": 50
+  },
+  "items": [
+    {
+      "kind": "youtube#playlist",
+      "etag": "9saF_bEKcD2BgYft4bSBw2N_4xg",
+      "id": "PLEsPxCgw-KMdTcDwhZRPnAYUKC1IHqGdN",
+      "snippet": {
+        "publishedAt": "2025-12-01T12:26:34.962111Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: DECEMBER 2025",
+        "description": "Music videos released in December 2025",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/NhcMA0gZi7Q/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/NhcMA0gZi7Q/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/NhcMA0gZi7Q/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/NhcMA0gZi7Q/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/NhcMA0gZi7Q/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: DECEMBER 2025",
+          "description": "Music videos released in December 2025"
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "9q2sNSyIZC7mTJcdYfPrcmgoFyw",
+      "id": "PLEsPxCgw-KMeorM6RjoafF0QAULjlIInb",
+      "snippet": {
+        "publishedAt": "2025-12-01T11:00:09.460141Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "HALLOWEEN OUTFIT",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/qMNjX5GpuYs/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/qMNjX5GpuYs/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/qMNjX5GpuYs/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/qMNjX5GpuYs/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/qMNjX5GpuYs/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "HALLOWEEN OUTFIT",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "UXvoUyyoP0lwAIHpS20YLo_ebes",
+      "id": "PLEsPxCgw-KMdN1sdCRofyYQ1ZxiGLyv6k",
+      "snippet": {
+        "publishedAt": "2025-11-18T15:16:37.612783Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "POPESQUE",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/zRqKDuuiGGg/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/zRqKDuuiGGg/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/zRqKDuuiGGg/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/zRqKDuuiGGg/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/zRqKDuuiGGg/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "POPESQUE",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "VPQh8Ccm4iteaZftnFBtXeFh-MQ",
+      "id": "PLEsPxCgw-KMcVCLymebFipHuYSDnCO5GF",
+      "snippet": {
+        "publishedAt": "2025-11-05T12:38:41.387164Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝 Upload: NOVEMBER 2025",
+        "description": "Music videos premieres from November 2025",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/wgFsczjV7k4/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/wgFsczjV7k4/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/wgFsczjV7k4/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/wgFsczjV7k4/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/wgFsczjV7k4/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝 Upload: NOVEMBER 2025",
+          "description": "Music videos premieres from November 2025"
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "Sb_2tHTMOhZtb18GGQkHKli33QU",
+      "id": "PLEsPxCgw-KMeBudFfFfmJLdvbrWSA-0Q4",
+      "snippet": {
+        "publishedAt": "2025-11-01T12:36:56.855169Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🎧 SAPIENS SONORUM",
+        "description": "SAPIENS SONORUM (latim para “sons sábios” ou “som consciente”) é um espaço de escuta refinada — não por status, mas por vivência. Aqui habitam artistas e canções que traduzem o amadurecimento humano em som. É o território onde o pop encontra o folk, o rock se deita com a MPB e o blues respira poesia. Canções de quem viveu, pensou e sentiu — e fez da música um espelho da própria existência.  Um convite à escuta madura. Mente atenta, alma aberta.",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/AgqGUBP3Cx0/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/AgqGUBP3Cx0/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/AgqGUBP3Cx0/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/AgqGUBP3Cx0/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/AgqGUBP3Cx0/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🎧 SAPIENS SONORUM",
+          "description": "SAPIENS SONORUM (latim para “sons sábios” ou “som consciente”) é um espaço de escuta refinada — não por status, mas por vivência. Aqui habitam artistas e canções que traduzem o amadurecimento humano em som. É o território onde o pop encontra o folk, o rock se deita com a MPB e o blues respira poesia. Canções de quem viveu, pensou e sentiu — e fez da música um espelho da própria existência.  Um convite à escuta madura. Mente atenta, alma aberta."
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "jExCWEUkJ0O9dbB0cq5tVweF-pQ",
+      "id": "PLEsPxCgw-KMfqISg98rpjbDAir0a_uLyp",
+      "snippet": {
+        "publishedAt": "2025-10-14T11:31:35.074095Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "2020 ⇄ 2024 shuffle「pt. 3」🔴",
+        "description": "This is the third part of the playlist dedicated to music videos released between 2020 and 2024",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/QIMihDOXMpY/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/QIMihDOXMpY/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/QIMihDOXMpY/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/QIMihDOXMpY/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/QIMihDOXMpY/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "2020 ⇄ 2024 shuffle「pt. 3」🔴",
+          "description": "This is the third part of the playlist dedicated to music videos released between 2020 and 2024"
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "rKfeD2GPsLn9d8IhrK5_UQCGrUM",
+      "id": "PLEsPxCgw-KMdj-Z_fzWIkyuI-GLHUuPOp",
+      "snippet": {
+        "publishedAt": "2025-10-02T12:31:15.192949Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: OCTOBER 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/htQBS2Ikz6c/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/htQBS2Ikz6c/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/htQBS2Ikz6c/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/htQBS2Ikz6c/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/htQBS2Ikz6c/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: OCTOBER 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "dSzxRvAakfJusECbD7BZntw8oQc",
+      "id": "PLEsPxCgw-KMfozQ9VefW2wcJ5fymS3mrx",
+      "snippet": {
+        "publishedAt": "2025-10-02T11:49:52.528586Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "VIDEORHYMES THROWBACK: 2010 ⇄ 2014",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/_0F2_sAlaNo/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/_0F2_sAlaNo/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/_0F2_sAlaNo/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "VIDEORHYMES THROWBACK: 2010 ⇄ 2014",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "eURFzBRPRJwsrDH43K8nsJDsOjE",
+      "id": "PLEsPxCgw-KMeZYFuh6dvj2AnJ6DqcG0a1",
+      "snippet": {
+        "publishedAt": "2025-10-02T11:46:27.895116Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "VIDEORHYMES REWIND: 2015 ⇄ 2019",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/O1vKJaoY5RY/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/O1vKJaoY5RY/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/O1vKJaoY5RY/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/O1vKJaoY5RY/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/O1vKJaoY5RY/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "VIDEORHYMES REWIND: 2015 ⇄ 2019",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "wzj4fZM5HAcVKp1NQXVLG543Gr0",
+      "id": "PLEsPxCgw-KMdrOi0U2fS-p6Bswr5qlwbl",
+      "snippet": {
+        "publishedAt": "2025-09-11T12:57:15.285544Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "AfroPop Gamma",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/5JUjFN9AuFU/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/5JUjFN9AuFU/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/5JUjFN9AuFU/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/5JUjFN9AuFU/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/5JUjFN9AuFU/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "AfroPop Gamma",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "uDlbP3_Yv24bO2QdnFQSoHHNPuY",
+      "id": "PLEsPxCgw-KMe7N7bMC8n78z_A6useshbl",
+      "snippet": {
+        "publishedAt": "2025-09-05T23:01:03.536796Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: SEPTEMBER 2025",
+        "description": "music videos released on September 2025",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/xGaZBfJOyAc/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/xGaZBfJOyAc/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/xGaZBfJOyAc/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/xGaZBfJOyAc/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/xGaZBfJOyAc/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: SEPTEMBER 2025",
+          "description": "music videos released on September 2025"
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "6C4-MFn7NQcOml80R7qJOqgXSzg",
+      "id": "PLEsPxCgw-KMfXz6imAVWCUC_Mueas-Rn8",
+      "snippet": {
+        "publishedAt": "2025-08-06T18:14:10.515333Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "2005🔀2009 shuffle 「pt. 2」",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/uSA8YzSrff4/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/uSA8YzSrff4/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/uSA8YzSrff4/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "2005🔀2009 shuffle 「pt. 2」",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "zmjJtBfnOlFFtHZAcO-rpMIz7mo",
+      "id": "PLEsPxCgw-KMceSXw8m4PM7KisU-QsNKeM",
+      "snippet": {
+        "publishedAt": "2025-08-01T13:59:44.921067Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: AUGUST 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/tZ192uMAPRA/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/tZ192uMAPRA/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/tZ192uMAPRA/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/tZ192uMAPRA/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/tZ192uMAPRA/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: AUGUST 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "ktBVZ7FYDT-7EjZNyGGW1Clr26k",
+      "id": "PLEsPxCgw-KMfb18obyDAIBDS5eq5tZGA8",
+      "snippet": {
+        "publishedAt": "2025-08-01T11:58:41.738881Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "LEFTFIELD GAMMA",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/sfsDxSpEhu0/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/sfsDxSpEhu0/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/sfsDxSpEhu0/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "LEFTFIELD GAMMA",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "fhudZar_JuYlNZh7lw2Go2yZH0Y",
+      "id": "PLEsPxCgw-KMe4sMw_NLxKCML-gmc9kA3p",
+      "snippet": {
+        "publishedAt": "2025-07-03T17:56:21.121797Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: JULY 2025",
+        "description": "MUSIC VIDEOS RELEASED IN JULY 2025",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/KU5V5WZVcVE/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/KU5V5WZVcVE/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/KU5V5WZVcVE/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/KU5V5WZVcVE/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/KU5V5WZVcVE/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: JULY 2025",
+          "description": "MUSIC VIDEOS RELEASED IN JULY 2025"
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "QC8lxAZsWjgU8xZ2qNmedHzTis4",
+      "id": "PLEsPxCgw-KMdckS-JBV2DGHV20_BM2hZK",
+      "snippet": {
+        "publishedAt": "2025-06-16T21:39:12.725196Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "downstairs dancefloor",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/pKw55n6CCrU/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/pKw55n6CCrU/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/pKw55n6CCrU/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/pKw55n6CCrU/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/pKw55n6CCrU/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "downstairs dancefloor",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "Gouh7fOCo8tdh9InRE48uH49wLA",
+      "id": "PLEsPxCgw-KMcZJm5f-bJMNJHK-hMiVQRS",
+      "snippet": {
+        "publishedAt": "2025-06-02T11:26:10.972754Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: JUNE 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/JgDNFQ2RaLQ/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/JgDNFQ2RaLQ/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/JgDNFQ2RaLQ/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/JgDNFQ2RaLQ/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/JgDNFQ2RaLQ/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: JUNE 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "uDoqTjUTMVw7Brkh25eYrnCOQUQ",
+      "id": "PLEsPxCgw-KMf4TYyx1Zfw-nD7LzWbj8fM",
+      "snippet": {
+        "publishedAt": "2025-05-04T20:59:56.329587Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: MAY 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/ia2Ph61bYzc/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/ia2Ph61bYzc/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/ia2Ph61bYzc/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/ia2Ph61bYzc/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/ia2Ph61bYzc/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: MAY 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "AFwmn5n0GE9K0xtOpqf92KJm_KI",
+      "id": "PLEsPxCgw-KMe1xjzxMRnC5-7d0x-iyP2j",
+      "snippet": {
+        "publishedAt": "2025-04-02T16:29:18.301187Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: APRIL 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/c8zq4kAn_O0/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/c8zq4kAn_O0/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/c8zq4kAn_O0/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/c8zq4kAn_O0/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/c8zq4kAn_O0/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: APRIL 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "7RKS6u3PpYXAAgbjhKypfMJwwY0",
+      "id": "PLEsPxCgw-KMdAqfMNAd6YciQ5yv_IO5it",
+      "snippet": {
+        "publishedAt": "2025-03-03T21:35:46.850056Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: MARCH 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/JSFG-IE8n_c/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/JSFG-IE8n_c/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/JSFG-IE8n_c/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/JSFG-IE8n_c/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/JSFG-IE8n_c/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: MARCH 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "PGRpkAeBGffw3WKld8ddWfgohmw",
+      "id": "PLEsPxCgw-KMeDraLTtHNWHrsnc5Hl9uVs",
+      "snippet": {
+        "publishedAt": "2025-02-20T19:55:24.54673Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "videoRHYMES 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/Xydmu4mbuzI/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/Xydmu4mbuzI/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/Xydmu4mbuzI/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/Xydmu4mbuzI/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/Xydmu4mbuzI/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "videoRHYMES 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "cHOBWComqBuI0DMa9oELDANk8O0",
+      "id": "PLEsPxCgw-KMebo2mBRauJ44oSKhLQAmJ2",
+      "snippet": {
+        "publishedAt": "2025-02-05T21:23:54.51335Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: FEBRUARY 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/u2ah9tWTkmk/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/u2ah9tWTkmk/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/u2ah9tWTkmk/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/u2ah9tWTkmk/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/u2ah9tWTkmk/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: FEBRUARY 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "PpkVltpt4YHDPxqar8DDOuFbVlY",
+      "id": "PLEsPxCgw-KMeQ7nOJd9dRZ3WNZ1NvMuPh",
+      "snippet": {
+        "publishedAt": "2025-01-24T20:57:33.894918Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "R&B「NOW」",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/TFC-OfPqynE/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/TFC-OfPqynE/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/TFC-OfPqynE/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/TFC-OfPqynE/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/TFC-OfPqynE/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "R&B「NOW」",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "I81vyECcOVH3_lNKh8XrxjR0nOI",
+      "id": "PLEsPxCgw-KMcwjsoAoWgXz6bmEoOblRMA",
+      "snippet": {
+        "publishedAt": "2025-01-11T22:42:38.783536Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "POP UP 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/Q0UtwjM4Yxo/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/Q0UtwjM4Yxo/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/Q0UtwjM4Yxo/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/Q0UtwjM4Yxo/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/Q0UtwjM4Yxo/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "POP UP 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "6VFgSkOrdMsZkpImpW8ha9eusF0",
+      "id": "PLEsPxCgw-KMeDdcBEQeAhYCODO4MzDqW4",
+      "snippet": {
+        "publishedAt": "2025-01-07T21:00:34.335889Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "INDIEcious 2025",
+        "description": "Alternative and Indie Rock music videos released in 2025",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/ypaWryZeshk/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/ypaWryZeshk/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/ypaWryZeshk/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/ypaWryZeshk/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/ypaWryZeshk/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "INDIEcious 2025",
+          "description": "Alternative and Indie Rock music videos released in 2025"
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "8Q-BQWEaJR7FNjUDBp-FuKtKuY0",
+      "id": "PLEsPxCgw-KMfM4XYSdJ9mgkHd-1VdY2WY",
+      "snippet": {
+        "publishedAt": "2025-01-07T21:00:02.962804Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: JANUARY 2025",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/hKFvvSE4SCo/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/hKFvvSE4SCo/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/hKFvvSE4SCo/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/hKFvvSE4SCo/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/hKFvvSE4SCo/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: JANUARY 2025",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "kKhwKH8kxHM_bo3-wZ49WNyNFrI",
+      "id": "PLEsPxCgw-KMdUcZFuKwiZfqnoOeYfX_85",
+      "snippet": {
+        "publishedAt": "2025-01-07T20:59:25.828941Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "2025 🔀 SHUFFLE",
+        "description": "Music videos released in 2025",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/eGWFmcn0xSU/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/eGWFmcn0xSU/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/eGWFmcn0xSU/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/eGWFmcn0xSU/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/eGWFmcn0xSU/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "2025 🔀 SHUFFLE",
+          "description": "Music videos released in 2025"
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "7vT7NrR7f90en_MXbafMHk3VYAM",
+      "id": "PLEsPxCgw-KMeiLxgxKIJ8a7bPfgNDMvE3",
+      "snippet": {
+        "publishedAt": "2024-12-08T11:39:52.609367Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: DECEMBER 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/J8U9czVT7tM/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/J8U9czVT7tM/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/J8U9czVT7tM/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/J8U9czVT7tM/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/J8U9czVT7tM/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: DECEMBER 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "YBdTwQti1ljjJ7JY1FKeNk30G7o",
+      "id": "PLEsPxCgw-KMcM4Bog0p5XLCCMS-rZTrvg",
+      "snippet": {
+        "publishedAt": "2024-11-10T13:28:06.615776Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "videoRHYMES Ñ",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/e9oIwfrAXhA/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/e9oIwfrAXhA/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/e9oIwfrAXhA/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/e9oIwfrAXhA/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/e9oIwfrAXhA/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "videoRHYMES Ñ",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "zBYnFTvWEa96j1xm76ABON84wZU",
+      "id": "PLEsPxCgw-KMci-V8QNmFLDjiKqZyxPzPM",
+      "snippet": {
+        "publishedAt": "2024-11-10T13:09:02.027378Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "PERIFERIA VIDEOCLÍPTICA",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/f7EFCK8KDz8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/f7EFCK8KDz8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/f7EFCK8KDz8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/f7EFCK8KDz8/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/f7EFCK8KDz8/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "PERIFERIA VIDEOCLÍPTICA",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "1H9c5EgvBuIzLZITnZWW3ur8yeQ",
+      "id": "PLEsPxCgw-KMfaQLKFNXerEKUvn9EILzoZ",
+      "snippet": {
+        "publishedAt": "2024-11-10T12:55:22.840541Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "RAINBOW PRIDE ZONE",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/51R5OSIBuKg/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/51R5OSIBuKg/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/51R5OSIBuKg/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/51R5OSIBuKg/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/51R5OSIBuKg/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "RAINBOW PRIDE ZONE",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "dSvU1F2wyAxd1a39syXC0hmkk7o",
+      "id": "PLEsPxCgw-KMdxVMgWf5Q-lfwKv09UvIwb",
+      "snippet": {
+        "publishedAt": "2024-11-03T11:12:22.826723Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: NOVEMBER 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/QpotQZsxzsc/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/QpotQZsxzsc/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/QpotQZsxzsc/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/QpotQZsxzsc/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/QpotQZsxzsc/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: NOVEMBER 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "jfOYpKSKuV468duxyX0Zu7DHJjI",
+      "id": "PLEsPxCgw-KMf8MmCkjL0cecEJYi5q85-3",
+      "snippet": {
+        "publishedAt": "2024-10-02T21:02:38.981793Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: OCTOBER 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/ekr2nIex040/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/ekr2nIex040/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/ekr2nIex040/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/ekr2nIex040/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/ekr2nIex040/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: OCTOBER 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "vXKjFUeJmQ7jsyafvG7do7UCdw0",
+      "id": "PLEsPxCgw-KMfUkDtmGSSnxFinwl4yk6KI",
+      "snippet": {
+        "publishedAt": "2024-09-03T19:42:08.884433Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: SEPTEMBER 2024",
+        "description": "Music videos released in September 2024",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/V9PVRfjEBTI/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/V9PVRfjEBTI/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/V9PVRfjEBTI/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/V9PVRfjEBTI/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/V9PVRfjEBTI/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: SEPTEMBER 2024",
+          "description": "Music videos released in September 2024"
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "S62PsRSHc8gp6RK6pyXY4Ag5Xac",
+      "id": "PLEsPxCgw-KMdENlNAFcVR9ChgjEQtMaAR",
+      "snippet": {
+        "publishedAt": "2024-08-19T11:49:29.641036Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "SOUL FEELINGS",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/9lRrg5DlUu8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/9lRrg5DlUu8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/9lRrg5DlUu8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/9lRrg5DlUu8/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/9lRrg5DlUu8/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "SOUL FEELINGS",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "7l8BpdY3RH07RTD-wSlmYQdJ1Tw",
+      "id": "PLEsPxCgw-KMcftIzhwayWOpkfQa7ab7BU",
+      "snippet": {
+        "publishedAt": "2024-08-18T14:14:23.409502Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "ZEN ZONE",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/JTwJFOFH-iE/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/JTwJFOFH-iE/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/JTwJFOFH-iE/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/JTwJFOFH-iE/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/JTwJFOFH-iE/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "ZEN ZONE",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "rHQRD13gOVm3FQcByBLnKs8y-BM",
+      "id": "PLEsPxCgw-KMdVLu8WbLkgSOv_XB6KADfE",
+      "snippet": {
+        "publishedAt": "2024-08-06T14:49:11.17403Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔗 DRAG ZONE",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/lvuu7yp-YWg/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/lvuu7yp-YWg/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/lvuu7yp-YWg/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/lvuu7yp-YWg/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/lvuu7yp-YWg/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔗 DRAG ZONE",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "v4CjNkBp2zFil8hjZGsVnpB_aeU",
+      "id": "PLEsPxCgw-KMf-Lm5rlsXQu2iRIev7yJbp",
+      "snippet": {
+        "publishedAt": "2024-08-02T11:30:58.578296Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "🔝Upload: AUGUST 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/kPa7bsKwL-c/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/kPa7bsKwL-c/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/kPa7bsKwL-c/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/kPa7bsKwL-c/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/kPa7bsKwL-c/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "🔝Upload: AUGUST 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "MoVfkztlpaOB1gZSHCP3vSt7zgE",
+      "id": "PLEsPxCgw-KMdexF3OG87f1CWLcy5IKtfk",
+      "snippet": {
+        "publishedAt": "2024-07-20T01:08:46.354421Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "BRAINWAVE SHIFT TIME MACHINE",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/tXc-sIQkcNM/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/tXc-sIQkcNM/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/tXc-sIQkcNM/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/tXc-sIQkcNM/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "BRAINWAVE SHIFT TIME MACHINE",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "GD1XAeV9dkBY9V827A-vgwKpEJQ",
+      "id": "PLEsPxCgw-KMcx5YzRf1MV7yZ65F2o0B3q",
+      "snippet": {
+        "publishedAt": "2024-07-07T22:38:41.340964Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "Overcast",
+        "description": "videoclipes para dias nublados e melancólicos",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/ILNAM5KDuhk/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/ILNAM5KDuhk/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/ILNAM5KDuhk/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/ILNAM5KDuhk/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/ILNAM5KDuhk/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "Overcast",
+          "description": "videoclipes para dias nublados e melancólicos"
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "_KFxM-X81ixwIlfhRfsvBGq-uSY",
+      "id": "PLEsPxCgw-KMdDnxcieMA7QIcKNeOOHL_g",
+      "snippet": {
+        "publishedAt": "2024-07-04T21:04:23.859249Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "Top Upload: JULY 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/H58vbez_m4E/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/H58vbez_m4E/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/H58vbez_m4E/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/H58vbez_m4E/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/H58vbez_m4E/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "Top Upload: JULY 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "43fDkuKOPYdbCyucXCMt1GBvXBU",
+      "id": "PLEsPxCgw-KMcpu7vyoiphTHEoROM8qeG4",
+      "snippet": {
+        "publishedAt": "2024-06-14T02:37:33.291362Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "HYPNOS",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/n-wEvzqdDZg/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/n-wEvzqdDZg/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/n-wEvzqdDZg/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/n-wEvzqdDZg/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "HYPNOS",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "HORDUUkRTPqGuAzxe-jhRTC8u_Y",
+      "id": "PLEsPxCgw-KMcFnyHS682POan0S07io_6E",
+      "snippet": {
+        "publishedAt": "2024-06-04T01:00:32.12637Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "Top Upload: JUNE 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/MgsdDfdGdHc/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/MgsdDfdGdHc/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/MgsdDfdGdHc/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/MgsdDfdGdHc/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/MgsdDfdGdHc/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "Top Upload: JUNE 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "6VeSqpRaRlCq7iwAAhb7TXN9Tn8",
+      "id": "PLEsPxCgw-KMfM-y0-vUz3rbmlHdI7sjVv",
+      "snippet": {
+        "publishedAt": "2024-05-05T05:10:56.845399Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "Top Upload: MAY 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/22tVWwmTie8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/22tVWwmTie8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/22tVWwmTie8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/22tVWwmTie8/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/22tVWwmTie8/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "Top Upload: MAY 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "KuQNYvObX-y5sxE8juBGWoFvNnI",
+      "id": "PLEsPxCgw-KMc-HtIjJ3yPH9z5oK7ECbQ5",
+      "snippet": {
+        "publishedAt": "2024-04-08T12:56:11.804028Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "Top Upload: APRIL 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/eVli-tstM5E/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/eVli-tstM5E/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/eVli-tstM5E/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/eVli-tstM5E/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/eVli-tstM5E/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "Top Upload: APRIL 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "f_vLhNNSfqBTXNx5X3miaSqqcvg",
+      "id": "PLEsPxCgw-KMd5tKAXXJiHdpc9sKYrwar-",
+      "snippet": {
+        "publishedAt": "2024-03-20T06:37:04.282707Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "AltHerNatives",
+        "description": "AltHerNatives celebrates the rich sonic diversity of alternative female singers from different eras and across the globe. Spanning decades of innovative music, this playlist explores a vast range of genres—from experimental electronic and avant-garde pop to introspective indie rock, alternative R&B, and beyond. Dive into the voices that have redefined and expanded alternative music, blending bold sounds with deep lyrical expression.",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/Mo1ctpZdM3w/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/Mo1ctpZdM3w/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/Mo1ctpZdM3w/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/Mo1ctpZdM3w/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/Mo1ctpZdM3w/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "AltHerNatives",
+          "description": "AltHerNatives celebrates the rich sonic diversity of alternative female singers from different eras and across the globe. Spanning decades of innovative music, this playlist explores a vast range of genres—from experimental electronic and avant-garde pop to introspective indie rock, alternative R&B, and beyond. Dive into the voices that have redefined and expanded alternative music, blending bold sounds with deep lyrical expression."
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "xhMWUdJlnzwu-q8r_qnZJvzDFu0",
+      "id": "PLEsPxCgw-KMekKEpEUWKrlUreN2gwqj28",
+      "snippet": {
+        "publishedAt": "2024-03-01T07:14:35.05133Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "Top Upload: MARCH 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/KNtJGQkC-WI/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/KNtJGQkC-WI/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/KNtJGQkC-WI/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/KNtJGQkC-WI/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/KNtJGQkC-WI/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "Top Upload: MARCH 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "A0QNqUKT9qYXHnyk8-DDRz2IQ3s",
+      "id": "PLEsPxCgw-KMe9F7GPKfuFA_6P3r4umBLd",
+      "snippet": {
+        "publishedAt": "2024-02-02T19:22:28.734645Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "Top Upload: FEBRUARY 2024",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/DI71FIdguUs/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/DI71FIdguUs/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/DI71FIdguUs/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/DI71FIdguUs/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/DI71FIdguUs/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "Top Upload: FEBRUARY 2024",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "MuttRbvCuJ2ne8pcfHPnEXY2pas",
+      "id": "PLEsPxCgw-KMctbHDCTs9c6J_PpTcLy3sO",
+      "snippet": {
+        "publishedAt": "2024-01-26T15:50:56.704863Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "ENGAJAMENTOS",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/XTJcchmKhPw/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/XTJcchmKhPw/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/XTJcchmKhPw/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/XTJcchmKhPw/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "ENGAJAMENTOS",
+          "description": ""
+        }
+      }
+    },
+    {
+      "kind": "youtube#playlist",
+      "etag": "yzvu6MnuQxVPWGzzh1bZkJ5F5CU",
+      "id": "PLEsPxCgw-KMeWBzYWp-2TJMEV88UMa5UU",
+      "snippet": {
+        "publishedAt": "2024-01-15T13:50:11.112785Z",
+        "channelId": "UCFUgNd9YfUTX8tSpaPEobgA",
+        "title": "POPback: 2015 ⇄ 2019",
+        "description": "Pop tunes from the period between 2015 and 2019",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/XifpfhFR-Kk/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/XifpfhFR-Kk/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/XifpfhFR-Kk/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/XifpfhFR-Kk/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/XifpfhFR-Kk/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Playlistismo",
+        "localized": {
+          "title": "POPback: 2015 ⇄ 2019",
+          "description": "Pop tunes from the period between 2015 and 2019"
+        }
+      }
+    }
+  ]
+}
+
+CH 01: 🔝Upload: DECEMBER 2025
+PlayListismo
+POWER
+
