@@ -5,7 +5,7 @@ const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
 // precisamos do ID do canal para buscar as playlists públicas dele.
 // Substitua o ID abaixo pelo SEU ID de canal (ex: UCxxxxxxxxxxxx).
 // Para encontrar seu ID: Vá em YouTube > Configurações > Configurações Avançadas.
-const CHANNEL_ID = 'UC18w5-0p3F8D7oGJO9Hwb6w'; // Exemplo: Canal provisório (troque pelo seu)
+const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA'; // Exemplo: Canal provisório (troque pelo seu)
 
 // --- ESTADO & UI ---
 const state = {
