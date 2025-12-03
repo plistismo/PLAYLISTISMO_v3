@@ -1,4 +1,5 @@
 
+
 import { fetchTrackDetails } from './lastFmAPI.js';
 
 // --- CONFIGURAÇÃO API YOUTUBE ---
@@ -236,12 +237,13 @@ function onPlayerReady(event) {
 
 function onPlayerError(event) {
     console.error(`[Player] Error: ${event.data}`);
-    // Se der erro no player do YT, ativa o Pexels Fallback
-    const currentTitle = state.currentSearchTerm || "Abstract art";
-    console.warn(`[System] YouTube Error. Engaging Pexels Fallback for: ${currentTitle}`);
+    // Se der erro no player do YT, ativa o Pexels Fallback usando dados do Banco
+    console.warn(`[System] YouTube Error. Engaging Database Fallback.`);
     
-    // Tenta pegar o nome da música que falhou (se disponível)
-    activateAuxPlayer(currentTitle, true);
+    getRandomTrackFromDB().then(term => {
+        const fallbackTerm = term || state.currentSearchTerm || "Retro aesthetic";
+        activateAuxPlayer(fallbackTerm, true);
+    });
 }
 
 function onPlayerStateChange(event) {
@@ -272,7 +274,35 @@ function onPlayerStateChange(event) {
     }
 }
 
-// --- LOGICA DE FALLBACK (PEXELS) ---
+// --- LOGICA DE FALLBACK (DB + PEXELS) ---
+
+async function getRandomTrackFromDB() {
+    console.log("[DB] Fetching random track for fallback...");
+    try {
+        // Busca as últimas 50 músicas cadastradas que tenham artista e música
+        const { data, error } = await supabase
+            .from('musicas')
+            .select('artista, musica')
+            .not('artista', 'is', null)
+            .neq('artista', '')
+            .limit(50)
+            .order('id', { ascending: false });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            // Escolhe uma aleatoriamente
+            const randomItem = data[Math.floor(Math.random() * data.length)];
+            // Monta string "Artista Música"
+            const term = `${randomItem.artista} ${randomItem.musica}`;
+            console.log(`[DB] Random selection: ${term}`);
+            return term;
+        }
+    } catch (err) {
+        console.error("[DB] Failed to get random track:", err);
+    }
+    return null;
+}
 
 async function fetchPexelsVideo(query) {
     // Limpa a query para ter melhores resultados
@@ -306,12 +336,14 @@ async function fetchPexelsVideo(query) {
 async function activateAuxPlayer(searchTerm, showWarning = false) {
     console.log(`[System] Switching to AUX PLAYER (Pexels)...`);
     
-    if (showWarning) showStatus("SIGNAL LOST - AUX", true);
+    if (showWarning) showStatus("AUX SIGNAL", true);
     
+    // Garante que o termo esteja limpo
     const videoUrl = await fetchPexelsVideo(searchTerm);
     
     if (videoUrl) {
         state.isAuxPlayerActive = true;
+        state.currentSearchTerm = searchTerm; // Atualiza o termo atual para navegação
         
         // Pausa YT se estiver rodando
         if (player && typeof player.pauseVideo === 'function') {
@@ -328,7 +360,7 @@ async function activateAuxPlayer(searchTerm, showWarning = false) {
         els.youtubeContainer.classList.add('opacity-0');
         
         // Atualiza Créditos Falsos/Genéricos
-        updateCreditsDOM("AUX SIGNAL", searchTerm.substring(0,20), "Pexels Database", "2024", "System");
+        updateCreditsDOM(searchTerm.substring(0,25), "Visual Experience", "Pexels DB", "2024", "System");
         showCredits();
         
         els.npTitle.textContent = "AUX: " + searchTerm;
@@ -405,8 +437,9 @@ async function fetchPlaylistItems(playlistId, playlistTitle) {
             
              // FAILOVER INTERCEPT
              if (response.status === 403 || response.status === 429) {
-                 console.error("[API] YouTube Quota Exceeded. Engaging Pexels Fallback.");
-                 activateAuxPlayer(playlistTitle, true);
+                 console.error("[API] YouTube Quota Exceeded. Engaging DB+Pexels Fallback.");
+                 const dbTerm = await getRandomTrackFromDB();
+                 activateAuxPlayer(dbTerm || playlistTitle, true);
                  return []; // Retorna vazio para impedir loadPlaylist do YT
              }
              if (!response.ok) throw new Error(`API Error: ${response.status}`);
@@ -418,8 +451,9 @@ async function fetchPlaylistItems(playlistId, playlistTitle) {
         return videos;
     } catch (error) {
         console.error(`[API] Failed to load videos for ${playlistId}`, error);
-        // Se falhar a lista, ativa o fallback com o nome da playlist
-        activateAuxPlayer(playlistTitle, true);
+        // Se falhar a lista, ativa o fallback usando o banco
+        const dbTerm = await getRandomTrackFromDB();
+        activateAuxPlayer(dbTerm || playlistTitle, true);
         return [];
     }
 }
@@ -528,7 +562,6 @@ async function changeChannel(playlistId, playlistTitle) {
     disableAuxPlayer();
 
     // Carrega vídeos da playlist selecionada (Lazy Load)
-    // Passamos o título para que, se der erro, o Pexels busque por esse tema
     const videos = await fetchPlaylistItems(playlistId, playlistTitle);
     
     state.currentPlaylistVideos = videos;
@@ -554,9 +587,10 @@ async function changeChannel(playlistId, playlistTitle) {
 function nextVideo() {
     triggerStatic();
     if (state.isAuxPlayerActive) {
-        // No modo Pexels, "Next" significa buscar outro vídeo similar
-        const term = state.currentSearchTerm || "Abstract art";
-        activateAuxPlayer(term); // Recarrega
+        // No modo Pexels, "Next" significa buscar outra música ALEATÓRIA do banco
+        getRandomTrackFromDB().then(term => {
+             activateAuxPlayer(term || "Abstract Art");
+        });
     } else if (player && player.nextVideo) {
         player.nextVideo();
     }
@@ -565,8 +599,10 @@ function nextVideo() {
 function prevVideo() {
     triggerStatic();
     if (state.isAuxPlayerActive) {
-        const term = state.currentSearchTerm || "Abstract art";
-        activateAuxPlayer(term);
+        // No modo Pexels, "Prev" também busca outra música aleatória do banco (simulando shuffle)
+        getRandomTrackFromDB().then(term => {
+             activateAuxPlayer(term || "Abstract Art");
+        });
     } else if (player && player.previousVideo) {
         player.previousVideo();
     }
@@ -873,3 +909,4 @@ function setupEventListeners() {
 
 // Check Auth BEFORE Init
 checkAuth();
+
