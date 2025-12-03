@@ -101,6 +101,30 @@ body {
     opacity: 0.12;
 }
 
+/* Static Noise Effect (Chiado) */
+@keyframes static-anim {
+    0% { background-position: 0 0; }
+    100% { background-position: 100px 100px; }
+}
+
+#static-overlay {
+    background: repeating-radial-gradient(
+        circle,
+        #111,
+        #333 2px,
+        #111 3px,
+        #555 3px
+    );
+    background-size: 4px 4px;
+    filter: contrast(150%) brightness(150%);
+    mix-blend-mode: screen;
+}
+
+#static-overlay.active {
+    opacity: 0.8;
+    animation: static-anim 0.1s linear infinite;
+}
+
 /* Tracking Lines */
 @keyframes tracking-scan {
     0% { transform: translateY(-10%); opacity: 0.1; }
@@ -128,23 +152,28 @@ body {
     animation: rgb-shift-text 2s infinite alternate;
 }
 
+/* OSD Fade Out */
+.fade-out {
+    opacity: 0;
+}
+
 /* --- CREDITS OVERLAY (MTV STYLE) --- */
 /* Modified to fit inside the TV Screen absolute positioning */
 .credits-overlay {
     position: absolute; 
     bottom: 20px; 
     left: 20px;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
     text-shadow: 2px 2px 0px #000000;
     font-family: 'Jost', sans-serif; 
     font-size: 14px; 
     line-height: 1.4;
     opacity: 0; 
-    transition: opacity 0.8s ease-in-out; /* Speed up transition so it's visible in 1.5s window */
-    background: rgba(0,0,0,0.9); 
+    transition: opacity 0.5s ease-in-out; /* Standard transition, visibility controlled via JS timers */
+    background: rgba(0,0,0,0.85); 
     padding: 10px;
     border-radius: 4px;
-    border-left: 4px solid #fff;
+    border-left: 5px solid #fff; /* Slightly thicker */
     pointer-events: none; 
     z-index: 25; 
     transform: perspective(500px) rotateY(2deg); 
@@ -154,8 +183,8 @@ body {
     .credits-overlay {
         bottom: 30px;
         left: 30px;
-        font-size: 16px;
-        padding: 12px;
+        font-size: 17px;
+        padding: 14px;
     }
 }
 
@@ -173,7 +202,7 @@ body {
 }
 
 .credit-line span.light {
-    font-weight: 300;
+    font-weight: 400;
     opacity: 0.9;
 }
 

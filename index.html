@@ -41,13 +41,27 @@
         <div class="bg-black/20 p-4 border-b-4 border-yellow-500 flex justify-between items-center shadow-lg">
             <div>
                 <h2 class="text-yellow-400 text-xl md:text-3xl font-bold tracking-widest vhs-text-shadow drop-shadow-md">CABLE GUIDE</h2>
-                <p class="text-white/60 text-xs md:text-sm tracking-wider">SYSTEM V.2.0 - ONLINE</p>
+                <p class="text-white/60 text-xs md:text-sm tracking-wider">SYSTEM V.2.1 - ONLINE</p>
             </div>
             <button id="close-guide-btn" class="bg-red-600 text-white px-4 py-2 rounded shadow border-b-4 border-red-800 active:border-0 active:translate-y-1 font-bold text-sm hover:bg-red-500 transition-colors">
                 EXIT (X)
             </button>
         </div>
         
+        <!-- INFO / NOW PLAYING SECTION (New) -->
+        <div id="guide-now-playing" class="bg-black/40 p-3 md:p-4 border-b border-white/20 text-white font-mono text-sm md:text-base hidden">
+            <div class="flex gap-4 items-start max-w-5xl mx-auto">
+                <div class="text-green-400 font-bold whitespace-nowrap">NOW PLAYING:</div>
+                <div class="flex-1">
+                    <div id="np-title" class="font-bold text-yellow-300 uppercase">--</div>
+                    <div class="text-xs text-white/70 mt-1 flex gap-4">
+                        <span id="np-playlist">PLAYLIST: --</span>
+                        <span id="np-id">ID: --</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Search Bar -->
         <div class="bg-[#000088] p-4 shadow-inner border-b border-white/10">
             <div class="max-w-3xl mx-auto flex items-center gap-3 bg-black/30 border-2 border-white/30 p-2 rounded">
@@ -118,8 +132,11 @@
                                 <div id="player" class="w-full h-full"></div>
                             </div>
 
+                            <!-- STATIC NOISE OVERLAY (CHIADO) -->
+                            <div id="static-overlay" class="absolute inset-0 z-30 opacity-0 pointer-events-none transition-opacity duration-100 bg-repeat"></div>
+
                             <!-- OSD Layer -->
-                            <div id="osd-layer" class="absolute inset-0 z-30 flex flex-col justify-between p-4 md:p-8 pointer-events-none font-mono text-white/80">
+                            <div id="osd-layer" class="absolute inset-0 z-30 flex flex-col justify-between p-4 md:p-8 pointer-events-none font-mono text-white/80 transition-opacity duration-1000">
                                 <div class="flex justify-between items-start">
                                     <div id="osd-status" class="vhs-text-shadow text-xl md:text-5xl tracking-widest uppercase font-bold text-green-500/80 drop-shadow-md">PLAY ►</div>
                                     <div class="vhs-text-shadow text-lg md:text-2xl" id="osd-channel">CH 01</div>

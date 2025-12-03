@@ -24,11 +24,15 @@ const els = {
     powerLed: document.getElementById('power-led'),
     tvPowerBtn: document.getElementById('tv-power-btn'),
     
+    // Static Noise
+    staticOverlay: document.getElementById('static-overlay'),
+    
     // TV Chassis Buttons
     btnNext: document.getElementById('tv-ch-next'),
     btnPrev: document.getElementById('tv-ch-prev'),
     btnSearch: document.getElementById('tv-search-btn'),
     
+    osdLayer: document.getElementById('osd-layer'),
     osdClock: document.getElementById('osd-clock'),
     statusMessage: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
@@ -38,6 +42,12 @@ const els = {
     closeGuideBtn: document.getElementById('close-guide-btn'),
     channelGuideContainer: document.getElementById('channel-guide-container'),
     channelSearch: document.getElementById('channel-search'),
+    guideNowPlaying: document.getElementById('guide-now-playing'),
+    
+    // Now Playing Info in Menu
+    npTitle: document.getElementById('np-title'),
+    npPlaylist: document.getElementById('np-playlist'),
+    npId: document.getElementById('np-id'),
     
     osdChannel: document.getElementById('osd-channel'),
     ventContainer: document.querySelector('.vent-container'),
@@ -60,6 +70,7 @@ const els = {
 let player;
 let currentTimers = [];
 let currentPlaylistVideos = {};
+let osdTimer = null;
 
 // --- INICIALIZAÇÃO ---
 
@@ -266,6 +277,7 @@ function filterChannels(searchTerm) {
 
 async function changeChannel(playlistId, displayText) {
     state.currentPlaylistId = playlistId;
+    triggerStatic(); // Efeito de chiado ao trocar
     
     // Close Search Menu if open
     if(state.isSearchOpen) {
@@ -318,6 +330,16 @@ function startClock() {
         const now = new Date();
         els.osdClock.innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     }, 1000);
+}
+
+// --- EFEITOS VISUAIS ---
+function triggerStatic() {
+    if(els.staticOverlay) {
+        els.staticOverlay.classList.add('active');
+        setTimeout(() => {
+            els.staticOverlay.classList.remove('active');
+        }, 1000); // 1 segundo de chiado
+    }
 }
 
 // --- YOUTUBE API CALLBACK ---
@@ -396,8 +418,7 @@ function setupControls() {
             if(!state.isOn) return;
             if(state.isSearchOpen) return; 
             
-            // Log for debug
-            console.log("Next clicked");
+            triggerStatic();
 
             if(player && typeof player.nextVideo === 'function') {
                 showStatus("NEXT TRACK >>|");
@@ -414,8 +435,8 @@ function setupControls() {
         els.btnPrev.onclick = () => {
             if(!state.isOn) return;
             if(state.isSearchOpen) return;
-
-             console.log("Prev clicked");
+            
+            triggerStatic();
 
             if(player && typeof player.previousVideo === 'function') {
                 showStatus("|<< PREV TRACK");
@@ -436,6 +457,27 @@ function toggleSearchMode() {
         if(player && typeof player.pauseVideo === 'function') {
             player.pauseVideo();
         }
+
+        // UPDATE "NOW PLAYING" INFO IN MENU
+        if(player && player.getVideoData) {
+            const videoData = player.getVideoData();
+            const currentVidId = videoData.video_id;
+            
+            // Tenta pegar dados limpos, senão usa os do YouTube
+            const displayData = currentPlaylistVideos[currentVidId] || { 
+                artist: videoData.author, 
+                song: videoData.title 
+            };
+
+            els.guideNowPlaying.classList.remove('hidden');
+            els.npTitle.textContent = `${displayData.artist} - ${displayData.song}`;
+            els.npId.textContent = `ID: ${currentVidId}`;
+            
+            // Nome da playlist atual
+            const currentListObj = state.playlists.find(p => p.id === state.currentPlaylistId);
+            els.npPlaylist.textContent = `PLAYLIST: ${currentListObj ? currentListObj.snippet.title : 'UNKNOWN'}`;
+        }
+
         els.internalGuide.classList.remove('hidden');
         els.channelSearch.value = '';
         els.channelSearch.focus();
@@ -530,14 +572,46 @@ function hideStatus() {
 // --- CRÉDITOS ---
 
 function onPlayerStateChange(event) {
+    // Gerenciamento do OSD Fade Out
     if (event.data == YT.PlayerState.PLAYING) {
+        // Mostra OSD
+        els.osdLayer.classList.remove('fade-out');
+        
+        // Agenda sumiço em 3 segundos
+        if (osdTimer) clearTimeout(osdTimer);
+        osdTimer = setTimeout(() => {
+            els.osdLayer.classList.add('fade-out');
+        }, 3000);
+
         const videoId = player.getVideoData().video_id;
         const duration = player.getDuration();
         handleCreditsForVideo(videoId, duration);
-    } else if (event.data == YT.PlayerState.ENDED) {
-        hideCredits();
-        hideInfoPanel();
+
+    } else {
+        // Se pausar, parar ou bufferizar, mostra OSD novamente
+        els.osdLayer.classList.remove('fade-out');
+        if (osdTimer) clearTimeout(osdTimer);
+
+        if (event.data == YT.PlayerState.ENDED) {
+            hideCredits();
+            hideInfoPanel();
+        }
     }
+}
+
+// Limpeza de string para API Last.FM
+function cleanStringForApi(str) {
+    if (!str) return "";
+    return str
+        .replace(/\(.*\)/g, '')   // Remove coisas em parenteses (Official Video)
+        .replace(/\[.*\]/g, '')   // Remove coisas em colchetes [HD]
+        .replace(/ft\..*/i, '')   // Remove feat
+        .replace(/feat\..*/i, '')
+        .replace(/official video/gi, '')
+        .replace(/video oficial/gi, '')
+        .replace(/lyric video/gi, '')
+        .replace(/videoclipe/gi, '')
+        .trim();
 }
 
 async function handleCreditsForVideo(videoId, duration) {
@@ -571,7 +645,6 @@ async function handleCreditsForVideo(videoId, duration) {
             .maybeSingle();
 
         if (dbData) {
-            console.log("★ Dados Supabase:", dbData);
             finalData = {
                 artist: dbData.artista || finalData.artist,
                 song: dbData.musica || finalData.song,
@@ -587,9 +660,9 @@ async function handleCreditsForVideo(videoId, duration) {
     // 3. Atualiza Créditos (TV)
     updateCreditsDOM(finalData);
 
-    // Timers de Créditos
-    const showAtStart = 2000;
-    const displayDuration = 1500;
+    // Timers de Créditos (Ajuste: 4s start, 2.5s duration)
+    const showAtStart = 4000;
+    const displayDuration = 2500;
     
     currentTimers.push(setTimeout(() => showCredits(), showAtStart));
     currentTimers.push(setTimeout(() => hideCredits(), showAtStart + displayDuration));
@@ -605,7 +678,13 @@ async function handleCreditsForVideo(videoId, duration) {
         // Limpa texto anterior
         els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">SEARCHING DB...</span></div>';
         
-        const lastFmData = await fetchTrackDetails(finalData.artist, finalData.song);
+        // Limpa os termos para aumentar chance de sucesso na API
+        const cleanArtist = cleanStringForApi(finalData.artist);
+        const cleanSong = cleanStringForApi(finalData.song);
+
+        console.log(`LastFM Query: Artist[${cleanArtist}] Song[${cleanSong}]`);
+
+        const lastFmData = await fetchTrackDetails(cleanArtist, cleanSong);
         
         if (lastFmData && lastFmData.curiosidade) {
             updateInfoPanel(lastFmData);
@@ -613,10 +692,8 @@ async function handleCreditsForVideo(videoId, duration) {
         } else {
             // Se não achar nada, apenas limpa ou mostra placeholder sutil
             els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/30"><span>NO DATA FOUND</span></div>';
-            // Opcional: Não mostrar o painel se não tiver dados
-            // hideInfoPanel(); 
         }
-    }, 10000); 
+    }, 4500); // Sincronizado para aparecer logo apos os créditos
 }
 
 function updateCreditsDOM(data) {
