@@ -1,5 +1,4 @@
-
-
+import { createClient } from '@supabase/supabase-js';
 import { fetchTrackDetails } from './lastFmAPI.js';
 
 // --- CONFIGURAÇÃO API YOUTUBE ---
@@ -10,109 +9,17 @@ const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA';
 const PEXELS_KEY = '9RNNrjxwbKyc4KHDfVSZ51TXiRnl3TLgUUuS64ZlvtAo9Kw5BW9eVd0Y';
 
 // --- DADOS DE FALLBACK (LEGACY) ---
-// Mantido para compatibilidade, mas o sistema priorizará o Pexels em falha catastrófica
 const FALLBACK_PLAYLISTS = [
     { id: 'PL_FALLBACK_1', snippet: { title: 'Folk Zone (Backup)', channelTitle: 'System' } },
     { id: 'PL_FALLBACK_2', snippet: { title: 'Trip Hop Zone (Backup)', channelTitle: 'System' } },
 ];
 
-
 // --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
 const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M';
-const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+const supabase = createClient(SB_URL, SB_KEY);
 
-// --- AUTH GUARD (PROTEÇÃO DE ROTA) ---
-async function checkAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-        console.warn("[Auth] No session found. Redirecting to login.");
-        window.location.href = 'login.html';
-    } else {
-        console.log("[Auth] Session valid. User:", session.user.email);
-        init(); // Só inicia o app se estiver logado
-    }
-}
-
-async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-        window.location.href = 'login.html';
-    }
-}
-
-
-// --- DEV CONSOLE LOGIC ---
-function initDevConsole() {
-    const trigger = document.getElementById('dev-debug-trigger');
-    const panel = document.getElementById('dev-debug-console');
-    const close = document.getElementById('dev-console-close');
-    const clear = document.getElementById('dev-console-clear');
-    const output = document.getElementById('dev-console-output');
-
-    if (trigger && panel) {
-        // Mostra o botão apenas quando o console é inicializado
-        trigger.classList.remove('hidden');
-
-        trigger.addEventListener('click', () => {
-            panel.classList.toggle('hidden');
-        });
-        close.addEventListener('click', () => {
-            panel.classList.add('hidden');
-        });
-        clear.addEventListener('click', () => {
-            output.innerHTML = '';
-        });
-    }
-
-    // Logger interno
-    const logToPanel = (msg) => {
-        if (!output) return;
-        const line = document.createElement('div');
-        line.innerText = `> ${msg}`;
-        line.className = "border-b border-red-900/30 pb-1";
-        output.appendChild(line);
-        output.scrollTop = output.scrollHeight;
-        
-        // Alerta visual no botão
-        if(trigger) {
-            trigger.classList.add('animate-pulse', 'bg-red-500');
-            setTimeout(() => trigger.classList.remove('animate-pulse', 'bg-red-500'), 2000);
-        }
-    };
-
-    // Capture Window Errors
-    window.onerror = function(message, source, lineno, colno, error) {
-        const cleanSource = source ? source.split('/').pop() : 'inline';
-        logToPanel(`ERR: ${message} (${cleanSource}:${lineno})`);
-        return false;
-    };
-
-    // Capture Unhandled Promises
-    window.addEventListener('unhandledrejection', function(event) {
-        logToPanel(`PROMISE: ${event.reason}`);
-    });
-
-    // Capture console.error
-    const originalError = console.error;
-    console.error = function(...args) {
-        originalError.apply(console, args);
-        logToPanel(`LOG: ${args.join(' ')}`);
-    };
-    
-    // Capture console.log para debug da API
-    const originalLog = console.log;
-    console.log = function(...args) {
-        originalLog.apply(console, args);
-        if(args[0] && typeof args[0] === 'string' && args[0].includes('[Script]')) {
-             logToPanel(`INFO: ${args.join(' ')}`);
-        }
-    };
-    
-    console.log("[System] Debug Console Initialized & Active");
-}
-
-// --- ESTADO & UI ---
+// --- ESTADO GLOBAL ---
 const state = {
     isOn: false,
     isSearchOpen: false,
@@ -120,14 +27,15 @@ const state = {
     playlists: [],
     currentPlaylistVideos: [],
     isAuxPlayerActive: false, // Indica se estamos usando o Pexels
-    currentSearchTerm: ''
+    currentSearchTerm: '',
+    playerReady: false
 };
 
 let player; // YouTube
 let auxPlayer; // Pexels
 let creditTimers = [];
 
-// Elementos
+// Elementos DOM
 const els = {
     screenOff: document.getElementById('screen-off'),
     screenOn: document.getElementById('screen-on'),
@@ -182,6 +90,80 @@ const els = {
     }
 };
 
+// --- AUTH GUARD (PROTEÇÃO DE ROTA) ---
+async function checkAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        console.warn("[Auth] No session found. Redirecting to login.");
+        window.location.href = 'login.html';
+    } else {
+        console.log("[Auth] Session valid. User:", session.user.email);
+        init(); // Só inicia o app se estiver logado
+    }
+}
+
+async function handleLogout() {
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+        window.location.href = 'login.html';
+    }
+}
+
+// --- DEV CONSOLE LOGIC ---
+function initDevConsole() {
+    const trigger = document.getElementById('dev-debug-trigger');
+    const panel = document.getElementById('dev-debug-console');
+    const close = document.getElementById('dev-console-close');
+    const clear = document.getElementById('dev-console-clear');
+    const output = document.getElementById('dev-console-output');
+
+    if (trigger && panel) {
+        trigger.classList.remove('hidden');
+
+        trigger.addEventListener('click', () => {
+            panel.classList.toggle('hidden');
+        });
+        close.addEventListener('click', () => {
+            panel.classList.add('hidden');
+        });
+        clear.addEventListener('click', () => {
+            output.innerHTML = '';
+        });
+    }
+
+    const logToPanel = (msg) => {
+        if (!output) return;
+        const line = document.createElement('div');
+        line.innerText = `> ${msg}`;
+        line.className = "border-b border-red-900/30 pb-1";
+        output.appendChild(line);
+        output.scrollTop = output.scrollHeight;
+        
+        if(trigger) {
+            trigger.classList.add('animate-pulse', 'bg-red-500');
+            setTimeout(() => trigger.classList.remove('animate-pulse', 'bg-red-500'), 2000);
+        }
+    };
+
+    window.onerror = function(message, source, lineno, colno, error) {
+        const cleanSource = source ? source.split('/').pop() : 'inline';
+        logToPanel(`ERR: ${message} (${cleanSource}:${lineno})`);
+        return false;
+    };
+
+    window.addEventListener('unhandledrejection', function(event) {
+        logToPanel(`PROMISE: ${event.reason}`);
+    });
+
+    const originalError = console.error;
+    console.error = function(...args) {
+        originalError.apply(console, args);
+        logToPanel(`LOG: ${args.join(' ')}`);
+    };
+    
+    console.log("[System] Debug Console Initialized & Active");
+}
+
 // --- INICIALIZAÇÃO ---
 function init() {
     console.log("[Script] Initializing RetroTV System...");
@@ -197,7 +179,7 @@ function init() {
 
     setupEventListeners();
 
-    // AUTO-POWER ON após 2 segundos (Automação solicitada)
+    // AUTO-POWER ON após 2 segundos
     setTimeout(() => {
         initDevConsole();
         console.log("[Auto-Power] Turning TV On...");
@@ -205,7 +187,7 @@ function init() {
     }, 2000);
 }
 
-// YouTube API Callback
+// Expose YouTube Callback to Global Scope (since we are in a module)
 window.onYouTubeIframeAPIReady = function() {
     console.log("[YouTube] API Ready. Creating Player...");
     player = new YT.Player('player', {
@@ -213,11 +195,11 @@ window.onYouTubeIframeAPIReady = function() {
         width: '100%',
         playerVars: {
             'playsinline': 1,
-            'controls': 0, // Sem controles
+            'controls': 0,
             'modestbranding': 1,
             'rel': 0,
             'fs': 0,
-            'iv_load_policy': 3 // Sem anotações
+            'iv_load_policy': 3
         },
         events: {
             'onReady': onPlayerReady,
@@ -229,7 +211,7 @@ window.onYouTubeIframeAPIReady = function() {
 
 function onPlayerReady(event) {
     console.log("[Player] Ready.");
-    // Carrega apenas a LISTA de playlists para não estourar a cota (Lazy Loading)
+    state.playerReady = true;
     fetchChannelPlaylists().then(() => {
         renderChannelGuide();
     });
@@ -237,7 +219,6 @@ function onPlayerReady(event) {
 
 function onPlayerError(event) {
     console.error(`[Player] Error: ${event.data}`);
-    // Se der erro no player do YT, ativa o Pexels Fallback usando dados do Banco
     console.warn(`[System] YouTube Error. Engaging Database Fallback.`);
     
     getRandomTrackFromDB().then(term => {
@@ -248,29 +229,24 @@ function onPlayerError(event) {
 
 function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
-        // Desativa o player auxiliar se o YT funcionar
         disableAuxPlayer();
-        
         showStatus("", false);
         const data = player.getVideoData();
-        state.currentSearchTerm = data.title; // Salva para fallback
+        state.currentSearchTerm = data.title;
         
         console.log(`[Player] Playing: ${data.title} (${data.video_id})`);
         
-        // Atualiza infos no Menu (Now Playing)
         els.npTitle.textContent = data.title;
         els.npId.textContent = `ID: ${data.video_id}`;
         
         handleCreditsForVideo(data.video_id, data.title);
         
-        // OSD Fade out logic
         els.osdLayer.classList.remove('fade-out');
         setTimeout(() => {
             if(player.getPlayerState() === YT.PlayerState.PLAYING) {
                 els.osdLayer.classList.add('fade-out');
             }
         }, 3000);
-
     }
 }
 
@@ -279,7 +255,6 @@ function onPlayerStateChange(event) {
 async function getRandomTrackFromDB() {
     console.log("[DB] Fetching random track for fallback...");
     try {
-        // Busca as últimas 50 músicas cadastradas que tenham artista e música
         const { data, error } = await supabase
             .from('musicas')
             .select('artista, musica')
@@ -291,9 +266,7 @@ async function getRandomTrackFromDB() {
         if (error) throw error;
 
         if (data && data.length > 0) {
-            // Escolhe uma aleatoriamente
             const randomItem = data[Math.floor(Math.random() * data.length)];
-            // Monta string "Artista Música"
             const term = `${randomItem.artista} ${randomItem.musica}`;
             console.log(`[DB] Random selection: ${term}`);
             return term;
@@ -305,23 +278,27 @@ async function getRandomTrackFromDB() {
 }
 
 async function fetchPexelsVideo(query) {
-    // Limpa a query para ter melhores resultados
-    const cleanQuery = cleanStringForApi(query).split(' ').slice(0, 3).join(' '); // Pega só as primeiras 3 palavras
+    const cleanQuery = cleanStringForApi(query).split(' ').slice(0, 3).join(' ');
     console.log(`[Pexels] Searching for: "${cleanQuery}"`);
     
-    const url = `https://api.pexels.com/videos/search?query=${encodeURIComponent(cleanQuery)}&per_page=5&orientation=landscape`;
-    
-    try {
-        const response = await fetch(url, {
-            headers: { Authorization: PEXELS_KEY }
-        });
-        
+    const trySearch = async (term) => {
+        const url = `https://api.pexels.com/videos/search?query=${encodeURIComponent(term)}&per_page=5&orientation=landscape`;
+        const response = await fetch(url, { headers: { Authorization: PEXELS_KEY } });
         if (!response.ok) throw new Error("Pexels API Error");
+        return await response.json();
+    };
+
+    try {
+        // Tentativa 1: Busca específica
+        let data = await trySearch(cleanQuery);
         
-        const data = await response.json();
+        // Tentativa 2: Fallback Genérico se não achar nada
+        if (!data.videos || data.videos.length === 0) {
+            console.warn("[Pexels] No results. Trying generic term.");
+            data = await trySearch("Retro Abstract");
+        }
         
         if (data.videos && data.videos.length > 0) {
-            // Pega um video aleatório dos resultados
             const randomVideo = data.videos[Math.floor(Math.random() * data.videos.length)];
             const videoFile = randomVideo.video_files.find(v => v.quality === 'hd') || randomVideo.video_files[0];
             return videoFile.link;
@@ -338,28 +315,26 @@ async function activateAuxPlayer(searchTerm, showWarning = false) {
     
     if (showWarning) showStatus("AUX SIGNAL", true);
     
-    // Garante que o termo esteja limpo
     const videoUrl = await fetchPexelsVideo(searchTerm);
     
     if (videoUrl) {
         state.isAuxPlayerActive = true;
-        state.currentSearchTerm = searchTerm; // Atualiza o termo atual para navegação
+        state.currentSearchTerm = searchTerm;
         
-        // Pausa YT se estiver rodando
-        if (player && typeof player.pauseVideo === 'function') {
+        if (player && typeof player.pauseVideo === 'function' && state.playerReady) {
             try { player.pauseVideo(); } catch(e){}
         }
 
-        // Configura Aux Player
         auxPlayer.src = videoUrl;
-        auxPlayer.play();
+        auxPlayer.play().catch(e => console.error("Aux Autoplay blocked", e));
         
-        // UI
         els.auxContainer.classList.remove('opacity-0', 'pointer-events-none');
         els.auxContainer.classList.add('opacity-100', 'pointer-events-auto');
         els.youtubeContainer.classList.add('opacity-0');
         
-        // Atualiza Créditos Falsos/Genéricos
+        // Remove Chiado se Pexels carregar
+        els.staticOverlay.classList.remove('active');
+        
         updateCreditsDOM(searchTerm.substring(0,25), "Visual Experience", "Pexels DB", "2024", "System");
         showCredits();
         
@@ -372,11 +347,9 @@ async function activateAuxPlayer(searchTerm, showWarning = false) {
 
 function disableAuxPlayer() {
     if (!state.isAuxPlayerActive) return;
-    
     console.log(`[System] Switching back to MAIN PLAYER (YouTube)...`);
     state.isAuxPlayerActive = false;
     auxPlayer.pause();
-    
     els.auxContainer.classList.add('opacity-0', 'pointer-events-none');
     els.auxContainer.classList.remove('opacity-100', 'pointer-events-auto');
     els.youtubeContainer.classList.remove('opacity-0');
@@ -394,53 +367,38 @@ async function fetchChannelPlaylists() {
             const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
             const response = await fetch(url);
             
-            if (response.status === 403 || response.status === 429) {
-                throw new Error("Quota Exceeded");
-            }
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status}`);
-            }
+            if (response.status === 403 || response.status === 429) throw new Error("Quota Exceeded");
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
 
             const data = await response.json();
-            
-            if (data.items) {
-                allPlaylists = [...allPlaylists, ...data.items];
-            }
+            if (data.items) allPlaylists = [...allPlaylists, ...data.items];
             nextPageToken = data.nextPageToken || '';
         } while (nextPageToken);
         
         state.playlists = allPlaylists;
-        console.log(`[API] Loaded ${state.playlists.length} playlists.`);
     } catch (error) {
         console.error("[API] Failed to fetch playlists:", error);
-        console.warn("[System] Activating FALLBACK Protocol (Offline Mode)...");
-        // Se a listagem falhar, carregamos os fallbacks manuais para tentar usar o embed
         state.playlists = FALLBACK_PLAYLISTS;
     }
 }
 
-// Busca vídeos APENAS quando o canal é selecionado (Lazy)
 async function fetchPlaylistItems(playlistId, playlistTitle) {
     console.log(`[API] Fetching videos for playlist ${playlistId}...`);
     let videos = [];
     let nextPageToken = '';
     
-    // Verifica se é Fallback Manual
-    if (playlistId.startsWith('PL_FALLBACK')) {
-        return [];
-    }
+    if (playlistId.startsWith('PL_FALLBACK')) return [];
 
     try {
         do {
             const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
             const response = await fetch(url);
             
-             // FAILOVER INTERCEPT
              if (response.status === 403 || response.status === 429) {
                  console.error("[API] YouTube Quota Exceeded. Engaging DB+Pexels Fallback.");
                  const dbTerm = await getRandomTrackFromDB();
                  activateAuxPlayer(dbTerm || playlistTitle, true);
-                 return []; // Retorna vazio para impedir loadPlaylist do YT
+                 return [];
              }
              if (!response.ok) throw new Error(`API Error: ${response.status}`);
              
@@ -451,7 +409,6 @@ async function fetchPlaylistItems(playlistId, playlistTitle) {
         return videos;
     } catch (error) {
         console.error(`[API] Failed to load videos for ${playlistId}`, error);
-        // Se falhar a lista, ativa o fallback usando o banco
         const dbTerm = await getRandomTrackFromDB();
         activateAuxPlayer(dbTerm || playlistTitle, true);
         return [];
@@ -459,29 +416,21 @@ async function fetchPlaylistItems(playlistId, playlistTitle) {
 }
 
 function groupPlaylists(playlists) {
-    const groups = {
-        'UPLOADS': [],
-        'ZONES': [],
-        'GENRES': [],
-        'ERAS': [],
-        'OTHERS': []
-    };
-
+    const groups = { 'UPLOADS': [], 'ZONES': [], 'GENRES': [], 'ERAS': [], 'OTHERS': [] };
     playlists.forEach(pl => {
         const title = pl.snippet.title.toUpperCase();
         if (title.includes('UPLOAD')) groups['UPLOADS'].push(pl);
         else if (title.includes('ZONE') || title.includes('RADIO')) groups['ZONES'].push(pl);
         else if (title.includes('ROCK') || title.includes('POP') || title.includes('JAZZ') || title.includes('INDIE') || title.includes('BRASIL')) groups['GENRES'].push(pl);
-        else if (title.match(/\d{4}/)) groups['ERAS'].push(pl); // Anos
+        else if (title.match(/\d{4}/)) groups['ERAS'].push(pl);
         else groups['OTHERS'].push(pl);
     });
-
     return groups;
 }
 
 function renderChannelGuide() {
     const container = els.channelGuideContainer;
-    container.innerHTML = ''; // Limpa
+    container.innerHTML = ''; 
 
     if (state.playlists.length === 0) {
         container.innerHTML = '<div class="text-red-500">NO SIGNAL / NO DATA</div>';
@@ -494,7 +443,6 @@ function renderChannelGuide() {
     for (const [category, items] of Object.entries(groups)) {
         if (items.length === 0) continue;
 
-        // Header da Categoria
         const header = document.createElement('div');
         header.className = "col-span-full border-b border-white/20 mt-4 mb-2 pb-1";
         header.innerHTML = `<span class="bg-[#ffff00] text-black px-2 font-bold">${category}</span>`;
@@ -505,23 +453,15 @@ function renderChannelGuide() {
             el.className = "teletext-link flex items-center p-1 cursor-pointer group hover:bg-white hover:text-blue-900 transition-colors";
             el.dataset.id = pl.id;
             el.dataset.title = pl.snippet.title;
-            
-            // Channel Number Format
             const chNum = String(channelIndex).padStart(2, '0');
-            
-            el.innerHTML = `
-                <span class="text-[#ffff00] mr-3 font-bold group-hover:text-blue-900">${chNum}</span>
-                <span class="truncate uppercase">${pl.snippet.title}</span>
-            `;
-            
+            el.innerHTML = `<span class="text-[#ffff00] mr-3 font-bold group-hover:text-blue-900">${chNum}</span><span class="truncate uppercase">${pl.snippet.title}</span>`;
             el.onclick = () => {
                 state.currentPlaylistId = pl.id;
                 els.osdChannel.innerText = `CH ${chNum}`;
                 els.npPlaylist.innerText = `PLAYLIST: ${pl.snippet.title}`;
                 changeChannel(pl.id, pl.snippet.title);
-                toggleSearchMode(); // Fecha o guia
+                toggleSearchMode();
             };
-            
             container.appendChild(el);
             channelIndex++;
         });
@@ -532,66 +472,42 @@ function renderChannelGuide() {
 els.channelSearch.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const links = els.channelGuideContainer.querySelectorAll('.teletext-link');
-    
     links.forEach(link => {
         const title = link.dataset.title.toLowerCase();
-        if (title.includes(term)) {
-            link.classList.remove('hidden');
-        } else {
-            link.classList.add('hidden');
-        }
+        link.classList.toggle('hidden', !title.includes(term));
     });
 });
 
 els.channelSearch.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
-        // Seleciona o primeiro visível
         const firstVisible = Array.from(els.channelGuideContainer.querySelectorAll('.teletext-link')).find(el => !el.classList.contains('hidden'));
         if (firstVisible) firstVisible.click();
     }
 });
 
-
 // --- CONTROLE DE CANAL & VÍDEO ---
-
 async function changeChannel(playlistId, playlistTitle) {
     showStatus("TUNING...", true);
     triggerStatic();
-    
-    // Reseta estado do aux
     disableAuxPlayer();
 
-    // Carrega vídeos da playlist selecionada (Lazy Load)
     const videos = await fetchPlaylistItems(playlistId, playlistTitle);
-    
     state.currentPlaylistVideos = videos;
-    state.currentPlayerIndex = 0;
 
-    if (videos.length > 0 && player) {
-        // Extrai apenas os IDs para carregar no player
+    if (videos.length > 0 && player && state.playerReady) {
         const videoIds = videos.map(v => v.snippet.resourceId.videoId);
-        
-        // Carrega a playlist no player
-        player.loadPlaylist(videoIds, 0); // Começa do indice 0
-        player.setLoop(true); // Loop na playlist
-        
+        player.loadPlaylist(videoIds, 0);
+        player.setLoop(true);
     } else {
-        // Se videos veio vazio, é porque deu erro e o Fallback Pexels já foi ativado no fetchPlaylistItems
-        if (!state.isAuxPlayerActive) {
-             showStatus("EMPTY CHANNEL", true);
-        }
+        if (!state.isAuxPlayerActive) showStatus("EMPTY CHANNEL", true);
     }
 }
 
-// Comandos do Controle (TV Chassis)
 function nextVideo() {
     triggerStatic();
     if (state.isAuxPlayerActive) {
-        // No modo Pexels, "Next" significa buscar outra música ALEATÓRIA do banco
-        getRandomTrackFromDB().then(term => {
-             activateAuxPlayer(term || "Abstract Art");
-        });
-    } else if (player && player.nextVideo) {
+        getRandomTrackFromDB().then(term => activateAuxPlayer(term || "Abstract Art"));
+    } else if (player && state.playerReady) {
         player.nextVideo();
     }
 }
@@ -599,38 +515,32 @@ function nextVideo() {
 function prevVideo() {
     triggerStatic();
     if (state.isAuxPlayerActive) {
-        // No modo Pexels, "Prev" também busca outra música aleatória do banco (simulando shuffle)
-        getRandomTrackFromDB().then(term => {
-             activateAuxPlayer(term || "Abstract Art");
-        });
-    } else if (player && player.previousVideo) {
+        getRandomTrackFromDB().then(term => activateAuxPlayer(term || "Abstract Art"));
+    } else if (player && state.playerReady) {
         player.previousVideo();
     }
 }
-
 
 // --- CRÉDITOS & METADADOS (SUPABASE + LAST.FM) ---
 
 function cleanStringForApi(str) {
     if (!str) return "";
     return str
-        .replace(/[\(\[\{].*?[\)\]\}]/g, '') // Remove (Official Video), [HD], etc
+        .replace(/[\(\[\{].*?[\)\]\}]/g, '')
         .replace(/official video/gi, '')
         .replace(/video oficial/gi, '')
         .replace(/videoclipe/gi, '')
         .replace(/ft\./gi, '')
         .replace(/feat\./gi, '')
         .replace(/,/g, '')
-        .replace(/-/g, ' ') // Hífens as vezes separam Artista - Musica, as vezes são parte do nome. Melhor remover pra busca.
+        .replace(/-/g, ' ')
         .trim();
 }
 
 async function handleCreditsForVideo(videoId, ytTitle) {
-    // 1. Limpa créditos anteriores
     clearCreditTimers();
     hideCredits();
     
-    // Reset Info Panel
     els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">LOADING DATA...</span></div>';
     els.infoPanel.classList.remove('active');
 
@@ -640,54 +550,38 @@ async function handleCreditsForVideo(videoId, ytTitle) {
     let album = "";
     let year = "";
 
-    // 2. Consulta Supabase
-    const { data, error } = await supabase
-        .from('musicas')
-        .select('*')
-        .eq('video_id', videoId)
-        .maybeSingle();
+    const { data } = await supabase.from('musicas').select('*').eq('video_id', videoId).maybeSingle();
 
     if (data) {
-        console.log("[DB] Match found in Supabase:", data);
         artist = data.artista;
         song = data.musica || song;
         director = data.direcao || "";
         album = data.album || "";
         year = data.ano || "";
     } else {
-        console.warn("[DB] No match. Using YouTube title fallback.");
-        // Tenta parsear "Artista - Musica" do título do YT
         const parts = ytTitle.split('-');
         if (parts.length >= 2) {
             artist = parts[0].trim();
             song = parts.slice(1).join(' ').trim();
         } else {
             song = ytTitle;
-            artist = ""; // Deixa em branco se não conseguir separar
+            artist = "";
         }
     }
 
-    // 3. Consulta Last.FM (Paralelo)
-    // Limpa strings para aumentar chance de match na API
     const apiArtist = cleanStringForApi(artist);
     const apiSong = cleanStringForApi(song);
     
     if (apiArtist && apiSong) {
-        fetchTrackDetails(apiArtist, apiSong).then(fmData => {
-            updateInfoPanel(fmData, artist, song);
-        });
+        fetchTrackDetails(apiArtist, apiSong).then(fmData => updateInfoPanel(fmData, artist, song));
     } else {
         els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span>NO DATA SIGNAL</span></div>';
     }
 
-    // 4. Atualiza UI de Créditos
     updateCreditsDOM(artist, song, album, year, director);
 
-    // 5. Agendamento (Timers)
-    // Aparecer 4s após início, durar 2.5s (Solicitado)
     const showDelay = 4000;
     const duration = 2500;
-    
     creditTimers.push(setTimeout(() => showCredits(), showDelay));
     creditTimers.push(setTimeout(() => hideCredits(), showDelay + duration));
 }
@@ -695,30 +589,19 @@ async function handleCreditsForVideo(videoId, ytTitle) {
 function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
     if (!fmData) {
         els.infoContent.innerHTML = `<div class="p-2 text-center text-amber-900">DATA NOT FOUND FOR<br>"${fallbackArtist}"</div>`;
-        els.infoPanel.classList.add('active'); // Mostra painel vazio iluminado
+        els.infoPanel.classList.add('active');
         return;
     }
 
     let html = '';
-    
-    // Imagem da Capa
-    if (fmData.capa) {
-        html += `<div class="mb-4 flex justify-center"><img src="${fmData.capa}" class="border border-amber-900/50 shadow-lg w-32 h-32 object-cover sepia-[.5] opacity-80"></div>`;
-    }
-    
-    // Dados Principais
+    if (fmData.capa) html += `<div class="mb-4 flex justify-center"><img src="${fmData.capa}" class="border border-amber-900/50 shadow-lg w-32 h-32 object-cover sepia-[.5] opacity-80"></div>`;
     html += `<div class="mb-2"><span class="bg-amber-900/20 px-1 text-amber-200">ARTIST:</span> ${fmData.artista}</div>`;
     html += `<div class="mb-2"><span class="bg-amber-900/20 px-1 text-amber-200">TRACK:</span> ${fmData.titulo}</div>`;
     if(fmData.album) html += `<div class="mb-2"><span class="bg-amber-900/20 px-1 text-amber-200">ALBUM:</span> ${fmData.album}</div>`;
     
-    // Tags
     if (fmData.tags && fmData.tags.length > 0) {
-        html += `<div class="mb-4 flex flex-wrap gap-1 mt-2">
-            ${fmData.tags.map(t => `<span class="text-xs border border-amber-900/40 px-1 text-amber-600 uppercase">${t}</span>`).join('')}
-        </div>`;
+        html += `<div class="mb-4 flex flex-wrap gap-1 mt-2">${fmData.tags.map(t => `<span class="text-xs border border-amber-900/40 px-1 text-amber-600 uppercase">${t}</span>`).join('')}</div>`;
     }
-    
-    // Bio / Curiosidade
     html += `<div class="border-t border-amber-900/30 pt-2 mt-2 text-justify text-sm leading-snug">${fmData.curiosidade}</div>`;
 
     els.infoContent.innerHTML = html;
@@ -727,13 +610,9 @@ function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
 
 function updateCreditsDOM(artist, song, album, year, director) {
     const set = (el, txt) => {
-        if (!txt) el.parentElement.style.display = 'none';
-        else {
-            el.parentElement.style.display = 'block';
-            el.innerText = txt;
-        }
+        el.parentElement.style.display = txt ? 'block' : 'none';
+        el.innerText = txt || '';
     };
-    
     set(els.credits.artist, artist);
     set(els.credits.song, song);
     set(els.credits.album, album);
@@ -741,58 +620,33 @@ function updateCreditsDOM(artist, song, album, year, director) {
     set(els.credits.director, director);
 }
 
-function showCredits() {
-    els.credits.container.classList.add('visible');
-}
-
-function hideCredits() {
-    els.credits.container.classList.remove('visible');
-}
-
-function clearCreditTimers() {
-    creditTimers.forEach(t => clearTimeout(t));
-    creditTimers = [];
-}
-
+function showCredits() { els.credits.container.classList.add('visible'); }
+function hideCredits() { els.credits.container.classList.remove('visible'); }
+function clearCreditTimers() { creditTimers.forEach(t => clearTimeout(t)); creditTimers = []; }
 
 // --- EFEITOS DE TV ---
-
 function togglePower() {
     state.isOn = !state.isOn;
-    
     if (state.isOn) {
-        // Ligar
         els.powerLed.classList.add('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.remove('bg-red-900');
-        
         els.screenOff.classList.add('hidden');
         els.screenOn.classList.remove('hidden');
-        
-        // Animação CRT
         els.screenOn.classList.add('crt-turn-on');
-        
         showStatus("INITIALIZING...", true);
-        
-        // Se Pexels estiver ativo, da play nele
         if (state.isAuxPlayerActive && auxPlayer) auxPlayer.play();
-
     } else {
-        // Desligar
-        if (player && typeof player.stopVideo === 'function') player.stopVideo();
+        if (player && typeof player.stopVideo === 'function' && state.playerReady) player.stopVideo();
         if (auxPlayer) auxPlayer.pause();
-
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.add('bg-red-900');
-        
         els.screenOn.classList.remove('crt-turn-on');
         els.screenOn.classList.add('crt-turn-off');
-        
         setTimeout(() => {
             els.screenOn.classList.add('hidden');
             els.screenOn.classList.remove('crt-turn-off');
             els.screenOff.classList.remove('hidden');
-        }, 400); // Tempo da animação
-        
+        }, 400);
         els.internalGuide.classList.add('hidden');
         els.infoPanel.classList.remove('active');
         state.isSearchOpen = false;
@@ -802,18 +656,12 @@ function togglePower() {
 function toggleSearchMode() {
     if (!state.isOn) return;
     state.isSearchOpen = !state.isSearchOpen;
-
     if (state.isSearchOpen) {
-        if (player && typeof player.pauseVideo === 'function') player.pauseVideo();
+        if (player && typeof player.pauseVideo === 'function' && state.playerReady) player.pauseVideo();
         if (auxPlayer) auxPlayer.pause();
-        
         els.internalGuide.classList.remove('hidden');
         els.channelSearch.focus();
-        
-        // Atualiza relógio do guia
         updateGuideClock();
-        
-        // Adiciona botão de logout ao footer se não existir
         const guideFooter = document.querySelector('#tv-internal-guide div:last-child');
         if (guideFooter && !document.getElementById('logout-btn-guide')) {
             const logoutSpan = document.createElement('span');
@@ -821,41 +669,26 @@ function toggleSearchMode() {
             guideFooter.appendChild(logoutSpan);
             document.getElementById('logout-btn-guide').addEventListener('click', handleLogout);
         }
-        
     } else {
         els.internalGuide.classList.add('hidden');
-        if (state.isAuxPlayerActive) {
-            auxPlayer.play();
-        } else if (player && state.currentPlaylistId) {
-            player.playVideo();
-        }
+        if (state.isAuxPlayerActive) auxPlayer.play();
+        else if (player && state.currentPlaylistId && state.playerReady) player.playVideo();
     }
 }
 
 function triggerStatic() {
     els.staticOverlay.classList.add('active');
-    // Audio do chiado (opcional)
-    setTimeout(() => {
-        els.staticOverlay.classList.remove('active');
-    }, 800);
+    setTimeout(() => els.staticOverlay.classList.remove('active'), 800);
 }
 
 function showStatus(msg, persistent = false) {
     els.statusText.innerText = msg;
     els.statusMessage.classList.remove('hidden');
-    
-    if (!persistent) {
-        setTimeout(() => {
-            els.statusMessage.classList.add('hidden');
-        }, 2000);
-    }
+    if (!persistent) setTimeout(() => els.statusMessage.classList.add('hidden'), 2000);
 }
 
-
 // --- AUXILIARES ---
-
 function populateDecorations() {
-    // Preenche grades de ventilação e speakers dinamicamente
     if (els.ventContainer) {
         els.ventContainer.innerHTML = '';
         for(let i=0; i<16; i++) {
@@ -864,7 +697,6 @@ function populateDecorations() {
             els.ventContainer.appendChild(d);
         }
     }
-    
     els.speakerGrids.forEach(grid => {
         grid.innerHTML = '';
         for(let i=0; i<20; i++) {
@@ -880,7 +712,6 @@ function startClocks() {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         const timeStr24 = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        
         if(els.osdClock) els.osdClock.innerText = timeStr;
         if(els.guideClock) els.guideClock.innerText = timeStr24;
     }, 1000);
@@ -894,19 +725,13 @@ function updateGuideClock() {
 function setupEventListeners() {
     els.tvPowerBtn.addEventListener('click', togglePower);
     els.btnSearch.addEventListener('click', toggleSearchMode);
-    
-    // Controles físicos da TV
     els.btnNext.addEventListener('click', nextVideo);
     els.btnPrev.addEventListener('click', prevVideo);
-    
-    // Atalhos de teclado
     document.addEventListener('keydown', (e) => {
         if (!state.isOn) return;
-        
         if (e.key === 'Escape' && state.isSearchOpen) toggleSearchMode();
     });
 }
 
 // Check Auth BEFORE Init
 checkAuth();
-
