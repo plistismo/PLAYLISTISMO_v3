@@ -27,8 +27,9 @@ const els = {
     statusMessage: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
     
-    // Internal TV Guide Elements
+    // Fullscreen Guide Elements
     internalGuide: document.getElementById('tv-internal-guide'),
+    closeGuideBtn: document.getElementById('close-guide-btn'),
     channelGuideContainer: document.getElementById('channel-guide-container'),
     channelSearch: document.getElementById('channel-search'),
     
@@ -73,7 +74,7 @@ async function fetchChannelPlaylists() {
     let allPlaylists = [];
     let nextPageToken = '';
     
-    showStatus("SCANNING...");
+    // showStatus("SCANNING..."); // Avoid showing scanning on boot before ON
 
     try {
         do {
@@ -92,17 +93,14 @@ async function fetchChannelPlaylists() {
             state.playlists = allPlaylists;
             renderChannelGuide(allPlaylists);
             state.currentPlaylistId = allPlaylists[0].id;
-            hideStatus();
         } else {
             console.error("Nenhuma playlist encontrada.");
             if(els.channelGuideContainer) {
                 els.channelGuideContainer.innerHTML = '<div class="text-white/50 text-center mt-4">NO SIGNAL</div>';
             }
-            showStatus("NO SIGNAL");
         }
     } catch (error) {
         console.error("Erro ao buscar playlists:", error);
-        showStatus("NETWORK ERROR");
     }
 }
 
@@ -146,7 +144,7 @@ async function fetchPlaylistItems(playlistId) {
     }
 }
 
-// --- NEW GUIDE RENDERING ---
+// --- NEW GUIDE RENDERING (TELETEXT STYLE) ---
 function renderChannelGuide(playlists) {
     if(!els.channelGuideContainer) return;
     
@@ -188,24 +186,27 @@ function renderChannelGuide(playlists) {
         if (groups[cat].length > 0) {
             // Category Header
             const header = document.createElement('div');
-            header.className = "text-[#888] text-[10px] font-bold border-b border-white/20 mt-4 mb-2 px-1 uppercase tracking-widest guide-category";
-            header.textContent = cat;
+            header.className = "text-yellow-400 text-lg md:text-xl font-bold border-b border-white/20 mt-6 mb-2 px-1 uppercase tracking-widest guide-category";
+            header.textContent = `[ ${cat} ]`;
             els.channelGuideContainer.appendChild(header);
 
-            // List
-            const list = document.createElement('ul');
-            list.className = "mb-2 list-none grid grid-cols-1 md:grid-cols-2 gap-2";
+            // List Container
+            const list = document.createElement('div');
+            list.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3";
             
             groups[cat].forEach(item => {
-                const li = document.createElement('li');
-                li.className = "guide-item bg-white/5 hover:bg-green-600 hover:text-black text-white/80 cursor-pointer text-sm px-3 py-2 font-mono truncate transition-all border border-transparent hover:border-green-400 rounded-sm";
-                li.textContent = item.display;
-                li.dataset.id = item.id;
-                li.dataset.name = item.display; // for search
+                const btn = document.createElement('button');
+                btn.className = "guide-item text-left bg-blue-900/50 hover:bg-yellow-400 hover:text-black text-white p-3 font-mono truncate transition-all border border-blue-700 rounded shadow-md group";
                 
-                li.addEventListener('click', () => changeChannel(item.id, item.display));
+                // Formata o texto para parecer teletexto
+                btn.innerHTML = `<span class="text-yellow-200 group-hover:text-black font-bold mr-2">${item.display.split(':')[0]}</span> ${item.display.split(':')[1]}`;
                 
-                list.appendChild(li);
+                btn.dataset.id = item.id;
+                btn.dataset.name = item.display; // for search
+                
+                btn.addEventListener('click', () => changeChannel(item.id, item.display));
+                
+                list.appendChild(btn);
             });
             
             els.channelGuideContainer.appendChild(list);
@@ -218,15 +219,20 @@ function filterChannels(searchTerm) {
     const term = searchTerm.toLowerCase();
     
     const items = els.channelGuideContainer.querySelectorAll('.guide-item');
-    
+    let count = 0;
+
     items.forEach(item => {
-        if(item.textContent.toLowerCase().includes(term)) {
-            item.parentElement.style.display = 'grid'; // Ensure parent list is visible
+        // Search in dataset name
+        if(item.dataset.name.toLowerCase().includes(term)) {
             item.style.display = 'block';
+            count++;
         } else {
             item.style.display = 'none';
         }
     });
+    
+    // Hide empty category headers logic could go here, but kept simple for now
+    return count;
 }
 
 async function changeChannel(playlistId, displayText) {
@@ -241,18 +247,16 @@ async function changeChannel(playlistId, displayText) {
     const channelMatch = displayText.match(/CH \d+/);
     if(channelMatch) {
         els.osdChannel.innerText = channelMatch[0];
+    } else {
+         els.osdChannel.innerText = "CH --";
     }
 
-    showStatus("TUNING...");
-    
-    await fetchPlaylistItems(state.currentPlaylistId);
+    if(state.isOn) {
+        showStatus("TUNING...");
+        await fetchPlaylistItems(state.currentPlaylistId);
 
-    if (player && player.loadPlaylist) {
-        if (state.isOn) {
+        if (player && player.loadPlaylist) {
             player.loadPlaylist({listType: 'playlist', list: state.currentPlaylistId});
-            hideStatus();
-        } else {
-            player.cuePlaylist({listType: 'playlist', list: state.currentPlaylistId});
             hideStatus();
         }
     }
@@ -311,9 +315,7 @@ window.onYouTubeIframeAPIReady = function() {
 };
 
 function onPlayerReady(event) {
-    if (state.currentPlaylistId) {
-        player.cuePlaylist({listType: 'playlist', list: state.currentPlaylistId});
-    }
+    // Player Ready
 }
 
 function onPlayerError(event) {
@@ -330,6 +332,20 @@ if(els.channelSearch) {
     els.channelSearch.addEventListener('input', (e) => {
         filterChannels(e.target.value);
     });
+    
+    // Enter key to select first result
+    els.channelSearch.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') {
+            const visibleItem = Array.from(els.channelGuideContainer.querySelectorAll('.guide-item')).find(item => item.style.display !== 'none');
+            if(visibleItem) {
+                visibleItem.click();
+            }
+        }
+    });
+}
+
+if(els.closeGuideBtn) {
+    els.closeGuideBtn.addEventListener('click', toggleSearchMode);
 }
 
 // --- CONTROLS & LOGIC ---
@@ -337,44 +353,48 @@ if(els.channelSearch) {
 function setupControls() {
     // Search / Menu Toggle
     if(els.btnSearch) {
-        els.btnSearch.addEventListener('click', () => {
+        els.btnSearch.onclick = () => {
+             // Only works if TV is ON
              if(!state.isOn) return;
              toggleSearchMode();
-        });
+        };
     }
 
     // Next Track / Channel
     if(els.btnNext) {
-        els.btnNext.addEventListener('click', () => {
+        els.btnNext.onclick = () => {
             if(!state.isOn) return;
-            if(state.isSearchOpen) return; // Disable ch change when menu is open
+            if(state.isSearchOpen) return; 
             
+            // Log for debug
+            console.log("Next clicked");
+
             if(player && typeof player.nextVideo === 'function') {
                 showStatus("NEXT TRACK >>|");
                 player.nextVideo();
                 setTimeout(hideStatus, 1500);
             } else {
-                showStatus("NO SIGNAL");
-                setTimeout(hideStatus, 1000);
+                showStatus("WAIT...");
             }
-        });
+        };
     }
 
     // Previous Track / Channel
     if(els.btnPrev) {
-        els.btnPrev.addEventListener('click', () => {
+        els.btnPrev.onclick = () => {
             if(!state.isOn) return;
             if(state.isSearchOpen) return;
+
+             console.log("Prev clicked");
 
             if(player && typeof player.previousVideo === 'function') {
                 showStatus("|<< PREV TRACK");
                 player.previousVideo();
                 setTimeout(hideStatus, 1500);
             } else {
-                showStatus("NO SIGNAL");
-                setTimeout(hideStatus, 1000);
+                showStatus("WAIT...");
             }
-        });
+        };
     }
 }
 
@@ -382,17 +402,15 @@ function toggleSearchMode() {
     state.isSearchOpen = !state.isSearchOpen;
 
     if(state.isSearchOpen) {
-        // OPEN MENU
+        // OPEN MENU (Fullscreen)
         if(player && typeof player.pauseVideo === 'function') {
             player.pauseVideo();
         }
         els.internalGuide.classList.remove('hidden');
         els.channelSearch.value = '';
         els.channelSearch.focus();
-        filterChannels(''); // Reset filter
+        filterChannels(''); 
         
-        // Visual feedback
-        els.osdChannel.innerText = "SEARCH";
     } else {
         // CLOSE MENU
         els.internalGuide.classList.add('hidden');
@@ -513,7 +531,7 @@ function handleCreditsForVideo(videoId, duration) {
 
     // Duração Estendida
     const showAtStart = 6000; // Começa a aparecer aos 6s
-    const displayDuration = 15000; // Fica na tela por 15s (antes era menos)
+    const displayDuration = 15000; 
     
     const hideAtStart = showAtStart + displayDuration;
     

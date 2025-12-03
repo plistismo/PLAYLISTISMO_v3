@@ -9,6 +9,10 @@ body {
     font-family: 'Press Start 2P', cursive;
 }
 
+.font-vt323 {
+    font-family: 'VT323', monospace;
+}
+
 /* Texture Classes */
 .texture-plastic {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
@@ -19,14 +23,14 @@ body {
     width: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.1); 
+    background: rgba(0,0,0,0.2); 
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #444; 
+    background: #ffcc00; 
     border-radius: 2px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #666; 
+    background: #ffe600; 
 }
 
 /* CRT & 3D Effects */
@@ -121,22 +125,31 @@ body {
 /* Modified to fit inside the TV Screen absolute positioning */
 .credits-overlay {
     position: absolute; /* Changed from fixed to absolute */
-    bottom: 30px;
-    left: 30px;
+    bottom: 20px; /* Adjusted for smaller screens */
+    left: 20px;
     color: rgba(255, 255, 255, 0.9);
     text-shadow: 2px 2px 0px #000000;
     font-family: 'Jost', sans-serif; /* Keep original font for credits */
-    font-size: 16px;
+    font-size: 14px; /* Slightly smaller base */
     line-height: 1.4;
     opacity: 0; /* Começa invisível */
     transition: opacity 2.5s ease-in-out; 
     background: rgba(0,0,0,0.9); /* Darker background */
-    padding: 12px;
+    padding: 10px;
     border-radius: 4px;
     border-left: 4px solid #fff;
     pointer-events: none; 
     z-index: 25; /* Between OSD and Scanlines */
     transform: perspective(500px) rotateY(2deg); /* Slight 3D tilt */
+}
+
+@media (min-width: 768px) {
+    .credits-overlay {
+        bottom: 30px;
+        left: 30px;
+        font-size: 16px;
+        padding: 12px;
+    }
 }
 
 .credits-overlay.visible {
