@@ -24,7 +24,7 @@
     </div>
 
     <!-- Main Container -->
-    <div class="relative z-10 w-full max-w-7xl flex flex-col md:flex-row items-center justify-center gap-16 pt-10">
+    <div class="relative z-10 w-full max-w-7xl flex flex-col items-center justify-center pt-4">
 
         <!-- TV UNIT -->
         <div id="tv-unit" class="relative w-full max-w-4xl transition-transform duration-500 perspective-[1500px] group">
@@ -67,18 +67,28 @@
                                 <div id="player" class="w-full h-full"></div>
                             </div>
 
-                            <!-- ON-SCREEN GUIDE (INTERNAL TV MENU) -->
-                            <!-- Placed before artifacts so noise/scanlines go OVER it -->
-                            <div id="tv-internal-guide" class="absolute top-4 left-4 bottom-16 w-1/3 min-w-[200px] z-30 pointer-events-auto flex flex-col gap-2 opacity-0 transition-opacity duration-500 font-mono">
-                                <div class="bg-black/70 backdrop-blur-sm border border-green-900/50 p-2 shadow-lg rounded-sm">
-                                    <div class="flex items-center gap-2 border-b border-green-900/50 pb-2 mb-2">
-                                        <span class="text-green-500 text-[10px] animate-pulse">● SEARCH</span>
-                                        <input type="text" id="channel-search" class="w-full bg-transparent text-green-400 text-xs uppercase outline-none placeholder-green-900" placeholder="KEYWORD...">
-                                    </div>
-                                    <div id="channel-guide-container" class="h-64 overflow-y-auto custom-scrollbar pr-1">
+                            <!-- SEARCH / GUIDE MENU (INTERNAL TV MENU) -->
+                            <!-- Full overlay style -->
+                            <div id="tv-internal-guide" class="absolute inset-0 z-40 bg-[#0000aa]/90 flex flex-col p-8 hidden pointer-events-auto font-mono">
+                                <div class="text-center mb-6">
+                                    <h2 class="text-white text-2xl font-bold tracking-widest vhs-text-shadow mb-2">CHANNEL SEARCH</h2>
+                                    <div class="h-1 w-full bg-white/20 rounded"></div>
+                                </div>
+                                
+                                <div class="bg-black/40 border-2 border-white/20 p-2 mb-4 flex items-center gap-2 shadow-inner">
+                                    <span class="text-green-500 animate-pulse">►</span>
+                                    <input type="text" id="channel-search" class="w-full bg-transparent text-white text-lg uppercase outline-none placeholder-white/50 font-bold" placeholder="ENTER KEYWORD..." autocomplete="off">
+                                </div>
+
+                                <div class="flex-1 overflow-y-auto custom-scrollbar border-t border-white/10 pt-2">
+                                    <div id="channel-guide-container" class="space-y-4">
                                         <!-- JS injects items here -->
-                                        <div class="text-green-900 text-[10px] mt-2">NO SIGNAL DATA</div>
+                                        <div class="text-white/50 text-center mt-10">LOADING DATA...</div>
                                     </div>
+                                </div>
+
+                                <div class="mt-4 text-center text-xs text-white/40 uppercase tracking-widest">
+                                    PRESS [SEARCH] TO EXIT
                                 </div>
                             </div>
 
@@ -96,7 +106,7 @@
                                 </div>
                             </div>
 
-                            <!-- Overlay de Créditos (Estilo MTV) - MOVED INSIDE SCREEN -->
+                            <!-- Overlay de Créditos (Estilo MTV) -->
                             <div id="video-credits" class="credits-overlay">
                                 <div class="credit-line"><span class="icon">🎤</span> <span id="artist-name">Artist</span></div>
                                 <div class="credit-line"><span class="icon">🎶</span> <span id="song-name">Song</span></div>
@@ -123,27 +133,54 @@
                     <div class="hidden md:flex flex-col justify-center w-12 ml-3 space-y-0.5 opacity-60 speaker-grid"></div>
                 </div>
 
-                <!-- Bottom Panel -->
-                <div class="mt-8 flex justify-between items-center px-10 relative">
-                    <div class="flex flex-col items-start group cursor-default">
-                        <div class="flex space-x-0.5 mb-1 opacity-80">
-                            <div class="w-3 h-1 bg-red-600 rounded-sm"></div>
-                            <div class="w-3 h-1 bg-green-600 rounded-sm"></div>
-                            <div class="w-3 h-1 bg-blue-600 rounded-sm"></div>
-                        </div>
+                <!-- Bottom Panel (Controls) -->
+                <div class="mt-8 flex justify-between items-center px-6 md:px-10 relative">
+                    
+                    <!-- Branding -->
+                    <div class="flex flex-col items-start group cursor-default select-none hidden md:block">
                         <span class="font-serif italic font-bold text-[#aaa] tracking-wider text-xl drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">Play<span class="text-[#888]">Listismo</span></span>
+                        <span class="text-[10px] text-[#555] tracking-[0.2em] font-bold">TRINITRON</span>
                     </div>
 
-                    <!-- LED & Power -->
-                    <div class="flex items-center space-x-4">
-                        <div class="flex flex-col items-center">
-                            <div id="power-led" class="w-2 h-2 rounded-full bg-red-900 border border-black transition-all duration-300"></div>
-                            <span class="text-[8px] text-gray-500 mt-1 font-bold">POWER</span>
+                    <!-- PHYSICAL CONTROLS (Migrated from Remote) -->
+                    <div class="flex items-center gap-6">
+                        
+                        <!-- Control Panel -->
+                        <div class="flex items-center bg-[#111] rounded-lg border-b border-r border-white/10 shadow-[inset_2px_2px_5px_black] p-1 gap-2">
+                            
+                            <!-- Search Button -->
+                            <button id="tv-search-btn" class="w-10 h-8 bg-[#222] rounded flex items-center justify-center text-gray-400 hover:bg-[#333] active:bg-black active:translate-y-[1px] transition-all border-b border-[#000]" title="Search / Menu">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </button>
+
+                            <!-- Divider -->
+                            <div class="w-px h-6 bg-[#333]"></div>
+
+                            <!-- Channel Controls -->
+                            <div class="flex gap-1">
+                                <button id="tv-ch-prev" class="w-10 h-8 bg-[#222] rounded flex items-center justify-center text-gray-400 hover:bg-[#333] active:bg-black active:translate-y-[1px] transition-all border-b border-[#000] font-bold text-xs" title="Previous Channel">
+                                    CH -
+                                </button>
+                                <button id="tv-ch-next" class="w-10 h-8 bg-[#222] rounded flex items-center justify-center text-gray-400 hover:bg-[#333] active:bg-black active:translate-y-[1px] transition-all border-b border-[#000] font-bold text-xs" title="Next Channel">
+                                    CH +
+                                </button>
+                            </div>
                         </div>
-                        <button id="tv-power-btn" class="w-10 h-10 rounded bg-[#1a1a1a] border-b-4 border-r-4 border-black shadow-lg flex items-center justify-center active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 transition-all">
-                            <svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
-                        </button>
+
+                        <!-- LED & Power -->
+                        <div class="flex items-center gap-3 border-l border-[#333] pl-6">
+                            <div class="flex flex-col items-center">
+                                <div id="power-led" class="w-2 h-2 rounded-full bg-red-900 border border-black transition-all duration-300 shadow-[0_0_2px_black]"></div>
+                                <span class="text-[8px] text-gray-600 mt-1 font-bold">POWER</span>
+                            </div>
+                            <button id="tv-power-btn" class="w-10 h-10 rounded bg-[#1a1a1a] border-b-4 border-r-4 border-black shadow-lg flex items-center justify-center active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 transition-all">
+                                <svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                            </button>
+                        </div>
                     </div>
+
                 </div>
                 
                 <!-- Feet -->
@@ -152,60 +189,6 @@
             </div>
         </div>
 
-        <!-- CONTROLLER UNIT -->
-        <div class="relative transform -rotate-3 select-none perspective-[500px] hidden md:block">
-            <div class="bg-[#222] texture-plastic w-64 rounded-[0_0_24px_24px] shadow-[20px_20px_50px_rgba(0,0,0,0.7),inset_1px_1px_1px_rgba(255,255,255,0.1)] border-l border-t border-[#444] relative z-10 pb-8 overflow-hidden">
-                
-                <!-- IR Blaster -->
-                <div class="h-10 bg-[#151515] rounded-[12px_12px_0_0] relative overflow-hidden border-b border-[#333] shadow-md">
-                     <div class="absolute inset-0 bg-red-900/30"></div>
-                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-black rounded-full shadow-[inset_0_0_8px_rgba(255,0,0,0.6)] border border-red-900/50"></div>
-                </div>
-
-                <div class="p-5 flex flex-col items-center">
-                    <div class="w-full flex justify-between items-center mb-8 border-b border-[#333] pb-3">
-                        <span class="text-gray-500 font-bold italic text-xs tracking-widest drop-shadow-[0_1px_1px_black]">UNIVERSAL</span>
-                        <div id="remote-light" class="w-1.5 h-1.5 rounded-full bg-red-900"></div>
-                    </div>
-
-                    <!-- Power -->
-                    <div class="flex justify-end w-full mb-8 px-2">
-                        <div class="flex flex-col items-center">
-                            <button id="remote-power-btn" class="w-12 h-12 rounded-full bg-[#cc2222] text-white remote-btn hover:bg-[#dd3333]">
-                                <svg class="w-5 h-5 drop-shadow-md opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
-                            </button>
-                            <span class="text-[8px] text-gray-500 mt-1 font-bold tracking-wider">POWER</span>
-                        </div>
-                    </div>
-
-                    <!-- Decorative Remote Buttons (UX IMPROVED) -->
-                    <div class="grid grid-cols-3 gap-2 w-full px-2">
-                        <div class="w-full h-8 bg-[#333] rounded mb-2 remote-btn"></div>
-                        <div class="w-full h-8 bg-[#333] rounded mb-2 remote-btn"></div>
-                        <div class="w-full h-8 bg-[#333] rounded mb-2 remote-btn"></div>
-                        
-                        <div class="col-span-3 text-center text-[9px] text-gray-600 font-bold tracking-widest mt-2 mb-1">CHANNEL</div>
-                        
-                        <!-- Prev (Minus) Left -->
-                        <div id="btn-prev" class="w-full h-12 bg-[#444] hover:bg-[#555] rounded remote-btn flex items-center justify-center text-gray-200 cursor-pointer active:translate-y-[2px] transition-colors border-b-2 border-[#222]">
-                            <span class="text-3xl font-bold leading-none mb-1">-</span>
-                        </div>
-                        
-                        <!-- Spacer -->
-                        <div class="w-full h-12 bg-[#111] rounded remote-btn border border-[#333] opacity-50"></div>
-                        
-                        <!-- Next (Plus) Right -->
-                        <div id="btn-next" class="w-full h-12 bg-[#444] hover:bg-[#555] rounded remote-btn flex items-center justify-center text-gray-200 cursor-pointer active:translate-y-[2px] transition-colors border-b-2 border-[#222]">
-                            <span class="text-3xl font-bold leading-none mb-1">+</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-8 text-[8px] text-[#444] text-center font-mono">
-                        PLAY-LISTISMO REMOTE
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="script.js"></script>

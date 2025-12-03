@@ -7,6 +7,7 @@ const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA'; // Exemplo: Canal provisório (tr
 // --- ESTADO & UI ---
 const state = {
     isOn: false,
+    isSearchOpen: false,
     currentPlaylistId: null,
     playlists: []
 };
@@ -15,12 +16,12 @@ const els = {
     screenOff: document.getElementById('screen-off'),
     screenOn: document.getElementById('screen-on'),
     powerLed: document.getElementById('power-led'),
-    remoteLight: document.getElementById('remote-light'),
     tvPowerBtn: document.getElementById('tv-power-btn'),
-    remotePowerBtn: document.getElementById('remote-power-btn'),
-    // Remote Control Buttons
-    btnNext: document.getElementById('btn-next'),
-    btnPrev: document.getElementById('btn-prev'),
+    
+    // TV Chassis Buttons
+    btnNext: document.getElementById('tv-ch-next'),
+    btnPrev: document.getElementById('tv-ch-prev'),
+    btnSearch: document.getElementById('tv-search-btn'),
     
     osdClock: document.getElementById('osd-clock'),
     statusMessage: document.getElementById('status-message'),
@@ -95,7 +96,7 @@ async function fetchChannelPlaylists() {
         } else {
             console.error("Nenhuma playlist encontrada.");
             if(els.channelGuideContainer) {
-                els.channelGuideContainer.innerHTML = '<div class="text-red-500 text-xs p-2">NO SIGNAL</div>';
+                els.channelGuideContainer.innerHTML = '<div class="text-white/50 text-center mt-4">NO SIGNAL</div>';
             }
             showStatus("NO SIGNAL");
         }
@@ -187,17 +188,17 @@ function renderChannelGuide(playlists) {
         if (groups[cat].length > 0) {
             // Category Header
             const header = document.createElement('div');
-            header.className = "text-[#444] text-[9px] font-bold border-b border-[#222] mt-2 mb-1 px-1 uppercase tracking-widest guide-category";
+            header.className = "text-[#888] text-[10px] font-bold border-b border-white/20 mt-4 mb-2 px-1 uppercase tracking-widest guide-category";
             header.textContent = cat;
             els.channelGuideContainer.appendChild(header);
 
             // List
             const list = document.createElement('ul');
-            list.className = "mb-2 list-none";
+            list.className = "mb-2 list-none grid grid-cols-1 md:grid-cols-2 gap-2";
             
             groups[cat].forEach(item => {
                 const li = document.createElement('li');
-                li.className = "guide-item text-green-700/80 hover:text-green-400 hover:bg-green-900/20 cursor-pointer text-[10px] px-1 py-0.5 font-mono truncate transition-colors";
+                li.className = "guide-item bg-white/5 hover:bg-green-600 hover:text-black text-white/80 cursor-pointer text-sm px-3 py-2 font-mono truncate transition-all border border-transparent hover:border-green-400 rounded-sm";
                 li.textContent = item.display;
                 li.dataset.id = item.id;
                 li.dataset.name = item.display; // for search
@@ -220,6 +221,7 @@ function filterChannels(searchTerm) {
     
     items.forEach(item => {
         if(item.textContent.toLowerCase().includes(term)) {
+            item.parentElement.style.display = 'grid'; // Ensure parent list is visible
             item.style.display = 'block';
         } else {
             item.style.display = 'none';
@@ -230,6 +232,11 @@ function filterChannels(searchTerm) {
 async function changeChannel(playlistId, displayText) {
     state.currentPlaylistId = playlistId;
     
+    // Close Search Menu if open
+    if(state.isSearchOpen) {
+        toggleSearchMode();
+    }
+
     // Update OSD Channel Text
     const channelMatch = displayText.match(/CH \d+/);
     if(channelMatch) {
@@ -325,13 +332,22 @@ if(els.channelSearch) {
     });
 }
 
-// --- REMOTE CONTROL ---
-function setupRemoteControl() {
-    // Next Track (Botão +)
+// --- CONTROLS & LOGIC ---
+
+function setupControls() {
+    // Search / Menu Toggle
+    if(els.btnSearch) {
+        els.btnSearch.addEventListener('click', () => {
+             if(!state.isOn) return;
+             toggleSearchMode();
+        });
+    }
+
+    // Next Track / Channel
     if(els.btnNext) {
         els.btnNext.addEventListener('click', () => {
             if(!state.isOn) return;
-            blinkRemoteLight();
+            if(state.isSearchOpen) return; // Disable ch change when menu is open
             
             if(player && typeof player.nextVideo === 'function') {
                 showStatus("NEXT TRACK >>|");
@@ -344,12 +360,12 @@ function setupRemoteControl() {
         });
     }
 
-    // Previous Track (Botão -)
+    // Previous Track / Channel
     if(els.btnPrev) {
         els.btnPrev.addEventListener('click', () => {
             if(!state.isOn) return;
-            blinkRemoteLight();
-            
+            if(state.isSearchOpen) return;
+
             if(player && typeof player.previousVideo === 'function') {
                 showStatus("|<< PREV TRACK");
                 player.previousVideo();
@@ -362,14 +378,27 @@ function setupRemoteControl() {
     }
 }
 
-function blinkRemoteLight() {
-    if(els.remoteLight) {
-        els.remoteLight.classList.add('bg-red-500', 'shadow-[0_0_5px_red]');
-        els.remoteLight.classList.remove('bg-red-900');
-        setTimeout(() => {
-            els.remoteLight.classList.remove('bg-red-500', 'shadow-[0_0_5px_red]');
-            els.remoteLight.classList.add('bg-red-900');
-        }, 200);
+function toggleSearchMode() {
+    state.isSearchOpen = !state.isSearchOpen;
+
+    if(state.isSearchOpen) {
+        // OPEN MENU
+        if(player && typeof player.pauseVideo === 'function') {
+            player.pauseVideo();
+        }
+        els.internalGuide.classList.remove('hidden');
+        els.channelSearch.value = '';
+        els.channelSearch.focus();
+        filterChannels(''); // Reset filter
+        
+        // Visual feedback
+        els.osdChannel.innerText = "SEARCH";
+    } else {
+        // CLOSE MENU
+        els.internalGuide.classList.add('hidden');
+        if(player && typeof player.playVideo === 'function') {
+            player.playVideo();
+        }
     }
 }
 
@@ -378,7 +407,6 @@ function togglePower() {
     state.isOn = !state.isOn;
     
     updateUI();
-    blinkRemoteLight();
     
     if (state.isOn) {
         showStatus("INITIALIZING...");
@@ -394,6 +422,7 @@ function togglePower() {
 
     } else {
         hideStatus();
+        if(state.isSearchOpen) toggleSearchMode(); // Reset search if off
         if(player && player.pauseVideo) {
             player.pauseVideo();
         }
@@ -422,16 +451,13 @@ function updateUI() {
         els.powerLed.classList.remove('bg-red-900');
         els.screenOff.classList.add('opacity-0');
         els.screenOn.classList.remove('hidden');
-        
-        // Show Internal Guide when ON
-        if(els.internalGuide) els.internalGuide.classList.remove('opacity-0');
     } else {
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.add('bg-red-900');
         els.screenOff.classList.remove('opacity-0');
         
-        // Hide Internal Guide when OFF
-        if(els.internalGuide) els.internalGuide.classList.add('opacity-0');
+        // Ensure menu is closed visually
+        if(els.internalGuide) els.internalGuide.classList.add('hidden');
 
         setTimeout(() => {
             if(!state.isOn) els.screenOn.classList.add('hidden');
@@ -543,9 +569,7 @@ function clearAllTimers() {
 
 function setupEventListeners() {
     els.tvPowerBtn.addEventListener('click', togglePower);
-    if(els.remotePowerBtn) els.remotePowerBtn.addEventListener('click', togglePower);
-    
-    setupRemoteControl();
+    setupControls();
 }
 
 init();

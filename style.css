@@ -16,17 +16,17 @@ body {
 
 /* Scrollbar Customization for Guide */
 .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.5); 
+    background: rgba(255,255,255,0.1); 
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #005500; 
+    background: #444; 
     border-radius: 2px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #00aa00; 
+    background: #666; 
 }
 
 /* CRT & 3D Effects */
@@ -115,36 +115,6 @@ body {
 }
 .vhs-text-shadow {
     animation: rgb-shift-text 2s infinite alternate;
-}
-
-/* Remote Button Style */
-.remote-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 6px 6px rgba(0,0,0,0.3);
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.075s;
-}
-
-.remote-btn:active {
-    box-shadow: 0 1px 0 rgba(0,0,0,0.4);
-    transform: translateY(3px) scale(0.98);
-}
-
-.remote-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-color: rgba(255,255,255,0.05);
-    border-radius: 9999px;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.remote-btn:hover::before {
-    opacity: 1;
 }
 
 /* --- CREDITS OVERLAY (MTV STYLE) --- */
