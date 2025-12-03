@@ -10,6 +10,65 @@ const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
 const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M';
 const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
+// --- DEV CONSOLE LOGIC ---
+function initDevConsole() {
+    const trigger = document.getElementById('dev-debug-trigger');
+    const panel = document.getElementById('dev-debug-console');
+    const close = document.getElementById('dev-console-close');
+    const clear = document.getElementById('dev-console-clear');
+    const output = document.getElementById('dev-console-output');
+
+    if (trigger && panel) {
+        trigger.addEventListener('click', () => {
+            panel.classList.toggle('hidden');
+        });
+        close.addEventListener('click', () => {
+            panel.classList.add('hidden');
+        });
+        clear.addEventListener('click', () => {
+            output.innerHTML = '';
+        });
+    }
+
+    // Logger interno
+    const logToPanel = (msg) => {
+        if (!output) return;
+        const line = document.createElement('div');
+        line.innerText = `> ${msg}`;
+        line.className = "border-b border-red-900/30 pb-1";
+        output.appendChild(line);
+        output.scrollTop = output.scrollHeight;
+        
+        // Auto-show se estiver escondido (opcional, pode ser irritante)
+        // panel.classList.remove('hidden');
+        
+        // Alerta visual no botão
+        if(trigger) {
+            trigger.classList.add('animate-pulse', 'bg-red-500');
+            setTimeout(() => trigger.classList.remove('animate-pulse', 'bg-red-500'), 2000);
+        }
+    };
+
+    // Capture Window Errors
+    window.onerror = function(message, source, lineno, colno, error) {
+        const cleanSource = source ? source.split('/').pop() : 'inline';
+        logToPanel(`ERR: ${message} (${cleanSource}:${lineno})`);
+        return false;
+    };
+
+    // Capture Unhandled Promises
+    window.addEventListener('unhandledrejection', function(event) {
+        logToPanel(`PROMISE: ${event.reason}`);
+    });
+
+    // Capture console.error
+    const originalError = console.error;
+    console.error = function(...args) {
+        originalError.apply(console, args);
+        logToPanel(`LOG: ${args.join(' ')}`);
+    };
+}
+
 // --- ESTADO & UI ---
 const state = {
     isOn: false,
@@ -76,6 +135,8 @@ let osdTimer = null;
 // --- INICIALIZAÇÃO ---
 
 async function init() {
+    initDevConsole(); // Iniciar interceptador de erros imediatamente
+    
     populateDecorations();
     startClock();
     setupEventListeners();
