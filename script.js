@@ -611,10 +611,8 @@ function togglePower() {
         
         showStatus("INITIALIZING...", true);
         
-        // Abre menu se não tiver playlist
-        if (!state.currentPlaylistId) {
-            setTimeout(() => toggleSearchMode(), 1500);
-        }
+        // REMOVIDO: Abertura automática do guia. A TV agora liga em 'Neve' ou 'Tela Azul' se não tiver vídeo.
+        // if (!state.currentPlaylistId) { setTimeout(() => toggleSearchMode(), 1500); }
 
     } else {
         // Desligar
