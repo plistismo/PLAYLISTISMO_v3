@@ -622,17 +622,19 @@ function onPlayerStateChange(event) {
     }
 }
 
-function handleCreditsForVideo(videoId, duration) {
+async function handleCreditsForVideo(videoId, duration) {
     clearAllTimers();
     hideCredits();
 
-    let data = currentPlaylistVideos[videoId];
+    // 1. Dados iniciais de Fallback (Vêm do cache da playlist do YouTube)
+    let finalData = currentPlaylistVideos[videoId];
     
-    if (!data) {
+    // Fallback secundário se nem o cache existir
+    if (!finalData) {
         const playerTitle = player.getVideoData().title;
         const playerAuthor = player.getVideoData().author;
         
-        data = {
+        finalData = {
             artist: playerAuthor || "Unknown",
             song: playerTitle || "Unknown Track",
             album: "-",
@@ -641,9 +643,36 @@ function handleCreditsForVideo(videoId, duration) {
         };
     }
 
-    updateCreditsDOM(data);
+    // 2. Consulta ao Banco de Dados Supabase
+    // Procura por informações enriquecidas usando o ID do vídeo atual
+    try {
+        const { data: dbData, error } = await supabase
+            .from('musicas')
+            .select('artista, musica, album, ano, direcao')
+            .eq('video_id', videoId)
+            .maybeSingle(); // maybeSingle evita erro se não achar
 
-    // Duração Estendida
+        if (dbData) {
+            // Se encontrou no banco, sobrescreve com os dados oficiais
+            console.log("★ Dados enriquecidos encontrados no Supabase:", dbData);
+            finalData = {
+                artist: dbData.artista || finalData.artist,
+                song: dbData.musica || finalData.song,
+                album: dbData.album || finalData.album,
+                year: dbData.ano ? dbData.ano.toString() : finalData.year,
+                director: dbData.direcao || finalData.director
+            };
+        } else {
+            console.log("Video não cadastrado no banco, usando dados do YouTube.");
+        }
+    } catch (err) {
+        console.warn("Erro ao consultar Supabase (usando fallback):", err);
+    }
+
+    // 3. Atualiza a tela com os dados finais
+    updateCreditsDOM(finalData);
+
+    // Lógica de Timers (Duração Estendida)
     const showAtStart = 6000; // Começa a aparecer aos 6s
     const displayDuration = 15000; 
     
