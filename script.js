@@ -26,7 +26,8 @@ const els = {
     statusMessage: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
     
-    // New Guide Elements
+    // Internal TV Guide Elements
+    internalGuide: document.getElementById('tv-internal-guide'),
     channelGuideContainer: document.getElementById('channel-guide-container'),
     channelSearch: document.getElementById('channel-search'),
     
@@ -34,11 +35,6 @@ const els = {
     ventContainer: document.querySelector('.vent-container'),
     speakerGrids: document.querySelectorAll('.speaker-grid'),
     
-    // Debug Console Elements
-    debugConsole: document.getElementById('debug-console'),
-    debugContent: document.getElementById('debug-content'),
-    debugClose: document.getElementById('close-console'),
-
     credits: {
         container: document.getElementById('video-credits'),
         artist: document.getElementById('artist-name'),
@@ -114,11 +110,6 @@ async function fetchPlaylistItems(playlistId) {
         const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}`);
         const data = await response.json();
 
-        // --- DEBUG CONSOLE FEATURE ---
-        // Mostra o JSON cru para o usuário ver os campos disponíveis
-        showDebugConsole(data);
-        // -----------------------------
-
         if (data.items) {
             currentPlaylistVideos = {};
 
@@ -151,13 +142,6 @@ async function fetchPlaylistItems(playlistId) {
     } catch (error) {
         console.error("Erro ao buscar vídeos:", error);
         return false;
-    }
-}
-
-function showDebugConsole(data) {
-    if (els.debugContent && els.debugConsole) {
-        els.debugContent.textContent = JSON.stringify(data, null, 2);
-        els.debugConsole.classList.remove('hidden');
     }
 }
 
@@ -203,7 +187,7 @@ function renderChannelGuide(playlists) {
         if (groups[cat].length > 0) {
             // Category Header
             const header = document.createElement('div');
-            header.className = "text-[#666] text-[10px] font-bold border-b border-[#333] mt-2 mb-1 px-2 uppercase tracking-widest guide-category";
+            header.className = "text-[#444] text-[9px] font-bold border-b border-[#222] mt-2 mb-1 px-1 uppercase tracking-widest guide-category";
             header.textContent = cat;
             els.channelGuideContainer.appendChild(header);
 
@@ -213,7 +197,7 @@ function renderChannelGuide(playlists) {
             
             groups[cat].forEach(item => {
                 const li = document.createElement('li');
-                li.className = "guide-item text-green-700 hover:text-green-400 hover:bg-[#111] cursor-pointer text-xs px-2 py-0.5 font-mono truncate transition-colors";
+                li.className = "guide-item text-green-700/80 hover:text-green-400 hover:bg-green-900/20 cursor-pointer text-[10px] px-1 py-0.5 font-mono truncate transition-colors";
                 li.textContent = item.display;
                 li.dataset.id = item.id;
                 li.dataset.name = item.display; // for search
@@ -233,7 +217,6 @@ function filterChannels(searchTerm) {
     const term = searchTerm.toLowerCase();
     
     const items = els.channelGuideContainer.querySelectorAll('.guide-item');
-    const categories = els.channelGuideContainer.querySelectorAll('.guide-category');
     
     items.forEach(item => {
         if(item.textContent.toLowerCase().includes(term)) {
@@ -242,9 +225,6 @@ function filterChannels(searchTerm) {
             item.style.display = 'none';
         }
     });
-    
-    // Optional: Hide empty categories if you want really clean look, 
-    // but simpler to just filter items for now.
 }
 
 async function changeChannel(playlistId, displayText) {
@@ -442,10 +422,17 @@ function updateUI() {
         els.powerLed.classList.remove('bg-red-900');
         els.screenOff.classList.add('opacity-0');
         els.screenOn.classList.remove('hidden');
+        
+        // Show Internal Guide when ON
+        if(els.internalGuide) els.internalGuide.classList.remove('opacity-0');
     } else {
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.add('bg-red-900');
         els.screenOff.classList.remove('opacity-0');
+        
+        // Hide Internal Guide when OFF
+        if(els.internalGuide) els.internalGuide.classList.add('opacity-0');
+
         setTimeout(() => {
             if(!state.isOn) els.screenOn.classList.add('hidden');
         }, 300);
@@ -558,13 +545,6 @@ function setupEventListeners() {
     els.tvPowerBtn.addEventListener('click', togglePower);
     if(els.remotePowerBtn) els.remotePowerBtn.addEventListener('click', togglePower);
     
-    // Close Debug Console
-    if(els.debugClose) {
-        els.debugClose.addEventListener('click', () => {
-            els.debugConsole.classList.add('hidden');
-        });
-    }
-
     setupRemoteControl();
 }
 

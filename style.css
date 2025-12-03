@@ -14,34 +14,19 @@ body {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
 }
 
-/* Cable Box Texture */
-.cable-box-texture {
-    background-color: #1a1a1a;
-    background-image: repeating-linear-gradient(90deg, transparent 0, transparent 2px, #111 2px, #111 4px);
-}
-
 /* Scrollbar Customization for Guide */
 .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: #000; 
+    background: rgba(0,0,0,0.5); 
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #004400; 
+    background: #005500; 
     border-radius: 2px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #00aa00; 
-}
-
-/* Blink Animation */
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-}
-.blink {
-    animation: blink 1s infinite;
 }
 
 /* CRT & 3D Effects */
@@ -174,8 +159,8 @@ body {
     font-size: 16px;
     line-height: 1.4;
     opacity: 0; /* Começa invisível */
-    transition: opacity 2.5s ease-in-out; /* INCREASED DURATION to 2.5s */
-    background: rgba(0,0,0,0.9); /* Darker background as requested */
+    transition: opacity 2.5s ease-in-out; 
+    background: rgba(0,0,0,0.9); /* Darker background */
     padding: 12px;
     border-radius: 4px;
     border-left: 4px solid #fff;
