@@ -1,16 +1,14 @@
 
+
 // --- CONFIGURAÇÃO API YOUTUBE ---
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
-
-// IMPORTANTE: Como estamos usando apenas uma API Key (e não login OAuth),
-// precisamos do ID do canal para buscar as playlists públicas dele.
 const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA'; // Exemplo: Canal provisório (troque pelo seu)
 
 // --- ESTADO & UI ---
 const state = {
     isOn: false,
-    currentPlaylistId: null, // Agora usamos o ID real do YouTube
-    playlists: [] // Será preenchido pela API
+    currentPlaylistId: null,
+    playlists: []
 };
 
 const els = {
@@ -31,6 +29,12 @@ const els = {
     osdChannel: document.getElementById('osd-channel'),
     ventContainer: document.querySelector('.vent-container'),
     speakerGrids: document.querySelectorAll('.speaker-grid'),
+    
+    // Debug Console Elements
+    debugConsole: document.getElementById('debug-console'),
+    debugContent: document.getElementById('debug-content'),
+    debugClose: document.getElementById('close-console'),
+
     credits: {
         container: document.getElementById('video-credits'),
         artist: document.getElementById('artist-name'),
@@ -43,7 +47,6 @@ const els = {
 
 let player;
 let currentTimers = [];
-// Cache local dos vídeos da playlist atual para os créditos
 let currentPlaylistVideos = {};
 
 // --- INICIALIZAÇÃO ---
@@ -66,21 +69,32 @@ async function init() {
 // --- API FETCHING ---
 
 async function fetchChannelPlaylists() {
-    try {
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}`);
-        const data = await response.json();
+    let allPlaylists = [];
+    let nextPageToken = '';
+    
+    showStatus("SCANNING...");
 
-        if (data.items) {
-            state.playlists = data.items;
-            populatePlaylistSelector(data.items);
+    try {
+        do {
+            const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
+            const response = await fetch(url);
+            const data = await response.json();
             
-            // Define a primeira playlist como padrão se houver
-            if (data.items.length > 0) {
-                state.currentPlaylistId = data.items[0].id;
+            if (data.items) {
+                allPlaylists = [...allPlaylists, ...data.items];
             }
+            
+            nextPageToken = data.nextPageToken || '';
+        } while (nextPageToken);
+
+        if (allPlaylists.length > 0) {
+            state.playlists = allPlaylists;
+            populatePlaylistSelector(allPlaylists);
+            state.currentPlaylistId = allPlaylists[0].id;
+            hideStatus();
         } else {
-            console.error("Nenhuma playlist encontrada ou erro na API:", data);
-            showStatus("API ERROR");
+            console.error("Nenhuma playlist encontrada.");
+            showStatus("NO SIGNAL");
         }
     } catch (error) {
         console.error("Erro ao buscar playlists:", error);
@@ -90,21 +104,22 @@ async function fetchChannelPlaylists() {
 
 async function fetchPlaylistItems(playlistId) {
     try {
-        // Busca até 50 vídeos da playlist
         const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}`);
         const data = await response.json();
 
+        // --- DEBUG CONSOLE FEATURE ---
+        // Mostra o JSON cru para o usuário ver os campos disponíveis
+        showDebugConsole(data);
+        // -----------------------------
+
         if (data.items) {
-            // Limpa cache anterior
             currentPlaylistVideos = {};
 
-            // Mapeia os dados para nosso formato de créditos
             data.items.forEach(item => {
                 const snippet = item.snippet;
                 const videoId = snippet.resourceId.videoId;
                 
-                // Parser simples de Título para extrair Artista - Música
-                // Espera formato "Artista - Música" no título do vídeo
+                // Tenta extrair Artista - Música do título
                 let artist = snippet.videoOwnerChannelTitle || snippet.channelTitle;
                 let song = snippet.title;
                 let album = "-"; 
@@ -118,12 +133,11 @@ async function fetchPlaylistItems(playlistId) {
                 currentPlaylistVideos[videoId] = {
                     artist: artist,
                     song: song,
-                    album: album, // A API não retorna álbum, deixamos genérico
+                    album: album,
                     year: snippet.publishedAt ? snippet.publishedAt.substring(0, 4) : "-",
-                    director: "-" // A API não retorna diretor explicitamente (geralmente está na description)
+                    director: "-" // A descrição (snippet.description) pode conter isso, mas precisa de parser complexo
                 };
             });
-            
             return true;
         }
         return false;
@@ -133,16 +147,54 @@ async function fetchPlaylistItems(playlistId) {
     }
 }
 
+function showDebugConsole(data) {
+    if (els.debugContent && els.debugConsole) {
+        els.debugContent.textContent = JSON.stringify(data, null, 2);
+        els.debugConsole.classList.remove('hidden');
+    }
+}
+
 function populatePlaylistSelector(playlists) {
     els.playlistSelector.innerHTML = '';
     
+    const groups = {
+        'UPLOADS': [], 'ZONES': [], 'GENRES': [], 'ERAS': [], 'BRASIL': [], 'OTHERS': []
+    };
+
     playlists.forEach((playlist, index) => {
+        const title = playlist.snippet.title;
+        const lowerTitle = title.toLowerCase();
+        
         const option = document.createElement('option');
         option.value = playlist.id;
-        // Formato CH 01: NOME DA PLAYLIST
         const num = (index + 1).toString().padStart(2, '0');
-        option.textContent = `CH ${num}: ${playlist.snippet.title}`;
-        els.playlistSelector.appendChild(option);
+        option.textContent = `CH ${num}: ${title}`;
+
+        let category = 'OTHERS';
+
+        if (lowerTitle.includes('upload') || lowerTitle.includes('envios')) {
+            category = 'UPLOADS';
+        } else if (lowerTitle.includes('zone')) {
+            category = 'ZONES';
+        } else if (lowerTitle.includes('brasil') || lowerTitle.includes('brazil') || lowerTitle.includes('mpb')) {
+            category = 'BRASIL';
+        } else if (lowerTitle.match(/\b(19|20)\d{2}\b/)) { 
+            category = 'ERAS';
+        } else if (lowerTitle.includes('pop') || lowerTitle.includes('rock') || lowerTitle.includes('jazz') || lowerTitle.includes('blues') || lowerTitle.includes('indie') || lowerTitle.includes('folk') || lowerTitle.includes('hop')) {
+            category = 'GENRES';
+        }
+
+        groups[category].push(option);
+    });
+
+    const renderOrder = ['UPLOADS', 'ZONES', 'ERAS', 'GENRES', 'BRASIL', 'OTHERS'];
+    renderOrder.forEach(key => {
+        if (groups[key].length > 0) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = `--- ${key} ---`;
+            groups[key].forEach(opt => optgroup.appendChild(opt));
+            els.playlistSelector.appendChild(optgroup);
+        }
     });
 }
 
@@ -188,7 +240,7 @@ window.onYouTubeIframeAPIReady = function() {
             'rel': 0,
             'disablekb': 1,
             'fs': 0,
-            'listType': 'playlist', // Configuração inicial genérica
+            'listType': 'playlist',
         },
         events: {
             'onReady': onPlayerReady,
@@ -199,7 +251,6 @@ window.onYouTubeIframeAPIReady = function() {
 };
 
 function onPlayerReady(event) {
-    // Se já temos uma playlist selecionada (fetch terminou antes do player), preparamos
     if (state.currentPlaylistId) {
         player.cuePlaylist({listType: 'playlist', list: state.currentPlaylistId});
     }
@@ -207,23 +258,25 @@ function onPlayerReady(event) {
 
 function onPlayerError(event) {
     console.log("YouTube Player Error:", event.data);
-    // Erro 150/101 significa restrição de embed. Pula para o próximo.
     if (event.data === 150 || event.data === 101) {
         player.nextVideo();
     }
 }
 
-// --- CONTROLE DE PLAYLIST ---
+// --- EVENTS & LISTENERS ---
+
 els.playlistSelector.addEventListener('change', async (e) => {
     state.currentPlaylistId = e.target.value;
     
-    // Atualiza Texto do Canal na TV
-    const channelIndex = e.target.selectedIndex + 1;
-    els.osdChannel.innerText = `CH 0${channelIndex}`;
+    const selectedText = e.target.options[e.target.selectedIndex].text;
+    const channelMatch = selectedText.match(/CH \d+/);
+    if(channelMatch) {
+        els.osdChannel.innerText = channelMatch[0];
+    }
 
     showStatus("TUNING...");
     
-    // Busca os metadados dos vídeos para os créditos
+    // Isso vai acionar o Debug Console também
     await fetchPlaylistItems(state.currentPlaylistId);
 
     if (player && player.loadPlaylist) {
@@ -237,15 +290,14 @@ els.playlistSelector.addEventListener('change', async (e) => {
     }
 });
 
-// --- REMOTE CONTROL LOGIC ---
+// --- REMOTE CONTROL ---
 function setupRemoteControl() {
-    // Next Track (Up Button / ▲)
+    // Next Track (Botão +)
     if(els.btnNext) {
         els.btnNext.addEventListener('click', () => {
             if(!state.isOn) return;
             blinkRemoteLight();
             
-            // Verifica se o player e o método existem
             if(player && typeof player.nextVideo === 'function') {
                 showStatus("NEXT TRACK >>|");
                 player.nextVideo();
@@ -257,7 +309,7 @@ function setupRemoteControl() {
         });
     }
 
-    // Previous Track (Down Button / ▼)
+    // Previous Track (Botão -)
     if(els.btnPrev) {
         els.btnPrev.addEventListener('click', () => {
             if(!state.isOn) return;
@@ -286,7 +338,7 @@ function blinkRemoteLight() {
     }
 }
 
-// --- TV POWER LOGIC ---
+// --- TV POWER ---
 function togglePower() {
     state.isOn = !state.isOn;
     
@@ -294,14 +346,11 @@ function togglePower() {
     blinkRemoteLight();
     
     if (state.isOn) {
-        // Turn ON
         showStatus("INITIALIZING...");
         setTimeout(() => showStatus("TUNING..."), 800);
         
-        // Garante que temos os metadados da playlist atual
         if (state.currentPlaylistId && Object.keys(currentPlaylistVideos).length === 0) {
             fetchPlaylistItems(state.currentPlaylistId).then(() => {
-                // Só dá play depois de tentar buscar metadados
                 triggerPlay();
             });
         } else {
@@ -309,7 +358,6 @@ function togglePower() {
         }
 
     } else {
-        // Turn OFF
         hideStatus();
         if(player && player.pauseVideo) {
             player.pauseVideo();
@@ -323,7 +371,6 @@ function triggerPlay() {
     setTimeout(() => {
         hideStatus();
         if(player && player.playVideo) {
-            // Se o player ainda não carregou a lista (primeiro boot), carrega agora
             const playlistNow = player.getPlaylistId();
             if (playlistNow !== state.currentPlaylistId && state.currentPlaylistId) {
                  player.loadPlaylist({listType: 'playlist', list: state.currentPlaylistId});
@@ -338,13 +385,11 @@ function updateUI() {
     if (state.isOn) {
         els.powerLed.classList.add('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.remove('bg-red-900');
-        
         els.screenOff.classList.add('opacity-0');
         els.screenOn.classList.remove('hidden');
     } else {
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.add('bg-red-900');
-        
         els.screenOff.classList.remove('opacity-0');
         setTimeout(() => {
             if(!state.isOn) els.screenOn.classList.add('hidden');
@@ -365,7 +410,7 @@ function hideStatus() {
     }
 }
 
-// --- LÓGICA DE CRÉDITOS ---
+// --- CRÉDITOS ---
 
 function onPlayerStateChange(event) {
     if (event.data == YT.PlayerState.PLAYING) {
@@ -381,11 +426,9 @@ function handleCreditsForVideo(videoId, duration) {
     clearAllTimers();
     hideCredits();
 
-    // Tenta pegar do nosso cache da API, ou cria um fallback com dados básicos do player
     let data = currentPlaylistVideos[videoId];
     
     if (!data) {
-        // Fallback: Tenta pegar o título direto do player se a API falhou
         const playerTitle = player.getVideoData().title;
         const playerAuthor = player.getVideoData().author;
         
@@ -400,11 +443,9 @@ function handleCreditsForVideo(videoId, duration) {
 
     updateCreditsDOM(data);
 
-    // Timings
-    const showAtStart = 6000; // 6s
-    const hideAtStart = 20000; // 20s
+    const showAtStart = 6000;
+    const hideAtStart = 20000;
     
-    // Safety check para vídeos muito curtos
     if (duration > 30) {
         currentTimers.push(setTimeout(() => showCredits(), showAtStart));
         currentTimers.push(setTimeout(() => hideCredits(), hideAtStart));
@@ -416,7 +457,6 @@ function handleCreditsForVideo(videoId, duration) {
             currentTimers.push(setTimeout(() => hideCredits(), hideAtEnd));
         }
     } else {
-        // Vídeos curtos mostram logo e ficam menos tempo
         currentTimers.push(setTimeout(() => showCredits(), 2000));
         currentTimers.push(setTimeout(() => hideCredits(), duration * 1000 - 1000));
     }
@@ -457,9 +497,14 @@ function setupEventListeners() {
     els.tvPowerBtn.addEventListener('click', togglePower);
     if(els.remotePowerBtn) els.remotePowerBtn.addEventListener('click', togglePower);
     
-    // Initialize Remote Controls
+    // Close Debug Console
+    if(els.debugClose) {
+        els.debugClose.addEventListener('click', () => {
+            els.debugConsole.classList.add('hidden');
+        });
+    }
+
     setupRemoteControl();
 }
 
-// Start
 init();
