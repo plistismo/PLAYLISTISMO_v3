@@ -16,20 +16,6 @@
 </head>
 <body class="bg-[#111] min-h-screen overflow-x-hidden flex flex-col items-center justify-center p-4 selection:bg-green-500 selection:text-black">
 
-    <!-- DEBUG CONSOLE OVERLAY (DEV ONLY) -->
-    <div id="debug-overlay" class="fixed inset-0 z-[100] bg-black/95 p-4 md:p-8 font-mono hidden flex-col">
-        <div class="flex justify-between items-center mb-4 border-b border-green-900 pb-2">
-            <h2 class="text-green-500 font-bold text-lg md:text-xl font-pixel tracking-widest">>> SYSTEM_DIAGNOSTICS</h2>
-            <button id="close-debug-btn" class="px-4 py-2 bg-red-900/20 border border-red-800 text-red-500 hover:bg-red-900/50 hover:text-red-300 transition-colors uppercase text-xs tracking-widest font-bold cursor-pointer">
-                [ CLOSE CONSOLE ]
-            </button>
-        </div>
-        <div class="flex-1 overflow-auto bg-[#0a0a0a] border border-green-900/50 p-4 rounded shadow-inner custom-scrollbar relative">
-            <div class="absolute top-2 right-2 text-xs text-gray-600">GET /youtube/v3/playlists</div>
-            <pre id="debug-content" class="text-xs text-green-400/80 whitespace-pre-wrap font-mono leading-relaxed"></pre>
-        </div>
-    </div>
-
     <!-- Ambient Background -->
     <div class="fixed inset-0 z-0 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] pointer-events-none">
         <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(#444 2px, transparent 2px); background-size: 30px 30px;"></div>
@@ -194,9 +180,9 @@
                         <div class="w-full h-8 bg-[#333] rounded mb-2 remote-btn"></div>
                         
                         <div class="col-span-3 text-center text-[9px] text-gray-600 font-bold tracking-widest mt-2 mb-1">CHANNEL</div>
-                        <div class="w-full h-10 bg-[#444] rounded remote-btn flex items-center justify-center text-[10px] font-bold">▲</div>
+                        <div id="btn-next" class="w-full h-10 bg-[#444] hover:bg-[#555] rounded remote-btn flex items-center justify-center text-[10px] font-bold cursor-pointer active:translate-y-[2px]">▲</div>
                         <div class="w-full h-10 bg-[#111] rounded remote-btn border border-[#333]"></div>
-                        <div class="w-full h-10 bg-[#444] rounded remote-btn flex items-center justify-center text-[10px] font-bold">▼</div>
+                        <div id="btn-prev" class="w-full h-10 bg-[#444] hover:bg-[#555] rounded remote-btn flex items-center justify-center text-[10px] font-bold cursor-pointer active:translate-y-[2px]">▼</div>
                     </div>
 
                     <div class="mt-8 text-[8px] text-[#444] text-center font-mono">

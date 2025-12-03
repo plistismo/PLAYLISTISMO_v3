@@ -4,8 +4,6 @@ const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
 
 // IMPORTANTE: Como estamos usando apenas uma API Key (e não login OAuth),
 // precisamos do ID do canal para buscar as playlists públicas dele.
-// Substitua o ID abaixo pelo SEU ID de canal (ex: UCxxxxxxxxxxxx).
-// Para encontrar seu ID: Vá em YouTube > Configurações > Configurações Avançadas.
 const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA'; // Exemplo: Canal provisório (troque pelo seu)
 
 // --- ESTADO & UI ---
@@ -22,6 +20,10 @@ const els = {
     remoteLight: document.getElementById('remote-light'),
     tvPowerBtn: document.getElementById('tv-power-btn'),
     remotePowerBtn: document.getElementById('remote-power-btn'),
+    // Remote Control Buttons
+    btnNext: document.getElementById('btn-next'),
+    btnPrev: document.getElementById('btn-prev'),
+    
     osdClock: document.getElementById('osd-clock'),
     statusMessage: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
@@ -36,11 +38,7 @@ const els = {
         album: document.getElementById('album-name'),
         year: document.getElementById('release-year'),
         director: document.getElementById('director-name')
-    },
-    // Debug Console Elements
-    debugOverlay: document.getElementById('debug-overlay'),
-    debugContent: document.getElementById('debug-content'),
-    closeDebugBtn: document.getElementById('close-debug-btn')
+    }
 };
 
 let player;
@@ -72,15 +70,6 @@ async function fetchChannelPlaylists() {
         const response = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}`);
         const data = await response.json();
 
-        // --- DEBUG CONSOLE LOGIC ---
-        // Popula o modal de debug com o resultado da requisição
-        if (els.debugOverlay && els.debugContent) {
-            els.debugOverlay.classList.remove('hidden');
-            els.debugOverlay.classList.add('flex');
-            els.debugContent.textContent = JSON.stringify(data, null, 2);
-        }
-        // ---------------------------
-
         if (data.items) {
             state.playlists = data.items;
             populatePlaylistSelector(data.items);
@@ -95,16 +84,6 @@ async function fetchChannelPlaylists() {
         }
     } catch (error) {
         console.error("Erro ao buscar playlists:", error);
-        
-        // --- DEBUG ERROR ---
-        if (els.debugOverlay && els.debugContent) {
-            els.debugOverlay.classList.remove('hidden');
-            els.debugOverlay.classList.add('flex');
-            els.debugContent.textContent = "FATAL ERROR:\n" + error.toString();
-            els.debugContent.classList.add('text-red-500');
-        }
-        // -------------------
-
         showStatus("NETWORK ERROR");
     }
 }
@@ -141,7 +120,7 @@ async function fetchPlaylistItems(playlistId) {
                     song: song,
                     album: album, // A API não retorna álbum, deixamos genérico
                     year: snippet.publishedAt ? snippet.publishedAt.substring(0, 4) : "-",
-                    director: "-" // A API não retorna diretor
+                    director: "-" // A API não retorna diretor explicitamente (geralmente está na description)
                 };
             });
             
@@ -258,11 +237,61 @@ els.playlistSelector.addEventListener('change', async (e) => {
     }
 });
 
+// --- REMOTE CONTROL LOGIC ---
+function setupRemoteControl() {
+    // Next Track (Up Button / ▲)
+    if(els.btnNext) {
+        els.btnNext.addEventListener('click', () => {
+            if(!state.isOn) return;
+            blinkRemoteLight();
+            
+            // Verifica se o player e o método existem
+            if(player && typeof player.nextVideo === 'function') {
+                showStatus("NEXT TRACK >>|");
+                player.nextVideo();
+                setTimeout(hideStatus, 1500);
+            } else {
+                showStatus("NO SIGNAL");
+                setTimeout(hideStatus, 1000);
+            }
+        });
+    }
+
+    // Previous Track (Down Button / ▼)
+    if(els.btnPrev) {
+        els.btnPrev.addEventListener('click', () => {
+            if(!state.isOn) return;
+            blinkRemoteLight();
+            
+            if(player && typeof player.previousVideo === 'function') {
+                showStatus("|<< PREV TRACK");
+                player.previousVideo();
+                setTimeout(hideStatus, 1500);
+            } else {
+                showStatus("NO SIGNAL");
+                setTimeout(hideStatus, 1000);
+            }
+        });
+    }
+}
+
+function blinkRemoteLight() {
+    if(els.remoteLight) {
+        els.remoteLight.classList.add('bg-red-500', 'shadow-[0_0_5px_red]');
+        els.remoteLight.classList.remove('bg-red-900');
+        setTimeout(() => {
+            els.remoteLight.classList.remove('bg-red-500', 'shadow-[0_0_5px_red]');
+            els.remoteLight.classList.add('bg-red-900');
+        }, 200);
+    }
+}
+
 // --- TV POWER LOGIC ---
 function togglePower() {
     state.isOn = !state.isOn;
     
     updateUI();
+    blinkRemoteLight();
     
     if (state.isOn) {
         // Turn ON
@@ -427,16 +456,9 @@ function clearAllTimers() {
 function setupEventListeners() {
     els.tvPowerBtn.addEventListener('click', togglePower);
     if(els.remotePowerBtn) els.remotePowerBtn.addEventListener('click', togglePower);
-
-    // Debug Close Listener
-    if (els.closeDebugBtn) {
-        els.closeDebugBtn.addEventListener('click', () => {
-            if (els.debugOverlay) {
-                els.debugOverlay.classList.add('hidden');
-                els.debugOverlay.classList.remove('flex');
-            }
-        });
-    }
+    
+    // Initialize Remote Controls
+    setupRemoteControl();
 }
 
 // Start
