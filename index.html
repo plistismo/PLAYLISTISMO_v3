@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play-Listismo | Retro Edition</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Jost:wght@300;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#111] min-h-screen overflow-x-hidden flex flex-col items-center justify-center p-4 selection:bg-green-500 selection:text-black">
+
+    <!-- Ambient Background -->
+    <div class="fixed inset-0 z-0 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] pointer-events-none">
+        <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(#444 2px, transparent 2px); background-size: 30px 30px;"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-purple-900/20 blur-[100px] rounded-full"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-900/10 blur-[100px] rounded-full"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 w-full max-w-7xl flex flex-col md:flex-row items-center justify-center gap-16 pt-10">
+
+        <!-- TV UNIT -->
+        <div id="tv-unit" class="relative w-full max-w-4xl transition-transform duration-500 perspective-[1500px] group">
+            
+            <!-- CABLE BOX / PLAYLIST SELECTOR -->
+            <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-64 bg-[#222] rounded-t-lg p-3 border-t border-l border-r border-[#444] shadow-xl z-0">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <select id="playlist-selector" class="w-full bg-[#111] text-green-500 font-mono text-sm border border-[#333] p-1 outline-none uppercase tracking-wider cursor-pointer hover:border-green-700 transition-colors">
+                        <option value="folkzone">CH 01: Folk Zone</option>
+                        <option value="trip_hop">CH 02: Trip Hop</option>
+                        <option value="mid_pop">CH 03: Mid-Pop BR</option>
+                        <option value="sepia">CH 04: Sepia Zone</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- TV Chassis -->
+            <div class="relative bg-[#1a1a1a] texture-plastic rounded-[24px] p-8 pb-12 shadow-[0_30px_60px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.15)] border-t border-[#333] tv-3d-tilt transform-style-3d z-10">
+                
+                <!-- Back Casing Illusion -->
+                <div class="absolute inset-0 bg-[#111] translate-z-back rounded-[20px] z-[-1] shadow-2xl"></div>
+
+                <!-- Top Vents -->
+                <div class="absolute top-3 left-1/2 -translate-x-1/2 w-3/4 h-6 flex justify-center space-x-1 opacity-30 rotate-x-20 vent-container">
+                    <!-- JS fills this -->
+                </div>
+
+                <!-- Front Bezel -->
+                <div class="flex bg-[#111] rounded-[2.5rem] p-6 shadow-[inset_0_0_20px_rgba(0,0,0,1)] border-b-8 border-r-8 border-[#050505] border-t border-l border-[#222]">
+                    
+                    <!-- Left Speaker Grid -->
+                    <div class="hidden md:flex flex-col justify-center w-12 mr-3 space-y-0.5 opacity-60 speaker-grid"></div>
+
+                    <!-- SCREEN CONTAINER -->
+                    <div class="relative flex-1 aspect-[4/3] bg-[#050505] rounded-[3rem] overflow-hidden screen-container border-[4px] border-[#080808] z-10">
+                        
+                        <!-- Bezel Depth & Reflections -->
+                        <div class="absolute inset-0 z-50 rounded-[3rem] shadow-[inset_0_0_50px_rgba(0,0,0,0.9)] pointer-events-none"></div>
+                        <div class="absolute inset-x-0 top-0 h-2/3 bg-gradient-to-b from-white/10 to-transparent rounded-t-[3rem] z-50 pointer-events-none opacity-40"></div>
+                        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_60%,rgba(0,0,0,0.4)_100%)] z-40 pointer-events-none"></div>
+
+                        <!-- STATE: OFF -->
+                        <div id="screen-off" class="absolute inset-0 bg-[#020202] flex items-center justify-center z-20 transition-opacity duration-300">
+                            <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-30 pointer-events-none"></div>
+                        </div>
+
+                        <!-- STATE: ON (Content) -->
+                        <div id="screen-on" class="hidden relative w-full h-full crt-flicker rounded-[2rem] overflow-hidden bg-black scale-[1.02]">
+                            
+                            <!-- YouTube Player Container -->
+                            <div class="absolute inset-0 z-0 pointer-events-auto">
+                                <div id="player" class="w-full h-full"></div>
+                            </div>
+
+                            <!-- OSD Layer -->
+                            <div id="osd-layer" class="absolute inset-0 z-20 flex flex-col justify-between p-6 md:p-8 pointer-events-none font-mono text-white/80">
+                                <div class="flex justify-between items-start">
+                                    <div id="osd-status" class="vhs-text-shadow text-3xl md:text-5xl tracking-widest uppercase font-bold text-green-500/80 drop-shadow-md">PLAY ►</div>
+                                    <div class="vhs-text-shadow text-xl md:text-2xl" id="osd-channel">CH 01</div>
+                                </div>
+                                <div class="flex justify-between items-end vhs-text-shadow text-xl md:text-2xl">
+                                    <span>STEREO</span>
+                                    <div class="flex flex-col items-end">
+                                        <span id="osd-clock">00:00 AM</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Overlay de Créditos (Estilo MTV) - MOVED INSIDE SCREEN -->
+                            <div id="video-credits" class="credits-overlay">
+                                <div class="credit-line"><span class="icon">🎤</span> <span id="artist-name">Artist</span></div>
+                                <div class="credit-line"><span class="icon">🎶</span> <span id="song-name">Song</span></div>
+                                <div class="credit-line"><span class="icon">💿</span> <span id="album-name">Album</span></div>
+                                <div class="credit-line"><span class="icon">📅</span> <span id="release-year">Year</span></div>
+                                <div class="credit-line"><span class="icon">🎬︎</span> <span id="director-name">Director</span></div>
+                            </div>
+
+                            <!-- Status Message Popup -->
+                            <div id="status-message" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-full text-center pointer-events-none">
+                                <div id="status-text" class="inline-block text-[#00ff00] font-pixel text-xl md:text-3xl bg-black/80 px-6 py-3 border-y-2 border-[#00ff00]/50 tracking-widest uppercase shadow-lg backdrop-blur-sm transform rotate-1">
+                                    INITIALIZING...
+                                </div>
+                            </div>
+
+                            <!-- VHS Artifacts -->
+                            <div class="vhs-noise z-10 mix-blend-overlay pointer-events-none"></div>
+                            <div class="vhs-tracking z-10 pointer-events-none"></div>
+                            <div class="absolute inset-0 scanlines pointer-events-none z-40 opacity-40"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right Speaker Grid -->
+                    <div class="hidden md:flex flex-col justify-center w-12 ml-3 space-y-0.5 opacity-60 speaker-grid"></div>
+                </div>
+
+                <!-- Bottom Panel -->
+                <div class="mt-8 flex justify-between items-center px-10 relative">
+                    <div class="flex flex-col items-start group cursor-default">
+                        <div class="flex space-x-0.5 mb-1 opacity-80">
+                            <div class="w-3 h-1 bg-red-600 rounded-sm"></div>
+                            <div class="w-3 h-1 bg-green-600 rounded-sm"></div>
+                            <div class="w-3 h-1 bg-blue-600 rounded-sm"></div>
+                        </div>
+                        <span class="font-serif italic font-bold text-[#aaa] tracking-wider text-xl drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">Play<span class="text-[#888]">Listismo</span></span>
+                    </div>
+
+                    <!-- LED & Power -->
+                    <div class="flex items-center space-x-4">
+                        <div class="flex flex-col items-center">
+                            <div id="power-led" class="w-2 h-2 rounded-full bg-red-900 border border-black transition-all duration-300"></div>
+                            <span class="text-[8px] text-gray-500 mt-1 font-bold">POWER</span>
+                        </div>
+                        <button id="tv-power-btn" class="w-10 h-10 rounded bg-[#1a1a1a] border-b-4 border-r-4 border-black shadow-lg flex items-center justify-center active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 transition-all">
+                            <svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Feet -->
+                <div class="absolute -bottom-4 left-16 w-24 h-5 bg-[#111] rounded-b shadow-[0_5px_10px_black]"></div>
+                <div class="absolute -bottom-4 right-16 w-24 h-5 bg-[#111] rounded-b shadow-[0_5px_10px_black]"></div>
+            </div>
+        </div>
+
+        <!-- CONTROLLER UNIT -->
+        <div class="relative transform -rotate-3 select-none perspective-[500px] hidden md:block">
+            <div class="bg-[#222] texture-plastic w-64 rounded-[0_0_24px_24px] shadow-[20px_20px_50px_rgba(0,0,0,0.7),inset_1px_1px_1px_rgba(255,255,255,0.1)] border-l border-t border-[#444] relative z-10 pb-8 overflow-hidden">
+                
+                <!-- IR Blaster -->
+                <div class="h-10 bg-[#151515] rounded-[12px_12px_0_0] relative overflow-hidden border-b border-[#333] shadow-md">
+                     <div class="absolute inset-0 bg-red-900/30"></div>
+                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-black rounded-full shadow-[inset_0_0_8px_rgba(255,0,0,0.6)] border border-red-900/50"></div>
+                </div>
+
+                <div class="p-5 flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-8 border-b border-[#333] pb-3">
+                        <span class="text-gray-500 font-bold italic text-xs tracking-widest drop-shadow-[0_1px_1px_black]">UNIVERSAL</span>
+                        <div id="remote-light" class="w-1.5 h-1.5 rounded-full bg-red-900"></div>
+                    </div>
+
+                    <!-- Power -->
+                    <div class="flex justify-end w-full mb-8 px-2">
+                        <div class="flex flex-col items-center">
+                            <button id="remote-power-btn" class="w-12 h-12 rounded-full bg-[#cc2222] text-white remote-btn hover:bg-[#dd3333]">
+                                <svg class="w-5 h-5 drop-shadow-md opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                            </button>
+                            <span class="text-[8px] text-gray-500 mt-1 font-bold tracking-wider">POWER</span>
+                        </div>
+                    </div>
+
+                    <!-- Decorative Remote Buttons -->
+                    <div class="grid grid-cols-3 gap-2 w-full px-2">
+                        <div class="w-full h-8 bg-[#333] rounded mb-2 remote-btn"></div>
+                        <div class="w-full h-8 bg-[#333] rounded mb-2 remote-btn"></div>
+                        <div class="w-full h-8 bg-[#333] rounded mb-2 remote-btn"></div>
+                        
+                        <div class="col-span-3 text-center text-[9px] text-gray-600 font-bold tracking-widest mt-2 mb-1">CHANNEL</div>
+                        <div class="w-full h-10 bg-[#444] rounded remote-btn flex items-center justify-center text-[10px] font-bold">▲</div>
+                        <div class="w-full h-10 bg-[#111] rounded remote-btn border border-[#333]"></div>
+                        <div class="w-full h-10 bg-[#444] rounded remote-btn flex items-center justify-center text-[10px] font-bold">▼</div>
+                    </div>
+
+                    <div class="mt-8 text-[8px] text-[#444] text-center font-mono">
+                        PLAY-LISTISMO REMOTE
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

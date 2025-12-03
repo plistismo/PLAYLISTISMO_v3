@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroVision V2 - Vanilla</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <!-- Custom Retro Styles -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Import Map for Gemini SDK -->
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+      }
+    }
+    </script>
+</head>
+<body class="bg-[#111] min-h-screen overflow-x-hidden flex flex-col items-center justify-center p-4 selection:bg-green-500 selection:text-black">
+
+    <!-- Ambient Background -->
+    <div class="fixed inset-0 z-0 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] pointer-events-none">
+        <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(#444 2px, transparent 2px); background-size: 30px 30px;"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-purple-900/20 blur-[100px] rounded-full"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-900/10 blur-[100px] rounded-full"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 w-full max-w-7xl flex flex-col md:flex-row items-center justify-center gap-16 pt-10">
+
+        <!-- TV UNIT -->
+        <div id="tv-unit" class="relative w-full max-w-4xl transition-transform duration-500 perspective-[1500px] group">
+            
+            <!-- TV Chassis -->
+            <div class="relative bg-[#1a1a1a] texture-plastic rounded-[24px] p-8 pb-12 shadow-[0_30px_60px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.15)] border-t border-[#333] tv-3d-tilt transform-style-3d">
+                
+                <!-- Back Casing Illusion -->
+                <div class="absolute inset-0 bg-[#111] translate-z-back rounded-[20px] z-[-1] shadow-2xl"></div>
+
+                <!-- Top Vents -->
+                <div class="absolute top-3 left-1/2 -translate-x-1/2 w-3/4 h-6 flex justify-center space-x-1 opacity-30 rotate-x-20">
+                    <div class="vent-strip"></div>
+                </div>
+
+                <!-- Front Bezel -->
+                <div class="flex bg-[#111] rounded-[2.5rem] p-6 shadow-[inset_0_0_20px_rgba(0,0,0,1)] border-b-8 border-r-8 border-[#050505] border-t border-l border-[#222]">
+                    
+                    <!-- Left Speaker Grid -->
+                    <div class="hidden md:flex flex-col justify-center w-12 mr-3 space-y-0.5 opacity-60 speaker-grid"></div>
+
+                    <!-- SCREEN CONTAINER -->
+                    <div class="relative flex-1 aspect-[4/3] bg-[#050505] rounded-[3rem] overflow-hidden screen-container border-[4px] border-[#080808] z-10">
+                        
+                        <!-- Bezel Depth & Reflections -->
+                        <div class="absolute inset-0 z-50 rounded-[3rem] shadow-[inset_0_0_50px_rgba(0,0,0,0.9)] pointer-events-none"></div>
+                        <div class="absolute inset-x-0 top-0 h-2/3 bg-gradient-to-b from-white/10 to-transparent rounded-t-[3rem] z-50 pointer-events-none opacity-40"></div>
+                        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_60%,rgba(0,0,0,0.4)_100%)] z-40 pointer-events-none"></div>
+
+                        <!-- STATE: OFF -->
+                        <div id="screen-off" class="absolute inset-0 bg-[#020202] flex items-center justify-center z-20">
+                            <div class="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-30 pointer-events-none"></div>
+                        </div>
+
+                        <!-- STATE: ON (Content) -->
+                        <div id="screen-on" class="hidden relative w-full h-full crt-flicker rounded-[2rem] overflow-hidden bg-black scale-[1.02]">
+                            
+                            <!-- Video Element -->
+                            <video id="tv-video" class="hidden w-full h-full object-cover vhs-filter pointer-events-auto" playsinline loop></video>
+                            
+                            <!-- Image Element -->
+                            <img id="tv-image" class="hidden w-full h-full object-cover vhs-filter" alt="TV Content">
+
+                            <!-- Blue Screen / No Signal -->
+                            <div id="blue-screen" class="hidden w-full h-full bg-[#0000aa] flex flex-col items-center justify-center text-white/90">
+                                <div class="text-4xl md:text-6xl font-mono mb-4 text-center vhs-text-shadow font-bold">VIDEO 1</div>
+                                <div class="vhs-text-shadow text-xl animate-pulse tracking-widest">AUTO TRACKING</div>
+                            </div>
+
+                            <!-- OSD Layer -->
+                            <div id="osd-layer" class="absolute inset-0 z-20 flex flex-col justify-between p-6 md:p-8 pointer-events-none font-mono text-white/80">
+                                <div class="flex justify-between items-start">
+                                    <div id="osd-status" class="vhs-text-shadow text-3xl md:text-5xl tracking-widest uppercase font-bold text-green-500/80 drop-shadow-md">PLAY ►</div>
+                                    <div class="vhs-text-shadow text-xl md:text-2xl">CH 03</div>
+                                </div>
+                                <div class="flex justify-between items-end vhs-text-shadow text-xl md:text-2xl">
+                                    <span>SP</span>
+                                    <div class="flex flex-col items-end">
+                                        <span id="osd-clock">00:00 AM</span>
+                                        <span class="tracking-wider text-lg">JUL 04 1996</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Message Popup -->
+                            <div id="status-message" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-full text-center pointer-events-none">
+                                <div id="status-text" class="inline-block text-[#00ff00] font-pixel text-xl md:text-3xl bg-black/80 px-6 py-3 border-y-2 border-[#00ff00]/50 tracking-widest uppercase shadow-lg backdrop-blur-sm transform rotate-1">
+                                    LOADING...
+                                </div>
+                            </div>
+
+                            <!-- VHS Artifacts -->
+                            <div class="vhs-noise z-10 mix-blend-overlay pointer-events-none"></div>
+                            <div class="vhs-tracking z-10 pointer-events-none"></div>
+                            <div class="absolute inset-0 scanlines pointer-events-none z-40 opacity-40"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right Speaker Grid -->
+                    <div class="hidden md:flex flex-col justify-center w-12 ml-3 space-y-0.5 opacity-60 speaker-grid"></div>
+                </div>
+
+                <!-- Bottom Panel -->
+                <div class="mt-8 flex justify-between items-center px-10 relative">
+                    <div class="flex flex-col items-start group cursor-default">
+                        <div class="flex space-x-0.5 mb-1 opacity-80">
+                            <div class="w-3 h-1 bg-red-600 rounded-sm"></div>
+                            <div class="w-3 h-1 bg-green-600 rounded-sm"></div>
+                            <div class="w-3 h-1 bg-blue-600 rounded-sm"></div>
+                        </div>
+                        <span class="font-serif italic font-bold text-[#aaa] tracking-wider text-xl drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">Gemini<span class="text-[#888]">Trinitron</span></span>
+                    </div>
+
+                    <!-- LED & Power -->
+                    <div class="flex items-center space-x-4">
+                        <div class="flex flex-col items-center">
+                            <div id="power-led" class="w-2 h-2 rounded-full bg-red-900 border border-black transition-all duration-300"></div>
+                            <span class="text-[8px] text-gray-500 mt-1 font-bold">POWER</span>
+                        </div>
+                        <button id="tv-power-btn" class="w-10 h-10 rounded bg-[#1a1a1a] border-b-4 border-r-4 border-black shadow-lg flex items-center justify-center active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 transition-all">
+                            <svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Feet -->
+                <div class="absolute -bottom-4 left-16 w-24 h-5 bg-[#111] rounded-b shadow-[0_5px_10px_black]"></div>
+                <div class="absolute -bottom-4 right-16 w-24 h-5 bg-[#111] rounded-b shadow-[0_5px_10px_black]"></div>
+            </div>
+        </div>
+
+        <!-- CONTROLLER UNIT -->
+        <div class="relative transform -rotate-3 select-none perspective-[500px]">
+            <div class="bg-[#222] texture-plastic w-64 rounded-[0_0_24px_24px] shadow-[20px_20px_50px_rgba(0,0,0,0.7),inset_1px_1px_1px_rgba(255,255,255,0.1)] border-l border-t border-[#444] relative z-10 pb-8 overflow-hidden">
+                
+                <!-- IR Blaster -->
+                <div class="h-10 bg-[#151515] rounded-[12px_12px_0_0] relative overflow-hidden border-b border-[#333] shadow-md">
+                     <div class="absolute inset-0 bg-red-900/30"></div>
+                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-black rounded-full shadow-[inset_0_0_8px_rgba(255,0,0,0.6)] border border-red-900/50"></div>
+                </div>
+
+                <div class="p-5 flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-8 border-b border-[#333] pb-3">
+                        <span class="text-gray-500 font-bold italic text-xs tracking-widest drop-shadow-[0_1px_1px_black]">UNIVERSAL</span>
+                        <div id="remote-light" class="w-1.5 h-1.5 rounded-full bg-red-900"></div>
+                    </div>
+
+                    <!-- Power -->
+                    <div class="flex justify-end w-full mb-8 px-2">
+                        <div class="flex flex-col items-center">
+                            <button id="remote-power-btn" class="w-12 h-12 rounded-full bg-[#cc2222] text-white remote-btn hover:bg-[#dd3333]">
+                                <svg class="w-5 h-5 drop-shadow-md opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                            </button>
+                            <span class="text-[8px] text-gray-500 mt-1 font-bold tracking-wider">POWER</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Pad -->
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-6 w-full mb-8 px-2">
+                         <div class="flex flex-col items-center space-y-2">
+                            <span class="text-[9px] text-gray-500 font-bold tracking-wider">SOURCE</span>
+                            <button id="upload-btn" class="w-14 h-14 rounded-lg bg-[#2a4a80] text-gray-200 remote-btn disabled:opacity-40 disabled:cursor-not-allowed">
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            </button>
+                         </div>
+                         <div class="flex flex-col items-center space-y-2">
+                            <span class="text-[9px] text-gray-500 font-bold tracking-wider">RESET</span>
+                            <button id="reset-btn" class="w-14 h-14 rounded-lg bg-[#b07d15] text-gray-100 remote-btn disabled:opacity-40 disabled:cursor-not-allowed">
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                            </button>
+                         </div>
+                    </div>
+
+                    <!-- Input Module -->
+                    <div class="w-full bg-[#181818] p-4 rounded-xl border border-[#333] shadow-[inset_0_4px_10px_rgba(0,0,0,0.8)]">
+                        <label class="block text-gray-600 text-[8px] mb-2 uppercase tracking-widest text-center border-b border-[#222] pb-1">
+                            Voice Command Module
+                        </label>
+                        <form id="command-form" class="flex flex-col gap-3">
+                            <input id="prompt-input" type="text" disabled placeholder="OFFLINE" autocomplete="off"
+                                class="w-full bg-[#050505] text-green-500 font-mono text-[10px] p-3 border border-gray-700 rounded-md focus:border-green-600 outline-none uppercase text-center placeholder-gray-800 shadow-[inset_0_2px_4px_black] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button id="transmit-btn" type="submit" disabled
+                                class="w-full py-3 bg-[#333] rounded-md text-gray-400 text-[10px] font-bold tracking-widest border-b-4 border-[#111] active:border-none active:translate-y-[4px] hover:bg-[#444] transition-all shadow-lg uppercase flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+                                <span>Transmit</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="file-input" class="hidden" accept="image/*">
+
+    <!-- Logic -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>

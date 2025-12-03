@@ -1,0 +1,179 @@
+/* Custom Fonts & Base */
+body {
+    font-family: 'VT323', monospace;
+}
+
+.font-pixel {
+    font-family: 'Press Start 2P', cursive;
+}
+
+/* Texture Classes */
+.texture-plastic {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* CRT & 3D Effects */
+.tv-3d-tilt {
+    transform: rotateX(4deg);
+}
+
+.translate-z-back {
+    transform: translateZ(-40px) scale(0.96);
+}
+
+.rotate-x-20 {
+    transform: rotateX(20deg);
+}
+
+/* CRT Flicker Animation */
+@keyframes flicker {
+    0% { opacity: 0.97; }
+    5% { opacity: 0.95; }
+    10% { opacity: 0.9; }
+    15% { opacity: 0.95; }
+    20% { opacity: 0.99; }
+    25% { opacity: 0.95; }
+    30% { opacity: 0.9; }
+    35% { opacity: 0.96; }
+    40% { opacity: 0.98; }
+    45% { opacity: 0.95; }
+    50% { opacity: 0.99; }
+    55% { opacity: 0.93; }
+    60% { opacity: 0.9; }
+    65% { opacity: 0.96; }
+    70% { opacity: 1; }
+    75% { opacity: 0.97; }
+    80% { opacity: 0.95; }
+    85% { opacity: 0.92; }
+    90% { opacity: 0.96; }
+    95% { opacity: 0.99; }
+    100% { opacity: 0.94; }
+}
+.crt-flicker {
+    animation: flicker 0.15s infinite;
+}
+
+/* Scanlines */
+.scanlines {
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.4) 50%,
+        rgba(0,0,0,0.4)
+    );
+    background-size: 100% 4px;
+}
+
+/* VHS Noise */
+.vhs-noise {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.12;
+}
+
+/* Tracking Lines */
+@keyframes tracking-scan {
+    0% { transform: translateY(-10%); opacity: 0.1; }
+    50% { opacity: 0.3; }
+    100% { transform: translateY(110%); opacity: 0.1; }
+}
+.vhs-tracking {
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 10%;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3) 20%, rgba(200,200,255,0.4) 50%, rgba(255,255,255,0.3) 80%, transparent);
+    animation: tracking-scan 4s linear infinite;
+    mix-blend-mode: overlay;
+    filter: blur(1px);
+}
+
+/* RGB Split Text */
+@keyframes rgb-shift-text {
+    0% { text-shadow: -2px 0 rgba(255,0,0,0.7), 2px 0 rgba(0,0,255,0.7); }
+    25% { text-shadow: -3px 0 rgba(255,0,0,0.7), 3px 0 rgba(0,0,255,0.7); }
+    50% { text-shadow: -2px 0 rgba(255,0,0,0.7), 2px 0 rgba(0,0,255,0.7); }
+    75% { text-shadow: -1px 0 rgba(255,0,0,0.7), 1px 0 rgba(0,0,255,0.7); }
+    100% { text-shadow: -2px 0 rgba(255,0,0,0.7), 2px 0 rgba(0,0,255,0.7); }
+}
+.vhs-text-shadow {
+    animation: rgb-shift-text 2s infinite alternate;
+}
+
+/* Remote Button Style */
+.remote-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 6px 6px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.075s;
+}
+
+.remote-btn:active {
+    box-shadow: 0 1px 0 rgba(0,0,0,0.4);
+    transform: translateY(3px) scale(0.98);
+}
+
+.remote-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255,255,255,0.05);
+    border-radius: 9999px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.remote-btn:hover::before {
+    opacity: 1;
+}
+
+/* --- CREDITS OVERLAY (MTV STYLE) --- */
+/* Modified to fit inside the TV Screen absolute positioning */
+.credits-overlay {
+    position: absolute; /* Changed from fixed to absolute */
+    bottom: 30px;
+    left: 30px;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 2px 2px 0px #000000;
+    font-family: 'Jost', sans-serif; /* Keep original font for credits */
+    font-size: 16px;
+    line-height: 1.4;
+    opacity: 0; /* Começa invisível */
+    transition: opacity 1s ease-in-out;
+    background: rgba(0,0,0,0.2); 
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 4px solid #fff;
+    pointer-events: none; 
+    z-index: 25; /* Between OSD and Scanlines */
+    transform: perspective(500px) rotateY(2deg); /* Slight 3D tilt */
+}
+
+.credits-overlay.visible {
+    opacity: 1;
+}
+
+.credit-line {
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
+
+.credit-line span {
+    font-weight: 700;
+}
+
+.credit-line span.light {
+    font-weight: 300;
+    opacity: 0.9;
+}
+
+.icon {
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+    margin-right: 5px;
+    font-size: 14px;
+}
