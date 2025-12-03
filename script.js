@@ -6,7 +6,7 @@ const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA'; // Exemplo: Canal provisório (tr
 
 // --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
-const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M'; // Usando a publishable key do prompt
+const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M'; // Usando a publishable key fornecida
 const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
 // --- ESTADO & UI ---
@@ -79,6 +79,7 @@ window.enrichDatabaseWithVideoLinks = async function() {
     console.log("🚀 Iniciando sincronização do Banco de Dados com YouTube...");
     
     // 1. Buscar músicas do Banco que não têm video_id
+    // Nota: A coluna video_id deve ser criada com o script SQL fornecido
     const { data: dbMusics, error } = await supabase
         .from('musicas')
         .select('*')
@@ -96,16 +97,18 @@ window.enrichDatabaseWithVideoLinks = async function() {
 
     console.log(`📋 Encontradas ${dbMusics.length} músicas sem link. Buscando vídeos no YouTube...`);
 
-    // 2. Buscar TODOS os vídeos de TODAS as playlists do canal
-    // Nota: Isso pode demorar e consumir cota de API.
+    // 2. Buscar TODOS os vídeos de TODAS as playlists do canal para comparação
+    // Isso é feito iterando sobre as playlists já carregadas ou carregando-as
     let allYoutubeVideos = [];
     
     if (state.playlists.length === 0) {
         await fetchChannelPlaylists();
     }
 
+    console.log("⏳ Buscando vídeos de todas as playlists... (Isso pode demorar)");
     for (const playlist of state.playlists) {
-        console.log(`🔍 Escaneando playlist: ${playlist.snippet.title}...`);
+        // Log para acompanhar progresso
+        // console.log(`  - Lendo playlist: ${playlist.snippet.title}`);
         const videos = await fetchAllVideosFromPlaylist(playlist.id);
         allYoutubeVideos = [...allYoutubeVideos, ...videos];
     }
@@ -122,16 +125,22 @@ window.enrichDatabaseWithVideoLinks = async function() {
         // Filtra vídeos que contenham o Artista E a Música no título
         const matches = allYoutubeVideos.filter(ytVid => {
             const title = ytVid.snippet.title.toLowerCase();
-            // Remove coisas comuns como "official video", "videoclipe", etc para melhorar match
-            const cleanTitle = title.replace(/official video|video oficial|videoclipe/g, '');
+            // Remove coisas comuns para melhorar a busca
+            const cleanTitle = title
+                .replace(/official video/g, '')
+                .replace(/video oficial/g, '')
+                .replace(/videoclipe/g, '')
+                .replace(/[({\[]/g, '')
+                .replace(/[)}\]]/g, '');
             
             return cleanTitle.includes(artist) && cleanTitle.includes(song);
         });
 
-        // REGRA: Se houver apenas 1 match exato, atualiza. Se houver 0 ou >1, ignora.
+        // REGRA: Se houver apenas 1 match exato (ou muito provável), atualiza.
+        // Se for 0, não achou. Se for > 1, é ambíguo, não mexe.
         if (matches.length === 1) {
             const videoId = matches[0].snippet.resourceId.videoId;
-            console.log(`✅ MATCH ÚNICO: ${dbRow.artista} - ${dbRow.musica} => ${videoId}`);
+            console.log(`✅ MATCH: "${dbRow.artista} - ${dbRow.musica}" => https://youtu.be/${videoId}`);
             
             // Atualiza Supabase
             const { error: updateError } = await supabase
@@ -145,15 +154,16 @@ window.enrichDatabaseWithVideoLinks = async function() {
                 updates++;
             }
         } else if (matches.length > 1) {
-            console.warn(`⚠️ Múltiplos resultados (${matches.length}) para: ${dbRow.artista} - ${dbRow.musica}. Ignorando.`);
+            console.warn(`⚠️ AMBÍGUO (${matches.length} resultados) para: "${dbRow.artista} - ${dbRow.musica}". Ignorado.`);
         } else {
-            console.log(`🚫 Nenhum resultado para: ${dbRow.artista} - ${dbRow.musica}`);
+            console.log(`🚫 NÃO ENCONTRADO: "${dbRow.artista} - ${dbRow.musica}"`);
         }
     }
 
     console.log(`🏁 Sincronização finalizada. ${updates} registros atualizados.`);
 };
 
+// Helper para buscar paginação completa de uma playlist
 async function fetchAllVideosFromPlaylist(playlistId) {
     let videos = [];
     let nextPageToken = '';
@@ -170,20 +180,18 @@ async function fetchAllVideosFromPlaylist(playlistId) {
             nextPageToken = data.nextPageToken || '';
         } while (nextPageToken);
     } catch (e) {
-        console.error("Erro ao buscar items da playlist:", e);
+        console.error(`Erro ao buscar items da playlist ${playlistId}:`, e);
     }
     return videos;
 }
 
 
-// --- API FETCHING ---
+// --- API FETCHING (APP NORMAL) ---
 
 async function fetchChannelPlaylists() {
     let allPlaylists = [];
     let nextPageToken = '';
     
-    // showStatus("SCANNING..."); // Avoid showing scanning on boot before ON
-
     try {
         do {
             const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
@@ -240,7 +248,7 @@ async function fetchPlaylistItems(playlistId) {
                     song: song,
                     album: album,
                     year: snippet.publishedAt ? snippet.publishedAt.substring(0, 4) : "-",
-                    director: "-" // A descrição (snippet.description) pode conter isso, mas precisa de parser complexo
+                    director: "-" 
                 };
             });
             return true;
@@ -338,8 +346,6 @@ function filterChannels(searchTerm) {
             item.style.display = 'none';
         }
     });
-    
-    // Hide empty category headers logic could go here, but kept simple for now
     return count;
 }
 
