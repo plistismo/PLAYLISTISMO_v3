@@ -25,7 +25,11 @@ const els = {
     osdClock: document.getElementById('osd-clock'),
     statusMessage: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
-    playlistSelector: document.getElementById('playlist-selector'),
+    
+    // New Guide Elements
+    channelGuideContainer: document.getElementById('channel-guide-container'),
+    channelSearch: document.getElementById('channel-search'),
+    
     osdChannel: document.getElementById('osd-channel'),
     ventContainer: document.querySelector('.vent-container'),
     speakerGrids: document.querySelectorAll('.speaker-grid'),
@@ -89,11 +93,14 @@ async function fetchChannelPlaylists() {
 
         if (allPlaylists.length > 0) {
             state.playlists = allPlaylists;
-            populatePlaylistSelector(allPlaylists);
+            renderChannelGuide(allPlaylists);
             state.currentPlaylistId = allPlaylists[0].id;
             hideStatus();
         } else {
             console.error("Nenhuma playlist encontrada.");
+            if(els.channelGuideContainer) {
+                els.channelGuideContainer.innerHTML = '<div class="text-red-500 text-xs p-2">NO SIGNAL</div>';
+            }
             showStatus("NO SIGNAL");
         }
     } catch (error) {
@@ -154,8 +161,11 @@ function showDebugConsole(data) {
     }
 }
 
-function populatePlaylistSelector(playlists) {
-    els.playlistSelector.innerHTML = '';
+// --- NEW GUIDE RENDERING ---
+function renderChannelGuide(playlists) {
+    if(!els.channelGuideContainer) return;
+    
+    els.channelGuideContainer.innerHTML = '';
     
     const groups = {
         'UPLOADS': [], 'ZONES': [], 'GENRES': [], 'ERAS': [], 'BRASIL': [], 'OTHERS': []
@@ -164,12 +174,8 @@ function populatePlaylistSelector(playlists) {
     playlists.forEach((playlist, index) => {
         const title = playlist.snippet.title;
         const lowerTitle = title.toLowerCase();
-        
-        const option = document.createElement('option');
-        option.value = playlist.id;
         const num = (index + 1).toString().padStart(2, '0');
-        option.textContent = `CH ${num}: ${title}`;
-
+        
         let category = 'OTHERS';
 
         if (lowerTitle.includes('upload') || lowerTitle.includes('envios')) {
@@ -184,18 +190,85 @@ function populatePlaylistSelector(playlists) {
             category = 'GENRES';
         }
 
-        groups[category].push(option);
+        // Store object for rendering
+        groups[category].push({
+            id: playlist.id,
+            display: `CH ${num}: ${title}`
+        });
     });
 
     const renderOrder = ['UPLOADS', 'ZONES', 'ERAS', 'GENRES', 'BRASIL', 'OTHERS'];
-    renderOrder.forEach(key => {
-        if (groups[key].length > 0) {
-            const optgroup = document.createElement('optgroup');
-            optgroup.label = `--- ${key} ---`;
-            groups[key].forEach(opt => optgroup.appendChild(opt));
-            els.playlistSelector.appendChild(optgroup);
+    
+    renderOrder.forEach(cat => {
+        if (groups[cat].length > 0) {
+            // Category Header
+            const header = document.createElement('div');
+            header.className = "text-[#666] text-[10px] font-bold border-b border-[#333] mt-2 mb-1 px-2 uppercase tracking-widest guide-category";
+            header.textContent = cat;
+            els.channelGuideContainer.appendChild(header);
+
+            // List
+            const list = document.createElement('ul');
+            list.className = "mb-2 list-none";
+            
+            groups[cat].forEach(item => {
+                const li = document.createElement('li');
+                li.className = "guide-item text-green-700 hover:text-green-400 hover:bg-[#111] cursor-pointer text-xs px-2 py-0.5 font-mono truncate transition-colors";
+                li.textContent = item.display;
+                li.dataset.id = item.id;
+                li.dataset.name = item.display; // for search
+                
+                li.addEventListener('click', () => changeChannel(item.id, item.display));
+                
+                list.appendChild(li);
+            });
+            
+            els.channelGuideContainer.appendChild(list);
         }
     });
+}
+
+function filterChannels(searchTerm) {
+    if(!els.channelGuideContainer) return;
+    const term = searchTerm.toLowerCase();
+    
+    const items = els.channelGuideContainer.querySelectorAll('.guide-item');
+    const categories = els.channelGuideContainer.querySelectorAll('.guide-category');
+    
+    items.forEach(item => {
+        if(item.textContent.toLowerCase().includes(term)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Optional: Hide empty categories if you want really clean look, 
+    // but simpler to just filter items for now.
+}
+
+async function changeChannel(playlistId, displayText) {
+    state.currentPlaylistId = playlistId;
+    
+    // Update OSD Channel Text
+    const channelMatch = displayText.match(/CH \d+/);
+    if(channelMatch) {
+        els.osdChannel.innerText = channelMatch[0];
+    }
+
+    showStatus("TUNING...");
+    
+    await fetchPlaylistItems(state.currentPlaylistId);
+
+    if (player && player.loadPlaylist) {
+        if (state.isOn) {
+            player.loadPlaylist({listType: 'playlist', list: state.currentPlaylistId});
+            hideStatus();
+        } else {
+            player.cuePlaylist({listType: 'playlist', list: state.currentPlaylistId});
+            hideStatus();
+        }
+    }
 }
 
 // --- VISUAL SETUP ---
@@ -265,30 +338,12 @@ function onPlayerError(event) {
 
 // --- EVENTS & LISTENERS ---
 
-els.playlistSelector.addEventListener('change', async (e) => {
-    state.currentPlaylistId = e.target.value;
-    
-    const selectedText = e.target.options[e.target.selectedIndex].text;
-    const channelMatch = selectedText.match(/CH \d+/);
-    if(channelMatch) {
-        els.osdChannel.innerText = channelMatch[0];
-    }
-
-    showStatus("TUNING...");
-    
-    // Isso vai acionar o Debug Console também
-    await fetchPlaylistItems(state.currentPlaylistId);
-
-    if (player && player.loadPlaylist) {
-        if (state.isOn) {
-            player.loadPlaylist({listType: 'playlist', list: state.currentPlaylistId});
-            hideStatus();
-        } else {
-            player.cuePlaylist({listType: 'playlist', list: state.currentPlaylistId});
-            hideStatus();
-        }
-    }
-});
+// Search Listener
+if(els.channelSearch) {
+    els.channelSearch.addEventListener('input', (e) => {
+        filterChannels(e.target.value);
+    });
+}
 
 // --- REMOTE CONTROL ---
 function setupRemoteControl() {
@@ -443,20 +498,26 @@ function handleCreditsForVideo(videoId, duration) {
 
     updateCreditsDOM(data);
 
-    const showAtStart = 6000;
-    const hideAtStart = 20000;
+    // Duração Estendida
+    const showAtStart = 6000; // Começa a aparecer aos 6s
+    const displayDuration = 15000; // Fica na tela por 15s (antes era menos)
+    
+    const hideAtStart = showAtStart + displayDuration;
     
     if (duration > 30) {
+        // Créditos iniciais
         currentTimers.push(setTimeout(() => showCredits(), showAtStart));
         currentTimers.push(setTimeout(() => hideCredits(), hideAtStart));
 
+        // Créditos finais
         if (duration > 60) {
-            const showAtEnd = (duration - 30) * 1000;
+            const showAtEnd = (duration - 25) * 1000; // 25s antes de acabar
             const hideAtEnd = (duration - 5) * 1000;
             currentTimers.push(setTimeout(() => showCredits(), showAtEnd));
             currentTimers.push(setTimeout(() => hideCredits(), hideAtEnd));
         }
     } else {
+        // Vídeo curto
         currentTimers.push(setTimeout(() => showCredits(), 2000));
         currentTimers.push(setTimeout(() => hideCredits(), duration * 1000 - 1000));
     }
