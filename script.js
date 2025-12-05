@@ -1,9 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { fetchTrackDetails } from './lastFmAPI.js';
+import { GoogleGenAI } from "@google/genai";
 
 // --- CONFIGURAÇÃO API YOUTUBE ---
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
 const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA';
+
+// --- CONFIGURAÇÃO GEMINI AI ---
+const GEMINI_API_KEY = 'AIzaSyAU0rLoRsAYns1W7ecNP0Drtw3fplbTgR0';
+const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+const aiModel = 'gemini-2.5-flash';
 
 // --- DADOS DE FALLBACK (IDs Reais para garantir funcionamento se a API falhar) ---
 const FALLBACK_PLAYLISTS = [
@@ -24,7 +30,9 @@ const state = {
     playlists: [],
     currentPlaylistVideos: [],
     currentSearchTerm: '',
-    playerReady: false
+    playerReady: false,
+    currentVideoTitle: '',
+    currentVideoId: ''
 };
 
 let player; // YouTube Only
@@ -72,6 +80,14 @@ const els = {
     // Last.FM Info Panel
     infoPanel: document.getElementById('info-panel'),
     infoContent: document.getElementById('info-content'),
+    
+    // AI Module
+    aiInput: document.getElementById('ai-input'),
+    aiSendBtn: document.getElementById('ai-send-btn'),
+    aiResponseDisplay: document.getElementById('ai-response-display'),
+    aiResponseText: document.getElementById('ai-response-text'),
+    aiCloseBtn: document.getElementById('ai-close-btn'),
+    aiLed: document.getElementById('ai-led'),
     
     credits: {
         container: document.getElementById('video-credits'),
@@ -194,7 +210,7 @@ window.onYouTubeIframeAPIReady = function() {
             'iv_load_policy': 3,
             'disablekb': 1,
             'mute': 0,
-            'autoplay': 0 // We control playback via JS
+            'autoplay': 1 
         },
         events: {
             'onReady': onPlayerReady,
@@ -209,11 +225,19 @@ function onPlayerReady(event) {
     state.playerReady = true;
     fetchChannelPlaylists().then(() => {
         renderChannelGuide();
-        // Se houver playlists, sintoniza a primeira mas não toca automaticamente para não bloquear audio
-        // if (state.playlists.length > 0) {
-        //    const first = state.playlists[0];
-        //    changeChannel(first.id, first.snippet.title);
-        // }
+        // Se houver playlists, sintoniza a primeira automaticamente
+        if (state.playlists.length > 0) {
+           const first = state.playlists[0];
+           console.log(`[Auto-Tune] Tuning to first channel: ${first.snippet.title}`);
+           // Define mas não força play se a TV estiver "desligada" visualmente, mas o estado diz ON
+           if(state.isOn) {
+               changeChannel(first.id, first.snippet.title);
+           } else {
+               // Prepara o estado
+               state.currentPlaylistId = first.id;
+               els.osdChannel.innerText = `CH 01`;
+           }
+        }
     });
 }
 
@@ -237,6 +261,8 @@ function onPlayerStateChange(event) {
         // Verifica se os dados do vídeo estão disponíveis
         if (data && data.title) {
             state.currentSearchTerm = data.title;
+            state.currentVideoTitle = data.title;
+            state.currentVideoId = data.video_id;
             console.log(`[Player] Playing: ${data.title} (${data.video_id})`);
             
             els.npTitle.textContent = data.title;
@@ -256,7 +282,7 @@ function onPlayerStateChange(event) {
     }
 }
 
-// --- LOGICA DE PLAYLISTS (LAZY LOADING) ---
+// --- LOGICA DE PLAYLISTS ---
 
 async function fetchChannelPlaylists() {
     console.log("[API] Fetching Playlists List...");
@@ -284,38 +310,15 @@ async function fetchChannelPlaylists() {
 }
 
 async function fetchPlaylistItems(playlistId, playlistTitle) {
-    // Usado apenas para popular metadados no background, não para tocar
-    console.log(`[API] Background fetching metadata for playlist ${playlistId}...`);
-    let videos = [];
-    let nextPageToken = '';
-    
-    // Se for fallback, não tentamos buscar na API para economizar cota/erros
-    if (playlistId.startsWith('PL_FALLBACK') || FALLBACK_PLAYLISTS.some(p => p.id === playlistId && p.id.startsWith('PLMC'))) {
-        // Para playlists reais de backup, retornamos vazio para evitar chamadas pesadas de API
-        // O player tocará normalmente via loadPlaylist({list: id})
-        return [];
-    }
-
+    // Apenas para metadados secundários, não para reprodução crítica
+    if (playlistId.startsWith('PL_FALLBACK')) return [];
     try {
-        // Busca apenas a primeira página para ter alguns metadados iniciais
-        const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${API_KEY}`;
+        const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=10&key=${API_KEY}`;
         const response = await fetch(url);
-        
-         if (response.status === 403 || response.status === 429) {
-             console.error("[API] YouTube Quota Exceeded (Metadata skipped).");
-             return [];
-         }
-         if (!response.ok) { 
-             // Ignora erros silenciosamente para não quebrar o fluxo
-             return []; 
-         }
-         
+        if (!response.ok) return [];
         const data = await response.json();
-        if (data.items) videos = data.items;
-        
-        return videos;
+        return data.items || [];
     } catch (error) {
-        console.warn(`[API] Metadata fetch warning for ${playlistId}`, error);
         return [];
     }
 }
@@ -398,9 +401,7 @@ async function changeChannel(playlistId, playlistTitle) {
     state.currentPlaylistId = playlistId;
 
     if (player && state.playerReady) {
-        // --- CORREÇÃO PRINCIPAL ---
-        // Usa o carregamento nativo de playlist.
-        // Isso evita erros de cota e garante que os vídeos renderizem.
+        // --- CORREÇÃO: loadPlaylist nativo ---
         player.loadPlaylist({
             listType: 'playlist',
             list: playlistId,
@@ -413,10 +414,8 @@ async function changeChannel(playlistId, playlistTitle) {
         showStatus("TUNING ERROR", true);
     }
 
-    // Carrega metadados em segundo plano (não bloqueia a reprodução)
     fetchPlaylistItems(playlistId, playlistTitle).then(videos => {
         state.currentPlaylistVideos = videos;
-        console.log(`[System] Background metadata loaded: ${videos.length} videos`);
     });
 }
 
@@ -431,6 +430,59 @@ function prevVideo() {
     triggerStatic();
     if (player && state.playerReady) {
         player.previousVideo();
+    }
+}
+
+// --- GEMINI AI INTEGRATION ---
+
+async function handleAIQuery(e) {
+    e.preventDefault();
+    if(!state.isOn) return;
+
+    const query = els.aiInput.value.trim();
+    if (!query) return;
+
+    els.aiInput.value = '';
+    els.aiLed.classList.remove('bg-red-900');
+    els.aiLed.classList.add('bg-red-500', 'animate-pulse');
+    els.aiResponseDisplay.classList.add('hidden');
+    
+    // Mostra status no OSD da TV também
+    showStatus("AI PROCESSING...", true);
+
+    try {
+        const context = `
+        User Context:
+        - App: Retro 90s TV Simulation
+        - Current Playlist: ${els.npPlaylist.innerText}
+        - Current Video: ${state.currentVideoTitle || 'Unknown'}
+        - Artist/Song (Guess): ${els.credits.artist.innerText} - ${els.credits.song.innerText}
+        
+        The user asks: "${query}"
+        
+        Provide a short, witty, or informative response fitting a retro tech enthusiast or music VJ persona. Keep it under 50 words if possible.
+        `;
+
+        const response = await genAI.models.generateContent({
+            model: aiModel,
+            contents: context
+        });
+
+        const text = response.text;
+        
+        // Exibir Resposta
+        els.aiResponseText.innerText = text;
+        els.aiResponseDisplay.classList.remove('hidden');
+        showStatus("DATA RECEIVED", false);
+
+    } catch (error) {
+        console.error("Gemini Error:", error);
+        els.aiResponseText.innerText = "ERROR: LINK FAILURE. SATELLITE UNREACHABLE.";
+        els.aiResponseDisplay.classList.remove('hidden');
+        showStatus("AI ERROR", false);
+    } finally {
+        els.aiLed.classList.add('bg-red-900');
+        els.aiLed.classList.remove('bg-red-500', 'animate-pulse');
     }
 }
 
@@ -554,6 +606,10 @@ function togglePower() {
         // Se já tivermos player pronto e playlist selecionada, retomar
         if(state.currentPlaylistId && player && state.playerReady) {
             player.playVideo();
+        } else if (state.playlists.length > 0 && player && state.playerReady) {
+            // Se ligou e tem canais mas nenhum selecionado, seleciona o primeiro
+            const first = state.playlists[0];
+            changeChannel(first.id, first.snippet.title);
         }
         
     } else {
@@ -570,6 +626,9 @@ function togglePower() {
         els.internalGuide.classList.add('hidden');
         els.infoPanel.classList.remove('active');
         state.isSearchOpen = false;
+        
+        // Desliga AI UI também
+        els.aiResponseDisplay.classList.add('hidden');
     }
 }
 
@@ -651,6 +710,15 @@ function setupEventListeners() {
     document.addEventListener('keydown', (e) => {
         if (!state.isOn) return;
         if (e.key === 'Escape' && state.isSearchOpen) toggleSearchMode();
+    });
+    
+    // AI Listeners
+    els.aiSendBtn.addEventListener('click', handleAIQuery);
+    els.aiInput.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') handleAIQuery(e);
+    });
+    els.aiCloseBtn.addEventListener('click', () => {
+        els.aiResponseDisplay.classList.add('hidden');
     });
 }
 
