@@ -173,6 +173,14 @@
                                     <div id="player" class="w-full h-full"></div>
                                 </div>
                                 
+                                <!-- LYRICS OVERLAY (NEW) -->
+                                <div id="lyrics-overlay" class="absolute inset-0 z-30 pointer-events-none hidden flex flex-col items-center justify-end pb-12">
+                                    <div class="bg-black/80 p-4 max-w-[90%] max-h-[60%] overflow-y-auto custom-scrollbar pointer-events-auto rounded border border-gray-800 backdrop-blur-sm">
+                                        <div class="text-yellow-400 font-vt323 text-center mb-2 text-sm uppercase tracking-widest border-b border-yellow-400/30 pb-1">AI Closed Captioning</div>
+                                        <div id="lyrics-content" class="text-white font-vt323 text-xl md:text-2xl leading-relaxed text-center whitespace-pre-wrap"></div>
+                                    </div>
+                                </div>
+                                
                                 <!-- STATIC NOISE OVERLAY -->
                                 <div id="static-overlay" class="absolute inset-0 z-30 opacity-0 pointer-events-none transition-opacity duration-100 bg-repeat"></div>
 
@@ -239,6 +247,12 @@
                                 <svg class="w-4 h-4 md:w-5 md:h-5 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
                             </button>
                             
+                            <!-- Closed Caption (NEW) -->
+                            <button id="tv-cc-btn" class="vcr-btn w-10 h-8 md:w-12 md:h-10 rounded flex items-center justify-center group relative" title="AI Lyrics (Closed Caption)">
+                                <span class="text-[8px] absolute -top-3 text-gray-500 font-bold tracking-widest group-hover:text-yellow-500">CC</span>
+                                <span class="text-xs md:text-sm font-bold text-gray-400 group-hover:text-white font-vt323 tracking-widest border border-gray-600 rounded px-1 group-hover:border-white transition-colors">SUB</span>
+                            </button>
+
                             <!-- Prev -->
                             <button id="tv-ch-prev" class="vcr-btn w-10 h-8 md:w-12 md:h-10 rounded flex items-center justify-center group relative" title="Rewind / Prev">
                                 <span class="text-[8px] absolute -top-3 text-gray-500 font-bold tracking-widest">REW</span>

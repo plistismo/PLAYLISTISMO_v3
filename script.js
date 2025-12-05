@@ -32,7 +32,11 @@ const state = {
     currentSearchTerm: '',
     playerReady: false,
     currentVideoTitle: '',
-    currentVideoId: ''
+    currentVideoId: '',
+    // Lyrics State
+    isLyricsOn: false,
+    currentLyrics: '',
+    lyricsScrollInterval: null
 };
 
 let player; // YouTube Only
@@ -55,6 +59,7 @@ const els = {
     btnNext: document.getElementById('tv-ch-next'),
     btnPrev: document.getElementById('tv-ch-prev'),
     btnSearch: document.getElementById('tv-search-btn'),
+    btnCC: document.getElementById('tv-cc-btn'), // NEW
     
     osdLayer: document.getElementById('osd-layer'),
     osdClock: document.getElementById('osd-clock'),
@@ -89,6 +94,10 @@ const els = {
     aiCloseBtn: document.getElementById('ai-close-btn'),
     aiLed: document.getElementById('ai-led'),
     
+    // Lyrics Elements
+    lyricsOverlay: document.getElementById('lyrics-overlay'),
+    lyricsContent: document.getElementById('lyrics-content'),
+
     credits: {
         container: document.getElementById('video-credits'),
         artist: document.getElementById('artist-name'),
@@ -260,15 +269,23 @@ function onPlayerStateChange(event) {
         
         // Verifica se os dados do vídeo estão disponíveis
         if (data && data.title) {
-            state.currentSearchTerm = data.title;
-            state.currentVideoTitle = data.title;
-            state.currentVideoId = data.video_id;
-            console.log(`[Player] Playing: ${data.title} (${data.video_id})`);
-            
-            els.npTitle.textContent = data.title;
-            els.npId.textContent = `ID: ${data.video_id}`;
-            
-            handleCreditsForVideo(data.video_id, data.title);
+            // Se o vídeo mudou
+            if (state.currentVideoId !== data.video_id) {
+                state.currentSearchTerm = data.title;
+                state.currentVideoTitle = data.title;
+                state.currentVideoId = data.video_id;
+                console.log(`[Player] Playing: ${data.title} (${data.video_id})`);
+                
+                els.npTitle.textContent = data.title;
+                els.npId.textContent = `ID: ${data.video_id}`;
+                
+                handleCreditsForVideo(data.video_id, data.title);
+
+                // Se legenda estiver ativa, busca a nova letra
+                if (state.isLyricsOn) {
+                    fetchLyricsForCurrentVideo();
+                }
+            }
         }
         
         els.osdLayer.classList.remove('fade-out');
@@ -433,7 +450,93 @@ function prevVideo() {
     }
 }
 
-// --- GEMINI AI INTEGRATION ---
+// --- LYRICS (LEGENDAS) VIA GEMINI AI ---
+async function toggleLyrics() {
+    if (!state.isOn) return;
+    state.isLyricsOn = !state.isLyricsOn;
+    
+    if (state.isLyricsOn) {
+        els.btnCC.classList.add('text-yellow-400'); // Highlight button
+        els.lyricsOverlay.classList.remove('hidden');
+        showStatus("CC: ENABLED", false);
+        
+        if (!els.lyricsContent.innerText || els.lyricsContent.innerText === "") {
+            fetchLyricsForCurrentVideo();
+        }
+    } else {
+        els.btnCC.classList.remove('text-yellow-400');
+        els.lyricsOverlay.classList.add('hidden');
+        showStatus("CC: DISABLED", false);
+        stopLyricsScroll();
+    }
+}
+
+async function fetchLyricsForCurrentVideo() {
+    if (!state.currentVideoTitle) return;
+
+    els.lyricsContent.innerText = "FETCHING DATA FROM SATELLITE...";
+    stopLyricsScroll();
+
+    // Tenta usar Artista/Musica limpos se disponíveis, senão usa o título do vídeo
+    let searchTerm = state.currentVideoTitle;
+    const artist = els.credits.artist.innerText;
+    const song = els.credits.song.innerText;
+    
+    if (artist && song && artist !== "Artist" && song !== "Song") {
+        searchTerm = `${artist} - ${song}`;
+    }
+
+    try {
+        const prompt = `
+        Context: You are a closed captioning system for a music TV channel.
+        Task: Provide the full lyrics for the song: "${searchTerm}".
+        Format: Return ONLY the lyrics as plain text. Do not add intro text, do not add "Lyrics:", do not add headers. Just the verses separated by line breaks.
+        Language: Detect the language of the song and return lyrics in that language.
+        `;
+
+        const response = await genAI.models.generateContent({
+            model: aiModel,
+            contents: prompt
+        });
+
+        const lyrics = response.text.trim();
+        els.lyricsContent.innerText = lyrics;
+        
+        // Inicia rolagem automática lenta (simulando tempo real)
+        startLyricsScroll();
+
+    } catch (error) {
+        console.error("Lyrics Error:", error);
+        els.lyricsContent.innerText = "CAPTION DATA CORRUPTED.\nUNABLE TO DECODE SIGNAL.";
+    }
+}
+
+function startLyricsScroll() {
+    stopLyricsScroll();
+    const container = els.lyricsOverlay.querySelector('div'); // O container com scroll
+    container.scrollTop = 0;
+    
+    // Rola lentamente (1px a cada X ms)
+    state.lyricsScrollInterval = setInterval(() => {
+        // Se o usuário estiver interagindo (scroll manual não detetado facilmente aqui, mas a rolagem lenta permite leitura)
+        // Se chegou ao fim, para
+        if (container.scrollTop + container.clientHeight >= container.scrollHeight) {
+             stopLyricsScroll();
+        } else {
+             container.scrollTop += 1;
+        }
+    }, 150); // Velocidade de leitura média
+}
+
+function stopLyricsScroll() {
+    if (state.lyricsScrollInterval) {
+        clearInterval(state.lyricsScrollInterval);
+        state.lyricsScrollInterval = null;
+    }
+}
+
+
+// --- GEMINI AI INTEGRATION (CHAT) ---
 
 async function handleAIQuery(e) {
     e.preventDefault();
@@ -627,8 +730,12 @@ function togglePower() {
         els.infoPanel.classList.remove('active');
         state.isSearchOpen = false;
         
-        // Desliga AI UI também
+        // Desliga AI UI e Legendas
         els.aiResponseDisplay.classList.add('hidden');
+        els.lyricsOverlay.classList.add('hidden');
+        state.isLyricsOn = false;
+        stopLyricsScroll();
+        els.btnCC.classList.remove('text-yellow-400');
     }
 }
 
@@ -707,6 +814,8 @@ function setupEventListeners() {
     els.btnSearch.addEventListener('click', toggleSearchMode);
     els.btnNext.addEventListener('click', nextVideo);
     els.btnPrev.addEventListener('click', prevVideo);
+    els.btnCC.addEventListener('click', toggleLyrics); // NEW LISTENER
+
     document.addEventListener('keydown', (e) => {
         if (!state.isOn) return;
         if (e.key === 'Escape' && state.isSearchOpen) toggleSearchMode();
