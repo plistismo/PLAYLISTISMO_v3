@@ -220,7 +220,11 @@ body {
     pointer-events: none;
     z-index: 60;
     transform: skewX(-5deg);
-    max-width: 40%; /* Prevent taking too much screen */
+    
+    /* FULL WIDTH FIX */
+    max-width: 90%; /* Allows it to take up most of the screen if needed */
+    width: auto;
+    right: 5%; /* Ensures it doesn't spill over */
 }
 
 .credits-overlay.visible {
@@ -231,9 +235,8 @@ body {
     margin-bottom: 0.3em; 
     text-transform: uppercase;
     letter-spacing: 1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal; /* Permite quebra de linha */
+    word-wrap: break-word; /* Garante quebra em palavras longas */
 }
 
 .credit-line span {
@@ -312,7 +315,7 @@ body {
         left: 3%;
         bottom: 3%;
         padding: 1%;
-        max-width: 60%;
+        max-width: 90%; /* Ensure mobile full width too */
     }
     
     #player {

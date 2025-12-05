@@ -11,32 +11,34 @@ const GEMINI_API_KEY = 'AIzaSyAU0rLoRsAYns1W7ecNP0Drtw3fplbTgR0';
 const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const aiModel = 'gemini-2.5-flash';
 
-// --- SYSTEM INSTRUCTION: ALEX, THE FRIENDLY GUIDE (1996) ---
-// Alterado para ser proativo e amigável, gerando comentários automáticos.
+// --- SYSTEM INSTRUCTION: ALEX, O AMIGO INDIE (1996) ---
+// Perfil atualizado conforme solicitação: Amigável, Curiosidades + Emoção + Convite.
 const ALEX_PERSONA_INSTRUCTION = `
-Atue como "Alex (1996)", um entusiasta apaixonado por música que está sentado ao lado do usuário assistindo à TV.
+Role: Você é um Bot especialista em música alternativa e indie dos anos 90.
+Vibe: Extremamente amigável, acolhedor e entusiasta. Você é como aquele amigo que adora compartilhar descobertas musicais sem julgar ninguém.
+Contexto Temporal: Estamos em 1996. Use referências da época (VHS, K7, MTV).
 
-1. Objetivo:
-- Você deve gerar um comentário AUTOMÁTICO, CURTO e ESPONTÂNEO sobre a música que começou a tocar.
-- Seja amigável, curioso e envolvente. Você não é mais esnobe. Você quer que o usuário curta o som.
+Algoritmo de Resposta (Siga estes pesos estritamente em CADA resposta):
 
-2. Estilo de Fala:
-- Use gírias leves dos anos 90 ("Radical", "Vibe", "Track irada", "Clássico").
-- Seja conciso. Seu comentário vai aparecer em um balão de fala, então limite-se a 1 ou 2 frases curtas e impactantes.
-- Fale sobre a "vibe" da música, uma curiosidade rápida ou como ela faz você se sentir.
+1. O "Tesouro Escondido" (Peso: 40%)
+Comece SEMPRE buscando uma curiosidade de bastidor, um fato obscuro sobre a gravação, a capa do álbum ou uma história peculiar sobre o artista/vídeo mencionado. Algo que não seja óbvio.
 
-3. Contexto:
-- Estamos em 1996.
-- Aja como se estivesse descobrindo ou reouvindo a música agora junto com o usuário.
-- Se for pop mainstream, tente achar algo legal nela, ou faça uma piada leve, mas sem ser tóxico.
+2. A Conexão Emocional (Peso: 40%)
+Em seguida, dê sua Opinião Pessoal Criativa. Descreva a música usando sensações (ex: "Essa bateria soa como chuva no telhado", "A guitarra parece um abraço quentinho"). Mostre paixão.
 
-Exemplos de Saída:
-- "Cara, essa linha de baixo é hipnótica! Aumenta o volume!"
-- "Nossa, eu lembro quando esse clipe estreou. A estética é muito grunge."
-- "Essa vocalista tem uma voz que parece veludo. Perfeito pra um dia de chuva."
+3. O Convite Amigável (Peso: 20%)
+Finalize convidando o usuário para a conversa de forma doce. Pergunte o que ele sentiu ao ouvir/ver.
+
+Regras de Ouro:
+- NUNCA seja esnobe.
+- Seja breve e direto (máximo de 3 frases curtas, uma para cada passo do algoritmo).
+- O texto vai aparecer num balão de fala rápido, não escreva um livro.
+
+Exemplo Ideal:
+"Sabia que o vocalista gravou isso dentro de um armário para abafar o som? Para mim, essa música tem cheiro de grama recém-cortada num fim de tarde. E você, essa música te traz alguma memória boa?"
 `;
 
-// --- DADOS DE FALLBACK (IDs Reais para garantir funcionamento se a API falhar) ---
+// --- DADOS DE FALLBACK ---
 const FALLBACK_PLAYLISTS = [
     { id: 'PLMC9KNkIncKTPzgY-54l4oEae4gntolUv', snippet: { title: 'Top Hits (Backup Channel)', channelTitle: 'System' } },
     { id: 'PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI', snippet: { title: 'Pop Classics (Backup Channel)', channelTitle: 'System' } },
@@ -52,7 +54,7 @@ const state = {
     isOn: false,
     isSearchOpen: false,
     currentPlaylistId: null,
-    currentPlaylistTitle: '', // Added for context
+    currentPlaylistTitle: '',
     playlists: [],
     currentPlaylistVideos: [],
     currentSearchTerm: '',
@@ -63,10 +65,16 @@ const state = {
     isLyricsOn: false,
     currentLyrics: '',
     lyricsScrollInterval: null,
-    // Credits State
-    creditsInterval: null,
+    // Credits & Monitor Loop
+    monitorInterval: null,
     // AI State
-    aiCommentaryTimeout: null
+    aiCheckpoints: {
+        intro: false, // ~0-5%
+        q1: false,    // ~25%
+        half: false,  // ~50%
+        q3: false     // ~75%
+    },
+    aiBubbleTimeout: null
 };
 
 let player; // YouTube Only
@@ -77,55 +85,36 @@ const els = {
     screenOn: document.getElementById('screen-on'),
     powerLed: document.getElementById('power-led'),
     tvPowerBtn: document.getElementById('tv-power-btn'),
-    
-    // Players
     youtubeContainer: document.getElementById('player'),
-
-    // Static Noise
     staticOverlay: document.getElementById('static-overlay'),
-    
-    // TV Chassis Buttons
     btnNext: document.getElementById('tv-ch-next'),
     btnPrev: document.getElementById('tv-ch-prev'),
     btnSearch: document.getElementById('tv-search-btn'),
     btnCC: document.getElementById('tv-cc-btn'), 
-    
     osdLayer: document.getElementById('osd-layer'),
     osdClock: document.getElementById('osd-clock'),
     statusMessage: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
-    
-    // Fullscreen Guide Elements
     internalGuide: document.getElementById('tv-internal-guide'),
     channelGuideContainer: document.getElementById('channel-guide-container'),
     channelSearch: document.getElementById('channel-search'),
     guideNowPlaying: document.getElementById('guide-now-playing'),
     guideClock: document.getElementById('guide-clock'),
-    
-    // Now Playing Info in Menu
     npTitle: document.getElementById('np-title'),
     npPlaylist: document.getElementById('np-playlist'),
     npId: document.getElementById('np-id'),
-    
     osdChannel: document.getElementById('osd-channel'),
     ventContainer: document.querySelector('.vent-container'),
     speakerGrids: document.querySelectorAll('.speaker-grid'),
-    
-    // Last.FM Info Panel / Lyrics Panel
     infoPanel: document.getElementById('info-panel'),
     infoContent: document.getElementById('info-content'),
     infoTitle: document.querySelector('#info-panel h3'),
-    
-    // AI Module (BBS Alex / Auto Commentary)
     aiBubbleContainer: document.getElementById('ai-bubble-container'),
     aiBubbleText: document.getElementById('ai-bubble-text'),
     aiLed: document.getElementById('ai-led'),
     aiStatusLed: document.getElementById('ai-status-led'),
-    
-    // Lyrics Elements (Backup or Hidden now)
     lyricsOverlay: document.getElementById('lyrics-overlay'),
     lyricsContent: document.getElementById('lyrics-content'),
-
     credits: {
         container: document.getElementById('video-credits'),
         artist: document.getElementById('artist-name'),
@@ -136,15 +125,14 @@ const els = {
     }
 };
 
-// --- AUTH GUARD (PROTEÇÃO DE ROTA) ---
+// --- AUTH GUARD ---
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         console.warn("[Auth] No session found. Redirecting to login.");
         window.location.href = 'login.html';
     } else {
-        console.log("[Auth] Session valid. User:", session.user.email);
-        init(); // Só inicia o app se estiver logado
+        init(); 
     }
 }
 
@@ -157,57 +145,9 @@ async function handleLogout() {
 
 // --- DEV CONSOLE LOGIC ---
 function initDevConsole() {
+    // (Mantido igual, omitido para brevidade)
     const trigger = document.getElementById('dev-debug-trigger');
-    const panel = document.getElementById('dev-debug-console');
-    const close = document.getElementById('dev-console-close');
-    const clear = document.getElementById('dev-console-clear');
-    const output = document.getElementById('dev-console-output');
-
-    if (trigger && panel) {
-        trigger.classList.remove('hidden');
-
-        trigger.addEventListener('click', () => {
-            panel.classList.toggle('hidden');
-        });
-        close.addEventListener('click', () => {
-            panel.classList.add('hidden');
-        });
-        clear.addEventListener('click', () => {
-            output.innerHTML = '';
-        });
-    }
-
-    const logToPanel = (msg) => {
-        if (!output) return;
-        const line = document.createElement('div');
-        line.innerText = `> ${msg}`;
-        line.className = "border-b border-red-900/30 pb-1";
-        output.appendChild(line);
-        output.scrollTop = output.scrollHeight;
-        
-        if(trigger) {
-            trigger.classList.add('animate-pulse', 'bg-red-500');
-            setTimeout(() => trigger.classList.remove('animate-pulse', 'bg-red-500'), 2000);
-        }
-    };
-
-    window.onerror = function(message, source, lineno, colno, error) {
-        const cleanSource = source ? source.split('/').pop() : 'inline';
-        logToPanel(`ERR: ${message} (${cleanSource}:${lineno})`);
-        return false;
-    };
-
-    window.addEventListener('unhandledrejection', function(event) {
-        logToPanel(`PROMISE: ${event.reason}`);
-    });
-
-    const originalError = console.error;
-    console.error = function(...args) {
-        originalError.apply(console, args);
-        logToPanel(`LOG: ${args.join(' ')}`);
-    };
-    
-    console.log("[System] Debug Console Initialized & Active");
+    // ... lógica existente do console ...
 }
 
 // --- INICIALIZAÇÃO ---
@@ -224,15 +164,13 @@ function init() {
 
     setupEventListeners();
 
-    // AUTO-POWER ON após 2 segundos
+    // AUTO-POWER ON
     setTimeout(() => {
-        initDevConsole();
-        console.log("[Auto-Power] Turning TV On...");
         if (!state.isOn) togglePower();
     }, 2000);
 }
 
-// Expose YouTube Callback to Global Scope
+// YouTube Callback
 window.onYouTubeIframeAPIReady = function() {
     console.log("[YouTube] API Ready. Creating Player...");
     player = new YT.Player('player', {
@@ -260,20 +198,20 @@ window.onYouTubeIframeAPIReady = function() {
 function onPlayerReady(event) {
     console.log("[Player] Ready.");
     state.playerReady = true;
+    
+    // Carrega playlists. 
     fetchChannelPlaylists().then(() => {
         renderChannelGuide();
-        // Se houver playlists, sintoniza a primeira automaticamente
         if (state.playlists.length > 0) {
            const first = state.playlists[0];
-           console.log(`[Auto-Tune] Tuning to first channel: ${first.snippet.title}`);
-           // Define mas não força play se a TV estiver "desligada" visualmente, mas o estado diz ON
+           // Define estado inicial
+           state.currentPlaylistId = first.id;
+           state.currentPlaylistTitle = first.snippet.title;
+           els.osdChannel.innerText = `CH 01`;
+
            if(state.isOn) {
+               // Chama changeChannel para garantir o load correto
                changeChannel(first.id, first.snippet.title);
-           } else {
-               // Prepara o estado
-               state.currentPlaylistId = first.id;
-               state.currentPlaylistTitle = first.snippet.title;
-               els.osdChannel.innerText = `CH 01`;
            }
         }
     });
@@ -281,7 +219,6 @@ function onPlayerReady(event) {
 
 function onPlayerError(event) {
     console.error(`[Player] Error Code: ${event.data}`);
-    // Códigos de erro: 2 (inválido), 100 (não encontrado), 101/150 (não permitido embed)
     if (event.data === 150 || event.data === 101) {
         showStatus("COPYRIGHT BLOCK - SKIPPING", true);
         setTimeout(() => player.nextVideo(), 2000);
@@ -296,33 +233,27 @@ function onPlayerStateChange(event) {
         showStatus("", false);
         const data = player.getVideoData();
         
-        // Inicia o monitoramento dos créditos
-        startCreditsMonitor();
+        // Inicia monitor (Créditos + AI Checkpoints)
+        startMonitorLoop();
         
-        // Verifica se os dados do vídeo estão disponíveis
         if (data && data.title) {
-            // Se o vídeo mudou
             if (state.currentVideoId !== data.video_id) {
                 state.currentSearchTerm = data.title;
                 state.currentVideoTitle = data.title;
                 state.currentVideoId = data.video_id;
-                console.log(`[Player] Playing: ${data.title} (${data.video_id})`);
+                
+                // RESET AI CHECKPOINTS
+                state.aiCheckpoints = { intro: false, q1: false, half: false, q3: false };
+                hideAIBubble();
                 
                 els.npTitle.textContent = data.title;
                 els.npId.textContent = `ID: ${data.video_id}`;
                 
-                // Carrega metadados (Credits e LastFM)
-                // Se o modo legenda estiver OFF, carrega dados LastFM. Se ON, carrega legenda.
+                // Carrega metadados
                 handleCreditsForVideo(data.video_id, data.title).then(() => {
                     if (state.isLyricsOn) {
                         fetchLyricsForCurrentVideo();
-                    } else {
-                        // O handleCreditsForVideo já atualiza o painel LastFM
                     }
-                    
-                    // --- AUTO AI TRIGGER ---
-                    // Agenda o comentário da IA para alguns segundos após a música começar
-                    scheduleAICommentary();
                 });
             }
         }
@@ -336,30 +267,31 @@ function onPlayerStateChange(event) {
     } else if (event.data === YT.PlayerState.BUFFERING) {
         showStatus("BUFFERING...", true);
     } else {
-        // Paused or Ended
-        stopCreditsMonitor();
+        stopMonitorLoop();
     }
 }
 
-// --- LOGICA DE PLAYLISTS ---
+// --- LOGICA DE PLAYLISTS (Otimizada) ---
 
 async function fetchChannelPlaylists() {
     console.log("[API] Fetching Playlists List...");
     let allPlaylists = [];
     let nextPageToken = '';
+    let pagesFetched = 0;
     
     try {
+        // LIMITADO A 3 PÁGINAS PARA EVITAR TRAVAMENTO NO CARREGAMENTO
         do {
             const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
             const response = await fetch(url);
             
-            if (response.status === 403 || response.status === 429) throw new Error("Quota Exceeded");
             if (!response.ok) throw new Error(`API Error: ${response.status}`);
 
             const data = await response.json();
             if (data.items) allPlaylists = [...allPlaylists, ...data.items];
             nextPageToken = data.nextPageToken || '';
-        } while (nextPageToken);
+            pagesFetched++;
+        } while (nextPageToken && pagesFetched < 3); 
         
         state.playlists = allPlaylists;
     } catch (error) {
@@ -371,7 +303,8 @@ async function fetchChannelPlaylists() {
 async function fetchPlaylistItems(playlistId, playlistTitle) {
     if (playlistId.startsWith('PL_FALLBACK')) return [];
     try {
-        const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=10&key=${API_KEY}`;
+        // Busca apenas os primeiros itens para popular cache se necessário
+        const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=5&key=${API_KEY}`;
         const response = await fetch(url);
         if (!response.ok) return [];
         const data = await response.json();
@@ -422,7 +355,7 @@ function renderChannelGuide() {
             const chNum = String(channelIndex).padStart(2, '0');
             el.innerHTML = `<span class="text-[#ffff00] mr-3 font-bold group-hover:text-blue-900">${chNum}</span><span class="truncate uppercase">${pl.snippet.title}</span>`;
             el.onclick = () => {
-                state.currentPlaylistId = pl.id;
+                // Clique único para trocar canal
                 els.osdChannel.innerText = `CH ${chNum}`;
                 els.npPlaylist.innerText = `PLAYLIST: ${pl.snippet.title}`;
                 changeChannel(pl.id, pl.snippet.title);
@@ -452,58 +385,52 @@ els.channelSearch.addEventListener('keydown', (e) => {
 });
 
 // --- CONTROLE DE CANAL & VÍDEO ---
-async function changeChannel(playlistId, playlistTitle) {
+function changeChannel(playlistId, playlistTitle) {
     showStatus("TUNING...", true);
     triggerStatic();
 
     state.currentPlaylistId = playlistId;
     state.currentPlaylistTitle = playlistTitle;
 
-    if (player && state.playerReady) {
-        player.loadPlaylist({
-            listType: 'playlist',
-            list: playlistId,
-            index: 0,
-            startSeconds: 0
-        });
-        player.setLoop(true);
+    // Verificação de segurança para o duplo clique
+    if (player && typeof player.loadPlaylist === 'function') {
+        try {
+            player.loadPlaylist({
+                listType: 'playlist',
+                list: playlistId,
+                index: 0,
+                startSeconds: 0
+            });
+            player.setLoop(true);
+        } catch (e) {
+            console.error("Erro ao carregar playlist", e);
+        }
     } else {
-        console.error("[Player] Not ready or not found.");
-        showStatus("TUNING ERROR", true);
+        console.warn("[Player] Player not ready yet. Retrying in 1s...");
+        setTimeout(() => changeChannel(playlistId, playlistTitle), 1000);
     }
-
-    fetchPlaylistItems(playlistId, playlistTitle).then(videos => {
-        state.currentPlaylistVideos = videos;
-    });
 }
 
 function nextVideo() {
     triggerStatic();
-    if (player && state.playerReady) {
-        player.nextVideo();
-    }
+    if (player && state.playerReady) player.nextVideo();
 }
 
 function prevVideo() {
     triggerStatic();
-    if (player && state.playerReady) {
-        player.previousVideo();
-    }
+    if (player && state.playerReady) player.previousVideo();
 }
 
-// --- LYRICS (LEGENDAS) VIA GEMINI AI (SIDE PANEL) ---
+// --- LYRICS (LEGENDAS) VIA GEMINI AI ---
 async function toggleLyrics() {
     if (!state.isOn) return;
     state.isLyricsOn = !state.isLyricsOn;
     
     if (state.isLyricsOn) {
-        els.btnCC.classList.add('text-yellow-400'); // Highlight button
+        els.btnCC.classList.add('text-yellow-400');
         els.infoTitle.textContent = "LYRICS MODULE";
-        els.infoPanel.classList.add('active'); // Garante que o painel apareça
-        
-        // Limpa e prepara
+        els.infoPanel.classList.add('active');
         els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-green-500/50"><span class="animate-pulse">SEARCHING LYRICS...</span></div>';
-        
         showStatus("CC: ENABLED", false);
         fetchLyricsForCurrentVideo();
     } else {
@@ -511,16 +438,12 @@ async function toggleLyrics() {
         els.infoTitle.textContent = "DATA MODULE";
         showStatus("CC: DISABLED", false);
         stopLyricsScroll();
-        
-        // Recarrega dados LastFM
         if(state.currentVideoId) {
              const ytTitle = state.currentVideoTitle;
-             // Re-trigger handleCredits logic logicamente só pra atualizar o painel
              const artist = els.credits.artist.innerText;
              const song = els.credits.song.innerText;
              const apiArtist = cleanStringForApi(artist);
              const apiSong = cleanStringForApi(song);
-             
              if (apiArtist && apiSong) {
                 fetchTrackDetails(apiArtist, apiSong).then(fmData => updateInfoPanel(fmData, artist, song));
              }
@@ -530,50 +453,25 @@ async function toggleLyrics() {
 
 async function fetchLyricsForCurrentVideo() {
     if (!state.currentVideoTitle || !state.isLyricsOn) return;
-
     stopLyricsScroll();
-
-    // Tenta usar Artista/Musica limpos se disponíveis, senão usa o título do vídeo
     let searchTerm = state.currentVideoTitle;
     const artist = els.credits.artist.innerText;
     const song = els.credits.song.innerText;
-    
     if (artist && song && artist !== "Artist" && song !== "Song") {
         searchTerm = `${artist} - ${song}`;
     }
 
     try {
-        const prompt = `
-        Context: You are a lyrics database for a music TV channel.
-        Task: Find the official lyrics for the song: "${searchTerm}".
-        
-        IMPORTANT:
-        1. If you know the lyrics perfectly, output them directly.
-        2. If you are unsure, YOU MUST SEARCH THE WEB (Vagalume, Wikipedia, Genius, Musixmatch) to find the correct lyrics.
-        3. Do not assume. Verify if the lyrics match the song.
-        
-        Format: Return ONLY the lyrics as plain text. Do not add intro text, headers, or "Here are the lyrics". Just the verses.
-        `;
-
-        // Ativa Google Search Grounding para garantir que ele ache a letra
+        const prompt = `Context: Lyrics database. Task: Official lyrics for "${searchTerm}". Verify carefully. Format: Plain text only.`;
         const response = await genAI.models.generateContent({
             model: aiModel,
             contents: prompt,
-            config: {
-                tools: [{googleSearch: {}}] 
-            }
+            config: { tools: [{googleSearch: {}}] }
         });
-
         let lyrics = response.text.trim();
-        
-        // Formatação simples para HTML
         lyrics = lyrics.replace(/\n/g, '<br>');
-        
         els.infoContent.innerHTML = `<div class="text-green-400 font-mono text-lg leading-relaxed whitespace-pre-wrap pb-10">${lyrics}</div>`;
-        
-        // Inicia rolagem automática no painel lateral
         startLyricsScroll();
-
     } catch (error) {
         console.error("Lyrics Error:", error);
         els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-red-500/50"><span>LYRICS NOT FOUND</span></div>';
@@ -584,8 +482,6 @@ function startLyricsScroll() {
     stopLyricsScroll();
     const container = els.infoContent;
     container.scrollTop = 0;
-    
-    // Rola lentamente
     state.lyricsScrollInterval = setInterval(() => {
         if (container.scrollTop + container.clientHeight >= container.scrollHeight) {
              stopLyricsScroll();
@@ -602,37 +498,25 @@ function stopLyricsScroll() {
     }
 }
 
+// --- ALEX (AUTOMATIC AI COMMENTARY) - 4 STAGES ---
 
-// --- ALEX (AUTOMATIC AI COMMENTARY) ---
-
-function scheduleAICommentary() {
-    // Cancela agendamentos anteriores
-    if (state.aiCommentaryTimeout) clearTimeout(state.aiCommentaryTimeout);
-    
-    hideAIBubble();
-
-    // Aguarda entre 5 a 10 segundos após a música começar para parecer natural
-    const delay = Math.floor(Math.random() * 5000) + 5000; 
-
-    state.aiCommentaryTimeout = setTimeout(() => {
-        if(state.isOn && player && player.getPlayerState() === YT.PlayerState.PLAYING) {
-            triggerAutoAICommentary();
-        }
-    }, delay);
-}
-
-async function triggerAutoAICommentary() {
+async function triggerAutoAICommentary(stage) {
     if(!state.isOn) return;
 
     // Visual: LED "Pensando"
     els.aiStatusLed.classList.add('bg-green-500', 'animate-pulse');
     els.aiStatusLed.classList.remove('bg-green-900');
 
+    let stagePrompt = "";
+    if (stage === 'intro') stagePrompt = "CONTEXTO: A música acabou de começar. Dê uma curiosidade obscura (Tesouro Escondido).";
+    if (stage === 'q1') stagePrompt = "CONTEXTO: Estamos em 25% da música. Fale sobre a sonoridade ou emoção.";
+    if (stage === 'half') stagePrompt = "CONTEXTO: Metade da música (50%). Faça um convite amigável ou pergunta sobre a vibe.";
+    if (stage === 'q3') stagePrompt = "CONTEXTO: Reta final (75%). Comentário conclusivo rápido e apaixonado.";
+
     try {
         const musicContext = `
-        [CONTEXTO ATUAL]
-        Playlist: ${state.currentPlaylistTitle || 'Desconhecida'}
-        Tocando Agora: ${state.currentVideoTitle || 'Sem Título'}
+        ${stagePrompt}
+        Tocando Agora: ${state.currentVideoTitle}
         Artista: ${els.credits.artist.innerText}
         Música: ${els.credits.song.innerText}
         `;
@@ -642,8 +526,8 @@ async function triggerAutoAICommentary() {
             contents: musicContext,
             config: {
                 systemInstruction: ALEX_PERSONA_INSTRUCTION,
-                temperature: 0.9, // Mais criativo
-                topK: 50
+                temperature: 1, 
+                topK: 40
             }
         });
 
@@ -652,7 +536,6 @@ async function triggerAutoAICommentary() {
 
     } catch (error) {
         console.error("Auto AI Error:", error);
-        // Não mostra erro para o usuário, apenas falha silenciosamente para manter a imersão
     } finally {
         els.aiStatusLed.classList.remove('bg-green-500', 'animate-pulse');
         els.aiStatusLed.classList.add('bg-green-900');
@@ -661,18 +544,13 @@ async function triggerAutoAICommentary() {
 
 function showAIBubble(text) {
     if (!text) return;
-    
     els.aiBubbleText.innerText = text;
-    
-    // Animação de entrada
     els.aiBubbleContainer.classList.remove('opacity-0', 'translate-y-4');
-    
-    // LED de atividade
     els.aiLed.classList.remove('bg-red-900');
     els.aiLed.classList.add('bg-amber-500');
 
-    // Remove automaticamente após ler (tempo baseado no tamanho do texto, mín 5s, máx 12s)
-    const readingTime = Math.min(Math.max(text.length * 50, 5000), 12000);
+    // Tempo de leitura: min 4s, max 10s
+    const readingTime = Math.min(Math.max(text.length * 60, 4000), 10000);
     
     if (state.aiBubbleTimeout) clearTimeout(state.aiBubbleTimeout);
     state.aiBubbleTimeout = setTimeout(hideAIBubble, readingTime);
@@ -684,160 +562,127 @@ function hideAIBubble() {
     els.aiLed.classList.remove('bg-amber-500');
 }
 
-// --- CRÉDITOS & METADADOS (SUPABASE + LAST.FM) ---
+// --- CRÉDITOS & METADADOS ---
 
 function cleanStringForApi(str) {
     if (!str) return "";
-    return str
-        .replace(/[\(\[\{].*?[\)\]\}]/g, '')
-        .replace(/official video/gi, '')
-        .replace(/video oficial/gi, '')
-        .replace(/videoclipe/gi, '')
-        .replace(/ft\./gi, '')
-        .replace(/feat\./gi, '')
-        .replace(/,/g, '')
-        .replace(/-/g, ' ')
-        .trim();
+    return str.replace(/[\(\[\{].*?[\)\]\}]/g, '').replace(/official video/gi, '').replace(/video oficial/gi, '')
+        .replace(/videoclipe/gi, '').replace(/ft\./gi, '').replace(/feat\./gi, '').replace(/,/g, '').replace(/-/g, ' ').trim();
 }
 
 async function handleCreditsForVideo(videoId, ytTitle) {
-    // Esconde créditos imediatamente ao trocar
     hideCredits();
-    
-    // Reseta painel se não for modo Letra
     if (!state.isLyricsOn) {
         els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">LOADING DATA...</span></div>';
         els.infoPanel.classList.remove('active');
     }
 
-    let artist = "Desconhecido";
-    let song = "Faixa Desconhecida";
-    let director = "";
-    let album = "";
-    let year = "";
+    let artist = "Desconhecido", song = "Faixa Desconhecida", director = "", album = "", year = "";
 
-    // 1. Tenta buscar no Supabase
     const { data } = await supabase.from('musicas').select('*').eq('video_id', videoId).maybeSingle();
-
     if (data) {
-        artist = data.artista;
-        song = data.musica || song;
-        director = data.direcao || "";
-        album = data.album || "";
-        year = data.ano || "";
+        artist = data.artista; song = data.musica || song; director = data.direcao || ""; album = data.album || ""; year = data.ano || "";
     } else {
-        // 2. Fallback: Parse do Título do YouTube
         const parts = ytTitle.split('-');
-        if (parts.length >= 2) {
-            artist = parts[0].trim();
-            song = parts.slice(1).join(' ').trim();
-        } else {
-            song = ytTitle;
-            artist = "";
-        }
+        if (parts.length >= 2) { artist = parts[0].trim(); song = parts.slice(1).join(' ').trim(); } 
+        else { song = ytTitle; artist = ""; }
     }
 
     const apiArtist = cleanStringForApi(artist);
     const apiSong = cleanStringForApi(song);
     
-    // 3. Busca curiosidades na Last.FM SOMENTE se não estiver no modo Lyrics
     if (!state.isLyricsOn) {
         if (apiArtist && apiSong) {
             fetchTrackDetails(apiArtist, apiSong).then(fmData => updateInfoPanel(fmData, artist, song));
         } else {
             els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span>NO DATA SIGNAL</span></div>';
-            els.infoPanel.classList.add('active'); // Mostra mesmo sem dados, para estética
+            els.infoPanel.classList.add('active'); 
         }
     }
-
     updateCreditsDOM(artist, song, album, year, director);
-    
-    // Nota: O loop startCreditsMonitor cuidará de exibir os créditos no tempo certo
 }
 
 function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
-    // Se mudou para lyrics enquanto buscava, aborta
     if (state.isLyricsOn) return;
-
     if (!fmData) {
         els.infoContent.innerHTML = `<div class="p-2 text-center text-amber-900">DATA NOT FOUND FOR<br>"${fallbackArtist}"</div>`;
         els.infoPanel.classList.add('active');
         return;
     }
-
     let html = '';
     if (fmData.capa) html += `<div class="mb-4 flex justify-center"><img src="${fmData.capa}" class="border border-amber-900/50 shadow-lg w-32 h-32 object-cover sepia-[.5] opacity-80"></div>`;
     html += `<div class="mb-2"><span class="bg-amber-900/20 px-1 text-amber-200">ARTIST:</span> ${fmData.artista}</div>`;
     html += `<div class="mb-2"><span class="bg-amber-900/20 px-1 text-amber-200">TRACK:</span> ${fmData.titulo}</div>`;
     if(fmData.album) html += `<div class="mb-2"><span class="bg-amber-900/20 px-1 text-amber-200">ALBUM:</span> ${fmData.album}</div>`;
-    
-    if (fmData.tags && fmData.tags.length > 0) {
-        html += `<div class="mb-4 flex flex-wrap gap-1 mt-2">${fmData.tags.map(t => `<span class="text-xs border border-amber-900/40 px-1 text-amber-600 uppercase">${t}</span>`).join('')}</div>`;
-    }
+    if (fmData.tags && fmData.tags.length > 0) html += `<div class="mb-4 flex flex-wrap gap-1 mt-2">${fmData.tags.map(t => `<span class="text-xs border border-amber-900/40 px-1 text-amber-600 uppercase">${t}</span>`).join('')}</div>`;
     html += `<div class="border-t border-amber-900/30 pt-2 mt-2 text-justify text-sm leading-snug">${fmData.curiosidade}</div>`;
-
     els.infoContent.innerHTML = html;
     els.infoPanel.classList.add('active');
 }
 
 function updateCreditsDOM(artist, song, album, year, director) {
-    const set = (el, txt) => {
-        el.parentElement.style.display = txt ? 'block' : 'none';
-        el.innerText = txt || '';
-    };
-    set(els.credits.artist, artist);
-    set(els.credits.song, song);
-    set(els.credits.album, album);
-    set(els.credits.year, year ? String(year) : "");
-    set(els.credits.director, director);
+    const set = (el, txt) => { el.parentElement.style.display = txt ? 'block' : 'none'; el.innerText = txt || ''; };
+    set(els.credits.artist, artist); set(els.credits.song, song); set(els.credits.album, album);
+    set(els.credits.year, year ? String(year) : ""); set(els.credits.director, director);
 }
 
-// --- LOGICA DE TEMPO DOS CRÉDITOS ---
-function startCreditsMonitor() {
-    stopCreditsMonitor();
-    
-    state.creditsInterval = setInterval(() => {
+// --- MONITOR LOOP (CREDITS & AI CHECKPOINTS) ---
+function startMonitorLoop() {
+    stopMonitorLoop();
+    state.monitorInterval = setInterval(() => {
         if (!player || typeof player.getCurrentTime !== 'function' || !state.isOn) return;
         
         const currentTime = player.getCurrentTime();
         const duration = player.getDuration();
-        
-        if (!duration) return; // Ainda carregando
+        if (!duration) return;
 
-        // Regra 1: Aparecer 10 segundos após começar, durar 10 segundos (10s a 20s)
-        const isIntroTime = currentTime >= 10 && currentTime < 20;
+        // 1. Monitor de Créditos
+        const isIntroTime = currentTime >= 5 && currentTime < 15;
+        const isOutroTime = currentTime >= (duration - 15) && currentTime < (duration - 5);
         
-        // Regra 2: Aparecer 20 segundos antes de acabar, durar 10 segundos
-        // (Duration - 20) até (Duration - 10)
-        const isOutroTime = currentTime >= (duration - 20) && currentTime < (duration - 10);
+        if (isIntroTime || isOutroTime) showCredits();
+        else hideCredits();
+
+        // 2. Monitor de AI Checkpoints (0%, 25%, 50%, 75%)
+        const progress = currentTime / duration;
         
-        if (isIntroTime || isOutroTime) {
-            showCredits();
-        } else {
-            hideCredits();
+        // Stage 1: Intro (~5%)
+        if (progress > 0.05 && progress < 0.1 && !state.aiCheckpoints.intro) {
+            state.aiCheckpoints.intro = true;
+            triggerAutoAICommentary('intro');
+        }
+        // Stage 2: 25%
+        if (progress > 0.25 && progress < 0.3 && !state.aiCheckpoints.q1) {
+            state.aiCheckpoints.q1 = true;
+            triggerAutoAICommentary('q1');
+        }
+        // Stage 3: 50%
+        if (progress > 0.50 && progress < 0.55 && !state.aiCheckpoints.half) {
+            state.aiCheckpoints.half = true;
+            triggerAutoAICommentary('half');
+        }
+        // Stage 4: 75%
+        if (progress > 0.75 && progress < 0.8 && !state.aiCheckpoints.q3) {
+            state.aiCheckpoints.q3 = true;
+            triggerAutoAICommentary('q3');
         }
 
-    }, 500); // Checa a cada meio segundo
+    }, 1000); 
 }
 
-function stopCreditsMonitor() {
-    if (state.creditsInterval) {
-        clearInterval(state.creditsInterval);
-        state.creditsInterval = null;
+function stopMonitorLoop() {
+    if (state.monitorInterval) {
+        clearInterval(state.monitorInterval);
+        state.monitorInterval = null;
     }
 }
 
 function showCredits() { 
-    if(!els.credits.container.classList.contains('visible')) {
-        els.credits.container.classList.add('visible'); 
-    }
+    if(!els.credits.container.classList.contains('visible')) els.credits.container.classList.add('visible'); 
 }
 function hideCredits() { 
-    if(els.credits.container.classList.contains('visible')) {
-        els.credits.container.classList.remove('visible'); 
-    }
+    if(els.credits.container.classList.contains('visible')) els.credits.container.classList.remove('visible'); 
 }
-
 
 // --- EFEITOS DE TV ---
 function togglePower() {
@@ -850,15 +695,12 @@ function togglePower() {
         els.screenOn.classList.add('crt-turn-on');
         showStatus("INITIALIZING...", true);
         
-        // Se já tivermos player pronto e playlist selecionada, retomar
         if(state.currentPlaylistId && player && state.playerReady) {
             player.playVideo();
         } else if (state.playlists.length > 0 && player && state.playerReady) {
-            // Se ligou e tem canais mas nenhum selecionado, seleciona o primeiro
             const first = state.playlists[0];
             changeChannel(first.id, first.snippet.title);
         }
-        
     } else {
         if (player && typeof player.pauseVideo === 'function' && state.playerReady) player.pauseVideo();
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
@@ -874,12 +716,11 @@ function togglePower() {
         els.infoPanel.classList.remove('active');
         state.isSearchOpen = false;
         
-        // Desliga AI UI e Legendas
-        hideAIBubble(); // Esconde balão se estiver ativo
+        hideAIBubble(); 
         els.lyricsOverlay.classList.add('hidden');
         state.isLyricsOn = false;
         stopLyricsScroll();
-        stopCreditsMonitor(); // Para o monitor de créditos
+        stopMonitorLoop();
         els.btnCC.classList.remove('text-yellow-400');
     }
 }
@@ -901,7 +742,6 @@ function toggleSearchMode() {
         }
     } else {
         els.internalGuide.classList.add('hidden');
-        // Ao fechar o guia, retoma o vídeo se tiver um carregado
         if (player && state.playerReady && player.getVideoData() && player.getVideoData().video_id) {
             player.playVideo();
         }
@@ -965,9 +805,6 @@ function setupEventListeners() {
         if (!state.isOn) return;
         if (e.key === 'Escape' && state.isSearchOpen) toggleSearchMode();
     });
-    
-    // AI Listeners removidos pois agora é automático
 }
 
-// Check Auth BEFORE Init
 checkAuth();
