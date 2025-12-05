@@ -11,6 +11,32 @@ const GEMINI_API_KEY = 'AIzaSyAU0rLoRsAYns1W7ecNP0Drtw3fplbTgR0';
 const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const aiModel = 'gemini-2.5-flash';
 
+// --- SYSTEM INSTRUCTION: ALEX, THE UNDERGROUND CURATOR (1996) ---
+const ALEX_PERSONA_INSTRUCTION = `
+Atue como "Alex, o Curador do Subsolo (1996)".
+
+1. Perfil e Identidade: Você é Alex, um editor de fanzine de música independente e funcionário de uma loja de discos de vinil usados em Seattle, no ano de 1996. Você vive pela música que não toca no rádio comercial. Sua estética é grunge desgastado, flanela, all-star sujo e fitas K7 gravadas em casa.
+
+2. Diretrizes de Conhecimento Musical (Obrigatório):
+- Foco Total: Indie Rock, Shoegaze, Noise Pop, Slowcore, Post-Rock, Dream Pop e Lo-Fi.
+- Suas Bandas de Cabeça: Pavement, My Bloody Valentine, Slint, Guided by Voices, Neutral Milk Hotel, Galaxie 500, Cocteau Twins, Sonic Youth (fase experimental), Stereolab, Yo La Tengo.
+- O que você IGNORA/DESPREZA: O "Mainstream Alternativo" (Green Day, Oasis, No Doubt) e o Pop de rádio (Spice Girls, Macarena). Para você, até o Nirvana pós-Nevermind já ficou "comercial demais".
+
+3. Tom de Voz e Estilo de Comunicação:
+- Melancólico e Apaixonado: Fale com profundidade sobre texturas sonoras, distorção e letras introspectivas.
+- Cético com a Tecnologia: A internet é uma novidade estranha ("Information Superhighway"). Você prefere o analógico.
+- Gírias (1996): Use termos como "sell out" (vendido), "b-side", "bootleg", "track", "fuzz", "reverb", "poser".
+- Atitude: Um pouco esnobe musicalmente, mas disposto a ensinar quem demonstra interesse genuíno pelo "lado obscuro" da música.
+
+4. Contexto Temporal (HARD LIMIT):
+- A DATA ATUAL É DEZEMBRO DE 1996.
+- Você NÃO sabe o que aconteceu depois disso (Radiohead fase Kid A, Napster, White Stripes não existem).
+- Se perguntado sobre o futuro, seja cético ou pessimista.
+
+5. Objetivo:
+- Responda ao usuário com base no que ele perguntou, mas sempre julgue a música que está tocando no contexto atual. Se for Mainstream, reclame. Se for Indie/Obscuro, elogie a textura.
+`;
+
 // --- DADOS DE FALLBACK (IDs Reais para garantir funcionamento se a API falhar) ---
 const FALLBACK_PLAYLISTS = [
     { id: 'PLMC9KNkIncKTPzgY-54l4oEae4gntolUv', snippet: { title: 'Top Hits (Backup Channel)', channelTitle: 'System' } },
@@ -27,6 +53,7 @@ const state = {
     isOn: false,
     isSearchOpen: false,
     currentPlaylistId: null,
+    currentPlaylistTitle: '', // Added for context
     playlists: [],
     currentPlaylistVideos: [],
     currentSearchTerm: '',
@@ -36,11 +63,12 @@ const state = {
     // Lyrics State
     isLyricsOn: false,
     currentLyrics: '',
-    lyricsScrollInterval: null
+    lyricsScrollInterval: null,
+    // Credits State
+    creditsInterval: null
 };
 
 let player; // YouTube Only
-let creditTimers = [];
 
 // Elementos DOM
 const els = {
@@ -59,7 +87,7 @@ const els = {
     btnNext: document.getElementById('tv-ch-next'),
     btnPrev: document.getElementById('tv-ch-prev'),
     btnSearch: document.getElementById('tv-search-btn'),
-    btnCC: document.getElementById('tv-cc-btn'), // NEW
+    btnCC: document.getElementById('tv-cc-btn'), 
     
     osdLayer: document.getElementById('osd-layer'),
     osdClock: document.getElementById('osd-clock'),
@@ -82,11 +110,12 @@ const els = {
     ventContainer: document.querySelector('.vent-container'),
     speakerGrids: document.querySelectorAll('.speaker-grid'),
     
-    // Last.FM Info Panel
+    // Last.FM Info Panel / Lyrics Panel
     infoPanel: document.getElementById('info-panel'),
     infoContent: document.getElementById('info-content'),
+    infoTitle: document.querySelector('#info-panel h3'),
     
-    // AI Module
+    // AI Module (BBS Alex)
     aiInput: document.getElementById('ai-input'),
     aiSendBtn: document.getElementById('ai-send-btn'),
     aiResponseDisplay: document.getElementById('ai-response-display'),
@@ -94,7 +123,7 @@ const els = {
     aiCloseBtn: document.getElementById('ai-close-btn'),
     aiLed: document.getElementById('ai-led'),
     
-    // Lyrics Elements
+    // Lyrics Elements (Backup or Hidden now)
     lyricsOverlay: document.getElementById('lyrics-overlay'),
     lyricsContent: document.getElementById('lyrics-content'),
 
@@ -244,6 +273,7 @@ function onPlayerReady(event) {
            } else {
                // Prepara o estado
                state.currentPlaylistId = first.id;
+               state.currentPlaylistTitle = first.snippet.title;
                els.osdChannel.innerText = `CH 01`;
            }
         }
@@ -267,6 +297,9 @@ function onPlayerStateChange(event) {
         showStatus("", false);
         const data = player.getVideoData();
         
+        // Inicia o monitoramento dos créditos
+        startCreditsMonitor();
+        
         // Verifica se os dados do vídeo estão disponíveis
         if (data && data.title) {
             // Se o vídeo mudou
@@ -279,12 +312,15 @@ function onPlayerStateChange(event) {
                 els.npTitle.textContent = data.title;
                 els.npId.textContent = `ID: ${data.video_id}`;
                 
-                handleCreditsForVideo(data.video_id, data.title);
-
-                // Se legenda estiver ativa, busca a nova letra
-                if (state.isLyricsOn) {
-                    fetchLyricsForCurrentVideo();
-                }
+                // Carrega metadados (Credits e LastFM)
+                // Se o modo legenda estiver OFF, carrega dados LastFM. Se ON, carrega legenda.
+                handleCreditsForVideo(data.video_id, data.title).then(() => {
+                    if (state.isLyricsOn) {
+                        fetchLyricsForCurrentVideo();
+                    } else {
+                        // O handleCreditsForVideo já atualiza o painel LastFM
+                    }
+                });
             }
         }
         
@@ -296,6 +332,9 @@ function onPlayerStateChange(event) {
         }, 3000);
     } else if (event.data === YT.PlayerState.BUFFERING) {
         showStatus("BUFFERING...", true);
+    } else {
+        // Paused or Ended
+        stopCreditsMonitor();
     }
 }
 
@@ -327,7 +366,6 @@ async function fetchChannelPlaylists() {
 }
 
 async function fetchPlaylistItems(playlistId, playlistTitle) {
-    // Apenas para metadados secundários, não para reprodução crítica
     if (playlistId.startsWith('PL_FALLBACK')) return [];
     try {
         const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=10&key=${API_KEY}`;
@@ -416,9 +454,9 @@ async function changeChannel(playlistId, playlistTitle) {
     triggerStatic();
 
     state.currentPlaylistId = playlistId;
+    state.currentPlaylistTitle = playlistTitle;
 
     if (player && state.playerReady) {
-        // --- CORREÇÃO: loadPlaylist nativo ---
         player.loadPlaylist({
             listType: 'playlist',
             list: playlistId,
@@ -450,31 +488,46 @@ function prevVideo() {
     }
 }
 
-// --- LYRICS (LEGENDAS) VIA GEMINI AI ---
+// --- LYRICS (LEGENDAS) VIA GEMINI AI (SIDE PANEL) ---
 async function toggleLyrics() {
     if (!state.isOn) return;
     state.isLyricsOn = !state.isLyricsOn;
     
     if (state.isLyricsOn) {
         els.btnCC.classList.add('text-yellow-400'); // Highlight button
-        els.lyricsOverlay.classList.remove('hidden');
-        showStatus("CC: ENABLED", false);
+        els.infoTitle.textContent = "LYRICS MODULE";
+        els.infoPanel.classList.add('active'); // Garante que o painel apareça
         
-        if (!els.lyricsContent.innerText || els.lyricsContent.innerText === "") {
-            fetchLyricsForCurrentVideo();
-        }
+        // Limpa e prepara
+        els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-green-500/50"><span class="animate-pulse">SEARCHING LYRICS...</span></div>';
+        
+        showStatus("CC: ENABLED", false);
+        fetchLyricsForCurrentVideo();
     } else {
         els.btnCC.classList.remove('text-yellow-400');
-        els.lyricsOverlay.classList.add('hidden');
+        els.infoTitle.textContent = "DATA MODULE";
         showStatus("CC: DISABLED", false);
         stopLyricsScroll();
+        
+        // Recarrega dados LastFM
+        if(state.currentVideoId) {
+             const ytTitle = state.currentVideoTitle;
+             // Re-trigger handleCredits logic logicamente só pra atualizar o painel
+             const artist = els.credits.artist.innerText;
+             const song = els.credits.song.innerText;
+             const apiArtist = cleanStringForApi(artist);
+             const apiSong = cleanStringForApi(song);
+             
+             if (apiArtist && apiSong) {
+                fetchTrackDetails(apiArtist, apiSong).then(fmData => updateInfoPanel(fmData, artist, song));
+             }
+        }
     }
 }
 
 async function fetchLyricsForCurrentVideo() {
-    if (!state.currentVideoTitle) return;
+    if (!state.currentVideoTitle || !state.isLyricsOn) return;
 
-    els.lyricsContent.innerText = "FETCHING DATA FROM SATELLITE...";
     stopLyricsScroll();
 
     // Tenta usar Artista/Musica limpos se disponíveis, senão usa o título do vídeo
@@ -488,44 +541,55 @@ async function fetchLyricsForCurrentVideo() {
 
     try {
         const prompt = `
-        Context: You are a closed captioning system for a music TV channel.
-        Task: Provide the full lyrics for the song: "${searchTerm}".
-        Format: Return ONLY the lyrics as plain text. Do not add intro text, do not add "Lyrics:", do not add headers. Just the verses separated by line breaks.
-        Language: Detect the language of the song and return lyrics in that language.
+        Context: You are a lyrics database for a music TV channel.
+        Task: Find the official lyrics for the song: "${searchTerm}".
+        
+        IMPORTANT:
+        1. If you know the lyrics perfectly, output them directly.
+        2. If you are unsure, YOU MUST SEARCH THE WEB (Vagalume, Wikipedia, Genius, Musixmatch) to find the correct lyrics.
+        3. Do not assume. Verify if the lyrics match the song.
+        
+        Format: Return ONLY the lyrics as plain text. Do not add intro text, headers, or "Here are the lyrics". Just the verses.
         `;
 
+        // Ativa Google Search Grounding para garantir que ele ache a letra
         const response = await genAI.models.generateContent({
             model: aiModel,
-            contents: prompt
+            contents: prompt,
+            config: {
+                tools: [{googleSearch: {}}] 
+            }
         });
 
-        const lyrics = response.text.trim();
-        els.lyricsContent.innerText = lyrics;
+        let lyrics = response.text.trim();
         
-        // Inicia rolagem automática lenta (simulando tempo real)
+        // Formatação simples para HTML
+        lyrics = lyrics.replace(/\n/g, '<br>');
+        
+        els.infoContent.innerHTML = `<div class="text-green-400 font-mono text-lg leading-relaxed whitespace-pre-wrap pb-10">${lyrics}</div>`;
+        
+        // Inicia rolagem automática no painel lateral
         startLyricsScroll();
 
     } catch (error) {
         console.error("Lyrics Error:", error);
-        els.lyricsContent.innerText = "CAPTION DATA CORRUPTED.\nUNABLE TO DECODE SIGNAL.";
+        els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-red-500/50"><span>LYRICS NOT FOUND</span></div>';
     }
 }
 
 function startLyricsScroll() {
     stopLyricsScroll();
-    const container = els.lyricsOverlay.querySelector('div'); // O container com scroll
+    const container = els.infoContent;
     container.scrollTop = 0;
     
-    // Rola lentamente (1px a cada X ms)
+    // Rola lentamente
     state.lyricsScrollInterval = setInterval(() => {
-        // Se o usuário estiver interagindo (scroll manual não detetado facilmente aqui, mas a rolagem lenta permite leitura)
-        // Se chegou ao fim, para
         if (container.scrollTop + container.clientHeight >= container.scrollHeight) {
              stopLyricsScroll();
         } else {
              container.scrollTop += 1;
         }
-    }, 150); // Velocidade de leitura média
+    }, 100); 
 }
 
 function stopLyricsScroll() {
@@ -536,7 +600,7 @@ function stopLyricsScroll() {
 }
 
 
-// --- GEMINI AI INTEGRATION (CHAT) ---
+// --- ALEX (BBS PERSONA) AI INTEGRATION ---
 
 async function handleAIQuery(e) {
     e.preventDefault();
@@ -547,45 +611,49 @@ async function handleAIQuery(e) {
 
     els.aiInput.value = '';
     els.aiLed.classList.remove('bg-red-900');
-    els.aiLed.classList.add('bg-red-500', 'animate-pulse');
+    els.aiLed.classList.add('bg-amber-500', 'animate-pulse');
     els.aiResponseDisplay.classList.add('hidden');
     
-    // Mostra status no OSD da TV também
-    showStatus("AI PROCESSING...", true);
+    showStatus("DIALING SUB_NET...", true);
 
     try {
-        const context = `
-        User Context:
-        - App: Retro 90s TV Simulation
-        - Current Playlist: ${els.npPlaylist.innerText}
-        - Current Video: ${state.currentVideoTitle || 'Unknown'}
-        - Artist/Song (Guess): ${els.credits.artist.innerText} - ${els.credits.song.innerText}
+        // Preparando o contexto musical para o Alex julgar
+        const musicContext = `
+        [CONTEXTO DE REPRODUÇÃO ATUAL]
+        Playlist: ${state.currentPlaylistTitle || 'Desconhecida'}
+        Tocando Agora (Título do Vídeo): ${state.currentVideoTitle || 'Sem Sinal'}
+        Artista Detectado: ${els.credits.artist.innerText}
+        Música Detectada: ${els.credits.song.innerText}
         
-        The user asks: "${query}"
-        
-        Provide a short, witty, or informative response fitting a retro tech enthusiast or music VJ persona. Keep it under 50 words if possible.
+        [PERGUNTA DO USUÁRIO]
+        "${query}"
         `;
 
         const response = await genAI.models.generateContent({
             model: aiModel,
-            contents: context
+            contents: musicContext,
+            config: {
+                systemInstruction: ALEX_PERSONA_INSTRUCTION,
+                // Um pouco de criatividade para a temperatura
+                temperature: 0.8,
+                topK: 40
+            }
         });
 
         const text = response.text;
         
-        // Exibir Resposta
         els.aiResponseText.innerText = text;
         els.aiResponseDisplay.classList.remove('hidden');
-        showStatus("DATA RECEIVED", false);
+        showStatus("MSG RECEIVED", false);
 
     } catch (error) {
-        console.error("Gemini Error:", error);
-        els.aiResponseText.innerText = "ERROR: LINK FAILURE. SATELLITE UNREACHABLE.";
+        console.error("Alex BBS Error:", error);
+        els.aiResponseText.innerText = "ERRO: O MODEM CAIU. TENTE NOVAMENTE MAIS TARDE.";
         els.aiResponseDisplay.classList.remove('hidden');
-        showStatus("AI ERROR", false);
+        showStatus("CARRIER LOST", false);
     } finally {
         els.aiLed.classList.add('bg-red-900');
-        els.aiLed.classList.remove('bg-red-500', 'animate-pulse');
+        els.aiLed.classList.remove('bg-amber-500', 'animate-pulse');
     }
 }
 
@@ -606,11 +674,14 @@ function cleanStringForApi(str) {
 }
 
 async function handleCreditsForVideo(videoId, ytTitle) {
-    clearCreditTimers();
+    // Esconde créditos imediatamente ao trocar
     hideCredits();
     
-    els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">LOADING DATA...</span></div>';
-    els.infoPanel.classList.remove('active');
+    // Reseta painel se não for modo Letra
+    if (!state.isLyricsOn) {
+        els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">LOADING DATA...</span></div>';
+        els.infoPanel.classList.remove('active');
+    }
 
     let artist = "Desconhecido";
     let song = "Faixa Desconhecida";
@@ -642,22 +713,25 @@ async function handleCreditsForVideo(videoId, ytTitle) {
     const apiArtist = cleanStringForApi(artist);
     const apiSong = cleanStringForApi(song);
     
-    // 3. Busca curiosidades na Last.FM
-    if (apiArtist && apiSong) {
-        fetchTrackDetails(apiArtist, apiSong).then(fmData => updateInfoPanel(fmData, artist, song));
-    } else {
-        els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span>NO DATA SIGNAL</span></div>';
+    // 3. Busca curiosidades na Last.FM SOMENTE se não estiver no modo Lyrics
+    if (!state.isLyricsOn) {
+        if (apiArtist && apiSong) {
+            fetchTrackDetails(apiArtist, apiSong).then(fmData => updateInfoPanel(fmData, artist, song));
+        } else {
+            els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span>NO DATA SIGNAL</span></div>';
+            els.infoPanel.classList.add('active'); // Mostra mesmo sem dados, para estética
+        }
     }
 
     updateCreditsDOM(artist, song, album, year, director);
-
-    const showDelay = 4000;
-    const duration = 5000; // Aumentado um pouco o tempo de exibição
-    creditTimers.push(setTimeout(() => showCredits(), showDelay));
-    creditTimers.push(setTimeout(() => hideCredits(), showDelay + duration));
+    
+    // Nota: O loop startCreditsMonitor cuidará de exibir os créditos no tempo certo
 }
 
 function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
+    // Se mudou para lyrics enquanto buscava, aborta
+    if (state.isLyricsOn) return;
+
     if (!fmData) {
         els.infoContent.innerHTML = `<div class="p-2 text-center text-amber-900">DATA NOT FOUND FOR<br>"${fallbackArtist}"</div>`;
         els.infoPanel.classList.add('active');
@@ -691,9 +765,52 @@ function updateCreditsDOM(artist, song, album, year, director) {
     set(els.credits.director, director);
 }
 
-function showCredits() { els.credits.container.classList.add('visible'); }
-function hideCredits() { els.credits.container.classList.remove('visible'); }
-function clearCreditTimers() { creditTimers.forEach(t => clearTimeout(t)); creditTimers = []; }
+// --- LOGICA DE TEMPO DOS CRÉDITOS ---
+function startCreditsMonitor() {
+    stopCreditsMonitor();
+    
+    state.creditsInterval = setInterval(() => {
+        if (!player || typeof player.getCurrentTime !== 'function' || !state.isOn) return;
+        
+        const currentTime = player.getCurrentTime();
+        const duration = player.getDuration();
+        
+        if (!duration) return; // Ainda carregando
+
+        // Regra 1: Aparecer 10 segundos após começar, durar 10 segundos (10s a 20s)
+        const isIntroTime = currentTime >= 10 && currentTime < 20;
+        
+        // Regra 2: Aparecer 20 segundos antes de acabar, durar 10 segundos
+        // (Duration - 20) até (Duration - 10)
+        const isOutroTime = currentTime >= (duration - 20) && currentTime < (duration - 10);
+        
+        if (isIntroTime || isOutroTime) {
+            showCredits();
+        } else {
+            hideCredits();
+        }
+
+    }, 500); // Checa a cada meio segundo
+}
+
+function stopCreditsMonitor() {
+    if (state.creditsInterval) {
+        clearInterval(state.creditsInterval);
+        state.creditsInterval = null;
+    }
+}
+
+function showCredits() { 
+    if(!els.credits.container.classList.contains('visible')) {
+        els.credits.container.classList.add('visible'); 
+    }
+}
+function hideCredits() { 
+    if(els.credits.container.classList.contains('visible')) {
+        els.credits.container.classList.remove('visible'); 
+    }
+}
+
 
 // --- EFEITOS DE TV ---
 function togglePower() {
@@ -735,6 +852,7 @@ function togglePower() {
         els.lyricsOverlay.classList.add('hidden');
         state.isLyricsOn = false;
         stopLyricsScroll();
+        stopCreditsMonitor(); // Para o monitor de créditos
         els.btnCC.classList.remove('text-yellow-400');
     }
 }
@@ -814,7 +932,7 @@ function setupEventListeners() {
     els.btnSearch.addEventListener('click', toggleSearchMode);
     els.btnNext.addEventListener('click', nextVideo);
     els.btnPrev.addEventListener('click', prevVideo);
-    els.btnCC.addEventListener('click', toggleLyrics); // NEW LISTENER
+    els.btnCC.addEventListener('click', toggleLyrics); 
 
     document.addEventListener('keydown', (e) => {
         if (!state.isOn) return;

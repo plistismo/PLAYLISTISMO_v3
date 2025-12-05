@@ -199,24 +199,28 @@ body {
     filter: sepia(0.2) contrast(1.15) brightness(1.1) saturate(1.1) blur(0.5px);
 }
 
-/* Credits Overlay (REDUCED SIZE) */
+/* Credits Overlay (RESPONSIVE SIZE) */
 .credits-overlay {
     position: absolute;
-    bottom: 30px; /* Adjusted */
-    left: 30px;   /* Adjusted */
+    bottom: 5%; /* Responsive positioning */
+    left: 5%;   /* Responsive positioning */
     color: white;
-    text-shadow: 2px 2px 0 #000000; /* Reduced shadow */
-    font-size: 16px; /* Reduced from 24px */
+    text-shadow: 2px 2px 0 #000000;
+    
+    /* Responsive font-size based on container width */
+    font-size: clamp(0.7rem, 2.5vmin, 1.2rem); 
+    
     font-family: 'Jost', sans-serif;
     line-height: 1.3;
     opacity: 0; 
     transition: opacity 0.8s ease-in-out; 
     background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%);
-    padding: 12px 20px; /* Reduced padding */
-    border-left: 4px solid #ffff00; /* Reduced border */
+    padding: 1.5% 2.5%; /* Responsive padding */
+    border-left: 0.3em solid #ffff00; /* Responsive border width roughly */
     pointer-events: none;
     z-index: 60;
     transform: skewX(-5deg);
+    max-width: 40%; /* Prevent taking too much screen */
 }
 
 .credits-overlay.visible {
@@ -224,9 +228,12 @@ body {
 }
 
 .credit-line {
-    margin-bottom: 4px; /* Reduced margin */
+    margin-bottom: 0.3em; 
     text-transform: uppercase;
     letter-spacing: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .credit-line span {
@@ -240,9 +247,9 @@ body {
 
 .icon {
     display: inline-block;
-    width: 20px; /* Reduced width */
+    width: 1.2em; 
     text-align: center;
-    margin-right: 6px;
+    margin-right: 0.4em;
     color: #ffff00; 
 }
 
@@ -302,11 +309,10 @@ body {
 /* Responsividade */
 @media (max-width: 768px) {
     .credits-overlay {
-        left: 10px;
-        bottom: 20px;
-        font-size: 12px; /* Even smaller on mobile */
-        padding: 8px;
-        border-left: 2px solid #ffff00;
+        left: 3%;
+        bottom: 3%;
+        padding: 1%;
+        max-width: 60%;
     }
     
     #player {
