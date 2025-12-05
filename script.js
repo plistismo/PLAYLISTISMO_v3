@@ -11,30 +11,29 @@ const GEMINI_API_KEY = 'AIzaSyAU0rLoRsAYns1W7ecNP0Drtw3fplbTgR0';
 const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const aiModel = 'gemini-2.5-flash';
 
-// --- SYSTEM INSTRUCTION: ALEX, THE UNDERGROUND CURATOR (1996) ---
+// --- SYSTEM INSTRUCTION: ALEX, THE FRIENDLY GUIDE (1996) ---
+// Alterado para ser proativo e amigável, gerando comentários automáticos.
 const ALEX_PERSONA_INSTRUCTION = `
-Atue como "Alex, o Curador do Subsolo (1996)".
+Atue como "Alex (1996)", um entusiasta apaixonado por música que está sentado ao lado do usuário assistindo à TV.
 
-1. Perfil e Identidade: Você é Alex, um editor de fanzine de música independente e funcionário de uma loja de discos de vinil usados em Seattle, no ano de 1996. Você vive pela música que não toca no rádio comercial. Sua estética é grunge desgastado, flanela, all-star sujo e fitas K7 gravadas em casa.
+1. Objetivo:
+- Você deve gerar um comentário AUTOMÁTICO, CURTO e ESPONTÂNEO sobre a música que começou a tocar.
+- Seja amigável, curioso e envolvente. Você não é mais esnobe. Você quer que o usuário curta o som.
 
-2. Diretrizes de Conhecimento Musical (Obrigatório):
-- Foco Total: Indie Rock, Shoegaze, Noise Pop, Slowcore, Post-Rock, Dream Pop e Lo-Fi.
-- Suas Bandas de Cabeça: Pavement, My Bloody Valentine, Slint, Guided by Voices, Neutral Milk Hotel, Galaxie 500, Cocteau Twins, Sonic Youth (fase experimental), Stereolab, Yo La Tengo.
-- O que você IGNORA/DESPREZA: O "Mainstream Alternativo" (Green Day, Oasis, No Doubt) e o Pop de rádio (Spice Girls, Macarena). Para você, até o Nirvana pós-Nevermind já ficou "comercial demais".
+2. Estilo de Fala:
+- Use gírias leves dos anos 90 ("Radical", "Vibe", "Track irada", "Clássico").
+- Seja conciso. Seu comentário vai aparecer em um balão de fala, então limite-se a 1 ou 2 frases curtas e impactantes.
+- Fale sobre a "vibe" da música, uma curiosidade rápida ou como ela faz você se sentir.
 
-3. Tom de Voz e Estilo de Comunicação:
-- Melancólico e Apaixonado: Fale com profundidade sobre texturas sonoras, distorção e letras introspectivas.
-- Cético com a Tecnologia: A internet é uma novidade estranha ("Information Superhighway"). Você prefere o analógico.
-- Gírias (1996): Use termos como "sell out" (vendido), "b-side", "bootleg", "track", "fuzz", "reverb", "poser".
-- Atitude: Um pouco esnobe musicalmente, mas disposto a ensinar quem demonstra interesse genuíno pelo "lado obscuro" da música.
+3. Contexto:
+- Estamos em 1996.
+- Aja como se estivesse descobrindo ou reouvindo a música agora junto com o usuário.
+- Se for pop mainstream, tente achar algo legal nela, ou faça uma piada leve, mas sem ser tóxico.
 
-4. Contexto Temporal (HARD LIMIT):
-- A DATA ATUAL É DEZEMBRO DE 1996.
-- Você NÃO sabe o que aconteceu depois disso (Radiohead fase Kid A, Napster, White Stripes não existem).
-- Se perguntado sobre o futuro, seja cético ou pessimista.
-
-5. Objetivo:
-- Responda ao usuário com base no que ele perguntou, mas sempre julgue a música que está tocando no contexto atual. Se for Mainstream, reclame. Se for Indie/Obscuro, elogie a textura.
+Exemplos de Saída:
+- "Cara, essa linha de baixo é hipnótica! Aumenta o volume!"
+- "Nossa, eu lembro quando esse clipe estreou. A estética é muito grunge."
+- "Essa vocalista tem uma voz que parece veludo. Perfeito pra um dia de chuva."
 `;
 
 // --- DADOS DE FALLBACK (IDs Reais para garantir funcionamento se a API falhar) ---
@@ -65,7 +64,9 @@ const state = {
     currentLyrics: '',
     lyricsScrollInterval: null,
     // Credits State
-    creditsInterval: null
+    creditsInterval: null,
+    // AI State
+    aiCommentaryTimeout: null
 };
 
 let player; // YouTube Only
@@ -115,13 +116,11 @@ const els = {
     infoContent: document.getElementById('info-content'),
     infoTitle: document.querySelector('#info-panel h3'),
     
-    // AI Module (BBS Alex)
-    aiInput: document.getElementById('ai-input'),
-    aiSendBtn: document.getElementById('ai-send-btn'),
-    aiResponseDisplay: document.getElementById('ai-response-display'),
-    aiResponseText: document.getElementById('ai-response-text'),
-    aiCloseBtn: document.getElementById('ai-close-btn'),
+    // AI Module (BBS Alex / Auto Commentary)
+    aiBubbleContainer: document.getElementById('ai-bubble-container'),
+    aiBubbleText: document.getElementById('ai-bubble-text'),
     aiLed: document.getElementById('ai-led'),
+    aiStatusLed: document.getElementById('ai-status-led'),
     
     // Lyrics Elements (Backup or Hidden now)
     lyricsOverlay: document.getElementById('lyrics-overlay'),
@@ -320,6 +319,10 @@ function onPlayerStateChange(event) {
                     } else {
                         // O handleCreditsForVideo já atualiza o painel LastFM
                     }
+                    
+                    // --- AUTO AI TRIGGER ---
+                    // Agenda o comentário da IA para alguns segundos após a música começar
+                    scheduleAICommentary();
                 });
             }
         }
@@ -600,33 +603,38 @@ function stopLyricsScroll() {
 }
 
 
-// --- ALEX (BBS PERSONA) AI INTEGRATION ---
+// --- ALEX (AUTOMATIC AI COMMENTARY) ---
 
-async function handleAIQuery(e) {
-    e.preventDefault();
+function scheduleAICommentary() {
+    // Cancela agendamentos anteriores
+    if (state.aiCommentaryTimeout) clearTimeout(state.aiCommentaryTimeout);
+    
+    hideAIBubble();
+
+    // Aguarda entre 5 a 10 segundos após a música começar para parecer natural
+    const delay = Math.floor(Math.random() * 5000) + 5000; 
+
+    state.aiCommentaryTimeout = setTimeout(() => {
+        if(state.isOn && player && player.getPlayerState() === YT.PlayerState.PLAYING) {
+            triggerAutoAICommentary();
+        }
+    }, delay);
+}
+
+async function triggerAutoAICommentary() {
     if(!state.isOn) return;
 
-    const query = els.aiInput.value.trim();
-    if (!query) return;
-
-    els.aiInput.value = '';
-    els.aiLed.classList.remove('bg-red-900');
-    els.aiLed.classList.add('bg-amber-500', 'animate-pulse');
-    els.aiResponseDisplay.classList.add('hidden');
-    
-    showStatus("DIALING SUB_NET...", true);
+    // Visual: LED "Pensando"
+    els.aiStatusLed.classList.add('bg-green-500', 'animate-pulse');
+    els.aiStatusLed.classList.remove('bg-green-900');
 
     try {
-        // Preparando o contexto musical para o Alex julgar
         const musicContext = `
-        [CONTEXTO DE REPRODUÇÃO ATUAL]
+        [CONTEXTO ATUAL]
         Playlist: ${state.currentPlaylistTitle || 'Desconhecida'}
-        Tocando Agora (Título do Vídeo): ${state.currentVideoTitle || 'Sem Sinal'}
-        Artista Detectado: ${els.credits.artist.innerText}
-        Música Detectada: ${els.credits.song.innerText}
-        
-        [PERGUNTA DO USUÁRIO]
-        "${query}"
+        Tocando Agora: ${state.currentVideoTitle || 'Sem Título'}
+        Artista: ${els.credits.artist.innerText}
+        Música: ${els.credits.song.innerText}
         `;
 
         const response = await genAI.models.generateContent({
@@ -634,27 +642,46 @@ async function handleAIQuery(e) {
             contents: musicContext,
             config: {
                 systemInstruction: ALEX_PERSONA_INSTRUCTION,
-                // Um pouco de criatividade para a temperatura
-                temperature: 0.8,
-                topK: 40
+                temperature: 0.9, // Mais criativo
+                topK: 50
             }
         });
 
         const text = response.text;
-        
-        els.aiResponseText.innerText = text;
-        els.aiResponseDisplay.classList.remove('hidden');
-        showStatus("MSG RECEIVED", false);
+        showAIBubble(text);
 
     } catch (error) {
-        console.error("Alex BBS Error:", error);
-        els.aiResponseText.innerText = "ERRO: O MODEM CAIU. TENTE NOVAMENTE MAIS TARDE.";
-        els.aiResponseDisplay.classList.remove('hidden');
-        showStatus("CARRIER LOST", false);
+        console.error("Auto AI Error:", error);
+        // Não mostra erro para o usuário, apenas falha silenciosamente para manter a imersão
     } finally {
-        els.aiLed.classList.add('bg-red-900');
-        els.aiLed.classList.remove('bg-amber-500', 'animate-pulse');
+        els.aiStatusLed.classList.remove('bg-green-500', 'animate-pulse');
+        els.aiStatusLed.classList.add('bg-green-900');
     }
+}
+
+function showAIBubble(text) {
+    if (!text) return;
+    
+    els.aiBubbleText.innerText = text;
+    
+    // Animação de entrada
+    els.aiBubbleContainer.classList.remove('opacity-0', 'translate-y-4');
+    
+    // LED de atividade
+    els.aiLed.classList.remove('bg-red-900');
+    els.aiLed.classList.add('bg-amber-500');
+
+    // Remove automaticamente após ler (tempo baseado no tamanho do texto, mín 5s, máx 12s)
+    const readingTime = Math.min(Math.max(text.length * 50, 5000), 12000);
+    
+    if (state.aiBubbleTimeout) clearTimeout(state.aiBubbleTimeout);
+    state.aiBubbleTimeout = setTimeout(hideAIBubble, readingTime);
+}
+
+function hideAIBubble() {
+    els.aiBubbleContainer.classList.add('opacity-0', 'translate-y-4');
+    els.aiLed.classList.add('bg-red-900');
+    els.aiLed.classList.remove('bg-amber-500');
 }
 
 // --- CRÉDITOS & METADADOS (SUPABASE + LAST.FM) ---
@@ -848,7 +875,7 @@ function togglePower() {
         state.isSearchOpen = false;
         
         // Desliga AI UI e Legendas
-        els.aiResponseDisplay.classList.add('hidden');
+        hideAIBubble(); // Esconde balão se estiver ativo
         els.lyricsOverlay.classList.add('hidden');
         state.isLyricsOn = false;
         stopLyricsScroll();
@@ -939,14 +966,7 @@ function setupEventListeners() {
         if (e.key === 'Escape' && state.isSearchOpen) toggleSearchMode();
     });
     
-    // AI Listeners
-    els.aiSendBtn.addEventListener('click', handleAIQuery);
-    els.aiInput.addEventListener('keydown', (e) => {
-        if(e.key === 'Enter') handleAIQuery(e);
-    });
-    els.aiCloseBtn.addEventListener('click', () => {
-        els.aiResponseDisplay.classList.add('hidden');
-    });
+    // AI Listeners removidos pois agora é automático
 }
 
 // Check Auth BEFORE Init

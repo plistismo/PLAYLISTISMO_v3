@@ -105,37 +105,43 @@
         <!-- TV & AI WRAPPER -->
         <div class="flex flex-col w-full max-w-4xl order-1 relative">
             
-            <!-- ALEX AI MODULE (BBS STYLE) -->
-            <div id="ai-module" class="relative w-full max-w-2xl mx-auto mb-4 perspective-[1000px] z-20 group">
+            <!-- ALEX AI MODULE (AUTOMATIC BUBBLE STYLE) -->
+            <div id="ai-module" class="relative w-full max-w-2xl mx-auto mb-10 perspective-[1000px] z-20 group">
                 <!-- Adesivo Grunge -->
                 <div class="absolute -top-3 -right-4 z-30 transform rotate-12 bg-yellow-200 text-black px-2 py-1 font-marker shadow-lg border border-black/20 text-xs font-bold font-sans">
-                    FANZINE MODE
+                    ALEX 1996
                 </div>
 
-                <div class="bg-[#222] border-2 border-[#444] rounded-t-sm rounded-b-md p-3 shadow-[0_10px_20px_rgba(0,0,0,0.5)] transform rotate-x-10 flex items-center gap-4 border-b-8 border-b-[#111]">
-                    <div class="flex flex-col gap-1 shrink-0 items-center">
-                        <div class="text-[9px] text-gray-400 font-bold tracking-widest font-mono text-center leading-tight">SUB_NET<br>TERMINAL</div>
+                <!-- Main AI Unit Box -->
+                <div class="bg-[#222] border-2 border-[#444] rounded-lg p-3 shadow-[0_10px_20px_rgba(0,0,0,0.5)] transform rotate-x-10 flex items-center justify-between gap-4 border-b-8 border-b-[#111]">
+                    <div class="flex flex-col gap-1 shrink-0 items-center pl-2">
+                        <div class="text-[9px] text-gray-400 font-bold tracking-widest font-mono text-center leading-tight">AUTO<br>COMMENTARY</div>
                         <div class="flex gap-1 mt-1">
                             <div class="w-2 h-2 rounded-sm bg-red-900 transition-colors duration-300 border border-black" id="ai-led"></div>
-                            <div class="w-2 h-2 rounded-sm bg-amber-900 animate-pulse border border-black"></div>
+                            <div class="w-2 h-2 rounded-sm bg-green-900 transition-colors duration-300 border border-black" id="ai-status-led"></div>
                         </div>
                     </div>
-                    <div class="flex-1 bg-[#0a0a0a] rounded border-2 border-gray-700/50 p-1 relative overflow-hidden h-12 flex items-center shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
-                        <span class="text-amber-600 mr-2 select-none font-vt323 text-xl blink">_</span>
-                        <input type="text" id="ai-input" class="w-full bg-transparent text-amber-500 font-vt323 text-xl outline-none placeholder-amber-900/40 uppercase tracking-wider" placeholder="FALE COM O CURADOR..." autocomplete="off">
-                        <div class="absolute inset-0 pointer-events-none scanlines opacity-20"></div>
+                    
+                    <!-- Decorate Vents -->
+                    <div class="flex-1 flex justify-center gap-1 opacity-20">
+                        <div class="w-1 h-8 bg-black rounded-full"></div>
+                        <div class="w-1 h-8 bg-black rounded-full"></div>
+                        <div class="w-1 h-8 bg-black rounded-full"></div>
+                        <div class="w-1 h-8 bg-black rounded-full"></div>
                     </div>
-                    <button id="ai-send-btn" class="bg-[#333] hover:bg-[#444] text-gray-300 hover:text-white px-4 py-2 rounded-sm border-b-4 border-r-4 border-black hover:border-gray-900 font-bold text-xs tracking-wider transition-all active:border-0 active:translate-y-1 active:translate-x-1 font-mono">SEND</button>
+
+                    <div class="text-[10px] text-gray-500 font-vt323 tracking-widest text-right pr-2">
+                        LISTENING...
+                    </div>
                 </div>
                 
-                <!-- AI RESPONSE POPUP -->
-                <div id="ai-response-display" class="hidden absolute top-[105%] left-0 right-0 bg-[#0a0a0a] border-2 border-amber-700/60 p-4 rounded-sm text-amber-500 font-vt323 text-lg shadow-[0_0_30px_rgba(180,83,9,0.1)] z-[60] max-h-72 overflow-y-auto custom-scrollbar">
-                    <div class="flex justify-between items-center border-b border-dashed border-amber-900/50 pb-2 mb-2">
-                        <span class="text-xs text-amber-700 font-bold tracking-widest">> INCOMING MESSAGE FROM: ALEX (1996)</span>
-                        <button id="ai-close-btn" class="text-amber-800 hover:text-amber-500 text-xs font-mono">[X]</button>
-                    </div>
-                    <div id="ai-response-text" class="leading-relaxed opacity-90 text-justify"></div>
-                    <div class="mt-4 text-[10px] text-amber-900/60 text-right font-mono">CONNECTION: 28.8KBPS // NO CARRIER</div>
+                <!-- SPEECH BUBBLE CONTAINER (Absolute over the unit or slightly above) -->
+                <div id="ai-bubble-container" class="absolute bottom-[110%] left-0 right-0 flex justify-center pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4">
+                     <div class="speech-bubble bg-[#fff] text-black border-2 border-black p-4 rounded-lg font-vt323 text-xl shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-md relative">
+                        <span id="ai-bubble-text">...</span>
+                        <!-- Bubble Tail -->
+                        <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-2 border-r-2 border-black transform rotate-45"></div>
+                     </div>
                 </div>
             </div>
 
