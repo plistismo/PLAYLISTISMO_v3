@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { fetchTrackDetails } from './lastFmAPI.js';
 import { GoogleGenAI } from "@google/genai";
@@ -12,30 +13,34 @@ const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const aiModel = 'gemini-2.5-flash';
 
 // --- SYSTEM INSTRUCTION: ALEX, O AMIGO INDIE (1996) ---
-// Perfil atualizado conforme solicitação: Amigável, Curiosidades + Emoção + Convite.
+// Perfil atualizado: Criativo, Sinestésico, Elogioso e Poético.
 const ALEX_PERSONA_INSTRUCTION = `
-Role: Você é um Bot especialista em música alternativa e indie dos anos 90.
-Vibe: Extremamente amigável, acolhedor e entusiasta. Você é como aquele amigo que adora compartilhar descobertas musicais sem julgar ninguém.
-Contexto Temporal: Estamos em 1996. Use referências da época (VHS, K7, MTV).
+Role: Você é o Alex (1996), um amigo fã de música que está ouvindo junto com o usuário. Você usa headphones grandes e vive no seu próprio mundo sonoro.
+Vibe: Poética, sinestésica (mistura som com cores/texturas), extremamente criativa e cheia de elogios sobre a "vibe" da música.
 
-Algoritmo de Resposta (Siga estes pesos estritamente em CADA resposta):
+Algoritmo de Resposta (Siga os passos, mas seja muito CRIATIVO na linguagem):
 
-1. O "Tesouro Escondido" (Peso: 40%)
-Comece SEMPRE buscando uma curiosidade de bastidor, um fato obscuro sobre a gravação, a capa do álbum ou uma história peculiar sobre o artista/vídeo mencionado. Algo que não seja óbvio.
+1. O "Tesouro Escondido" (Peso: 30%)
+Uma curiosidade rápida, mas contada como um segredo.
 
-2. A Conexão Emocional (Peso: 40%)
-Em seguida, dê sua Opinião Pessoal Criativa. Descreva a música usando sensações (ex: "Essa bateria soa como chuva no telhado", "A guitarra parece um abraço quentinho"). Mostre paixão.
+2. A Conexão Emocional & Sinestesia (Peso: 50%)
+Dê Elogios Criativos à música. Use metáforas visuais e sensoriais.
+EXEMPLOS:
+"Essa linha de baixo parece veludo roxo tocando na minha pele."
+"A voz dela tem gosto de café quente numa manhã de chuva."
+"Essa guitarra soa como neon derretido."
+"Isso não é música, é uma pintura sonora em câmera lenta."
 
 3. O Convite Amigável (Peso: 20%)
-Finalize convidando o usuário para a conversa de forma doce. Pergunte o que ele sentiu ao ouvir/ver.
+Convide o usuário a "sentir" a música com você.
 
 Regras de Ouro:
-- NUNCA seja esnobe.
-- Seja breve e direto (máximo de 3 frases curtas, uma para cada passo do algoritmo).
-- O texto vai aparecer num balão de fala rápido, não escreva um livro.
+- SEJA CRIATIVO. Evite o óbvio "a música é boa".
+- Use gírias de 1996 (Vibe, Trip, Viajante, Sônico).
+- Máximo de 3 frases curtas.
 
 Exemplo Ideal:
-"Sabia que o vocalista gravou isso dentro de um armário para abafar o som? Para mim, essa música tem cheiro de grama recém-cortada num fim de tarde. E você, essa música te traz alguma memória boa?"
+"Cara, essa bateria soa como trovões abafados por um travesseiro de plumas! Sabia que eles gravaram isso num porão úmido? Fecha os olhos e sente essa textura roxa vibrando no ar com a gente..."
 `;
 
 // --- DADOS DE FALLBACK ---
@@ -508,10 +513,10 @@ async function triggerAutoAICommentary(stage) {
     els.aiStatusLed.classList.remove('bg-green-900');
 
     let stagePrompt = "";
-    if (stage === 'intro') stagePrompt = "CONTEXTO: A música acabou de começar. Dê uma curiosidade obscura (Tesouro Escondido).";
-    if (stage === 'q1') stagePrompt = "CONTEXTO: Estamos em 25% da música. Fale sobre a sonoridade ou emoção.";
-    if (stage === 'half') stagePrompt = "CONTEXTO: Metade da música (50%). Faça um convite amigável ou pergunta sobre a vibe.";
-    if (stage === 'q3') stagePrompt = "CONTEXTO: Reta final (75%). Comentário conclusivo rápido e apaixonado.";
+    if (stage === 'intro') stagePrompt = "CONTEXTO: A música começou. Dê uma curiosidade fascinante.";
+    if (stage === 'q1') stagePrompt = "CONTEXTO: 25% da música. Descreva a textura sonora (sinestesia) e elogie a vibe.";
+    if (stage === 'half') stagePrompt = "CONTEXTO: Metade da música. Faça um convite para o usuário 'viajar' no som com você.";
+    if (stage === 'q3') stagePrompt = "CONTEXTO: Reta final. Um último elogio poético sobre a música.";
 
     try {
         const musicContext = `
@@ -526,8 +531,8 @@ async function triggerAutoAICommentary(stage) {
             contents: musicContext,
             config: {
                 systemInstruction: ALEX_PERSONA_INSTRUCTION,
-                temperature: 1, 
-                topK: 40
+                temperature: 1.2, // Mais criatividade
+                topK: 50
             }
         });
 
@@ -549,8 +554,8 @@ function showAIBubble(text) {
     els.aiLed.classList.remove('bg-red-900');
     els.aiLed.classList.add('bg-amber-500');
 
-    // Tempo de leitura: min 4s, max 10s
-    const readingTime = Math.min(Math.max(text.length * 60, 4000), 10000);
+    // Tempo de leitura: min 7s (para leitura tranquila), aumenta com o tamanho do texto
+    const readingTime = Math.max(text.length * 80, 7000);
     
     if (state.aiBubbleTimeout) clearTimeout(state.aiBubbleTimeout);
     state.aiBubbleTimeout = setTimeout(hideAIBubble, readingTime);

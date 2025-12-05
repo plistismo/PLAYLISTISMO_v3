@@ -106,7 +106,13 @@
         <div class="flex flex-col w-full max-w-4xl order-1 relative">
             
             <!-- ALEX AI MODULE (AUTOMATIC BUBBLE STYLE) -->
-            <div id="ai-module" class="relative w-full max-w-2xl mx-auto mb-10 perspective-[1000px] z-20 group">
+            <div id="ai-module" class="relative w-full max-w-2xl mx-auto mb-10 perspective-[1000px] z-20 group mt-16">
+                
+                <!-- AVATAR / GIF CONTAINER (Sits on top) -->
+                <div id="ai-avatar-container" class="absolute bottom-[95%] left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+                    <img src="https://i.gifer.com/7d20.gif" alt="AI Avatar" class="w-32 h-auto md:w-40 object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.8)] avatar-bob">
+                </div>
+
                 <!-- Adesivo Grunge -->
                 <div class="absolute -top-3 -right-4 z-30 transform rotate-12 bg-yellow-200 text-black px-2 py-1 font-marker shadow-lg border border-black/20 text-xs font-bold font-sans">
                     ALEX 1996
@@ -135,9 +141,9 @@
                     </div>
                 </div>
                 
-                <!-- SPEECH BUBBLE CONTAINER (Absolute over the unit or slightly above) -->
-                <div id="ai-bubble-container" class="absolute bottom-[110%] left-0 right-0 flex justify-center pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4">
-                     <div class="speech-bubble bg-[#fff] text-black border-2 border-black p-4 rounded-lg font-vt323 text-xl shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-md relative">
+                <!-- SPEECH BUBBLE CONTAINER (Moved to side/top to fit avatar) -->
+                <div id="ai-bubble-container" class="absolute bottom-[200%] md:bottom-[150%] left-0 right-0 flex justify-center pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4 z-50">
+                     <div class="speech-bubble bg-[#fff] text-black border-2 border-black p-4 rounded-lg font-vt323 text-xl shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-[90%] md:max-w-md relative">
                         <span id="ai-bubble-text">...</span>
                         <!-- Bubble Tail -->
                         <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-2 border-r-2 border-black transform rotate-45"></div>
