@@ -1,19 +1,32 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
 const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M';
 const supabase = createClient(SB_URL, SB_KEY);
 
-// DOM Elements
-const form = document.getElementById('auth-form');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const btnLogin = document.getElementById('btn-login');
-const btnRegister = document.getElementById('btn-register');
-const msgBox = document.getElementById('auth-msg');
+// DOM Elements - Views
+const viewLogin = document.getElementById('view-login');
+const viewRegister = document.getElementById('view-register');
 
-// Check if already logged in
+// DOM Elements - Forms & Inputs
+const formLogin = document.getElementById('form-login');
+const loginEmail = document.getElementById('login-email');
+const loginPass = document.getElementById('login-password');
+const loginMsg = document.getElementById('msg-login');
+const btnLoginSubmit = document.getElementById('btn-submit-login');
+
+const formRegister = document.getElementById('form-register');
+const regEmail = document.getElementById('reg-email');
+const regPass = document.getElementById('reg-password');
+const regMsg = document.getElementById('msg-register');
+const btnRegSubmit = document.getElementById('btn-submit-register');
+
+// DOM Elements - Navigation
+const goToRegister = document.getElementById('go-to-register');
+const goToLogin = document.getElementById('go-to-login');
+
+// --- SESSION CHECK ---
 async function checkSession() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
@@ -22,82 +35,89 @@ async function checkSession() {
 }
 checkSession();
 
-// Utils
-function showMessage(msg, isError = true) {
-    msgBox.textContent = `> ${msg}`;
-    msgBox.classList.remove('hidden');
+// --- NAVIGATION LOGIC ---
+goToRegister.addEventListener('click', () => {
+    viewLogin.classList.add('hidden');
+    viewRegister.classList.remove('hidden');
+    clearMessages();
+});
+
+goToLogin.addEventListener('click', () => {
+    viewRegister.classList.add('hidden');
+    viewLogin.classList.remove('hidden');
+    clearMessages();
+});
+
+function clearMessages() {
+    loginMsg.classList.add('hidden');
+    regMsg.classList.add('hidden');
+    loginMsg.innerText = '';
+    regMsg.innerText = '';
+}
+
+function showFeedback(element, msg, isError = true) {
+    element.innerText = msg;
+    element.classList.remove('hidden');
     if (isError) {
-        msgBox.classList.add('text-red-500', 'border-red-500', 'bg-red-900/20');
-        msgBox.classList.remove('text-yellow-400', 'border-yellow-400', 'bg-yellow-900/20');
+        element.classList.remove('bg-green-900/80', 'border-green-500');
+        element.classList.add('bg-red-900/80', 'border-red-500');
     } else {
-        msgBox.classList.remove('text-red-500', 'border-red-500', 'bg-red-900/20');
-        msgBox.classList.add('text-yellow-400', 'border-yellow-400', 'bg-yellow-900/20');
+        element.classList.remove('bg-red-900/80', 'border-red-500');
+        element.classList.add('bg-green-900/80', 'border-green-500');
     }
 }
 
-function setLoading(isLoading) {
-    if (isLoading) {
-        btnLogin.textContent = "[ PROCESSING... ]";
-        btnLogin.disabled = true;
-        btnRegister.disabled = true;
-    } else {
-        btnLogin.textContent = "[ LOGIN ]";
-        btnLogin.disabled = false;
-        btnRegister.disabled = false;
-    }
-}
+// --- HANDLERS ---
 
-// Handlers
-async function handleLogin(e) {
+// LOGIN
+formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
-    setLoading(true);
-    msgBox.classList.add('hidden');
+    btnLoginSubmit.disabled = true;
+    btnLoginSubmit.innerText = "TUNING IN...";
+    
+    const email = loginEmail.value;
+    const password = loginPass.value;
 
-    const email = emailInput.value;
-    const password = passwordInput.value;
-
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
         email,
         password
     });
 
     if (error) {
-        showMessage(`ACCESS DENIED: ${error.message}`);
-        setLoading(false);
+        showFeedback(loginMsg, `ERROR: ${error.message}`);
+        btnLoginSubmit.disabled = false;
+        btnLoginSubmit.innerText = "CONNECT SERVICE";
     } else {
-        showMessage("ACCESS GRANTED. REDIRECTING...", false);
+        showFeedback(loginMsg, "SIGNAL LOCKED. REDIRECTING...", false);
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 1000);
     }
-}
+});
 
-async function handleRegister() {
-    setLoading(true);
-    msgBox.classList.add('hidden');
+// REGISTER
+formRegister.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btnRegSubmit.disabled = true;
+    btnRegSubmit.innerText = "ACTIVATING...";
 
-    const email = emailInput.value;
-    const password = passwordInput.value;
+    const email = regEmail.value;
+    const password = regPass.value;
 
-    if (!email || !password) {
-        showMessage("INPUT DATA REQUIRED");
-        setLoading(false);
-        return;
-    }
-
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
         email,
         password
     });
 
     if (error) {
-        showMessage(`REGISTRATION FAILED: ${error.message}`);
+        showFeedback(regMsg, `FAILED: ${error.message}`);
+        btnRegSubmit.disabled = false;
+        btnRegSubmit.innerText = "ACTIVATE ACCOUNT";
     } else {
-        showMessage("USER CREATED. PLEASE LOGIN.", false);
+        showFeedback(regMsg, "SUCCESS! CHECK EMAIL OR LOGIN.", false);
+        setTimeout(() => {
+            goToLogin.click();
+            showFeedback(loginMsg, "ACCOUNT CREATED. PLEASE LOGIN.", false);
+        }, 1500);
     }
-    setLoading(false);
-}
-
-// Events
-form.addEventListener('submit', handleLogin);
-btnRegister.addEventListener('click', handleRegister);
+});

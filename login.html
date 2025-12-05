@@ -3,111 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlayListismo V4 | ACCESS CONTROL</title>
+    <title>PlayListismo | AUTH SYSTEM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Jost:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Import Map para garantir carregamento correto dos módulos -->
+    <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.86.0"
+      }
+    }
+    </script>
+
     <style>
-        .scan-line {
-            width: 100%;
-            height: 100px;
-            z-index: 10;
-            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0, 255, 0, 0.2) 50%, rgba(0,0,0,0) 100%);
-            opacity: 0.1;
-            position: absolute;
-            bottom: 100%;
-            animation: scanline 10s linear infinite;
+        body {
+            background-color: #0000aa; /* VCR Blue */
+            font-family: 'VT323', monospace;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+        
+        /* Scanlines Sutis */
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
             pointer-events: none;
         }
-        @keyframes scanline {
-            0% { bottom: 100%; }
-            100% { bottom: -100px; }
+
+        .osd-box {
+            background-color: rgba(0, 0, 80, 0.9);
+            border: 4px double #ffffff;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.5);
         }
-        .login-input {
-            background: rgba(0, 20, 0, 0.6);
-            border: 1px solid #00ff00;
-            color: #00ff00;
-            font-family: 'VT323', monospace;
+
+        .osd-text-shadow {
+            text-shadow: 2px 2px 0px #000000;
         }
-        .login-input:focus {
+
+        .input-retro {
+            background: #cccccc;
+            color: #111;
+            font-family: 'Jost', sans-serif;
+            font-weight: bold;
+            border: 2px solid #555;
+            box-shadow: inset 2px 2px 0px #000;
+        }
+        .input-retro:focus {
             outline: none;
-            box-shadow: 0 0 10px #00ff00;
-            background: rgba(0, 40, 0, 0.8);
+            background: #fff;
         }
-        .login-btn {
-            background: #005500;
-            border: 1px solid #00ff00;
-            color: #00ff00;
-            transition: all 0.2s;
-        }
-        .login-btn:hover {
-            background: #00ff00;
+
+        .btn-retro {
+            background: #aaaaaa;
+            border-top: 2px solid #fff;
+            border-left: 2px solid #fff;
+            border-right: 2px solid #444;
+            border-bottom: 2px solid #444;
             color: black;
-            box-shadow: 0 0 15px #00ff00;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .btn-retro:active {
+            border-top: 2px solid #444;
+            border-left: 2px solid #444;
+            border-right: 2px solid #fff;
+            border-bottom: 2px solid #fff;
+            transform: translateY(2px);
+        }
+        
+        .blink {
+            animation: blinker 1s linear infinite;
+        }
+        @keyframes blinker {
+            50% { opacity: 0; }
         }
     </style>
 </head>
-<body class="bg-black min-h-screen flex items-center justify-center font-vt323 overflow-hidden selection:bg-[#00ff00] selection:text-black">
+<body class="flex items-center justify-center min-h-screen relative">
 
-    <!-- Ambient Background -->
-    <div class="fixed inset-0 z-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0a1a0a] to-black pointer-events-none">
-        <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #00ff00 2px, #00ff00 4px);"></div>
-    </div>
+    <!-- Scanlines Overlay -->
+    <div class="fixed inset-0 scanlines z-50"></div>
+    
+    <!-- Static Noise (Low Opacity) -->
+    <div class="fixed inset-0 opacity-[0.03] pointer-events-none z-40" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'1\'/%3E%3C/svg%3E');"></div>
 
-    <!-- Scanline Overlay -->
-    <div class="scan-line"></div>
-
-    <!-- Main Terminal Container -->
-    <div class="relative z-10 w-full max-w-md p-6">
+    <!-- MAIN CONTAINER -->
+    <div class="relative z-50 w-full max-w-lg p-4">
         
         <!-- Header -->
-        <div class="border-2 border-[#00ff00] bg-black/80 p-1 mb-6 shadow-[0_0_20px_rgba(0,255,0,0.2)]">
-            <div class="bg-[#00ff00] text-black text-center text-2xl font-bold py-1 animate-pulse">
-                SYSTEM ACCESS REQUIRED
-            </div>
+        <div class="text-center mb-8">
+            <h1 class="text-5xl mb-2 osd-text-shadow font-bold tracking-widest">CABLE BOX <span class="text-yellow-400">AUTH</span></h1>
+            <p class="text-xl osd-text-shadow blink">WAITING FOR SIGNAL...</p>
         </div>
 
-        <!-- Form Box -->
-        <div class="border-l-4 border-[#00ff00] p-6 bg-black/90 shadow-2xl relative">
-            <div class="absolute -top-3 left-4 bg-black px-2 text-[#00ff00] text-sm">SECURE CONNECTION</div>
-            
-            <div class="mb-8 text-[#00ff00] text-lg leading-tight">
-                <p>> INITIATING UPLINK...</p>
-                <p>> PROTOCOL: AUTH_V4</p>
-                <p>> ENTER CREDENTIALS:</p>
+        <!-- LOGIN VIEW -->
+        <div id="view-login" class="osd-box p-8 transition-all">
+            <div class="text-center border-b-2 border-white/20 pb-4 mb-6">
+                <h2 class="text-3xl osd-text-shadow">CHANNEL ACCESS</h2>
             </div>
 
-            <form id="auth-form" class="space-y-6">
+            <form id="form-login" class="space-y-6">
                 <div>
-                    <label class="block text-[#00ff00] text-xl mb-1">> IDENTIFIER (EMAIL)</label>
-                    <input type="email" id="email" required class="w-full p-3 text-xl login-input placeholder-green-900" placeholder="user@playlistismo.tv">
+                    <label class="block text-xl mb-1 osd-text-shadow uppercase">Subscriber ID (Email)</label>
+                    <input type="email" id="login-email" required class="w-full p-2 text-lg input-retro">
                 </div>
-
                 <div>
-                    <label class="block text-[#00ff00] text-xl mb-1">> PASSCODE</label>
-                    <input type="password" id="password" required class="w-full p-3 text-xl login-input placeholder-green-900" placeholder="••••••••">
+                    <label class="block text-xl mb-1 osd-text-shadow uppercase">Pin Code (Password)</label>
+                    <input type="password" id="login-password" required class="w-full p-2 text-lg input-retro">
                 </div>
 
-                <div id="auth-msg" class="text-red-500 text-lg hidden border border-red-500 p-2 bg-red-900/20">
-                    > ERROR: INVALID CREDENTIALS
-                </div>
+                <div id="msg-login" class="hidden bg-red-900/80 text-white p-2 border border-red-500 text-center font-bold"></div>
 
-                <div class="flex gap-4 pt-4">
-                    <button type="submit" id="btn-login" class="flex-1 login-btn py-3 text-2xl uppercase font-bold tracking-wider">
-                        [ LOGIN ]
-                    </button>
-                    <button type="button" id="btn-register" class="flex-1 border border-[#00ff00]/50 text-[#00ff00]/70 hover:text-[#00ff00] hover:border-[#00ff00] py-3 text-2xl uppercase transition-colors">
-                        [ REGISTER ]
-                    </button>
-                </div>
+                <button type="submit" id="btn-submit-login" class="w-full py-3 text-xl btn-retro">
+                    CONNECT SERVICE
+                </button>
             </form>
 
-            <div class="mt-6 text-center text-green-800 text-sm">
-                PLAYLISTISMO // RETRO VISION SYSTEMS<br>
-                EST. 1996
+            <div class="mt-6 text-center">
+                <span class="text-lg osd-text-shadow">NO ACCOUNT?</span>
+                <button id="go-to-register" class="ml-2 text-yellow-400 hover:text-white underline text-xl osd-text-shadow">REGISTER NEW BOX</button>
             </div>
         </div>
+
+        <!-- REGISTER VIEW (Hidden by default) -->
+        <div id="view-register" class="osd-box p-8 hidden">
+            <div class="text-center border-b-2 border-white/20 pb-4 mb-6">
+                <h2 class="text-3xl osd-text-shadow">NEW SUBSCRIBER</h2>
+            </div>
+
+            <form id="form-register" class="space-y-6">
+                <div>
+                    <label class="block text-xl mb-1 osd-text-shadow uppercase">Enter Email</label>
+                    <input type="email" id="reg-email" required class="w-full p-2 text-lg input-retro">
+                </div>
+                <div>
+                    <label class="block text-xl mb-1 osd-text-shadow uppercase">Set Pin Code</label>
+                    <input type="password" id="reg-password" required class="w-full p-2 text-lg input-retro">
+                </div>
+
+                <div id="msg-register" class="hidden bg-red-900/80 text-white p-2 border border-red-500 text-center font-bold"></div>
+
+                <button type="submit" id="btn-submit-register" class="w-full py-3 text-xl btn-retro">
+                    ACTIVATE ACCOUNT
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <span class="text-lg osd-text-shadow">ALREADY SUBSCRIBED?</span>
+                <button id="go-to-login" class="ml-2 text-yellow-400 hover:text-white underline text-xl osd-text-shadow">RETURN TO LOGIN</button>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center opacity-60 font-sans text-sm font-bold">
+            PLAYLISTISMO // V4.0 SYSTEM
+        </div>
+
     </div>
 
     <script type="module" src="login.js"></script>

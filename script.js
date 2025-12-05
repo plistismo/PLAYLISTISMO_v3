@@ -5,9 +5,6 @@ import { fetchTrackDetails } from './lastFmAPI.js';
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
 const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA';
 
-// --- CONFIGURAÇÃO PEXELS API (FALLBACK VISUAL) ---
-const PEXELS_KEY = '9RNNrjxwbKyc4KHDfVSZ51TXiRnl3TLgUUuS64ZlvtAo9Kw5BW9eVd0Y';
-
 // --- DADOS DE FALLBACK (LEGACY) ---
 const FALLBACK_PLAYLISTS = [
     { id: 'PL_FALLBACK_1', snippet: { title: 'Folk Zone (Backup)', channelTitle: 'System' } },
@@ -26,13 +23,11 @@ const state = {
     currentPlaylistId: null,
     playlists: [],
     currentPlaylistVideos: [],
-    isAuxPlayerActive: false, // Indica se estamos usando o Pexels
     currentSearchTerm: '',
     playerReady: false
 };
 
-let player; // YouTube
-let auxPlayer; // Pexels
+let player; // YouTube Only
 let creditTimers = [];
 
 // Elementos DOM
@@ -44,8 +39,6 @@ const els = {
     
     // Players
     youtubeContainer: document.getElementById('player'),
-    auxContainer: document.getElementById('aux-player-container'),
-    auxVideo: document.getElementById('aux-video'),
 
     // Static Noise
     staticOverlay: document.getElementById('static-overlay'),
@@ -167,7 +160,6 @@ function initDevConsole() {
 // --- INICIALIZAÇÃO ---
 function init() {
     console.log("[Script] Initializing RetroTV System...");
-    auxPlayer = els.auxVideo;
     populateDecorations();
     startClocks();
     
@@ -187,7 +179,7 @@ function init() {
     }, 2000);
 }
 
-// Expose YouTube Callback to Global Scope (since we are in a module)
+// Expose YouTube Callback to Global Scope
 window.onYouTubeIframeAPIReady = function() {
     console.log("[YouTube] API Ready. Creating Player...");
     player = new YT.Player('player', {
@@ -219,17 +211,11 @@ function onPlayerReady(event) {
 
 function onPlayerError(event) {
     console.error(`[Player] Error: ${event.data}`);
-    console.warn(`[System] YouTube Error. Engaging Database Fallback.`);
-    
-    getRandomTrackFromDB().then(term => {
-        const fallbackTerm = term || state.currentSearchTerm || "Retro aesthetic";
-        activateAuxPlayer(fallbackTerm, true);
-    });
+    showStatus("NO SIGNAL / ERROR", true);
 }
 
 function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
-        disableAuxPlayer();
         showStatus("", false);
         const data = player.getVideoData();
         state.currentSearchTerm = data.title;
@@ -248,111 +234,6 @@ function onPlayerStateChange(event) {
             }
         }, 3000);
     }
-}
-
-// --- LOGICA DE FALLBACK (DB + PEXELS) ---
-
-async function getRandomTrackFromDB() {
-    console.log("[DB] Fetching random track for fallback...");
-    try {
-        const { data, error } = await supabase
-            .from('musicas')
-            .select('artista, musica')
-            .not('artista', 'is', null)
-            .neq('artista', '')
-            .limit(50)
-            .order('id', { ascending: false });
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            const randomItem = data[Math.floor(Math.random() * data.length)];
-            const term = `${randomItem.artista} ${randomItem.musica}`;
-            console.log(`[DB] Random selection: ${term}`);
-            return term;
-        }
-    } catch (err) {
-        console.error("[DB] Failed to get random track:", err);
-    }
-    return null;
-}
-
-async function fetchPexelsVideo(query) {
-    const cleanQuery = cleanStringForApi(query).split(' ').slice(0, 3).join(' ');
-    console.log(`[Pexels] Searching for: "${cleanQuery}"`);
-    
-    const trySearch = async (term) => {
-        const url = `https://api.pexels.com/videos/search?query=${encodeURIComponent(term)}&per_page=5&orientation=landscape`;
-        const response = await fetch(url, { headers: { Authorization: PEXELS_KEY } });
-        if (!response.ok) throw new Error("Pexels API Error");
-        return await response.json();
-    };
-
-    try {
-        // Tentativa 1: Busca específica
-        let data = await trySearch(cleanQuery);
-        
-        // Tentativa 2: Fallback Genérico se não achar nada
-        if (!data.videos || data.videos.length === 0) {
-            console.warn("[Pexels] No results. Trying generic term.");
-            data = await trySearch("Retro Abstract");
-        }
-        
-        if (data.videos && data.videos.length > 0) {
-            const randomVideo = data.videos[Math.floor(Math.random() * data.videos.length)];
-            const videoFile = randomVideo.video_files.find(v => v.quality === 'hd') || randomVideo.video_files[0];
-            return videoFile.link;
-        }
-        return null;
-    } catch (err) {
-        console.error("[Pexels] Fetch failed:", err);
-        return null;
-    }
-}
-
-async function activateAuxPlayer(searchTerm, showWarning = false) {
-    console.log(`[System] Switching to AUX PLAYER (Pexels)...`);
-    
-    if (showWarning) showStatus("AUX SIGNAL", true);
-    
-    const videoUrl = await fetchPexelsVideo(searchTerm);
-    
-    if (videoUrl) {
-        state.isAuxPlayerActive = true;
-        state.currentSearchTerm = searchTerm;
-        
-        if (player && typeof player.pauseVideo === 'function' && state.playerReady) {
-            try { player.pauseVideo(); } catch(e){}
-        }
-
-        auxPlayer.src = videoUrl;
-        auxPlayer.play().catch(e => console.error("Aux Autoplay blocked", e));
-        
-        els.auxContainer.classList.remove('opacity-0', 'pointer-events-none');
-        els.auxContainer.classList.add('opacity-100', 'pointer-events-auto');
-        els.youtubeContainer.classList.add('opacity-0');
-        
-        // Remove Chiado se Pexels carregar
-        els.staticOverlay.classList.remove('active');
-        
-        updateCreditsDOM(searchTerm.substring(0,25), "Visual Experience", "Pexels DB", "2024", "System");
-        showCredits();
-        
-        els.npTitle.textContent = "AUX: " + searchTerm;
-        els.npId.textContent = "SOURCE: PEXELS";
-    } else {
-        showStatus("NO SIGNAL", true);
-    }
-}
-
-function disableAuxPlayer() {
-    if (!state.isAuxPlayerActive) return;
-    console.log(`[System] Switching back to MAIN PLAYER (YouTube)...`);
-    state.isAuxPlayerActive = false;
-    auxPlayer.pause();
-    els.auxContainer.classList.add('opacity-0', 'pointer-events-none');
-    els.auxContainer.classList.remove('opacity-100', 'pointer-events-auto');
-    els.youtubeContainer.classList.remove('opacity-0');
 }
 
 // --- LOGICA DE PLAYLISTS (LAZY LOADING) ---
@@ -395,9 +276,7 @@ async function fetchPlaylistItems(playlistId, playlistTitle) {
             const response = await fetch(url);
             
              if (response.status === 403 || response.status === 429) {
-                 console.error("[API] YouTube Quota Exceeded. Engaging DB+Pexels Fallback.");
-                 const dbTerm = await getRandomTrackFromDB();
-                 activateAuxPlayer(dbTerm || playlistTitle, true);
+                 console.error("[API] YouTube Quota Exceeded.");
                  return [];
              }
              if (!response.ok) throw new Error(`API Error: ${response.status}`);
@@ -409,8 +288,6 @@ async function fetchPlaylistItems(playlistId, playlistTitle) {
         return videos;
     } catch (error) {
         console.error(`[API] Failed to load videos for ${playlistId}`, error);
-        const dbTerm = await getRandomTrackFromDB();
-        activateAuxPlayer(dbTerm || playlistTitle, true);
         return [];
     }
 }
@@ -489,7 +366,6 @@ els.channelSearch.addEventListener('keydown', (e) => {
 async function changeChannel(playlistId, playlistTitle) {
     showStatus("TUNING...", true);
     triggerStatic();
-    disableAuxPlayer();
 
     const videos = await fetchPlaylistItems(playlistId, playlistTitle);
     state.currentPlaylistVideos = videos;
@@ -499,24 +375,20 @@ async function changeChannel(playlistId, playlistTitle) {
         player.loadPlaylist(videoIds, 0);
         player.setLoop(true);
     } else {
-        if (!state.isAuxPlayerActive) showStatus("EMPTY CHANNEL", true);
+        showStatus("EMPTY CHANNEL", true);
     }
 }
 
 function nextVideo() {
     triggerStatic();
-    if (state.isAuxPlayerActive) {
-        getRandomTrackFromDB().then(term => activateAuxPlayer(term || "Abstract Art"));
-    } else if (player && state.playerReady) {
+    if (player && state.playerReady) {
         player.nextVideo();
     }
 }
 
 function prevVideo() {
     triggerStatic();
-    if (state.isAuxPlayerActive) {
-        getRandomTrackFromDB().then(term => activateAuxPlayer(term || "Abstract Art"));
-    } else if (player && state.playerReady) {
+    if (player && state.playerReady) {
         player.previousVideo();
     }
 }
@@ -634,10 +506,8 @@ function togglePower() {
         els.screenOn.classList.remove('hidden');
         els.screenOn.classList.add('crt-turn-on');
         showStatus("INITIALIZING...", true);
-        if (state.isAuxPlayerActive && auxPlayer) auxPlayer.play();
     } else {
         if (player && typeof player.stopVideo === 'function' && state.playerReady) player.stopVideo();
-        if (auxPlayer) auxPlayer.pause();
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.add('bg-red-900');
         els.screenOn.classList.remove('crt-turn-on');
@@ -658,7 +528,6 @@ function toggleSearchMode() {
     state.isSearchOpen = !state.isSearchOpen;
     if (state.isSearchOpen) {
         if (player && typeof player.pauseVideo === 'function' && state.playerReady) player.pauseVideo();
-        if (auxPlayer) auxPlayer.pause();
         els.internalGuide.classList.remove('hidden');
         els.channelSearch.focus();
         updateGuideClock();
@@ -671,8 +540,7 @@ function toggleSearchMode() {
         }
     } else {
         els.internalGuide.classList.add('hidden');
-        if (state.isAuxPlayerActive) auxPlayer.play();
-        else if (player && state.currentPlaylistId && state.playerReady) player.playVideo();
+        if (player && state.currentPlaylistId && state.playerReady) player.playVideo();
     }
 }
 
