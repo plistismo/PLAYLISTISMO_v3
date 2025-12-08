@@ -23,6 +23,7 @@ const inputArtista = document.getElementById('input-artista');
 const inputMusica = document.getElementById('input-musica');
 const inputAno = document.getElementById('input-ano');
 const inputAlbum = document.getElementById('input-album');
+const inputGroup = document.getElementById('input-group'); // NOVO
 const inputDirecao = document.getElementById('input-direcao');
 const inputVideoId = document.getElementById('input-video-id');
 
@@ -69,6 +70,7 @@ musicForm.addEventListener('submit', async (e) => {
         // Schema define 'ano' como TEXT na nova tabela. Enviamos como string.
         ano: inputAno.value ? String(inputAno.value) : null,
         album: inputAlbum.value.trim() || null,
+        playlist_group: inputGroup.value || null, // NOVO
         direcao: inputDirecao.value.trim() || null,
         video_id: inputVideoId.value.trim() || null
     };
@@ -124,8 +126,9 @@ window.editMusic = (id) => {
     inputId.value = music.id;
     inputArtista.value = music.artista || '';
     inputMusica.value = music.musica || '';
-    inputAno.value = music.ano || ''; // Agora trata texto/numero de forma transparente
+    inputAno.value = music.ano || ''; 
     inputAlbum.value = music.album || '';
+    inputGroup.value = music.playlist_group || ''; // NOVO
     inputDirecao.value = music.direcao || '';
     inputVideoId.value = music.video_id || '';
 
@@ -151,19 +154,19 @@ function renderTable(data) {
         const row = document.createElement('tr');
         row.className = 'hover:bg-amber-900/10 transition-colors group';
         row.innerHTML = `
-            <td class="font-mono text-sm opacity-70 align-top">${item.id}</td>
-            <td class="align-top">
+            <td class="font-mono text-sm opacity-70 align-top border-r border-amber-900/30 px-2">${item.id}</td>
+            <td class="align-top border-r border-amber-900/30 px-2">
                 <div class="font-bold text-lg leading-none">${item.artista}</div>
                 <div class="text-sm opacity-80">${item.musica || '---'}</div>
             </td>
-            <td class="hidden md:table-cell text-sm opacity-60 align-top">
+            <td class="hidden md:table-cell text-sm opacity-60 align-top border-r border-amber-900/30 px-2">
                 ${item.album ? `💿 ${item.album}` : ''} <br>
                 ${item.ano ? `📅 ${item.ano}` : ''}
             </td>
-            <td class="hidden md:table-cell font-mono text-xs opacity-50 align-top">
-                ${item.video_id ? item.video_id : '<span class="text-red-900">SEM ID</span>'}
+            <td class="hidden md:table-cell font-mono text-sm text-amber-300 opacity-80 align-top border-r border-amber-900/30 px-2">
+                ${item.playlist_group || '---'}
             </td>
-            <td class="text-center align-middle">
+            <td class="text-center align-middle px-2">
                 <button onclick="editMusic(${item.id})" class="text-amber-500 hover:bg-amber-500 hover:text-black px-2 py-1 border border-amber-500 text-sm mr-1">EDIT</button>
                 <button onclick="deleteMusic(${item.id})" class="text-red-500 hover:bg-red-500 hover:text-black px-2 py-1 border border-red-500 text-sm">DEL</button>
             </td>
@@ -198,6 +201,7 @@ searchInput.addEventListener('input', (e) => {
     const filtered = allMusics.filter(m => 
         (m.artista && m.artista.toLowerCase().includes(term)) ||
         (m.musica && m.musica.toLowerCase().includes(term)) ||
+        (m.playlist_group && m.playlist_group.toLowerCase().includes(term)) ||
         (m.id && m.id.toString().includes(term))
     );
     renderTable(filtered);
