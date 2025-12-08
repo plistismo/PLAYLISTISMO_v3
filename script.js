@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 import { fetchTrackDetails } from './lastFmAPI.js';
 import { GoogleGenAI } from "@google/genai";
@@ -358,7 +359,8 @@ function renderChannelGuide() {
             el.dataset.id = pl.id;
             el.dataset.title = pl.snippet.title;
             const chNum = String(channelIndex).padStart(2, '0');
-            el.innerHTML = `<span class="text-[#ffff00] mr-3 font-bold group-hover:text-blue-900">${chNum}</span><span class="truncate uppercase">${pl.snippet.title}</span>`;
+            // Remove uppercase class to respect original casing as requested
+            el.innerHTML = `<span class="text-[#ffff00] mr-3 font-bold group-hover:text-blue-900">${chNum}</span><span class="truncate">${pl.snippet.title}</span>`;
             el.onclick = () => {
                 // Clique único para trocar canal
                 els.osdChannel.innerText = `CH ${chNum}`;
@@ -575,6 +577,19 @@ function cleanStringForApi(str) {
         .replace(/videoclipe/gi, '').replace(/ft\./gi, '').replace(/feat\./gi, '').replace(/,/g, '').replace(/-/g, ' ').trim();
 }
 
+function formatCreditHtml(text) {
+    if (!text) return '';
+    // Unbold "ft." or "feat." case insensitive
+    let formatted = text.replace(/\s(ft\.?|feat\.?)\s/gi, (match) => {
+        return `<span class="font-light opacity-75">${match}</span>`;
+    });
+    
+    // Unbold ℗ symbol (likely what user meant by 'P that looks like an 8' in credits context)
+    formatted = formatted.replace(/℗/g, '<span class="font-light opacity-75">℗</span>');
+    
+    return formatted;
+}
+
 async function handleCreditsForVideo(videoId, ytTitle) {
     hideCredits();
     if (!state.isLyricsOn) {
@@ -626,9 +641,16 @@ function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
 }
 
 function updateCreditsDOM(artist, song, album, year, director) {
-    const set = (el, txt) => { el.parentElement.style.display = txt ? 'block' : 'none'; el.innerText = txt || ''; };
-    set(els.credits.artist, artist); set(els.credits.song, song); set(els.credits.album, album);
-    set(els.credits.year, year ? String(year) : ""); set(els.credits.director, director);
+    const set = (el, txt) => { 
+        el.parentElement.style.display = txt ? 'block' : 'none'; 
+        // Use innerHTML to allow for custom bolding/formatting
+        el.innerHTML = formatCreditHtml(txt) || ''; 
+    };
+    set(els.credits.artist, artist); 
+    set(els.credits.song, song); 
+    set(els.credits.album, album);
+    set(els.credits.year, year ? String(year) : ""); 
+    set(els.credits.director, director);
 }
 
 // --- MONITOR LOOP (CREDITS & AI CHECKPOINTS) ---
@@ -642,8 +664,10 @@ function startMonitorLoop() {
         if (!duration) return;
 
         // 1. Monitor de Créditos
-        const isIntroTime = currentTime >= 5 && currentTime < 15;
-        const isOutroTime = currentTime >= (duration - 15) && currentTime < (duration - 5);
+        // Rule: Start 10s after video starts, lasts for 10s (10s to 20s)
+        // Rule: Reappear 20s before end, lasts for 10s (Duration-20 to Duration-10)
+        const isIntroTime = currentTime >= 10 && currentTime < 20;
+        const isOutroTime = currentTime >= (duration - 20) && currentTime < (duration - 10);
         
         if (isIntroTime || isOutroTime) showCredits();
         else hideCredits();

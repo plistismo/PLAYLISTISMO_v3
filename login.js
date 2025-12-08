@@ -15,6 +15,7 @@ const loginEmail = document.getElementById('login-email');
 const loginPass = document.getElementById('login-password');
 const loginMsg = document.getElementById('msg-login');
 const btnLoginSubmit = document.getElementById('btn-submit-login');
+const btnGithub = document.getElementById('btn-github'); // GitHub Button
 
 const formRegister = document.getElementById('form-register');
 const regEmail = document.getElementById('reg-email');
@@ -69,7 +70,29 @@ function showFeedback(element, msg, isError = true) {
 
 // --- HANDLERS ---
 
-// LOGIN
+// GITHUB LOGIN
+if (btnGithub) {
+    btnGithub.addEventListener('click', async () => {
+        btnGithub.disabled = true;
+        btnGithub.innerHTML = "REDIRECTING... <span class='blink'>_</span>";
+        
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'github',
+            options: {
+                // Redireciona de volta para a app principal após login
+                redirectTo: window.location.href.replace('login.html', 'index.html')
+            }
+        });
+
+        if (error) {
+            showFeedback(loginMsg, `GITHUB ERROR: ${error.message}`);
+            btnGithub.disabled = false;
+            btnGithub.innerHTML = "<span>👾</span> ACCESS VIA GITHUB";
+        }
+    });
+}
+
+// EMAIL LOGIN
 formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
     btnLoginSubmit.disabled = true;

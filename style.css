@@ -1,4 +1,5 @@
 
+
 /* Custom Fonts & Base */
 body {
     font-family: 'VT323', monospace;
@@ -233,7 +234,6 @@ body {
 
 .credit-line {
     margin-bottom: 0.3em; 
-    text-transform: uppercase;
     letter-spacing: 1px;
     white-space: normal; /* Permite quebra de linha */
     word-wrap: break-word; /* Garante quebra em palavras longas */
@@ -256,11 +256,12 @@ body {
     color: #ffff00; 
 }
 
-/* Player Zoom Hack to Hide UI */
+/* Player Zoom Hack Removed to fix cropping */
 #player {
     pointer-events: none;
-    transform: scale(1.35); /* Zoom in to crop UI */
-    transform-origin: center;
+    width: 100%;
+    height: 100%;
+    transform: none; /* Removed scale */
 }
 
 /* Info Panel (Last.FM) */
@@ -327,7 +328,8 @@ body {
         max-width: 90%; /* Ensure mobile full width too */
     }
     
+    /* Mobile Scale Hack Removed */
     #player {
-        transform: scale(1.2); 
+        /* transform: scale(1.2); REMOVED */ 
     }
 }

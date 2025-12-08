@@ -77,6 +77,24 @@
             border-bottom: 2px solid #fff;
             transform: translateY(2px);
         }
+
+        .btn-github-retro {
+            background: #24292e;
+            color: white;
+            border-top: 2px solid #666;
+            border-left: 2px solid #666;
+            border-right: 2px solid #000;
+            border-bottom: 2px solid #000;
+        }
+        .btn-github-retro:hover {
+            background: #333;
+        }
+        .btn-github-retro:active {
+            border-top: 2px solid #000;
+            border-left: 2px solid #000;
+            border-right: 2px solid #666;
+            border-bottom: 2px solid #666;
+        }
         
         .blink {
             animation: blinker 1s linear infinite;
@@ -125,6 +143,18 @@
                     CONNECT SERVICE
                 </button>
             </form>
+
+            <!-- GITHUB BUTTON -->
+            <div class="relative flex py-5 items-center">
+                <div class="flex-grow border-t border-gray-500"></div>
+                <span class="flex-shrink-0 mx-4 text-gray-400 font-vt323 text-lg">EXT. SOURCE</span>
+                <div class="flex-grow border-t border-gray-500"></div>
+            </div>
+
+            <button type="button" id="btn-github" class="w-full py-3 text-xl btn-retro btn-github-retro flex items-center justify-center gap-3">
+                <span>👾</span> ACCESS VIA GITHUB
+            </button>
+            <!-- END GITHUB BUTTON -->
 
             <div class="mt-6 text-center">
                 <span class="text-lg osd-text-shadow">NO ACCOUNT?</span>
