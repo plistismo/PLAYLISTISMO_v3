@@ -1,3 +1,5 @@
+
+
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÕES ---
@@ -71,8 +73,9 @@ async function enrichDatabaseWithVideoLinks() {
     console.log("🚀 INICIANDO SINCRONIZAÇÃO OTIMIZADA (ESM)...");
 
     // 1. Busca músicas sem link no banco
+    // MIGRADO PARA musicas_backup
     const { data: dbMusics, error } = await supabase
-        .from('musicas')
+        .from('musicas_backup')
         .select('*')
         .is('video_id', null);
 
@@ -121,8 +124,9 @@ async function enrichDatabaseWithVideoLinks() {
             console.log(`✅ MATCH: "${dbRow.artista} - ${dbRow.musica}"`);
             console.log(`   ↳ YouTube: "${videoTitle}"`);
 
+            // MIGRADO PARA musicas_backup
             const { error: upErr } = await supabase
-                .from('musicas')
+                .from('musicas_backup')
                 .update({ video_id: videoId })
                 .eq('id', dbRow.id);
 

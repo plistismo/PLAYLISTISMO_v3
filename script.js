@@ -603,7 +603,9 @@ async function handleCreditsForVideo(videoId, ytTitle) {
 
     let artist = "Desconhecido", song = "Faixa Desconhecida", director = "", album = "", year = "";
 
-    const { data } = await supabase.from('musicas').select('*').eq('video_id', videoId).maybeSingle();
+    // MIGRADO PARA A NOVA TABELA musicas_backup
+    const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
+    
     if (data) {
         artist = data.artista; song = data.musica || song; director = data.direcao || ""; album = data.album || ""; year = data.ano || "";
     } else {

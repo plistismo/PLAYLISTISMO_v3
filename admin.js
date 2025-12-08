@@ -1,3 +1,5 @@
+
+
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -42,8 +44,9 @@ async function checkAuth() {
 async function fetchMusics() {
     tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">LENDO MEMÓRIA...</td></tr>';
     
+    // MIGRADO PARA musicas_backup
     const { data, error } = await supabase
-        .from('musicas')
+        .from('musicas_backup')
         .select('*')
         .order('id', { ascending: false });
 
@@ -63,7 +66,8 @@ musicForm.addEventListener('submit', async (e) => {
     const formData = {
         artista: inputArtista.value.trim(),
         musica: inputMusica.value.trim(),
-        ano: inputAno.value ? parseInt(inputAno.value) : null,
+        // Schema define 'ano' como TEXT na nova tabela. Enviamos como string.
+        ano: inputAno.value ? String(inputAno.value) : null,
         album: inputAlbum.value.trim() || null,
         direcao: inputDirecao.value.trim() || null,
         video_id: inputVideoId.value.trim() || null
@@ -75,13 +79,13 @@ musicForm.addEventListener('submit', async (e) => {
     let error = null;
 
     if (id) {
-        // UPDATE
-        const { error: err } = await supabase.from('musicas').update(formData).eq('id', id);
+        // UPDATE (Tabela musicas_backup)
+        const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
         error = err;
         if(!error) showMessage(`REGISTRO #${id} ATUALIZADO COM SUCESSO!`);
     } else {
-        // CREATE
-        const { error: err } = await supabase.from('musicas').insert([formData]);
+        // CREATE (Tabela musicas_backup)
+        const { error: err } = await supabase.from('musicas_backup').insert([formData]);
         error = err;
         if(!error) showMessage("NOVO REGISTRO GRAVADO!");
     }
@@ -101,7 +105,8 @@ musicForm.addEventListener('submit', async (e) => {
 window.deleteMusic = async (id) => {
     if(!confirm(`ATENÇÃO: Deletar registro #${id}? Esta ação é irreversível.`)) return;
 
-    const { error } = await supabase.from('musicas').delete().eq('id', id);
+    // DELETE (Tabela musicas_backup)
+    const { error } = await supabase.from('musicas_backup').delete().eq('id', id);
 
     if (error) {
         showMessage(`ERRO AO DELETAR: ${error.message}`, true);
@@ -119,7 +124,7 @@ window.editMusic = (id) => {
     inputId.value = music.id;
     inputArtista.value = music.artista || '';
     inputMusica.value = music.musica || '';
-    inputAno.value = music.ano || '';
+    inputAno.value = music.ano || ''; // Agora trata texto/numero de forma transparente
     inputAlbum.value = music.album || '';
     inputDirecao.value = music.direcao || '';
     inputVideoId.value = music.video_id || '';
