@@ -331,36 +331,58 @@ body {
     animation: bob 0.6s infinite ease-in-out alternate;
 }
 
-/* ADMIN PANEL STYLES (Service Mode) */
+/* --- ADMIN PANEL STYLES (Service Mode) --- */
 .service-mode-input {
-    background: transparent;
-    border: 1px solid #d97706; /* Amber */
-    color: #d97706;
+    background: #111;
+    border: 1px solid #78350f; /* Amber-900 */
+    color: #d97706; /* Amber-600 */
     font-family: 'VT323', monospace;
     text-transform: uppercase;
 }
 .service-mode-input:focus {
     outline: none;
+    border-color: #d97706;
     background: rgba(217, 119, 6, 0.1);
-    box-shadow: 0 0 10px rgba(217, 119, 6, 0.3);
+    box-shadow: 0 0 10px rgba(217, 119, 6, 0.2);
 }
+.service-mode-input::placeholder {
+    color: #451a03;
+    opacity: 0.7;
+}
+
 .service-mode-btn {
     border: 1px solid #d97706;
     color: #d97706;
     background: transparent;
     transition: all 0.2s;
+    font-family: 'VT323', monospace;
+    text-transform: uppercase;
+    cursor: pointer;
 }
 .service-mode-btn:hover {
     background: #d97706;
     color: #000;
+    box-shadow: 0 0 15px #d97706;
+}
+
+.service-mode-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'VT323', monospace;
 }
 .service-mode-table th, .service-mode-table td {
-    border: 1px solid #444;
+    border: 1px solid #451a03; /* Dark Amber */
     padding: 0.5rem;
 }
 .service-mode-table th {
     background: #222;
-    color: #fbbf24;
+    color: #d97706;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+}
+.service-mode-table tr:hover {
+    background-color: rgba(217, 119, 6, 0.1);
 }
 
 /* Responsividade */
