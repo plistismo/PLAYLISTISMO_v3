@@ -1,5 +1,3 @@
-
-
 /* Custom Fonts & Base */
 body {
     font-family: 'VT323', monospace;
@@ -200,32 +198,44 @@ body {
     filter: sepia(0.2) contrast(1.15) brightness(1.1) saturate(1.1) blur(0.5px);
 }
 
-/* Credits Overlay (RESPONSIVE SIZE) */
+/* Credits Overlay (UPDATED: No Box, MTV Style) */
 .credits-overlay {
     position: absolute;
-    bottom: 5%; /* Responsive positioning */
-    left: 5%;   /* Responsive positioning */
-    color: white;
-    text-shadow: 2px 2px 0 #000000;
+    bottom: 8%; /* Slightly raised safe area */
+    left: 6%;   /* Slightly inset */
+    color: #f0f0f0; /* Soft white */
     
-    /* Responsive font-size based on container width */
-    font-size: clamp(0.7rem, 2.5vmin, 1.2rem); 
+    /* Simulate black text stroke for visibility on any bg - BOLD OUTLINE */
+    text-shadow: 
+        2px 2px 0px #000, 
+        -1px -1px 0 #000,  
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000;
+    
+    /* Reduced size as requested */
+    font-size: clamp(0.7rem, 2vmin, 1.1rem); 
     
     font-family: 'Jost', sans-serif;
-    line-height: 1.3;
+    font-weight: 700; /* Bold to match Kabel font vibe */
+    line-height: 1.1;
+    
     opacity: 0; 
     transition: opacity 0.8s ease-in-out; 
-    background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%);
-    padding: 1.5% 2.5%; /* Responsive padding */
-    border-left: 0.3em solid #ffff00; /* Responsive border width roughly */
+    
+    /* REMOVED: Background, Border, Padding */
+    background: none;
+    padding: 0;
+    border: none;
+    
     pointer-events: none;
     z-index: 60;
-    transform: skewX(-5deg);
     
-    /* FULL WIDTH FIX */
-    max-width: 90%; /* Allows it to take up most of the screen if needed */
+    /* Removed skew for cleaner original MTV look */
+    transform: none; 
+    
+    max-width: 90%;
     width: auto;
-    right: 5%; /* Ensures it doesn't spill over */
 }
 
 .credits-overlay.visible {
@@ -233,10 +243,11 @@ body {
 }
 
 .credit-line {
-    margin-bottom: 0.3em; 
-    letter-spacing: 1px;
-    white-space: normal; /* Permite quebra de linha */
-    word-wrap: break-word; /* Garante quebra em palavras longas */
+    margin-bottom: 0.2rem; 
+    letter-spacing: 0.5px;
+    white-space: normal; 
+    word-wrap: break-word; 
+    /* Mixed case preserved (no uppercase transform) */
 }
 
 .credit-line span {
@@ -244,8 +255,8 @@ body {
 }
 
 .credit-line span.light {
-    font-weight: 300;
-    color: #e0e0e0;
+    font-weight: 400; /* Slightly lighter for ft. */
+    opacity: 0.9;
 }
 
 .icon {
@@ -253,15 +264,16 @@ body {
     width: 1.2em; 
     text-align: center;
     margin-right: 0.4em;
-    color: #ffff00; 
+    color: #ffff00; /* Yellow icons pop against black shadow */
+    text-shadow: 2px 2px 0px #000; /* Ensure icons also have shadow */
 }
 
-/* Player Zoom Hack Removed to fix cropping */
+/* Player Zoom Hack REMOVED to hide UI but keep aspect ratio */
 #player {
     pointer-events: none;
     width: 100%;
     height: 100%;
-    transform: none; /* Removed scale */
+    transform: none; /* No scaling ensures no cutoff */
 }
 
 /* Info Panel (Last.FM) */
@@ -319,17 +331,43 @@ body {
     animation: bob 0.6s infinite ease-in-out alternate;
 }
 
+/* ADMIN PANEL STYLES (Service Mode) */
+.service-mode-input {
+    background: transparent;
+    border: 1px solid #d97706; /* Amber */
+    color: #d97706;
+    font-family: 'VT323', monospace;
+    text-transform: uppercase;
+}
+.service-mode-input:focus {
+    outline: none;
+    background: rgba(217, 119, 6, 0.1);
+    box-shadow: 0 0 10px rgba(217, 119, 6, 0.3);
+}
+.service-mode-btn {
+    border: 1px solid #d97706;
+    color: #d97706;
+    background: transparent;
+    transition: all 0.2s;
+}
+.service-mode-btn:hover {
+    background: #d97706;
+    color: #000;
+}
+.service-mode-table th, .service-mode-table td {
+    border: 1px solid #444;
+    padding: 0.5rem;
+}
+.service-mode-table th {
+    background: #222;
+    color: #fbbf24;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     .credits-overlay {
-        left: 3%;
-        bottom: 3%;
-        padding: 1%;
-        max-width: 90%; /* Ensure mobile full width too */
-    }
-    
-    /* Mobile Scale Hack Removed */
-    #player {
-        /* transform: scale(1.2); REMOVED */ 
+        left: 4%;
+        bottom: 5%;
+        max-width: 90%; 
     }
 }

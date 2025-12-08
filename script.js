@@ -325,7 +325,7 @@ function groupPlaylists(playlists) {
     playlists.forEach(pl => {
         const title = pl.snippet.title.toUpperCase();
         if (title.includes('UPLOAD')) groups['UPLOADS'].push(pl);
-        else if (title.includes('ZONE') || title.includes('RADIO')) groups['ZONES'].push(pl);
+        else if (title.includes('ZONE')) groups['ZONES'].push(pl);
         else if (title.includes('ROCK') || title.includes('POP') || title.includes('JAZZ') || title.includes('INDIE') || title.includes('BRASIL')) groups['GENRES'].push(pl);
         else if (title.match(/\d{4}/)) groups['ERAS'].push(pl);
         else groups['OTHERS'].push(pl);
@@ -409,6 +409,10 @@ function changeChannel(playlistId, playlistTitle) {
                 startSeconds: 0
             });
             player.setLoop(true);
+            // REFORÇO: Força o play para evitar clique duplo
+            setTimeout(() => {
+                try { player.playVideo(); } catch(e){}
+            }, 100);
         } catch (e) {
             console.error("Erro ao carregar playlist", e);
         }
