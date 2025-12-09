@@ -142,7 +142,8 @@ window.onYouTubeIframeAPIReady = function() {
         width: '100%',
         playerVars: {
             'playsinline': 1, 'controls': 0, 'modestbranding': 1, 'rel': 0,
-            'fs': 0, 'iv_load_policy': 3, 'disablekb': 1, 'mute': 0, 'autoplay': 1 
+            'fs': 0, 'iv_load_policy': 3, 'disablekb': 1, 'mute': 0, 'autoplay': 1,
+            'showinfo': 0 // Deprecated mas mantemos por legado
         },
         events: {
             'onReady': onPlayerReady,
@@ -188,7 +189,9 @@ function onPlayerStateChange(event) {
         startMonitorLoop();
         
         if (data && data.title) {
+            // Se o ID mudou, é um novo vídeo
             if (state.currentVideoId !== data.video_id) {
+                console.log(`[Player] New Track: ${data.video_id}`);
                 state.currentSearchTerm = data.title;
                 state.currentVideoTitle = data.title;
                 state.currentVideoId = data.video_id;
@@ -199,7 +202,10 @@ function onPlayerStateChange(event) {
                 els.npTitle.textContent = data.title;
                 els.npId.textContent = `ID: ${data.video_id}`;
                 
-                // CRUCIAL: Chama a função de créditos passando o ID do vídeo para buscar no DB
+                // CRUCIAL: Limpa créditos anteriores
+                hideCredits();
+                
+                // Chama a função de créditos passando o ID do vídeo para buscar no DB
                 handleCreditsForVideo(data.video_id, data.title).then(() => {
                     if (state.isLyricsOn) fetchLyricsForCurrentVideo();
                 });
@@ -674,12 +680,13 @@ function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
 }
 
 function updateCreditsDOM(artist, song, album, year, director) {
-    // Helper para preencher ou esconder linhas
+    // Helper para preencher ou esconder linhas e remover classes "hidden"
     const fill = (el, text, prefix = "", suffix = "") => {
-        if (!text) {
+        if (!text || text.trim() === "") {
             el.innerHTML = "";
             el.classList.add("hidden");
         } else {
+            // Garante que o texto tenha sombra e seja visível
             el.innerHTML = prefix + formatCreditHtml(text) + suffix;
             el.classList.remove("hidden");
         }
@@ -708,11 +715,22 @@ function startMonitorLoop() {
         const duration = player.getDuration();
         if (!duration) return;
 
-        const isIntroTime = currentTime >= 8 && currentTime < 18; // Ajustado para aparecer mais cedo
-        const isOutroTime = currentTime >= (duration - 20) && currentTime < (duration - 10);
+        // CUTOFF: Pula o vídeo 2 segundos antes do fim para evitar End Screens do YouTube
+        if (currentTime >= duration - 2) {
+            console.log("Auto-Skipping End Screen...");
+            player.nextVideo();
+            triggerStatic();
+            return;
+        }
+
+        const isIntroTime = currentTime >= 4 && currentTime < 14; // Créditos aparecem entre 4s e 14s
+        const isOutroTime = currentTime >= (duration - 15) && currentTime < (duration - 5);
         
-        if (isIntroTime || isOutroTime) showCredits();
-        else hideCredits();
+        if (isIntroTime || isOutroTime) {
+            showCredits();
+        } else {
+            hideCredits();
+        }
 
         const progress = currentTime / duration;
         if (progress > 0.05 && progress < 0.1 && !state.aiCheckpoints.intro) { state.aiCheckpoints.intro = true; triggerAutoAICommentary('intro'); }
@@ -727,8 +745,15 @@ function stopMonitorLoop() {
     if (state.monitorInterval) { clearInterval(state.monitorInterval); state.monitorInterval = null; }
 }
 
-function showCredits() { if(!els.credits.container.classList.contains('visible')) els.credits.container.classList.add('visible'); }
-function hideCredits() { if(els.credits.container.classList.contains('visible')) els.credits.container.classList.remove('visible'); }
+function showCredits() { 
+    // Só mostra se houver conteúdo no artista ou música
+    if (els.credits.artist.innerText || els.credits.song.innerText) {
+        els.credits.container.classList.add('visible'); 
+    }
+}
+function hideCredits() { 
+    els.credits.container.classList.remove('visible'); 
+}
 
 // --- EFEITOS DE TV ---
 function togglePower() {
