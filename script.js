@@ -604,51 +604,51 @@ function formatCreditHtml(text) {
     return formatted;
 }
 
-// ATUALIZAÇÃO V4: BUSCA ESTRITA POR ID DE VÍDEO
+// ATUALIZAÇÃO V7: BUSCA ESTRITA POR ID DE VÍDEO
+// CROSS-ANALYSIS: Somente dados do DB via ID são permitidos nos créditos.
 async function handleCreditsForVideo(videoId, ytTitle) {
     hideCredits();
     
-    // Limpa a interface do painel lateral se não for lyrics
-    if (!state.isLyricsOn) {
-        els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">LOADING DATA...</span></div>';
-        els.infoPanel.classList.remove('active');
-    }
+    // Limpa imediatamente para evitar persistência de dados antigos
+    updateCreditsDOM("", "", "", "", "");
 
-    // Variáveis finais
+    // Variáveis finais (inicializadas vazias para garantir o "Cross-analysis")
     let artist = "";
     let song = "";
     let album = "";
     let year = "";
     let director = "";
 
-    // 1. Busca exata no banco pelo VIDEO_ID
-    const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
+    // 1. Busca exata no banco pelo VIDEO_ID (Prioridade Absoluta)
+    console.log(`[Credits] Fetching metadata for ID: ${videoId}`);
+    const { data, error } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
     
+    if (error) console.error("[Credits] DB Error:", error);
+
     if (data) {
-        // Se encontrou no banco, usamos os dados oficiais
+        console.log(`[Credits] Data found in DB for ${videoId}`);
         artist = data.artista || "";
         song = data.musica || "";
         album = data.album || "";
         year = data.ano ? String(data.ano) : "";
         director = data.direcao || "";
     } else {
-        // 2. Fallback se não estiver no banco: Tenta extrair do título do YouTube
+        console.log(`[Credits] ID ${videoId} not found in DB. Using fallback for Artist/Song only.`);
+        // Fallback apenas para não quebrar a experiência do player de música, 
+        // mas campos de metadados específicos (álbum, diretor) ficam vazios.
         const parts = ytTitle.split('-');
         if (parts.length >= 2) { 
             artist = parts[0].trim(); 
             song = parts.slice(1).join(' ').trim(); 
         } else { 
             song = ytTitle; 
-            artist = ""; 
         }
-        // No fallback, album/ano/diretor ficam vazios para não inventar dados
     }
 
-    // Busca dados no Last.FM se possível
-    const apiArtist = cleanStringForApi(artist);
-    const apiSong = cleanStringForApi(song);
-    
+    // Busca dados no Last.FM se possível (para o painel lateral, não afeta os créditos na tela)
     if (!state.isLyricsOn) {
+        const apiArtist = cleanStringForApi(artist);
+        const apiSong = cleanStringForApi(song);
         if (apiArtist && apiSong) {
             fetchTrackDetails(apiArtist, apiSong).then(fmData => updateInfoPanel(fmData, artist, song));
         } else {
@@ -657,7 +657,7 @@ async function handleCreditsForVideo(videoId, ytTitle) {
         }
     }
     
-    // Atualiza o DOM dos créditos
+    // Atualiza o DOM dos créditos com dados validados
     updateCreditsDOM(artist, song, album, year, director);
 }
 
