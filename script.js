@@ -1,5 +1,7 @@
 
 
+
+
 import { createClient } from '@supabase/supabase-js';
 import { fetchTrackDetails } from './lastFmAPI.js';
 import { GoogleGenAI } from "@google/genai";
@@ -604,15 +606,15 @@ function formatCreditHtml(text) {
     return formatted;
 }
 
-// ATUALIZAÇÃO V7: BUSCA ESTRITA POR ID DE VÍDEO
-// CROSS-ANALYSIS: Somente dados do DB via ID são permitidos nos créditos.
+// ATUALIZAÇÃO V8: LÓGICA DE FALLBACK REFINADA
+// Se não encontrar no banco, usa título limpo.
 async function handleCreditsForVideo(videoId, ytTitle) {
     hideCredits();
     
     // Limpa imediatamente para evitar persistência de dados antigos
     updateCreditsDOM("", "", "", "", "");
 
-    // Variáveis finais (inicializadas vazias para garantir o "Cross-analysis")
+    // Variáveis finais (inicializadas vazias)
     let artist = "";
     let song = "";
     let album = "";
@@ -633,9 +635,9 @@ async function handleCreditsForVideo(videoId, ytTitle) {
         year = data.ano ? String(data.ano) : "";
         director = data.direcao || "";
     } else {
-        console.log(`[Credits] ID ${videoId} not found in DB. Using fallback for Artist/Song only.`);
-        // Fallback apenas para não quebrar a experiência do player de música, 
-        // mas campos de metadados específicos (álbum, diretor) ficam vazios.
+        console.log(`[Credits] ID ${videoId} not found in DB. Using smart fallback.`);
+        
+        // Separa por hífen padrão (Artist - Song)
         const parts = ytTitle.split('-');
         if (parts.length >= 2) { 
             artist = parts[0].trim(); 
@@ -643,9 +645,20 @@ async function handleCreditsForVideo(videoId, ytTitle) {
         } else { 
             song = ytTitle; 
         }
+
+        // Limpeza estética para fallback (remove lixo como "Official Video")
+        const clean = (s) => s.replace(/[\(\[\{].*?[\)\]\}]/g, '')
+                              .replace(/official video/gi, '')
+                              .replace(/video oficial/gi, '')
+                              .replace(/lyric video/gi, '')
+                              .replace(/4k/gi, '')
+                              .trim();
+                              
+        artist = clean(artist);
+        song = clean(song);
     }
 
-    // Busca dados no Last.FM se possível (para o painel lateral, não afeta os créditos na tela)
+    // Busca dados no Last.FM se possível (para o painel lateral)
     if (!state.isLyricsOn) {
         const apiArtist = cleanStringForApi(artist);
         const apiSong = cleanStringForApi(song);

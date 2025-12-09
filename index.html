@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -34,7 +35,7 @@
     
     <!-- ADMIN BUTTON (CRUD) - VISIBLE -->
     <a href="admin.html" class="fixed top-2 left-2 z-[9999] bg-amber-900/50 text-amber-500 hover:text-black hover:bg-amber-500 border border-amber-600 px-3 py-1 font-vt323 text-lg font-bold tracking-widest transition-all shadow-[0_0_10px_rgba(217,119,6,0.2)]">
-        ADMIN / CRUD v7
+        ADMIN / CRUD v8
     </a>
     
     <div id="dev-debug-console" class="fixed top-0 right-0 bg-black/95 border-l-2 border-b-2 border-red-500 z-[10000] hidden flex flex-col font-mono text-base shadow-2xl">
@@ -241,8 +242,9 @@
                                     </div>
                                 </div>
 
-                                <!-- Credits Overlay (MTV STYLE REFACTORED V7) -->
-                                <div id="video-credits" class="credits-overlay hidden">
+                                <!-- Credits Overlay (MTV STYLE REFACTORED V8) -->
+                                <!-- Removed 'hidden' class here so JS can control opacity properly -->
+                                <div id="video-credits" class="credits-overlay">
                                     <!-- Elements will be injected here as blocks -->
                                     <div id="cr-artist" class="credit-block text-2xl md:text-3xl font-bold text-white mb-2 leading-none"></div>
                                     <div id="cr-song" class="credit-block text-xl md:text-2xl text-white mb-2 leading-none"></div>
