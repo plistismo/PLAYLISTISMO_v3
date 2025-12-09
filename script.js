@@ -67,7 +67,11 @@ const els = {
     osdClock: document.getElementById('osd-clock'),
     statusMessage: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
+    
+    // Guide / Sidebar Elements
     internalGuide: document.getElementById('tv-internal-guide'),
+    guideSidebar: document.getElementById('guide-sidebar'),
+    guideBackdrop: document.getElementById('guide-backdrop'),
     channelGuideContainer: document.getElementById('channel-guide-container'),
     channelSearch: document.getElementById('channel-search'),
     guideNowPlaying: document.getElementById('guide-now-playing'),
@@ -75,6 +79,7 @@ const els = {
     npTitle: document.getElementById('np-title'),
     npPlaylist: document.getElementById('np-playlist'),
     npId: document.getElementById('np-id'),
+    
     osdChannel: document.getElementById('osd-channel'),
     ventContainer: document.querySelector('.vent-container'),
     speakerGrids: document.querySelectorAll('.speaker-grid'),
@@ -275,12 +280,12 @@ function renderChannelGuide() {
                 <span class="bg-[#ffff00] text-black px-2 font-bold inline-block mr-2 transition-colors">[+]</span>
                 <span class="text-[#ffff00] font-bold text-xl">${groupName}</span>
             </div>
-            <span class="text-xs opacity-50 text-white">${items.length} PLAYLISTS</span>
+            <span class="text-xs opacity-50 text-white">${items.length} PLS</span>
         `;
         
         // --- CONTENT WRAPPER (Hidden by default) ---
         const contentWrapper = document.createElement('div');
-        contentWrapper.className = "accordion-content grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 pl-4 border-l-2 border-white/10 ml-2";
+        contentWrapper.className = "accordion-content grid grid-cols-1 gap-y-2 pl-2 border-l-2 border-white/10 ml-2";
 
         // Adiciona funcionalidade de Toggle
         header.addEventListener('click', () => {
@@ -304,15 +309,15 @@ function renderChannelGuide() {
             
             const chNum = String(channelIndex).padStart(2, '0');
             el.innerHTML = `
-                <span class="text-[#ffff00] mr-3 font-bold group-hover:text-blue-900">${chNum}</span>
-                <span class="truncate">${item.name}</span>
-                <span class="text-xs ml-auto opacity-50">${item.count} TRACKS</span>
+                <span class="text-[#ffff00] mr-3 font-bold group-hover:text-blue-900 font-mono text-sm">${chNum}</span>
+                <span class="truncate text-lg">${item.name}</span>
+                <span class="text-xs ml-auto opacity-50 font-mono">${item.count}</span>
             `;
             
             el.onclick = () => {
                 els.osdChannel.innerText = `CH ${chNum}`;
                 playVirtualChannel(item.name);
-                toggleSearchMode();
+                toggleSearchMode(); // Close sidebar
             };
             contentWrapper.appendChild(el);
             channelIndex++;
@@ -593,6 +598,7 @@ function formatCreditHtml(text) {
     return formatted;
 }
 
+// ATUALIZAÇÃO: Exibe apenas se existir no banco de dados.
 async function handleCreditsForVideo(videoId, ytTitle) {
     hideCredits();
     if (!state.isLyricsOn) {
@@ -600,17 +606,38 @@ async function handleCreditsForVideo(videoId, ytTitle) {
         els.infoPanel.classList.remove('active');
     }
 
-    let artist = "Desconhecido", song = "Faixa Desconhecida", director = "", album = "", year = "";
+    // Padrões de Fallback (Vazios para os opcionais)
+    let artist = "Desconhecido";
+    let song = "Faixa Desconhecida";
+    let director = "";
+    let album = "";
+    let year = "";
 
     // Busca no DB Backup
     const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
     
     if (data) {
-        artist = data.artista; song = data.musica || song; director = data.direcao || ""; album = data.album || ""; year = data.ano || "";
+        // Se existe no banco, usamos os dados do banco.
+        artist = data.artista || "Desconhecido";
+        song = data.musica || "Faixa Desconhecida";
+        // Campos Opcionais: Se nulos no banco, ficam vazios aqui para serem ocultados.
+        album = data.album || "";
+        year = data.ano || "";
+        director = data.direcao || "";
     } else {
+        // Fallback para título do YouTube se não estiver no banco
         const parts = ytTitle.split('-');
-        if (parts.length >= 2) { artist = parts[0].trim(); song = parts.slice(1).join(' ').trim(); } 
-        else { song = ytTitle; artist = ""; }
+        if (parts.length >= 2) { 
+            artist = parts[0].trim(); 
+            song = parts.slice(1).join(' ').trim(); 
+        } else { 
+            song = ytTitle; 
+            artist = ""; 
+        }
+        // No fallback do YouTube, não inventamos album/ano/diretor
+        album = "";
+        year = "";
+        director = "";
     }
 
     const apiArtist = cleanStringForApi(artist);
@@ -647,13 +674,19 @@ function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
 
 function updateCreditsDOM(artist, song, album, year, director) {
     const set = (el, txt) => { 
-        el.parentElement.style.display = txt ? 'block' : 'none'; 
-        el.innerHTML = formatCreditHtml(txt) || ''; 
+        const content = txt ? String(txt).trim() : '';
+        // Se houver conteúdo, mostra o bloco. Se não, esconde completamente (display: none).
+        if (content) {
+            el.parentElement.style.display = 'block';
+            el.innerHTML = formatCreditHtml(content);
+        } else {
+            el.parentElement.style.display = 'none';
+        }
     };
     set(els.credits.artist, artist); 
     set(els.credits.song, song); 
     set(els.credits.album, album);
-    set(els.credits.year, year ? String(year) : ""); 
+    set(els.credits.year, year); 
     set(els.credits.director, director);
 }
 
@@ -717,9 +750,9 @@ function togglePower() {
             els.screenOn.classList.remove('crt-turn-off');
             els.screenOff.classList.remove('hidden');
         }, 400);
-        els.internalGuide.classList.add('hidden');
+        // Force Close Sidebar on Power Off
+        if (state.isSearchOpen) toggleSearchMode();
         els.infoPanel.classList.remove('active');
-        state.isSearchOpen = false;
         
         hideAIBubble(); 
         els.lyricsOverlay.classList.add('hidden');
@@ -731,23 +764,51 @@ function togglePower() {
 }
 
 function toggleSearchMode() {
-    if (!state.isOn) return;
+    if (!state.isOn && !state.isSearchOpen) return; // Only open if TV is ON
+    
     state.isSearchOpen = !state.isSearchOpen;
+    const guideWrapper = els.internalGuide;
+    const sidebar = els.guideSidebar;
+    const backdrop = els.guideBackdrop;
+
     if (state.isSearchOpen) {
+        // OPEN
         if (player && typeof player.pauseVideo === 'function' && state.playerReady) player.pauseVideo();
-        els.internalGuide.classList.remove('hidden');
-        els.channelSearch.focus();
+        
+        // Remove hidden immediately
+        guideWrapper.classList.remove('hidden');
+        
+        // Trigger animations next frame
+        requestAnimationFrame(() => {
+            sidebar.classList.remove('-translate-x-full');
+            backdrop.classList.remove('opacity-0');
+            els.channelSearch.focus();
+        });
+        
         updateGuideClock();
-        const guideFooter = document.querySelector('#tv-internal-guide div:last-child');
+        
+        // Add Logout if missing
+        const guideFooter = sidebar.querySelector('div:last-child');
         if (guideFooter && !document.getElementById('logout-btn-guide')) {
-            const logoutSpan = document.createElement('span');
-            logoutSpan.innerHTML = ' | <span class="text-purple-500 font-bold cursor-pointer" id="logout-btn-guide">SAIR (LOGOUT)</span>';
-            guideFooter.appendChild(logoutSpan);
+            const logoutContainer = document.createElement('div');
+            logoutContainer.className = "mt-2 pt-2 border-t border-white/10";
+            logoutContainer.innerHTML = '<span class="text-purple-500 font-bold cursor-pointer text-xs hover:text-purple-300" id="logout-btn-guide">SAIR (LOGOUT)</span>';
+            guideFooter.appendChild(logoutContainer);
             document.getElementById('logout-btn-guide').addEventListener('click', handleLogout);
         }
+
     } else {
-        els.internalGuide.classList.add('hidden');
-        if (player && state.playerReady) player.playVideo();
+        // CLOSE
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('opacity-0');
+
+        // Wait for transition (300ms) then hide
+        setTimeout(() => {
+            if(!state.isSearchOpen) { // Double check state hasn't changed
+                guideWrapper.classList.add('hidden');
+                if (player && state.playerReady && state.isOn) player.playVideo();
+            }
+        }, 300);
     }
 }
 
@@ -803,6 +864,11 @@ function setupEventListeners() {
     els.btnNext.addEventListener('click', nextVideo);
     els.btnPrev.addEventListener('click', prevVideo);
     els.btnCC.addEventListener('click', toggleLyrics); 
+    
+    // Backdrop Click to Close
+    els.guideBackdrop.addEventListener('click', () => {
+        if(state.isSearchOpen) toggleSearchMode();
+    });
 
     document.addEventListener('keydown', (e) => {
         if (!state.isOn) return;
