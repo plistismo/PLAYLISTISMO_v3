@@ -209,6 +209,11 @@ function onPlayerStateChange(event) {
         // Reset visual imediato ao iniciar
         els.creditsOverlay.classList.remove('visible');
 
+        // Tenta atualizar créditos agora que o vídeo começou (para pegar o título se necessário)
+        if (state.currentVideoData) {
+            updateCreditsInfo(state.currentVideoData);
+        }
+
         // Se CC estiver ligado, gera letras
         if (state.isLyricsOn && state.currentVideoData) {
             generateAILyrics(state.currentVideoData);
@@ -314,7 +319,6 @@ async function loadChannelContent(playlistName) {
     }
 
     // APLICAÇÃO DO SHUFFLE REAL (FISHER-YATES)
-    // Isso garante uma ordem nova e aleatória toda vez que o canal é carregado.
     state.currentChannelList = fisherYatesShuffle([...data]);
     state.currentIndex = 0;
     
@@ -339,6 +343,7 @@ function playCurrentVideo() {
         }
     }
     
+    // Atualiza info inicial (tentativa com dados do DB)
     updateCreditsInfo(videoData);
     updateGuideNowPlaying();
 }
@@ -391,12 +396,65 @@ function showOSD() {
     }, 4000);
 }
 
+// --- SMART CREDITS LOGIC ---
+
+// Helper: Limpa títulos do YouTube (remove "Official Video", "Lyrics", etc)
+function cleanYouTubeTitle(title) {
+    if (!title) return "";
+    return title
+        .replace(/[\(\[\{].*?[\)\]\}]/g, '') // Remove parênteses/colchetes e conteúdo
+        .replace(/official video/gi, '')
+        .replace(/lyrics/gi, '')
+        .replace(/hq/gi, '')
+        .replace(/4k/gi, '')
+        .replace(/hd/gi, '')
+        .replace(/\s+/g, ' ') // Remove espaços duplos
+        .trim();
+}
+
 function updateCreditsInfo(data) {
-    els.credArtist.innerText = data.artista || 'Unknown Artist';
-    els.credSong.innerText = data.musica || 'Unknown Track';
-    els.credAlbum.innerText = data.album || 'Unknown Album';
-    els.credYear.innerText = data.ano || '19--';
-    els.credDirector.innerText = data.direcao || 'Unknown Director';
+    // 1. Prioriza dados do Banco de Dados
+    let artist = data.artista;
+    let song = data.musica;
+    
+    // 2. Fallback: Se não tem no DB, tenta pegar do título do YouTube
+    if ((!artist || !song || artist === 'Unknown' || song === 'Unknown') && player && typeof player.getVideoData === 'function') {
+        const ytData = player.getVideoData();
+        if (ytData && ytData.title) {
+            const cleanTitle = cleanYouTubeTitle(ytData.title);
+            
+            // Tenta separar por hífen "Artist - Song"
+            const parts = cleanTitle.split('-');
+            
+            if (parts.length >= 2) {
+                // Se encontrou separador, assume Artista - Música
+                if (!artist) artist = parts[0].trim();
+                if (!song) song = parts.slice(1).join('-').trim(); // Junta o resto caso tenha mais hifens
+            } else {
+                // Se não tem separador, coloca tudo na música
+                if (!song) song = cleanTitle;
+            }
+        }
+    }
+
+    // 3. Função auxiliar para mostrar/esconder linha
+    const updateLine = (element, text) => {
+        const lineParent = element.parentElement; // A div .credit-line
+        
+        if (text && text.toString().trim() !== '' && text !== 'null' && text !== 'undefined') {
+            element.innerText = text;
+            lineParent.style.display = 'flex'; // Mostra se tem dado
+        } else {
+            lineParent.style.display = 'none'; // Esconde se vazio
+        }
+    };
+
+    // 4. Aplica lógica linha a linha
+    updateLine(els.credArtist, artist);
+    updateLine(els.credSong, song);
+    updateLine(els.credAlbum, data.album);
+    updateLine(els.credYear, data.ano);
+    updateLine(els.credDirector, data.direcao);
 }
 
 
@@ -425,7 +483,13 @@ async function generateAILyrics(videoData) {
     els.lyricsContent.innerText = "Scanning audio patterns...";
 
     try {
-        const prompt = `Gere uma interpretação poética curta ou a letra (se for famosa) da música "${videoData.musica}" de "${videoData.artista}". 
+        // Usa fallback name também para a AI se necessário
+        let searchName = videoData.musica;
+        if (!searchName && player && player.getVideoData) {
+             searchName = cleanYouTubeTitle(player.getVideoData().title);
+        }
+
+        const prompt = `Gere uma interpretação poética curta ou a letra (se for famosa) da música "${searchName}" do artista "${videoData.artista || 'Unknown'}". 
         Formate como legendas de Closed Caption.`;
 
         const response = await genAI.models.generateContent({
@@ -514,7 +578,7 @@ function selectChannelFromGuide(name) {
 
 function updateGuideNowPlaying() {
     if (state.currentVideoData) {
-        els.guideNpTitle.innerText = `${state.currentVideoData.artista} - ${state.currentVideoData.musica}`;
+        els.guideNpTitle.innerText = `${state.currentVideoData.artista || '?'} - ${state.currentVideoData.musica || '?'}`;
         els.guideNpPlaylist.innerText = `CANAL: ${state.currentChannelName}`;
         els.guideNowPlayingBox.classList.remove('hidden');
     }
