@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -174,17 +176,10 @@
                                 <!-- STATIC NOISE OVERLAY -->
                                 <div id="static-overlay" class="absolute inset-0 z-30 opacity-0 pointer-events-none transition-opacity duration-100 bg-repeat"></div>
 
-                                <!-- OSD Layer -->
-                                <div id="osd-layer" class="absolute inset-0 z-30 flex flex-col justify-between p-4 md:p-8 pointer-events-none font-vt323 text-white/80 transition-opacity duration-1000">
-                                    <div class="flex justify-between items-start">
-                                        <div id="osd-status" class="vhs-text-shadow text-3xl md:text-5xl uppercase text-green-500 drop-shadow-md">PLAY ►</div>
-                                        <div class="vhs-text-shadow text-2xl md:text-3xl bg-black/50 px-2" id="osd-channel">CH 01</div>
-                                    </div>
-                                    <div class="flex justify-between items-end vhs-text-shadow text-xl md:text-2xl">
-                                        <span>STEREO SP</span>
-                                        <div class="flex flex-col items-end">
-                                            <span id="osd-clock">00:00 AM</span>
-                                        </div>
+                                <!-- OSD Layer (Simplified) -->
+                                <div id="osd-layer" class="absolute inset-0 z-30 pointer-events-none font-vt323 text-white/80 transition-opacity duration-1000">
+                                    <div class="absolute top-4 right-6 text-right">
+                                        <div class="vhs-text-shadow text-2xl md:text-3xl bg-black/50 px-2" id="tv-playlist-label">--</div>
                                     </div>
                                 </div>
 

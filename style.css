@@ -199,14 +199,14 @@ body {
     filter: sepia(0.2) contrast(1.15) brightness(1.1) saturate(1.1) blur(0.5px);
 }
 
-/* Credits Overlay (REVERTED & SLIGHTLY INCREASED) */
+/* Credits Overlay (ADJUSTED SIZE & READABILITY) */
 .credits-overlay {
     position: absolute;
     bottom: 10%; 
     left: 8%;   
     color: #f0f0f0; /* Soft white */
     
-    /* MODERATE OUTLINE - Clean 90s look */
+    /* CLEANER OUTLINE for better readability */
     text-shadow: 
         2px 2px 0px #000, 
         -1px -1px 0 #000,  
@@ -214,12 +214,12 @@ body {
         -1px 1px 0 #000,
         1px 1px 0 #000;
     
-    /* SLIGHTLY LARGER (Not enormous) */
-    font-size: clamp(1.5rem, 4vmin, 2.2rem); 
+    /* BALANCED SIZE - Not too huge, but very clear */
+    font-size: clamp(1.2rem, 3vmin, 1.8rem); 
     
     font-family: 'Jost', sans-serif;
     font-weight: 700; /* Bold */
-    line-height: 1.2;
+    line-height: 1.3;
     
     opacity: 0; 
     transition: opacity 0.8s ease-in-out; 
@@ -242,7 +242,7 @@ body {
 }
 
 .credit-line {
-    margin-bottom: 0.3rem; 
+    margin-bottom: 0.2rem; 
     letter-spacing: 0.5px;
     white-space: normal; 
     word-wrap: break-word; 
@@ -256,9 +256,9 @@ body {
 
 .icon {
     display: inline-block;
-    width: 1.3em; 
+    width: 1.4em; 
     text-align: center;
-    margin-right: 0.5em;
+    margin-right: 0.4em;
     color: #ffff00; 
     text-shadow: 2px 2px 0px #000; 
 }
@@ -408,6 +408,6 @@ body {
         left: 6%;
         bottom: 8%;
         max-width: 90%; 
-        font-size: clamp(1rem, 4vmin, 1.6rem); /* Adjusted for mobile */
+        font-size: clamp(1rem, 4vmin, 1.4rem); /* Adjusted for mobile */
     }
 }

@@ -51,11 +51,9 @@ const els = {
     btnSearch: document.getElementById('tv-search-btn'),
     btnCC: document.getElementById('tv-cc-btn'),
     
-    // OSD
+    // OSD Cleaned
     osdLayer: document.getElementById('osd-layer'),
-    osdClock: document.getElementById('osd-clock'),
-    osdStatus: document.getElementById('osd-status'),
-    osdChannel: document.getElementById('osd-channel'),
+    playlistLabel: document.getElementById('tv-playlist-label'),
     statusMsg: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
     
@@ -95,8 +93,7 @@ function init() {
 function startClocks() {
     setInterval(() => {
         const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        els.osdClock.innerText = timeStr;
+        // Apenas o relógio do guia (teletexto) é mantido
         els.guideClock.innerText = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         
         // Monitoramento constante de Créditos e Estado
@@ -106,7 +103,7 @@ function startClocks() {
     }, 1000);
 }
 
-// --- MONITORAMENTO DE CRÉDITOS (NOVA LÓGICA) ---
+// --- MONITORAMENTO DE CRÉDITOS (LÓGICA AJUSTADA) ---
 function monitorCredits() {
     if (!player || typeof player.getCurrentTime !== 'function') return;
 
@@ -115,15 +112,15 @@ function monitorCredits() {
     
     if (!duration || duration < 1) return;
 
-    // DEFINIÇÃO DAS JANELAS DE TEMPO
-    // Intro: Aparece aos 15s, fica por 20s (sai aos 35s)
-    const isIntroWindow = currentTime >= 15 && currentTime < 35;
+    // DEFINIÇÃO DAS JANELAS DE TEMPO (Solicitado pelo usuário)
     
-    // Outro: Aparece 30s antes do fim, fica por 20s (sai 10s antes do fim)
-    // Só ativa se o vídeo tiver duração suficiente
-    const outroStartTime = duration - 30;
+    // Intro: Aparece aos 10s, fica por 10s (sai aos 20s)
+    const isIntroWindow = currentTime >= 10 && currentTime < 20;
+    
+    // Outro: Aparece 20s antes do fim, fica por 10s (sai 10s antes do fim)
+    const outroStartTime = duration - 20;
     const outroEndTime = duration - 10;
-    const isOutroWindow = (duration > 60) && (currentTime >= outroStartTime && currentTime < outroEndTime);
+    const isOutroWindow = (duration > 40) && (currentTime >= outroStartTime && currentTime < outroEndTime);
 
     if (isIntroWindow || isOutroWindow) {
         els.creditsOverlay.classList.add('visible');
@@ -263,7 +260,9 @@ async function loadChannelContent(playlistName) {
     showStatic(500);
     showStatus(`TUNING: ${playlistName}`);
     state.currentChannelName = playlistName;
-    els.osdChannel.innerText = playlistName.substring(0, 10).toUpperCase();
+    
+    // Atualiza apenas o nome da Playlist na tela
+    els.playlistLabel.innerText = playlistName.toUpperCase();
 
     // Busca vídeos dessa playlist
     const { data, error } = await supabase
