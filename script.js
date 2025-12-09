@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from "@google/genai";
 
@@ -418,8 +419,9 @@ function updateCreditsInfo(data) {
     let song = data.musica;
     
     // 2. Fallback: Se não tem no DB, tenta pegar do título do YouTube
-    if ((!artist || !song || artist === 'Unknown' || song === 'Unknown') && player && typeof player.getVideoData === 'function') {
+    if ((!artist || !song || artist === 'Unknown' || song === 'Unknown' || artist.trim() === '') && player && typeof player.getVideoData === 'function') {
         const ytData = player.getVideoData();
+        
         if (ytData && ytData.title) {
             const cleanTitle = cleanYouTubeTitle(ytData.title);
             
@@ -431,7 +433,13 @@ function updateCreditsInfo(data) {
                 if (!artist) artist = parts[0].trim();
                 if (!song) song = parts.slice(1).join('-').trim(); // Junta o resto caso tenha mais hifens
             } else {
-                // Se não tem separador, coloca tudo na música
+                // FALLBACK DE ÚLTIMO RECURSO:
+                // Se não tem separador no título, pegamos o Nome do Canal (Author) como Artista
+                // e o Título completo como Música.
+                if (!artist && ytData.author) {
+                    // Remove "VEVO" ou "Official" do nome do canal se possível para limpar
+                    artist = ytData.author.replace(/VEVO/gi, '').replace(/Official/gi, '').trim();
+                }
                 if (!song) song = cleanTitle;
             }
         }
