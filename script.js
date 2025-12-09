@@ -1,9 +1,5 @@
 
 
-
-
-
-
 import { createClient } from '@supabase/supabase-js';
 import { fetchTrackDetails } from './lastFmAPI.js';
 import { GoogleGenAI } from "@google/genai";
@@ -97,10 +93,11 @@ const els = {
     lyricsOverlay: document.getElementById('lyrics-overlay'),
     credits: {
         container: document.getElementById('video-credits'),
-        artist: document.getElementById('cr-artist'),
-        song: document.getElementById('cr-song'),
-        album: document.getElementById('cr-album'),
-        director: document.getElementById('cr-director')
+        artist: document.getElementById('artist-name'),
+        song: document.getElementById('song-name'),
+        album: document.getElementById('album-name'),
+        year: document.getElementById('release-year'),
+        director: document.getElementById('director-name')
     }
 };
 
@@ -146,8 +143,7 @@ window.onYouTubeIframeAPIReady = function() {
         width: '100%',
         playerVars: {
             'playsinline': 1, 'controls': 0, 'modestbranding': 1, 'rel': 0,
-            'fs': 0, 'iv_load_policy': 3, 'disablekb': 1, 'mute': 0, 'autoplay': 1,
-            'showinfo': 0 // Deprecated mas mantemos por legado
+            'fs': 0, 'iv_load_policy': 3, 'disablekb': 1, 'mute': 0, 'autoplay': 1 
         },
         events: {
             'onReady': onPlayerReady,
@@ -193,9 +189,7 @@ function onPlayerStateChange(event) {
         startMonitorLoop();
         
         if (data && data.title) {
-            // Se o ID mudou, é um novo vídeo
             if (state.currentVideoId !== data.video_id) {
-                console.log(`[Player] New Track: ${data.video_id}`);
                 state.currentSearchTerm = data.title;
                 state.currentVideoTitle = data.title;
                 state.currentVideoId = data.video_id;
@@ -206,10 +200,6 @@ function onPlayerStateChange(event) {
                 els.npTitle.textContent = data.title;
                 els.npId.textContent = `ID: ${data.video_id}`;
                 
-                // CRUCIAL: Limpa créditos anteriores
-                hideCredits();
-                
-                // Chama a função de créditos passando o ID do vídeo para buscar no DB
                 handleCreditsForVideo(data.video_id, data.title).then(() => {
                     if (state.isLyricsOn) fetchLyricsForCurrentVideo();
                 });
@@ -486,7 +476,6 @@ async function toggleLyrics() {
         stopLyricsScroll();
         if(state.currentVideoId) {
              const ytTitle = state.currentVideoTitle;
-             // Usa os valores já carregados nos créditos para buscar info
              const artist = els.credits.artist.innerText;
              const song = els.credits.song.innerText;
              const apiArtist = cleanStringForApi(artist);
@@ -504,7 +493,7 @@ async function fetchLyricsForCurrentVideo() {
     let searchTerm = state.currentVideoTitle;
     const artist = els.credits.artist.innerText;
     const song = els.credits.song.innerText;
-    if (artist && song) {
+    if (artist && song && artist !== "Artist" && song !== "Song") {
         searchTerm = `${artist} - ${song}`;
     }
 
@@ -605,65 +594,56 @@ function cleanStringForApi(str) {
 function formatCreditHtml(text) {
     if (!text) return '';
     let formatted = text.replace(/\s(ft\.?|feat\.?)\s/gi, (match) => `<span class="font-light opacity-75">${match}</span>`);
+    formatted = formatted.replace(/℗/g, '<span class="font-light opacity-75">℗</span>');
     return formatted;
 }
 
-// ATUALIZAÇÃO V8: LÓGICA DE FALLBACK REFINADA
-// Se não encontrar no banco, usa título limpo.
+// ATUALIZAÇÃO: Exibe apenas se existir no banco de dados.
 async function handleCreditsForVideo(videoId, ytTitle) {
     hideCredits();
-    
-    // Limpa imediatamente para evitar persistência de dados antigos
-    updateCreditsDOM("", "", "", "", "");
+    if (!state.isLyricsOn) {
+        els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">LOADING DATA...</span></div>';
+        els.infoPanel.classList.remove('active');
+    }
 
-    // Variáveis finais (inicializadas vazias)
-    let artist = "";
-    let song = "";
+    // Padrões de Fallback (Vazios para os opcionais)
+    let artist = "Desconhecido";
+    let song = "Faixa Desconhecida";
+    let director = "";
     let album = "";
     let year = "";
-    let director = "";
 
-    // 1. Busca exata no banco pelo VIDEO_ID (Prioridade Absoluta)
-    console.log(`[Credits] Fetching metadata for ID: ${videoId}`);
-    const { data, error } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
+    // Busca no DB Backup
+    const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
     
-    if (error) console.error("[Credits] DB Error:", error);
-
     if (data) {
-        console.log(`[Credits] Data found in DB for ${videoId}`);
-        artist = data.artista || "";
-        song = data.musica || "";
+        // Se existe no banco, usamos os dados do banco.
+        artist = data.artista || "Desconhecido";
+        song = data.musica || "Faixa Desconhecida";
+        // Campos Opcionais: Se nulos no banco, ficam vazios aqui para serem ocultados.
         album = data.album || "";
-        year = data.ano ? String(data.ano) : "";
+        year = data.ano || "";
         director = data.direcao || "";
     } else {
-        console.log(`[Credits] ID ${videoId} not found in DB. Using smart fallback.`);
-        
-        // Separa por hífen padrão (Artist - Song)
+        // Fallback para título do YouTube se não estiver no banco
         const parts = ytTitle.split('-');
         if (parts.length >= 2) { 
             artist = parts[0].trim(); 
             song = parts.slice(1).join(' ').trim(); 
         } else { 
             song = ytTitle; 
+            artist = ""; 
         }
-
-        // Limpeza estética para fallback (remove lixo como "Official Video")
-        const clean = (s) => s.replace(/[\(\[\{].*?[\)\]\}]/g, '')
-                              .replace(/official video/gi, '')
-                              .replace(/video oficial/gi, '')
-                              .replace(/lyric video/gi, '')
-                              .replace(/4k/gi, '')
-                              .trim();
-                              
-        artist = clean(artist);
-        song = clean(song);
+        // No fallback do YouTube, não inventamos album/ano/diretor
+        album = "";
+        year = "";
+        director = "";
     }
 
-    // Busca dados no Last.FM se possível (para o painel lateral)
+    const apiArtist = cleanStringForApi(artist);
+    const apiSong = cleanStringForApi(song);
+    
     if (!state.isLyricsOn) {
-        const apiArtist = cleanStringForApi(artist);
-        const apiSong = cleanStringForApi(song);
         if (apiArtist && apiSong) {
             fetchTrackDetails(apiArtist, apiSong).then(fmData => updateInfoPanel(fmData, artist, song));
         } else {
@@ -671,8 +651,6 @@ async function handleCreditsForVideo(videoId, ytTitle) {
             els.infoPanel.classList.add('active'); 
         }
     }
-    
-    // Atualiza o DOM dos créditos com dados validados
     updateCreditsDOM(artist, song, album, year, director);
 }
 
@@ -695,32 +673,21 @@ function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
 }
 
 function updateCreditsDOM(artist, song, album, year, director) {
-    // Helper para preencher ou esconder linhas e remover classes "hidden"
-    // ATUALIZADO V9: Adicionado suporte a ícones (prefix)
-    const fill = (el, text, prefix = "", suffix = "") => {
-        if (!text || text.trim() === "") {
-            el.innerHTML = "";
-            el.classList.add("hidden");
+    const set = (el, txt) => { 
+        const content = txt ? String(txt).trim() : '';
+        // Se houver conteúdo, mostra o bloco. Se não, esconde completamente (display: none).
+        if (content) {
+            el.parentElement.style.display = 'block';
+            el.innerHTML = formatCreditHtml(content);
         } else {
-            // Garante que o texto tenha sombra e seja visível
-            // V9: Adiciona ícone
-            el.innerHTML = prefix + formatCreditHtml(text) + suffix;
-            el.classList.remove("hidden");
+            el.parentElement.style.display = 'none';
         }
     };
-
-    // V9: Ícones Retro (Emojis)
-    fill(els.credits.artist, artist, "🎤 ");
-    fill(els.credits.song, song, "🎵 ", ""); 
-    fill(els.credits.album, album, "💿 ");
-    
-    // Combina Diretor e Ano se ambos existirem, ou mostra só um
-    let extraInfo = "";
-    if (director) extraInfo += `DIR: ${director}`;
-    if (director && year) extraInfo += " // ";
-    if (year) extraInfo += year;
-    
-    fill(els.credits.director, extraInfo, "🎬 ");
+    set(els.credits.artist, artist); 
+    set(els.credits.song, song); 
+    set(els.credits.album, album);
+    set(els.credits.year, year); 
+    set(els.credits.director, director);
 }
 
 // --- MONITOR LOOP ---
@@ -733,22 +700,11 @@ function startMonitorLoop() {
         const duration = player.getDuration();
         if (!duration) return;
 
-        // CUTOFF: Pula o vídeo 2 segundos antes do fim para evitar End Screens do YouTube
-        if (currentTime >= duration - 2) {
-            console.log("Auto-Skipping End Screen...");
-            player.nextVideo();
-            triggerStatic();
-            return;
-        }
-
-        const isIntroTime = currentTime >= 4 && currentTime < 14; // Créditos aparecem entre 4s e 14s
-        const isOutroTime = currentTime >= (duration - 15) && currentTime < (duration - 5);
+        const isIntroTime = currentTime >= 10 && currentTime < 20;
+        const isOutroTime = currentTime >= (duration - 20) && currentTime < (duration - 10);
         
-        if (isIntroTime || isOutroTime) {
-            showCredits();
-        } else {
-            hideCredits();
-        }
+        if (isIntroTime || isOutroTime) showCredits();
+        else hideCredits();
 
         const progress = currentTime / duration;
         if (progress > 0.05 && progress < 0.1 && !state.aiCheckpoints.intro) { state.aiCheckpoints.intro = true; triggerAutoAICommentary('intro'); }
@@ -763,15 +719,8 @@ function stopMonitorLoop() {
     if (state.monitorInterval) { clearInterval(state.monitorInterval); state.monitorInterval = null; }
 }
 
-function showCredits() { 
-    // Só mostra se houver conteúdo no artista ou música
-    if (els.credits.artist.innerText || els.credits.song.innerText) {
-        els.credits.container.classList.add('visible'); 
-    }
-}
-function hideCredits() { 
-    els.credits.container.classList.remove('visible'); 
-}
+function showCredits() { if(!els.credits.container.classList.contains('visible')) els.credits.container.classList.add('visible'); }
+function hideCredits() { if(els.credits.container.classList.contains('visible')) els.credits.container.classList.remove('visible'); }
 
 // --- EFEITOS DE TV ---
 function togglePower() {
