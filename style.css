@@ -1,3 +1,4 @@
+
 /* Custom Fonts & Base */
 body {
     font-family: 'VT323', monospace;
@@ -198,27 +199,27 @@ body {
     filter: sepia(0.2) contrast(1.15) brightness(1.1) saturate(1.1) blur(0.5px);
 }
 
-/* Credits Overlay (UPDATED: 3X SIZE MTV Style) */
+/* Credits Overlay (REVERTED & SLIGHTLY INCREASED) */
 .credits-overlay {
     position: absolute;
-    bottom: 15%; /* Adjusted for larger text */
+    bottom: 10%; 
     left: 8%;   
     color: #f0f0f0; /* Soft white */
     
-    /* BOLD OUTLINE - Thicker shadow for bigger text */
+    /* MODERATE OUTLINE - Clean 90s look */
     text-shadow: 
-        4px 4px 0px #000, 
-        -3px -3px 0 #000,  
-        3px -3px 0 #000,
-        -3px 3px 0 #000,
-        3px 3px 0 #000;
+        2px 2px 0px #000, 
+        -1px -1px 0 #000,  
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000;
     
-    /* INCREASED SIZE (Approx 3x previous) */
-    font-size: clamp(2.5rem, 7vmin, 4rem); 
+    /* SLIGHTLY LARGER (Not enormous) */
+    font-size: clamp(1.5rem, 4vmin, 2.2rem); 
     
     font-family: 'Jost', sans-serif;
     font-weight: 700; /* Bold */
-    line-height: 1.1;
+    line-height: 1.2;
     
     opacity: 0; 
     transition: opacity 0.8s ease-in-out; 
@@ -232,7 +233,7 @@ body {
     
     transform: none; 
     
-    max-width: 85%;
+    max-width: 60%; /* Prevents taking full screen */
     width: auto;
 }
 
@@ -241,7 +242,7 @@ body {
 }
 
 .credit-line {
-    margin-bottom: 0.5rem; 
+    margin-bottom: 0.3rem; 
     letter-spacing: 0.5px;
     white-space: normal; 
     word-wrap: break-word; 
@@ -255,11 +256,11 @@ body {
 
 .icon {
     display: inline-block;
-    width: 1.5em; /* Wider spacing for large text */
+    width: 1.3em; 
     text-align: center;
-    margin-right: 0.4em;
+    margin-right: 0.5em;
     color: #ffff00; 
-    text-shadow: 4px 4px 0px #000; 
+    text-shadow: 2px 2px 0px #000; 
 }
 
 /* Player Zoom Hack REMOVED to hide UI but keep aspect ratio */
@@ -404,9 +405,9 @@ body {
 /* Responsividade */
 @media (max-width: 768px) {
     .credits-overlay {
-        left: 4%;
+        left: 6%;
         bottom: 8%;
         max-width: 90%; 
-        font-size: clamp(1.8rem, 5vmin, 2.5rem);
+        font-size: clamp(1rem, 4vmin, 1.6rem); /* Adjusted for mobile */
     }
 }
