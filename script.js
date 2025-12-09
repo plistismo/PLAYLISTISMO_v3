@@ -93,11 +93,10 @@ const els = {
     lyricsOverlay: document.getElementById('lyrics-overlay'),
     credits: {
         container: document.getElementById('video-credits'),
-        artist: document.getElementById('artist-name'),
-        song: document.getElementById('song-name'),
-        album: document.getElementById('album-name'),
-        year: document.getElementById('release-year'),
-        director: document.getElementById('director-name')
+        artist: document.getElementById('cr-artist'),
+        song: document.getElementById('cr-song'),
+        album: document.getElementById('cr-album'),
+        director: document.getElementById('cr-director')
     }
 };
 
@@ -200,6 +199,7 @@ function onPlayerStateChange(event) {
                 els.npTitle.textContent = data.title;
                 els.npId.textContent = `ID: ${data.video_id}`;
                 
+                // CRUCIAL: Chama a função de créditos passando o ID do vídeo para buscar no DB
                 handleCreditsForVideo(data.video_id, data.title).then(() => {
                     if (state.isLyricsOn) fetchLyricsForCurrentVideo();
                 });
@@ -476,6 +476,7 @@ async function toggleLyrics() {
         stopLyricsScroll();
         if(state.currentVideoId) {
              const ytTitle = state.currentVideoTitle;
+             // Usa os valores já carregados nos créditos para buscar info
              const artist = els.credits.artist.innerText;
              const song = els.credits.song.innerText;
              const apiArtist = cleanStringForApi(artist);
@@ -493,7 +494,7 @@ async function fetchLyricsForCurrentVideo() {
     let searchTerm = state.currentVideoTitle;
     const artist = els.credits.artist.innerText;
     const song = els.credits.song.innerText;
-    if (artist && song && artist !== "Artist" && song !== "Song") {
+    if (artist && song) {
         searchTerm = `${artist} - ${song}`;
     }
 
@@ -594,38 +595,38 @@ function cleanStringForApi(str) {
 function formatCreditHtml(text) {
     if (!text) return '';
     let formatted = text.replace(/\s(ft\.?|feat\.?)\s/gi, (match) => `<span class="font-light opacity-75">${match}</span>`);
-    formatted = formatted.replace(/℗/g, '<span class="font-light opacity-75">℗</span>');
     return formatted;
 }
 
-// ATUALIZAÇÃO: Exibe apenas se existir no banco de dados.
+// ATUALIZAÇÃO V4: BUSCA ESTRITA POR ID DE VÍDEO
 async function handleCreditsForVideo(videoId, ytTitle) {
     hideCredits();
+    
+    // Limpa a interface do painel lateral se não for lyrics
     if (!state.isLyricsOn) {
         els.infoContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-amber-900/50"><span class="animate-pulse">LOADING DATA...</span></div>';
         els.infoPanel.classList.remove('active');
     }
 
-    // Padrões de Fallback (Vazios para os opcionais)
-    let artist = "Desconhecido";
-    let song = "Faixa Desconhecida";
-    let director = "";
+    // Variáveis finais
+    let artist = "";
+    let song = "";
     let album = "";
     let year = "";
+    let director = "";
 
-    // Busca no DB Backup
+    // 1. Busca exata no banco pelo VIDEO_ID
     const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
     
     if (data) {
-        // Se existe no banco, usamos os dados do banco.
-        artist = data.artista || "Desconhecido";
-        song = data.musica || "Faixa Desconhecida";
-        // Campos Opcionais: Se nulos no banco, ficam vazios aqui para serem ocultados.
+        // Se encontrou no banco, usamos os dados oficiais
+        artist = data.artista || "";
+        song = data.musica || "";
         album = data.album || "";
-        year = data.ano || "";
+        year = data.ano ? String(data.ano) : "";
         director = data.direcao || "";
     } else {
-        // Fallback para título do YouTube se não estiver no banco
+        // 2. Fallback se não estiver no banco: Tenta extrair do título do YouTube
         const parts = ytTitle.split('-');
         if (parts.length >= 2) { 
             artist = parts[0].trim(); 
@@ -634,12 +635,10 @@ async function handleCreditsForVideo(videoId, ytTitle) {
             song = ytTitle; 
             artist = ""; 
         }
-        // No fallback do YouTube, não inventamos album/ano/diretor
-        album = "";
-        year = "";
-        director = "";
+        // No fallback, album/ano/diretor ficam vazios para não inventar dados
     }
 
+    // Busca dados no Last.FM se possível
     const apiArtist = cleanStringForApi(artist);
     const apiSong = cleanStringForApi(song);
     
@@ -651,6 +650,8 @@ async function handleCreditsForVideo(videoId, ytTitle) {
             els.infoPanel.classList.add('active'); 
         }
     }
+    
+    // Atualiza o DOM dos créditos
     updateCreditsDOM(artist, song, album, year, director);
 }
 
@@ -673,21 +674,28 @@ function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
 }
 
 function updateCreditsDOM(artist, song, album, year, director) {
-    const set = (el, txt) => { 
-        const content = txt ? String(txt).trim() : '';
-        // Se houver conteúdo, mostra o bloco. Se não, esconde completamente (display: none).
-        if (content) {
-            el.parentElement.style.display = 'block';
-            el.innerHTML = formatCreditHtml(content);
+    // Helper para preencher ou esconder linhas
+    const fill = (el, text, prefix = "", suffix = "") => {
+        if (!text) {
+            el.innerHTML = "";
+            el.classList.add("hidden");
         } else {
-            el.parentElement.style.display = 'none';
+            el.innerHTML = prefix + formatCreditHtml(text) + suffix;
+            el.classList.remove("hidden");
         }
     };
-    set(els.credits.artist, artist); 
-    set(els.credits.song, song); 
-    set(els.credits.album, album);
-    set(els.credits.year, year); 
-    set(els.credits.director, director);
+
+    fill(els.credits.artist, artist);
+    fill(els.credits.song, song, '"', '"'); // Aspas na música
+    fill(els.credits.album, album);
+    
+    // Combina Diretor e Ano se ambos existirem, ou mostra só um
+    let extraInfo = "";
+    if (director) extraInfo += `DIR: ${director}`;
+    if (director && year) extraInfo += " // ";
+    if (year) extraInfo += year;
+    
+    fill(els.credits.director, extraInfo);
 }
 
 // --- MONITOR LOOP ---
@@ -700,7 +708,7 @@ function startMonitorLoop() {
         const duration = player.getDuration();
         if (!duration) return;
 
-        const isIntroTime = currentTime >= 10 && currentTime < 20;
+        const isIntroTime = currentTime >= 8 && currentTime < 18; // Ajustado para aparecer mais cedo
         const isOutroTime = currentTime >= (duration - 20) && currentTime < (duration - 10);
         
         if (isIntroTime || isOutroTime) showCredits();

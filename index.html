@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Jost:wght@300;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Jost:wght@400;700;900&display=swap" rel="stylesheet">
     
     <!-- Custom Styles -->
     <link rel="stylesheet" href="style.css">
@@ -33,7 +33,7 @@
     
     <!-- ADMIN BUTTON (CRUD) - VISIBLE -->
     <a href="admin.html" class="fixed top-2 left-2 z-[9999] bg-amber-900/50 text-amber-500 hover:text-black hover:bg-amber-500 border border-amber-600 px-3 py-1 font-vt323 text-lg font-bold tracking-widest transition-all shadow-[0_0_10px_rgba(217,119,6,0.2)]">
-        ADMIN / CRUD v3
+        ADMIN / CRUD v4
     </a>
     
     <div id="dev-debug-console" class="fixed top-0 right-0 bg-black/95 border-l-2 border-b-2 border-red-500 z-[10000] hidden flex flex-col font-mono text-base shadow-2xl">
@@ -85,6 +85,7 @@
                     <div class="flex justify-between text-white text-sm opacity-80">
                         <span id="np-playlist">PLAYLIST: --</span>
                     </div>
+                    <div id="np-id" class="text-[10px] text-gray-500 font-mono mt-1"></div>
                 </div>
 
                 <!-- SEARCH INPUT -->
@@ -239,13 +240,12 @@
                                     </div>
                                 </div>
 
-                                <!-- Credits Overlay -->
-                                <div id="video-credits" class="credits-overlay">
-                                    <div class="credit-line"><span class="icon">🎤</span> <span id="artist-name">Artist</span></div>
-                                    <div class="credit-line"><span class="icon">🎼</span> <span id="song-name">Song</span></div>
-                                    <div class="credit-line"><span class="icon">💽</span> <span id="album-name">Album</span></div>
-                                    <div class="credit-line"><span class="icon">📅</span> <span id="release-year">Year</span></div>
-                                    <div class="credit-line"><span class="icon">🎬</span> <span id="director-name">Director</span></div>
+                                <!-- Credits Overlay (MTV STYLE REFACTORED) -->
+                                <div id="video-credits" class="credits-overlay hidden">
+                                    <div id="cr-artist" class="font-bold text-2xl md:text-3xl text-white drop-shadow-[2px_2px_0_black] leading-none mb-1"></div>
+                                    <div id="cr-song" class="text-lg md:text-xl text-white drop-shadow-[1px_1px_0_black] leading-tight mb-1"></div>
+                                    <div id="cr-album" class="text-sm md:text-base text-gray-300 drop-shadow-[1px_1px_0_black]"></div>
+                                    <div id="cr-director" class="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest drop-shadow-[1px_1px_0_black] mt-1"></div>
                                 </div>
 
                                 <!-- Status Message -->
