@@ -405,11 +405,14 @@ function cleanYouTubeTitle(title) {
     return title
         .replace(/[\(\[\{].*?[\)\]\}]/g, '') // Remove parênteses/colchetes e conteúdo
         .replace(/official video/gi, '')
+        .replace(/official music video/gi, '')
+        .replace(/video clip/gi, '')
         .replace(/lyrics/gi, '')
         .replace(/hq/gi, '')
         .replace(/4k/gi, '')
         .replace(/hd/gi, '')
         .replace(/\s+/g, ' ') // Remove espaços duplos
+        .replace(/\s*[–—|:]\s*/g, ' - ') // Normaliza separadores (hífen, travessão, pipe)
         .trim();
 }
 
@@ -425,22 +428,35 @@ function updateCreditsInfo(data) {
         if (ytData && ytData.title) {
             const cleanTitle = cleanYouTubeTitle(ytData.title);
             
-            // Tenta separar por hífen "Artist - Song"
-            const parts = cleanTitle.split('-');
+            // Tenta separar por hífen padrão "Artist - Song"
+            const parts = cleanTitle.split(' - ');
             
             if (parts.length >= 2) {
                 // Se encontrou separador, assume Artista - Música
                 if (!artist) artist = parts[0].trim();
-                if (!song) song = parts.slice(1).join('-').trim(); // Junta o resto caso tenha mais hifens
+                // Junta o resto caso tenha mais hifens no nome da música
+                if (!song) song = parts.slice(1).join(' - ').trim(); 
             } else {
                 // FALLBACK DE ÚLTIMO RECURSO:
                 // Se não tem separador no título, pegamos o Nome do Canal (Author) como Artista
-                // e o Título completo como Música.
                 if (!artist && ytData.author) {
-                    // Remove "VEVO" ou "Official" do nome do canal se possível para limpar
-                    artist = ytData.author.replace(/VEVO/gi, '').replace(/Official/gi, '').trim();
+                    // Remove sufixos comuns de canais oficiais para limpar o nome
+                    artist = ytData.author.replace(/VEVO/gi, '').replace(/Official/gi, '').replace(/Topic/gi, '').trim();
                 }
-                if (!song) song = cleanTitle;
+                
+                if (!song) {
+                    // VERIFICAÇÃO DE REPETIÇÃO:
+                    // Se temos o artista (vindo do canal) e o título começa com esse nome,
+                    // removemos o artista do título para evitar "Madonna: Madonna - Like a Prayer"
+                    if (artist && cleanTitle.toLowerCase().startsWith(artist.toLowerCase())) {
+                        let tempSong = cleanTitle.substring(artist.length).trim();
+                        // Remove separadores que podem ter sobrado no início (ex: " - Like a Prayer")
+                        tempSong = tempSong.replace(/^[-: ]+/, '').trim();
+                        song = tempSong || cleanTitle; // Se sobrar vazio, volta ao original
+                    } else {
+                        song = cleanTitle;
+                    }
+                }
             }
         }
     }

@@ -200,23 +200,23 @@ body {
     filter: sepia(0.2) contrast(1.15) brightness(1.1) saturate(1.1) blur(0.5px);
 }
 
-/* Credits Overlay (REVERTED TO LARGER SIZE) */
+/* Credits Overlay (ADJUSTED FOR SUBTLETY) */
 .credits-overlay {
     position: absolute;
     bottom: 8%; 
-    left: 6%;   
+    left: 8%;   
     color: #f0f0f0; /* Soft white */
     
-    /* Strong outline for readability on video */
+    /* Strong outline but cleaner for smaller text */
     text-shadow: 
-        3px 3px 0px #000, 
+        2px 2px 0px #000, 
         -1px -1px 0 #000,  
         1px -1px 0 #000,
         -1px 1px 0 #000,
         1px 1px 0 #000;
     
-    /* Reverted to larger cinematic size */
-    font-size: clamp(1.8rem, 4vmin, 2.5rem);
+    /* Reduced size for more harmonious look */
+    font-size: clamp(1.2rem, 3vmin, 1.8rem);
     
     font-family: 'Jost', sans-serif;
     font-weight: 700; /* Bold */
@@ -235,7 +235,6 @@ body {
     transform: none; 
     
     width: auto;
-    /* Removed max-width constraint to prevent wrapping too early on large text */
 }
 
 .credits-overlay.visible {
@@ -245,7 +244,7 @@ body {
 .credit-line {
     margin-bottom: 0.3rem; 
     letter-spacing: 0.5px;
-    white-space: nowrap; /* Tries to keep on one line unless screen is tiny */
+    white-space: nowrap; 
     display: flex;
     align-items: center;
 }
@@ -256,7 +255,7 @@ body {
 
 .icon {
     display: inline-block;
-    width: 1.4em; 
+    width: 1.2em; 
     text-align: center;
     margin-right: 0.4em;
     color: #ffff00; 
@@ -408,6 +407,6 @@ body {
         left: 6%;
         bottom: 8%;
         max-width: 90%; 
-        font-size: clamp(1rem, 4vmin, 1.4rem); /* Adjusted for mobile */
+        font-size: clamp(1rem, 3.5vmin, 1.4rem); /* Adjusted for mobile */
     }
 }
