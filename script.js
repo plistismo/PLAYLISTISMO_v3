@@ -1,19 +1,11 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { fetchTrackDetails } from './lastFmAPI.js';
 import { GoogleGenAI } from "@google/genai";
 
 // --- CONFIGURAÇÃO API & CHAVES ---
 const GEMINI_API_KEY = 'AIzaSyAU0rLoRsAYns1W7ecNP0Drtw3fplbTgR0'; 
 const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const AI_MODEL = 'gemini-2.5-flash';
-
-// Persona do Alex (1996)
-const ALEX_PERSONA_INSTRUCTION = `
-Role: Você é o Alex (1996), um amigo viciado em MTV e música alternativa. Você está assistindo clipes na TV com o usuário.
-Vibe: Nostálgica, poética, "grunge", sinestésica. Você fala gírias dos anos 90 (mas sem exagero cringe).
-Regra: Comentários curtíssimos (max 2 frases). Reaja à vibe da música.
-`;
 
 // --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
@@ -38,17 +30,13 @@ const state = {
 
     // Lyrics State
     isLyricsOn: false,
-    lyricsLoading: false,
-    
-    // AI State
-    aiCommentaryActive: true,
-    lastCommentVideoId: null,
+    lyricsLoading: false
 };
 
 let player; // Instância do Player YT
 let timeInterval; // Loop de monitoramento de tempo
 
-// --- ELEMENTOS DOM (Corrigido e Completo) ---
+// --- ELEMENTOS DOM ---
 const els = {
     screenOff: document.getElementById('screen-off'),
     screenOn: document.getElementById('screen-on'),
@@ -81,10 +69,6 @@ const els = {
     guideNpPlaylist: document.getElementById('np-playlist'),
     guideNowPlayingBox: document.getElementById('guide-now-playing'),
 
-    // Info Panel (Last.FM)
-    infoPanel: document.getElementById('info-panel'),
-    infoContent: document.getElementById('info-content'),
-    
     // Credits Overlay
     creditsOverlay: document.getElementById('video-credits'),
     credArtist: document.getElementById('artist-name'),
@@ -92,12 +76,6 @@ const els = {
     credAlbum: document.getElementById('album-name'),
     credYear: document.getElementById('release-year'),
     credDirector: document.getElementById('director-name'),
-    
-    // AI Elements
-    aiBubbleContainer: document.getElementById('ai-bubble-container'),
-    aiBubbleText: document.getElementById('ai-bubble-text'),
-    aiLed: document.getElementById('ai-led'),
-    aiStatusLed: document.getElementById('ai-status-led'),
     
     // Lyrics
     lyricsOverlay: document.getElementById('lyrics-overlay'),
@@ -172,12 +150,6 @@ function onPlayerStateChange(event) {
             generateAILyrics(state.currentVideoData);
         }
         
-        // Verifica se deve gerar comentário AI (Intro)
-        if (state.currentVideoData && state.lastCommentVideoId !== state.currentVideoData.video_id) {
-            generateAICommentary(state.currentVideoData);
-            state.lastCommentVideoId = state.currentVideoData.video_id;
-        }
-
     } else if (event.data === YT.PlayerState.BUFFERING) {
         showStatus("TUNING...");
     }
@@ -213,7 +185,6 @@ function togglePower() {
 
         setTimeout(() => {
             showOSD();
-            els.infoPanel.classList.add('active'); // Liga painel lateral
         }, 1000);
 
     } else {
@@ -228,14 +199,12 @@ function togglePower() {
             els.screenOn.classList.add('hidden');
             els.screenOff.classList.remove('hidden');
             if (player && state.playerReady) player.pauseVideo();
-            els.infoPanel.classList.remove('active');
             state.isPlaying = false;
         }, 400);
         
         // Reset estados visuais
         hideCredits();
         els.lyricsOverlay.classList.add('hidden');
-        els.aiBubbleContainer.style.opacity = '0';
     }
 }
 
@@ -288,7 +257,6 @@ function playCurrentVideo() {
     }
     
     updateCreditsInfo(videoData);
-    updateLastFmInfo(videoData);
     updateGuideNowPlaying();
 }
 
@@ -352,7 +320,7 @@ function showCredits() {
     els.creditsOverlay.classList.remove('visible');
     // Delay para aparecer estilo MTV
     setTimeout(() => els.creditsOverlay.classList.add('visible'), 2000);
-    // Some depois de 6s
+    // Some depois de 8s
     setTimeout(hideCredits, 8000);
 }
 
@@ -360,78 +328,8 @@ function hideCredits() {
     els.creditsOverlay.classList.remove('visible');
 }
 
-// --- INTEGRAÇÃO LAST.FM (Info Panel) ---
-async function updateLastFmInfo(videoData) {
-    if (!state.isOn) return;
-    
-    els.infoContent.innerHTML = '<div class="flex h-full items-center justify-center animate-pulse">RECEIVING DATA...</div>';
-    
-    const details = await fetchTrackDetails(videoData.artista, videoData.musica);
-    
-    if (details) {
-        let tagsHtml = details.tags.map(t => `<span class="inline-block border border-amber-700 px-1 text-xs mr-1 mb-1">${t}</span>`).join('');
-        let html = `
-            <div class="mb-4 text-center">
-                ${details.capa ? `<img src="${details.capa}" class="w-32 h-32 mx-auto border border-amber-900/50 mb-2 grayscale opacity-80">` : ''}
-                <div class="text-xl font-bold text-amber-500">${details.artista}</div>
-                <div class="text-sm border-b border-amber-900/30 pb-2 mb-2">${details.album}</div>
-                <div class="flex flex-wrap justify-center">${tagsHtml}</div>
-            </div>
-            <div class="text-sm text-justify opacity-90 leading-tight">
-                ${details.curiosidade}
-            </div>
-        `;
-        els.infoContent.innerHTML = html;
-    } else {
-        els.infoContent.innerHTML = '<div class="text-center mt-10 opacity-50">NO DATA FOUND<br>IN ARCHIVE</div>';
-    }
-}
 
-
-// --- GEMINI AI (ALEX & CC) ---
-
-async function generateAICommentary(videoData) {
-    if (!state.aiCommentaryActive) return;
-
-    // Feedback visual no "LED" da AI
-    els.aiStatusLed.classList.add('bg-green-500', 'animate-pulse');
-    els.aiStatusLed.classList.remove('bg-green-900');
-
-    try {
-        const prompt = `Contexto: Estamos ouvindo "${videoData.musica}" de "${videoData.artista}" (${videoData.ano || 'Anos 90'}). 
-        ${videoData.direcao ? 'Diretor: ' + videoData.direcao : ''}.
-        Gere um comentário curto e criativo sobre essa música/clipe para aparecer em um balão de fala.`;
-
-        const response = await genAI.models.generateContent({
-            model: AI_MODEL,
-            contents: [{ parts: [{ text: prompt }] }],
-            config: {
-                systemInstruction: ALEX_PERSONA_INSTRUCTION,
-            }
-        });
-
-        const text = response.text.trim();
-        showAIBubble(text);
-
-    } catch (e) {
-        console.error("AI Error:", e);
-    } finally {
-        els.aiStatusLed.classList.remove('bg-green-500', 'animate-pulse');
-        els.aiStatusLed.classList.add('bg-green-900');
-    }
-}
-
-function showAIBubble(text) {
-    els.aiBubbleText.innerText = text;
-    els.aiBubbleContainer.style.opacity = '1';
-    els.aiBubbleContainer.style.transform = 'translateY(0)';
-    
-    // Esconde depois de 8 segundos
-    setTimeout(() => {
-        els.aiBubbleContainer.style.opacity = '0';
-        els.aiBubbleContainer.style.transform = 'translateY(10px)';
-    }, 8000);
-}
+// --- GEMINI AI (CC) ---
 
 // CC / Lyrics Logic
 els.btnCC.addEventListener('click', () => {

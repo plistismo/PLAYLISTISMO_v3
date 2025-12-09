@@ -31,11 +31,6 @@
         🐞
     </button>
     
-    <!-- ADMIN BUTTON (CRUD) - VISIBLE -->
-    <a href="admin.html" class="fixed top-2 left-2 z-[9999] bg-amber-900/50 text-amber-500 hover:text-black hover:bg-amber-500 border border-amber-600 px-3 py-1 font-vt323 text-lg font-bold tracking-widest transition-all shadow-[0_0_10px_rgba(217,119,6,0.2)]">
-        ADMIN / CRUD v2
-    </a>
-    
     <div id="dev-debug-console" class="fixed top-0 right-0 bg-black/95 border-l-2 border-b-2 border-red-500 z-[10000] hidden flex flex-col font-mono text-base shadow-2xl">
         <div class="bg-red-900/50 text-red-200 px-2 py-1 flex justify-between items-center border-b border-red-500/30">
             <span class="font-bold">ERROR LOG</span>
@@ -117,63 +112,17 @@
     </div>
 
     <!-- Main Container -->
-    <div class="relative z-10 w-full max-w-[90rem] flex flex-col lg:flex-row items-start lg:items-center justify-center gap-8 pt-2 md:pt-4">
+    <!-- Modificado para centralizar e remover gap desnecessário -->
+    <div class="relative z-10 w-full h-full flex flex-col items-center justify-center pt-2 md:pt-4 min-h-screen">
 
         <!-- VERSION LABEL EXTERNAL -->
-        <div class="absolute -top-12 md:-top-16 left-1/2 -translate-x-1/2 text-white/40 font-vt323 text-2xl md:text-3xl tracking-[0.5em] uppercase drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] select-none pointer-events-none whitespace-nowrap z-0">
+        <div class="absolute top-2 md:top-4 left-1/2 -translate-x-1/2 text-white/40 font-vt323 text-2xl md:text-3xl tracking-[0.5em] uppercase drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] select-none pointer-events-none whitespace-nowrap z-0">
             PlayListismo V6
         </div>
 
-        <!-- TV & AI WRAPPER -->
-        <div class="flex flex-col w-full max-w-4xl order-1 relative">
+        <!-- TV WRAPPER (Increased size to max-w-7xl and centered) -->
+        <div class="flex flex-col w-full max-w-7xl relative">
             
-            <!-- ALEX AI MODULE (AUTOMATIC BUBBLE STYLE) -->
-            <div id="ai-module" class="relative w-full max-w-2xl mx-auto mb-10 perspective-[1000px] z-20 group mt-16">
-                
-                <!-- AVATAR / GIF CONTAINER (Sits on top/front) -->
-                <!-- Changed bottom to 22% to lower it over the vents -->
-                <div id="ai-avatar-container" class="absolute bottom-[22%] left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-                    <img src="https://i.gifer.com/7d20.gif" alt="AI Avatar" class="w-32 h-auto md:w-40 object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.8)] avatar-bob">
-                </div>
-
-                <!-- Adesivo Grunge -->
-                <div class="absolute -top-3 -right-4 z-30 transform rotate-12 bg-yellow-200 text-black px-2 py-1 font-marker shadow-lg border border-black/20 text-xs font-bold font-sans">
-                    ALEX 1996
-                </div>
-
-                <!-- Main AI Unit Box -->
-                <div class="bg-[#222] border-2 border-[#444] rounded-lg p-3 shadow-[0_10px_20px_rgba(0,0,0,0.5)] transform rotate-x-10 flex items-center justify-between gap-4 border-b-8 border-b-[#111]">
-                    <div class="flex flex-col gap-1 shrink-0 items-center pl-2">
-                        <div class="text-[9px] text-gray-400 font-bold tracking-widest font-mono text-center leading-tight">AUTO<br>COMMENTARY</div>
-                        <div class="flex gap-1 mt-1">
-                            <div class="w-2 h-2 rounded-sm bg-red-900 transition-colors duration-300 border border-black" id="ai-led"></div>
-                            <div class="w-2 h-2 rounded-sm bg-green-900 transition-colors duration-300 border border-black" id="ai-status-led"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Decorate Vents -->
-                    <div class="flex-1 flex justify-center gap-1 opacity-20">
-                        <div class="w-1 h-8 bg-black rounded-full"></div>
-                        <div class="w-1 h-8 bg-black rounded-full"></div>
-                        <div class="w-1 h-8 bg-black rounded-full"></div>
-                        <div class="w-1 h-8 bg-black rounded-full"></div>
-                    </div>
-
-                    <div class="text-[10px] text-gray-500 font-vt323 tracking-widest text-right pr-2">
-                        LISTENING...
-                    </div>
-                </div>
-                
-                <!-- SPEECH BUBBLE CONTAINER (Moved to side/top to fit avatar) -->
-                <div id="ai-bubble-container" class="absolute bottom-[200%] md:bottom-[150%] left-0 right-0 flex justify-center pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4 z-50">
-                     <div class="speech-bubble bg-[#fff] text-black border-2 border-black p-4 rounded-lg font-vt323 text-xl shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-[90%] md:max-w-md relative">
-                        <span id="ai-bubble-text">...</span>
-                        <!-- Bubble Tail -->
-                        <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-2 border-r-2 border-black transform rotate-45"></div>
-                     </div>
-                </div>
-            </div>
-
             <!-- TV UNIT -->
             <div id="tv-unit" class="relative w-full transition-transform duration-500 md:perspective-[1500px] group">
                 
@@ -330,21 +279,6 @@
                     <div class="hidden md:block absolute -bottom-3 right-16 w-20 h-4 bg-[#0a0a0a] rounded-b shadow-[0_5px_10px_black]"></div>
                 </div>
             </div>
-        </div>
-
-        <!-- INFO PANEL (Last.FM Data) -->
-        <div id="info-panel" class="hidden lg:block w-80 min-h-[400px] bg-[#111] border-2 border-amber-900/50 rounded-lg p-6 relative shadow-[0_0_30px_rgba(0,0,0,0.8)] font-vt323 opacity-0 translate-x-10 transition-all duration-700 order-2">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none rounded-lg z-10"></div>
-            <div class="flex justify-between items-center border-b border-amber-900/50 pb-2 mb-4">
-                <h3 class="text-amber-500/80 text-xl tracking-widest font-bold">DATA MODULE</h3>
-                <div class="w-2 h-2 bg-amber-600 rounded-full animate-pulse"></div>
-            </div>
-            <div id="info-content" class="text-amber-400/80 text-lg leading-relaxed space-y-4 opacity-80 h-[350px] overflow-y-auto custom-scrollbar pr-2">
-                <div class="flex flex-col items-center justify-center h-full text-amber-900/50">
-                    <span class="animate-pulse">AWAITING SIGNAL...</span>
-                </div>
-            </div>
-            <div class="absolute bottom-4 right-4 text-[10px] text-amber-900/40 font-mono">DBX-1000 // REV. A</div>
         </div>
 
     </div>
