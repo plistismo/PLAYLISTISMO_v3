@@ -200,27 +200,27 @@ body {
     filter: sepia(0.2) contrast(1.15) brightness(1.1) saturate(1.1) blur(0.5px);
 }
 
-/* Credits Overlay (ADJUSTED FOR SUBTLETY) */
+/* Credits Overlay (ELEGANT SIZE ADJUSTMENT) */
 .credits-overlay {
     position: absolute;
-    bottom: 8%; 
-    left: 8%;   
-    color: #f0f0f0; /* Soft white */
+    bottom: 9%;   /* Adjusted slightly for balance */
+    left: 7%;     /* Adjusted slightly for balance */
+    color: #f0f0f0; 
     
-    /* Strong outline but cleaner for smaller text */
+    /* Refined shadow for smaller text - cleaner look */
     text-shadow: 
-        2px 2px 0px #000, 
-        -1px -1px 0 #000,  
-        1px -1px 0 #000,
-        -1px 1px 0 #000,
-        1px 1px 0 #000;
+        1.5px 1.5px 0px #000, 
+        -0.5px -0.5px 0 #000,  
+        0.5px -0.5px 0 #000,
+        -0.5px 0.5px 0 #000,
+        0.5px 0.5px 0 #000;
     
-    /* Reduced size for more harmonious look */
-    font-size: clamp(1.2rem, 3vmin, 1.8rem);
+    /* Elegant size: Not too small, not too big. */
+    font-size: clamp(1.1rem, 2.2vmin, 1.5rem);
     
     font-family: 'Jost', sans-serif;
-    font-weight: 700; /* Bold */
-    line-height: 1.2;
+    font-weight: 700; 
+    line-height: 1.15;
     
     opacity: 0; 
     transition: opacity 0.8s ease-in-out; 
@@ -233,7 +233,6 @@ body {
     z-index: 60;
     
     transform: none; 
-    
     width: auto;
 }
 
@@ -242,7 +241,7 @@ body {
 }
 
 .credit-line {
-    margin-bottom: 0.3rem; 
+    margin-bottom: 0.25rem; 
     letter-spacing: 0.5px;
     white-space: nowrap; 
     display: flex;
@@ -257,9 +256,9 @@ body {
     display: inline-block;
     width: 1.2em; 
     text-align: center;
-    margin-right: 0.4em;
+    margin-right: 0.5em; /* Slightly more breathing room */
     color: #ffff00; 
-    text-shadow: 2px 2px 0px #000; 
+    text-shadow: 1.5px 1.5px 0px #000; 
 }
 
 /* Player Zoom Hack REMOVED to hide UI but keep aspect ratio */
