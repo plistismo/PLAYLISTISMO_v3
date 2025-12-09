@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 import { fetchTrackDetails } from './lastFmAPI.js';
 import { GoogleGenAI } from "@google/genai";
@@ -30,7 +31,7 @@ const state = {
     isOn: false,
     isSearchOpen: false,
     // Estado de Playlist Virtual (DB)
-    virtualChannels: {}, // Cache dos canais gerados do DB
+    virtualChannels: {}, // Cache dos canais gerados do DB { group, videoCount, videos: [] | null }
     currentChannelName: '',
     currentVideoIdsQueue: [], // Lista de IDs para tocar
     
@@ -151,7 +152,7 @@ function onPlayerReady(event) {
     console.log("[Player] Ready.");
     state.playerReady = true;
     
-    // CARREGA CANAIS DO DB
+    // CARREGA CATÁLOGO LEVE DO DB
     fetchChannelsFromDB().then(() => {
         renderChannelGuide();
         
@@ -208,43 +209,33 @@ function onPlayerStateChange(event) {
     }
 }
 
-// --- LÓGICA DE CANAIS VIA DB (CORE CHANGE) ---
+// --- LÓGICA DE CANAIS VIA DB (CATALOG TABLE) ---
 
 async function fetchChannelsFromDB() {
-    console.log("[DB] Fetching Channels from Supabase...");
+    console.log("[DB] Fetching Catalog from 'playlists' table...");
     
-    // Busca músicas que tenham video_id e playlist definidos
+    // Busca na tabela leve de catálogo (apenas nomes e contagens)
     const { data, error } = await supabase
-        .from('musicas_backup')
-        .select('video_id, playlist, playlist_group, artista, musica')
-        .not('video_id', 'is', null)
-        .not('playlist', 'is', null);
+        .from('playlists')
+        .select('name, group_name, video_count')
+        .order('name');
 
     if (error || !data) {
         console.error("DB Error:", error);
         return;
     }
 
-    // Agrupa dados em formato de "Canais"
-    // Estrutura: { "Nome Playlist": { group: "GENRES", videos: [id1, id2...] } }
     const channels = {};
-
     data.forEach(row => {
-        const plName = row.playlist;
-        if (!channels[plName]) {
-            channels[plName] = {
-                group: row.playlist_group || 'OTHERS',
-                videos: [] // Lista de IDs
-            };
-        }
-        // Evita duplicatas de ID na mesma playlist
-        if (!channels[plName].videos.includes(row.video_id)) {
-            channels[plName].videos.push(row.video_id);
-        }
+        channels[row.name] = {
+            group: row.group_name || 'OTHERS',
+            videoCount: row.video_count || 0,
+            videos: null // Lazy Load: Será preenchido ao clicar
+        };
     });
 
     state.virtualChannels = channels;
-    console.log(`[DB] Loaded ${Object.keys(channels).length} virtual channels.`);
+    console.log(`[DB] Catalog loaded: ${Object.keys(channels).length} playlists.`);
 }
 
 function renderChannelGuide() {
@@ -261,7 +252,7 @@ function renderChannelGuide() {
     const groupedDisplay = {};
     for (const [name, data] of Object.entries(channels)) {
         if (!groupedDisplay[data.group]) groupedDisplay[data.group] = [];
-        groupedDisplay[data.group].push({ name, count: data.videos.length });
+        groupedDisplay[data.group].push({ name, count: data.videoCount });
     }
 
     // Ordem de exibição
@@ -333,18 +324,59 @@ function renderChannelGuide() {
     });
 }
 
-// --- TOCAR CANAL VIRTUAL ---
-function playVirtualChannel(channelName) {
+// --- TOCAR CANAL VIRTUAL (COM LAZY LOAD) ---
+async function playVirtualChannel(channelName) {
     if (!state.virtualChannels[channelName]) return;
 
-    showStatus("TUNING DB...", true);
+    showStatus("TUNING...", true);
     triggerStatic();
 
     const channelData = state.virtualChannels[channelName];
     state.currentChannelName = channelName;
-    state.currentVideoIdsQueue = channelData.videos;
-
     els.npPlaylist.innerText = `PLAYLIST: ${channelName}`;
+
+    // LAZY LOAD: Se não tiver vídeos cacheados, busca no banco
+    if (!channelData.videos || channelData.videos.length === 0) {
+        showStatus("DOWNLOADING TRACKS...", true);
+        console.log(`[LazyLoad] Fetching tracks for "${channelName}"...`);
+        
+        let allIds = [];
+        let from = 0;
+        const pageSize = 1000;
+        let hasMore = true;
+
+        while(hasMore) {
+            const { data, error } = await supabase
+                .from('musicas_backup')
+                .select('video_id')
+                .eq('playlist', channelName)
+                .range(from, from + pageSize - 1);
+            
+            if (error) {
+                console.error("Fetch Tracks Error:", error);
+                showStatus("DB ERROR", true);
+                return;
+            }
+
+            if (data && data.length > 0) {
+                const ids = data.map(row => row.video_id).filter(id => id);
+                allIds = allIds.concat(ids);
+                if (data.length < pageSize) hasMore = false;
+                from += pageSize;
+            } else {
+                hasMore = false;
+            }
+        }
+        // Cacheia os IDs
+        state.virtualChannels[channelName].videos = allIds;
+    }
+
+    state.currentVideoIdsQueue = state.virtualChannels[channelName].videos;
+
+    if (state.currentVideoIdsQueue.length === 0) {
+        showStatus("EMPTY CHANNEL", true);
+        return;
+    }
 
     // Embaralha para sensação de TV
     const shuffled = [...state.currentVideoIdsQueue].sort(() => Math.random() - 0.5);

@@ -88,11 +88,10 @@ async function runMigration() {
         return;
     }
 
-    // PASSO 2: Atualização
+    // PASSO 2: Atualização de Grupos na Tabela Principal
     console.log("💾 [PASSO 2/3] Calculando Grupos e Atualizando Registros...");
-    console.log("   ℹ️  Atualizando coluna 'playlist_group' baseado no nome da playlist.");
-    console.log("");
-
+    console.log("   ℹ️  Atualizando coluna 'playlist_group' na tabela principal.");
+    
     let successCount = 0;
     let errorCount = 0;
     
@@ -100,8 +99,7 @@ async function runMigration() {
         const playlistName = uniquePlaylistNames[i];
         const group = getPlaylistCategory(playlistName);
         
-        // UX: Mostra o progresso atual
-        process.stdout.write(`   🔨 [${i + 1}/${totalPlaylists}] Atualizando: "${playlistName.substring(0, 30)}..." -> GRUPO: ${group}          \r`);
+        process.stdout.write(`   🔨 [${i + 1}/${totalPlaylists}] Updating: "${playlistName.substring(0, 25)}..." -> ${group}          \r`);
 
         try {
             const { error } = await supabase
@@ -110,16 +108,55 @@ async function runMigration() {
                 .eq('playlist', playlistName);
 
             if (error) {
-                // Loga o erro mas não para o loop
-                console.log(`\n   ❌ Erro ao atualizar "${playlistName}": ${error.message}`);
                 errorCount++;
             } else {
                 successCount++;
             }
         } catch (err) {
-            console.log(`\n   ❌ Exceção ao atualizar "${playlistName}":`, err);
             errorCount++;
         }
+    }
+    console.log(`\n   ✅ Grupos atualizados.`);
+
+    // PASSO 3: Sincronizar Tabela de Catálogo (Playlists)
+    console.log("");
+    console.log("📚 [PASSO 3/3] Sincronizando Tabela Catálogo 'playlists'...");
+    console.log("   ℹ️  Contando vídeos e gerando tabela resumo para otimização do frontend.");
+
+    let catalogSuccess = 0;
+
+    for (let i = 0; i < totalPlaylists; i++) {
+        const playlistName = uniquePlaylistNames[i];
+        const group = getPlaylistCategory(playlistName);
+
+        // 1. Obter contagem exata
+        const { count, error: countErr } = await supabase
+            .from('musicas_backup')
+            .select('*', { count: 'exact', head: true })
+            .eq('playlist', playlistName);
+
+        if (countErr) {
+            console.log(`\n   ❌ Erro contagem "${playlistName}":`, countErr.message);
+            continue;
+        }
+
+        // 2. Upsert na tabela playlists
+        const { error: upsertErr } = await supabase
+            .from('playlists')
+            .upsert({ 
+                name: playlistName, 
+                group_name: group,
+                video_count: count,
+                updated_at: new Date()
+            }, { onConflict: 'name' });
+
+        if (upsertErr) {
+            console.log(`\n   ❌ Erro ao salvar catálogo "${playlistName}":`, upsertErr.message);
+        } else {
+            catalogSuccess++;
+        }
+        
+        process.stdout.write(`   📖 Catalogando [${i+1}/${totalPlaylists}]: ${count} vídeos em "${playlistName.substring(0,20)}..."        \r`);
     }
 
     console.log("\n");
@@ -127,9 +164,9 @@ async function runMigration() {
     // RESUMO
     console.log("=================================================");
     console.log("🏁 MIGRAÇÃO CONCLUÍDA!");
-    console.log(`   - Playlists Únicas Processadas: ${totalPlaylists}`);
-    console.log(`   - Updates com Sucesso: ${successCount}`);
-    console.log(`   - Falhas: ${errorCount}`);
+    console.log(`   - Playlists Processadas: ${totalPlaylists}`);
+    console.log(`   - Updates 'musicas_backup': ${successCount}`);
+    console.log(`   - Entradas 'playlists' (Catálogo): ${catalogSuccess}`);
     console.log("=================================================");
 }
 
