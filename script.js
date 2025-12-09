@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from "@google/genai";
 
@@ -97,7 +98,38 @@ function startClocks() {
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         els.osdClock.innerText = timeStr;
         els.guideClock.innerText = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        // Monitoramento constante de Créditos e Estado
+        if (state.isOn && state.playerReady && state.isPlaying) {
+            monitorCredits();
+        }
     }, 1000);
+}
+
+// --- MONITORAMENTO DE CRÉDITOS (NOVA LÓGICA) ---
+function monitorCredits() {
+    if (!player || typeof player.getCurrentTime !== 'function') return;
+
+    const currentTime = player.getCurrentTime();
+    const duration = player.getDuration();
+    
+    if (!duration || duration < 1) return;
+
+    // DEFINIÇÃO DAS JANELAS DE TEMPO
+    // Intro: Aparece aos 15s, fica por 20s (sai aos 35s)
+    const isIntroWindow = currentTime >= 15 && currentTime < 35;
+    
+    // Outro: Aparece 30s antes do fim, fica por 20s (sai 10s antes do fim)
+    // Só ativa se o vídeo tiver duração suficiente
+    const outroStartTime = duration - 30;
+    const outroEndTime = duration - 10;
+    const isOutroWindow = (duration > 60) && (currentTime >= outroStartTime && currentTime < outroEndTime);
+
+    if (isIntroWindow || isOutroWindow) {
+        els.creditsOverlay.classList.add('visible');
+    } else {
+        els.creditsOverlay.classList.remove('visible');
+    }
 }
 
 // --- YOUTUBE API ---
@@ -140,11 +172,15 @@ function onPlayerReady(event) {
 function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.ENDED) {
         handleVideoEnd();
+        state.isPlaying = false;
+        els.creditsOverlay.classList.remove('visible'); // Força esconder
     } else if (event.data === YT.PlayerState.PLAYING) {
         state.isPlaying = true;
         hideStatus();
-        showCredits();
         
+        // Reset visual imediato ao iniciar
+        els.creditsOverlay.classList.remove('visible');
+
         // Se CC estiver ligado, gera letras
         if (state.isLyricsOn && state.currentVideoData) {
             generateAILyrics(state.currentVideoData);
@@ -152,6 +188,8 @@ function onPlayerStateChange(event) {
         
     } else if (event.data === YT.PlayerState.BUFFERING) {
         showStatus("TUNING...");
+    } else if (event.data === YT.PlayerState.PAUSED) {
+        state.isPlaying = false;
     }
 }
 
@@ -203,7 +241,7 @@ function togglePower() {
         }, 400);
         
         // Reset estados visuais
-        hideCredits();
+        els.creditsOverlay.classList.remove('visible');
         els.lyricsOverlay.classList.add('hidden');
     }
 }
@@ -314,18 +352,6 @@ function updateCreditsInfo(data) {
     els.credAlbum.innerText = data.album || 'Unknown Album';
     els.credYear.innerText = data.ano || '19--';
     els.credDirector.innerText = data.direcao || 'Unknown Director';
-}
-
-function showCredits() {
-    els.creditsOverlay.classList.remove('visible');
-    // Delay para aparecer estilo MTV
-    setTimeout(() => els.creditsOverlay.classList.add('visible'), 2000);
-    // Some depois de 8s
-    setTimeout(hideCredits, 8000);
-}
-
-function hideCredits() {
-    els.creditsOverlay.classList.remove('visible');
 }
 
 

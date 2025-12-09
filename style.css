@@ -198,32 +198,31 @@ body {
     filter: sepia(0.2) contrast(1.15) brightness(1.1) saturate(1.1) blur(0.5px);
 }
 
-/* Credits Overlay (UPDATED: No Box, MTV Style) */
+/* Credits Overlay (UPDATED: 3X SIZE MTV Style) */
 .credits-overlay {
     position: absolute;
-    bottom: 8%; /* Slightly raised safe area */
-    left: 6%;   /* Slightly inset */
+    bottom: 15%; /* Adjusted for larger text */
+    left: 8%;   
     color: #f0f0f0; /* Soft white */
     
-    /* Simulate black text stroke for visibility on any bg - BOLD OUTLINE */
+    /* BOLD OUTLINE - Thicker shadow for bigger text */
     text-shadow: 
-        2px 2px 0px #000, 
-        -1px -1px 0 #000,  
-        1px -1px 0 #000,
-        -1px 1px 0 #000,
-        1px 1px 0 #000;
+        4px 4px 0px #000, 
+        -3px -3px 0 #000,  
+        3px -3px 0 #000,
+        -3px 3px 0 #000,
+        3px 3px 0 #000;
     
-    /* Reduced size as requested */
-    font-size: clamp(0.7rem, 2vmin, 1.1rem); 
+    /* INCREASED SIZE (Approx 3x previous) */
+    font-size: clamp(2.5rem, 7vmin, 4rem); 
     
     font-family: 'Jost', sans-serif;
-    font-weight: 700; /* Bold to match Kabel font vibe */
+    font-weight: 700; /* Bold */
     line-height: 1.1;
     
     opacity: 0; 
     transition: opacity 0.8s ease-in-out; 
     
-    /* REMOVED: Background, Border, Padding */
     background: none;
     padding: 0;
     border: none;
@@ -231,10 +230,9 @@ body {
     pointer-events: none;
     z-index: 60;
     
-    /* Removed skew for cleaner original MTV look */
     transform: none; 
     
-    max-width: 90%;
+    max-width: 85%;
     width: auto;
 }
 
@@ -243,29 +241,25 @@ body {
 }
 
 .credit-line {
-    margin-bottom: 0.2rem; 
+    margin-bottom: 0.5rem; 
     letter-spacing: 0.5px;
     white-space: normal; 
     word-wrap: break-word; 
-    /* Mixed case preserved (no uppercase transform) */
+    display: flex;
+    align-items: center;
 }
 
 .credit-line span {
     font-weight: 700;
 }
 
-.credit-line span.light {
-    font-weight: 400; /* Slightly lighter for ft. */
-    opacity: 0.9;
-}
-
 .icon {
     display: inline-block;
-    width: 1.2em; 
+    width: 1.5em; /* Wider spacing for large text */
     text-align: center;
     margin-right: 0.4em;
-    color: #ffff00; /* Yellow icons pop against black shadow */
-    text-shadow: 2px 2px 0px #000; /* Ensure icons also have shadow */
+    color: #ffff00; 
+    text-shadow: 4px 4px 0px #000; 
 }
 
 /* Player Zoom Hack REMOVED to hide UI but keep aspect ratio */
@@ -411,7 +405,8 @@ body {
 @media (max-width: 768px) {
     .credits-overlay {
         left: 4%;
-        bottom: 5%;
+        bottom: 8%;
         max-width: 90%; 
+        font-size: clamp(1.8rem, 5vmin, 2.5rem);
     }
 }
