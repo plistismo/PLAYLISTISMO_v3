@@ -1,54 +1,24 @@
 
-
 import { createClient } from '@supabase/supabase-js';
 import { fetchTrackDetails } from './lastFmAPI.js';
 import { GoogleGenAI } from "@google/genai";
 
-// --- CONFIGURAÇÃO API YOUTUBE ---
-const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
-const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA';
-
-// --- CONFIGURAÇÃO GEMINI AI ---
+// --- CONFIGURAÇÃO API YOUTUBE (APENAS PLAYER) ---
+// Nota: Não usamos mais a API para buscar playlists, apenas para o Iframe Player.
 const GEMINI_API_KEY = 'AIzaSyAU0rLoRsAYns1W7ecNP0Drtw3fplbTgR0';
 const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const aiModel = 'gemini-2.5-flash';
 
-// --- SYSTEM INSTRUCTION: ALEX, O AMIGO INDIE (1996) ---
-// Perfil atualizado: Criativo, Sinestésico, Elogioso e Poético.
+// --- SYSTEM INSTRUCTION ---
 const ALEX_PERSONA_INSTRUCTION = `
 Role: Você é o Alex (1996), um amigo fã de música que está ouvindo junto com o usuário. Você usa headphones grandes e vive no seu próprio mundo sonoro.
 Vibe: Poética, sinestésica (mistura som com cores/texturas), extremamente criativa e cheia de elogios sobre a "vibe" da música.
-
-Algoritmo de Resposta (Siga os passos, mas seja muito CRIATIVO na linguagem):
-
-1. O "Tesouro Escondido" (Peso: 30%)
-Uma curiosidade rápida, mas contada como um segredo.
-
-2. A Conexão Emocional & Sinestesia (Peso: 50%)
-Dê Elogios Criativos à música. Use metáforas visuais e sensoriais.
-EXEMPLOS:
-"Essa linha de baixo parece veludo roxo tocando na minha pele."
-"A voz dela tem gosto de café quente numa manhã de chuva."
-"Essa guitarra soa como neon derretido."
-"Isso não é música, é uma pintura sonora em câmera lenta."
-
-3. O Convite Amigável (Peso: 20%)
-Convide o usuário a "sentir" a música com você.
-
-Regras de Ouro:
-- SEJA CRIATIVO. Evite o óbvio "a música é boa".
-- Use gírias de 1996 (Vibe, Trip, Viajante, Sônico).
-- Máximo de 3 frases curtas.
-
-Exemplo Ideal:
-"Cara, essa bateria soa como trovões abafados por um travesseiro de plumas! Sabia que eles gravaram isso num porão úmido? Fecha os olhos e sente essa textura roxa vibrando no ar com a gente..."
+Algoritmo de Resposta:
+1. O "Tesouro Escondido" (30%): Curiosidade rápida.
+2. A Conexão Emocional (50%): Metáforas visuais e sensoriais.
+3. O Convite (20%): Chame o usuário para sentir a música.
+Regras: Gírias de 96, Máximo 3 frases.
 `;
-
-// --- DADOS DE FALLBACK ---
-const FALLBACK_PLAYLISTS = [
-    { id: 'PLMC9KNkIncKTPzgY-54l4oEae4gntolUv', snippet: { title: 'Top Hits (Backup Channel)', channelTitle: 'System' } },
-    { id: 'PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI', snippet: { title: 'Pop Classics (Backup Channel)', channelTitle: 'System' } },
-];
 
 // --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
@@ -59,10 +29,11 @@ const supabase = createClient(SB_URL, SB_KEY);
 const state = {
     isOn: false,
     isSearchOpen: false,
-    currentPlaylistId: null,
-    currentPlaylistTitle: '',
-    playlists: [],
-    currentPlaylistVideos: [],
+    // Estado de Playlist Virtual (DB)
+    virtualChannels: {}, // Cache dos canais gerados do DB
+    currentChannelName: '',
+    currentVideoIdsQueue: [], // Lista de IDs para tocar
+    
     currentSearchTerm: '',
     playerReady: false,
     currentVideoTitle: '',
@@ -71,19 +42,14 @@ const state = {
     isLyricsOn: false,
     currentLyrics: '',
     lyricsScrollInterval: null,
-    // Credits & Monitor Loop
+    // Monitor Loop
     monitorInterval: null,
     // AI State
-    aiCheckpoints: {
-        intro: false, // ~0-5%
-        q1: false,    // ~25%
-        half: false,  // ~50%
-        q3: false     // ~75%
-    },
+    aiCheckpoints: { intro: false, q1: false, half: false, q3: false },
     aiBubbleTimeout: null
 };
 
-let player; // YouTube Only
+let player; 
 
 // Elementos DOM
 const els = {
@@ -91,7 +57,6 @@ const els = {
     screenOn: document.getElementById('screen-on'),
     powerLed: document.getElementById('power-led'),
     tvPowerBtn: document.getElementById('tv-power-btn'),
-    youtubeContainer: document.getElementById('player'),
     staticOverlay: document.getElementById('static-overlay'),
     btnNext: document.getElementById('tv-ch-next'),
     btnPrev: document.getElementById('tv-ch-prev'),
@@ -120,7 +85,6 @@ const els = {
     aiLed: document.getElementById('ai-led'),
     aiStatusLed: document.getElementById('ai-status-led'),
     lyricsOverlay: document.getElementById('lyrics-overlay'),
-    lyricsContent: document.getElementById('lyrics-content'),
     credits: {
         container: document.getElementById('video-credits'),
         artist: document.getElementById('artist-name'),
@@ -135,7 +99,6 @@ const els = {
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        console.warn("[Auth] No session found. Redirecting to login.");
         window.location.href = 'login.html';
     } else {
         init(); 
@@ -144,21 +107,12 @@ async function checkAuth() {
 
 async function handleLogout() {
     const { error } = await supabase.auth.signOut();
-    if (!error) {
-        window.location.href = 'login.html';
-    }
-}
-
-// --- DEV CONSOLE LOGIC ---
-function initDevConsole() {
-    // (Mantido igual, omitido para brevidade)
-    const trigger = document.getElementById('dev-debug-trigger');
-    // ... lógica existente do console ...
+    if (!error) window.location.href = 'login.html';
 }
 
 // --- INICIALIZAÇÃO ---
 function init() {
-    console.log("[Script] Initializing RetroTV System...");
+    console.log("[Script] Initializing RetroTV System (DB Mode)...");
     populateDecorations();
     startClocks();
     
@@ -178,20 +132,12 @@ function init() {
 
 // YouTube Callback
 window.onYouTubeIframeAPIReady = function() {
-    console.log("[YouTube] API Ready. Creating Player...");
     player = new YT.Player('player', {
         height: '100%',
         width: '100%',
         playerVars: {
-            'playsinline': 1,
-            'controls': 0,
-            'modestbranding': 1,
-            'rel': 0,
-            'fs': 0,
-            'iv_load_policy': 3,
-            'disablekb': 1,
-            'mute': 0,
-            'autoplay': 1 
+            'playsinline': 1, 'controls': 0, 'modestbranding': 1, 'rel': 0,
+            'fs': 0, 'iv_load_policy': 3, 'disablekb': 1, 'mute': 0, 'autoplay': 1 
         },
         events: {
             'onReady': onPlayerReady,
@@ -205,31 +151,27 @@ function onPlayerReady(event) {
     console.log("[Player] Ready.");
     state.playerReady = true;
     
-    // Carrega playlists. 
-    fetchChannelPlaylists().then(() => {
+    // CARREGA CANAIS DO DB
+    fetchChannelsFromDB().then(() => {
         renderChannelGuide();
-        if (state.playlists.length > 0) {
-           const first = state.playlists[0];
-           // Define estado inicial
-           state.currentPlaylistId = first.id;
-           state.currentPlaylistTitle = first.snippet.title;
-           els.osdChannel.innerText = `CH 01`;
-
+        
+        // Pega o primeiro canal disponível para tocar
+        const channelNames = Object.keys(state.virtualChannels);
+        if (channelNames.length > 0) {
+           const firstChannel = channelNames[0];
            if(state.isOn) {
-               // Chama changeChannel para garantir o load correto
-               changeChannel(first.id, first.snippet.title);
+               playVirtualChannel(firstChannel);
            }
         }
     });
 }
 
 function onPlayerError(event) {
-    console.error(`[Player] Error Code: ${event.data}`);
     if (event.data === 150 || event.data === 101) {
-        showStatus("COPYRIGHT BLOCK - SKIPPING", true);
-        setTimeout(() => player.nextVideo(), 2000);
+        showStatus("SKIP: COPYRIGHT BLOCK", true);
+        setTimeout(() => player.nextVideo(), 1500);
     } else {
-        showStatus("NO SIGNAL / ERROR", true);
+        showStatus("NO SIGNAL", true);
         triggerStatic();
     }
 }
@@ -238,8 +180,6 @@ function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
         showStatus("", false);
         const data = player.getVideoData();
-        
-        // Inicia monitor (Créditos + AI Checkpoints)
         startMonitorLoop();
         
         if (data && data.title) {
@@ -248,28 +188,19 @@ function onPlayerStateChange(event) {
                 state.currentVideoTitle = data.title;
                 state.currentVideoId = data.video_id;
                 
-                // RESET AI CHECKPOINTS
                 state.aiCheckpoints = { intro: false, q1: false, half: false, q3: false };
                 hideAIBubble();
                 
                 els.npTitle.textContent = data.title;
                 els.npId.textContent = `ID: ${data.video_id}`;
                 
-                // Carrega metadados
                 handleCreditsForVideo(data.video_id, data.title).then(() => {
-                    if (state.isLyricsOn) {
-                        fetchLyricsForCurrentVideo();
-                    }
+                    if (state.isLyricsOn) fetchLyricsForCurrentVideo();
                 });
             }
         }
-        
         els.osdLayer.classList.remove('fade-out');
-        setTimeout(() => {
-            if(player.getPlayerState() === YT.PlayerState.PLAYING) {
-                els.osdLayer.classList.add('fade-out');
-            }
-        }, 3000);
+        setTimeout(() => els.osdLayer.classList.add('fade-out'), 3000);
     } else if (event.data === YT.PlayerState.BUFFERING) {
         showStatus("BUFFERING...", true);
     } else {
@@ -277,162 +208,219 @@ function onPlayerStateChange(event) {
     }
 }
 
-// --- LOGICA DE PLAYLISTS (Otimizada) ---
+// --- LÓGICA DE CANAIS VIA DB (CORE CHANGE) ---
 
-async function fetchChannelPlaylists() {
-    console.log("[API] Fetching Playlists List...");
-    let allPlaylists = [];
-    let nextPageToken = '';
-    let pagesFetched = 0;
+async function fetchChannelsFromDB() {
+    console.log("[DB] Fetching Channels from Supabase...");
     
-    try {
-        // LIMITADO A 3 PÁGINAS PARA EVITAR TRAVAMENTO NO CARREGAMENTO
-        do {
-            const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
-            const response = await fetch(url);
-            
-            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+    // Busca músicas que tenham video_id e playlist definidos
+    const { data, error } = await supabase
+        .from('musicas_backup')
+        .select('video_id, playlist, playlist_group, artista, musica')
+        .not('video_id', 'is', null)
+        .not('playlist', 'is', null);
 
-            const data = await response.json();
-            if (data.items) allPlaylists = [...allPlaylists, ...data.items];
-            nextPageToken = data.nextPageToken || '';
-            pagesFetched++;
-        } while (nextPageToken && pagesFetched < 3); 
-        
-        state.playlists = allPlaylists;
-    } catch (error) {
-        console.error("[API] Failed to fetch playlists:", error);
-        state.playlists = FALLBACK_PLAYLISTS;
+    if (error || !data) {
+        console.error("DB Error:", error);
+        return;
     }
-}
 
-async function fetchPlaylistItems(playlistId, playlistTitle) {
-    if (playlistId.startsWith('PL_FALLBACK')) return [];
-    try {
-        // Busca apenas os primeiros itens para popular cache se necessário
-        const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=5&key=${API_KEY}`;
-        const response = await fetch(url);
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data.items || [];
-    } catch (error) {
-        return [];
-    }
-}
+    // Agrupa dados em formato de "Canais"
+    // Estrutura: { "Nome Playlist": { group: "GENRES", videos: [id1, id2...] } }
+    const channels = {};
 
-function groupPlaylists(playlists) {
-    const groups = { 'UPLOADS': [], 'ZONES': [], 'GENRES': [], 'ERAS': [], 'OTHERS': [] };
-    playlists.forEach(pl => {
-        const title = pl.snippet.title.toUpperCase();
-        if (title.includes('UPLOAD')) groups['UPLOADS'].push(pl);
-        else if (title.includes('ZONE')) groups['ZONES'].push(pl);
-        else if (title.includes('ROCK') || title.includes('POP') || title.includes('JAZZ') || title.includes('INDIE') || title.includes('BRASIL')) groups['GENRES'].push(pl);
-        else if (title.match(/\d{4}/)) groups['ERAS'].push(pl);
-        else groups['OTHERS'].push(pl);
+    data.forEach(row => {
+        const plName = row.playlist;
+        if (!channels[plName]) {
+            channels[plName] = {
+                group: row.playlist_group || 'OTHERS',
+                videos: [] // Lista de IDs
+            };
+        }
+        // Evita duplicatas de ID na mesma playlist
+        if (!channels[plName].videos.includes(row.video_id)) {
+            channels[plName].videos.push(row.video_id);
+        }
     });
-    return groups;
+
+    state.virtualChannels = channels;
+    console.log(`[DB] Loaded ${Object.keys(channels).length} virtual channels.`);
 }
 
 function renderChannelGuide() {
     const container = els.channelGuideContainer;
     container.innerHTML = ''; 
 
-    if (state.playlists.length === 0) {
-        container.innerHTML = '<div class="text-red-500">NO SIGNAL / NO DATA</div>';
+    const channels = state.virtualChannels;
+    if (Object.keys(channels).length === 0) {
+        container.innerHTML = '<div class="text-red-500">DATABASE EMPTY OR OFFLINE</div>';
         return;
     }
 
-    const groups = groupPlaylists(state.playlists);
+    // Agrupa para exibição por Categoria
+    const groupedDisplay = {};
+    for (const [name, data] of Object.entries(channels)) {
+        if (!groupedDisplay[data.group]) groupedDisplay[data.group] = [];
+        groupedDisplay[data.group].push({ name, count: data.videos.length });
+    }
+
+    // Ordem de exibição
+    const groupOrder = ['UPLOADS', 'ZONES', 'GENRES', 'ERAS', 'OTHERS'];
     let channelIndex = 1;
 
-    for (const [category, items] of Object.entries(groups)) {
-        if (items.length === 0) continue;
+    groupOrder.forEach(groupName => {
+        const items = groupedDisplay[groupName];
+        if (!items) return;
 
+        // --- GROUP CONTAINER (Accordion Wrapper) ---
+        const groupContainer = document.createElement('div');
+        groupContainer.className = "flex flex-col mb-1";
+
+        // --- HEADER (Clickable) ---
         const header = document.createElement('div');
-        header.className = "col-span-full border-b border-white/20 mt-4 mb-2 pb-1";
-        header.innerHTML = `<span class="bg-[#ffff00] text-black px-2 font-bold">${category}</span>`;
-        container.appendChild(header);
+        header.className = "accordion-header flex justify-between items-center border-b border-white/20 pb-1 mb-2";
+        header.innerHTML = `
+            <div>
+                <span class="bg-[#ffff00] text-black px-2 font-bold inline-block mr-2 transition-colors">[+]</span>
+                <span class="text-[#ffff00] font-bold text-xl">${groupName}</span>
+            </div>
+            <span class="text-xs opacity-50 text-white">${items.length} PLAYLISTS</span>
+        `;
+        
+        // --- CONTENT WRAPPER (Hidden by default) ---
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = "accordion-content grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 pl-4 border-l-2 border-white/10 ml-2";
 
-        items.forEach(pl => {
+        // Adiciona funcionalidade de Toggle
+        header.addEventListener('click', () => {
+            const isOpen = contentWrapper.classList.contains('open');
+            const indicator = header.querySelector('span:first-child');
+            
+            if (isOpen) {
+                contentWrapper.classList.remove('open');
+                indicator.innerText = "[+]";
+            } else {
+                contentWrapper.classList.add('open');
+                indicator.innerText = "[-]";
+            }
+        });
+
+        // --- ITEMS ---
+        items.forEach(item => {
             const el = document.createElement('div');
             el.className = "teletext-link flex items-center p-1 cursor-pointer group hover:bg-white hover:text-blue-900 transition-colors";
-            el.dataset.id = pl.id;
-            el.dataset.title = pl.snippet.title;
+            el.dataset.title = item.name;
+            
             const chNum = String(channelIndex).padStart(2, '0');
-            // Remove uppercase class to respect original casing as requested
-            el.innerHTML = `<span class="text-[#ffff00] mr-3 font-bold group-hover:text-blue-900">${chNum}</span><span class="truncate">${pl.snippet.title}</span>`;
+            el.innerHTML = `
+                <span class="text-[#ffff00] mr-3 font-bold group-hover:text-blue-900">${chNum}</span>
+                <span class="truncate">${item.name}</span>
+                <span class="text-xs ml-auto opacity-50">${item.count} TRACKS</span>
+            `;
+            
             el.onclick = () => {
-                // Clique único para trocar canal
                 els.osdChannel.innerText = `CH ${chNum}`;
-                els.npPlaylist.innerText = `PLAYLIST: ${pl.snippet.title}`;
-                changeChannel(pl.id, pl.snippet.title);
+                playVirtualChannel(item.name);
                 toggleSearchMode();
             };
-            container.appendChild(el);
+            contentWrapper.appendChild(el);
             channelIndex++;
         });
+
+        groupContainer.appendChild(header);
+        groupContainer.appendChild(contentWrapper);
+        container.appendChild(groupContainer);
+    });
+}
+
+// --- TOCAR CANAL VIRTUAL ---
+function playVirtualChannel(channelName) {
+    if (!state.virtualChannels[channelName]) return;
+
+    showStatus("TUNING DB...", true);
+    triggerStatic();
+
+    const channelData = state.virtualChannels[channelName];
+    state.currentChannelName = channelName;
+    state.currentVideoIdsQueue = channelData.videos;
+
+    els.npPlaylist.innerText = `PLAYLIST: ${channelName}`;
+
+    // Embaralha para sensação de TV
+    const shuffled = [...state.currentVideoIdsQueue].sort(() => Math.random() - 0.5);
+
+    if (player && typeof player.loadPlaylist === 'function') {
+        player.loadPlaylist({
+            playlist: shuffled, // Passa array de IDs
+            index: 0,
+            startSeconds: 0
+        });
+        player.setLoop(true);
     }
 }
 
-// Filtro de Busca
+// Filtro de Busca e Auto-Expand Accordion
 els.channelSearch.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
-    const links = els.channelGuideContainer.querySelectorAll('.teletext-link');
-    links.forEach(link => {
-        const title = link.dataset.title.toLowerCase();
-        link.classList.toggle('hidden', !title.includes(term));
+    const groupContainers = els.channelGuideContainer.querySelectorAll('.flex.flex-col.mb-1'); // Seleciona cada bloco de grupo
+
+    groupContainers.forEach(group => {
+        const header = group.querySelector('.accordion-header');
+        const content = group.querySelector('.accordion-content');
+        const links = content.querySelectorAll('.teletext-link');
+        const indicator = header.querySelector('span:first-child');
+        
+        let hasMatch = false;
+
+        links.forEach(link => {
+            const title = link.dataset.title.toLowerCase();
+            const matches = title.includes(term);
+            link.classList.toggle('hidden', !matches);
+            if (matches) hasMatch = true;
+        });
+
+        // Se tiver busca ativa e houver match no grupo, abre o accordion
+        if (term.length > 0) {
+            if (hasMatch) {
+                content.classList.add('open');
+                group.classList.remove('hidden');
+                indicator.innerText = "[-]";
+            } else {
+                content.classList.remove('open');
+                group.classList.add('hidden'); // Oculta o grupo inteiro se não tiver resultado
+                indicator.innerText = "[+]";
+            }
+        } else {
+            // Se limpar a busca, reseta estado (fecha tudo e mostra todos os grupos)
+            group.classList.remove('hidden');
+            links.forEach(l => l.classList.remove('hidden'));
+            content.classList.remove('open');
+            indicator.innerText = "[+]";
+        }
     });
 });
 
 els.channelSearch.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
-        const firstVisible = Array.from(els.channelGuideContainer.querySelectorAll('.teletext-link')).find(el => !el.classList.contains('hidden'));
-        if (firstVisible) firstVisible.click();
+        // Busca o primeiro link visível em qualquer accordion aberto
+        const visibleLinks = Array.from(els.channelGuideContainer.querySelectorAll('.teletext-link:not(.hidden)'));
+        if (visibleLinks.length > 0) {
+            visibleLinks[0].click();
+        }
     }
 });
 
-// --- CONTROLE DE CANAL & VÍDEO ---
-function changeChannel(playlistId, playlistTitle) {
-    showStatus("TUNING...", true);
-    triggerStatic();
-
-    state.currentPlaylistId = playlistId;
-    state.currentPlaylistTitle = playlistTitle;
-
-    // Verificação de segurança para o duplo clique
-    if (player && typeof player.loadPlaylist === 'function') {
-        try {
-            player.loadPlaylist({
-                listType: 'playlist',
-                list: playlistId,
-                index: 0,
-                startSeconds: 0
-            });
-            player.setLoop(true);
-            // REFORÇO: Força o play para evitar clique duplo
-            setTimeout(() => {
-                try { player.playVideo(); } catch(e){}
-            }, 100);
-        } catch (e) {
-            console.error("Erro ao carregar playlist", e);
-        }
-    } else {
-        console.warn("[Player] Player not ready yet. Retrying in 1s...");
-        setTimeout(() => changeChannel(playlistId, playlistTitle), 1000);
-    }
-}
-
+// --- CONTROLES DE VÍDEO ---
 function nextVideo() {
     triggerStatic();
     if (player && state.playerReady) player.nextVideo();
 }
-
 function prevVideo() {
     triggerStatic();
     if (player && state.playerReady) player.previousVideo();
 }
 
-// --- LYRICS (LEGENDAS) VIA GEMINI AI ---
+// --- LYRICS (LEGENDAS) ---
 async function toggleLyrics() {
     if (!state.isOn) return;
     state.isLyricsOn = !state.isLyricsOn;
@@ -509,12 +497,9 @@ function stopLyricsScroll() {
     }
 }
 
-// --- ALEX (AUTOMATIC AI COMMENTARY) - 4 STAGES ---
-
+// --- ALEX AI ---
 async function triggerAutoAICommentary(stage) {
     if(!state.isOn) return;
-
-    // Visual: LED "Pensando"
     els.aiStatusLed.classList.add('bg-green-500', 'animate-pulse');
     els.aiStatusLed.classList.remove('bg-green-900');
 
@@ -531,20 +516,12 @@ async function triggerAutoAICommentary(stage) {
         Artista: ${els.credits.artist.innerText}
         Música: ${els.credits.song.innerText}
         `;
-
         const response = await genAI.models.generateContent({
             model: aiModel,
             contents: musicContext,
-            config: {
-                systemInstruction: ALEX_PERSONA_INSTRUCTION,
-                temperature: 1.2, // Mais criatividade
-                topK: 50
-            }
+            config: { systemInstruction: ALEX_PERSONA_INSTRUCTION, temperature: 1.2, topK: 50 }
         });
-
-        const text = response.text;
-        showAIBubble(text);
-
+        showAIBubble(response.text);
     } catch (error) {
         console.error("Auto AI Error:", error);
     } finally {
@@ -559,10 +536,7 @@ function showAIBubble(text) {
     els.aiBubbleContainer.classList.remove('opacity-0', 'translate-y-4');
     els.aiLed.classList.remove('bg-red-900');
     els.aiLed.classList.add('bg-amber-500');
-
-    // Tempo de leitura: min 7s (para leitura tranquila), aumenta com o tamanho do texto
     const readingTime = Math.max(text.length * 80, 7000);
-    
     if (state.aiBubbleTimeout) clearTimeout(state.aiBubbleTimeout);
     state.aiBubbleTimeout = setTimeout(hideAIBubble, readingTime);
 }
@@ -574,7 +548,6 @@ function hideAIBubble() {
 }
 
 // --- CRÉDITOS & METADADOS ---
-
 function cleanStringForApi(str) {
     if (!str) return "";
     return str.replace(/[\(\[\{].*?[\)\]\}]/g, '').replace(/official video/gi, '').replace(/video oficial/gi, '')
@@ -583,14 +556,8 @@ function cleanStringForApi(str) {
 
 function formatCreditHtml(text) {
     if (!text) return '';
-    // Unbold "ft." or "feat." case insensitive
-    let formatted = text.replace(/\s(ft\.?|feat\.?)\s/gi, (match) => {
-        return `<span class="font-light opacity-75">${match}</span>`;
-    });
-    
-    // Unbold ℗ symbol (likely what user meant by 'P that looks like an 8' in credits context)
+    let formatted = text.replace(/\s(ft\.?|feat\.?)\s/gi, (match) => `<span class="font-light opacity-75">${match}</span>`);
     formatted = formatted.replace(/℗/g, '<span class="font-light opacity-75">℗</span>');
-    
     return formatted;
 }
 
@@ -603,7 +570,7 @@ async function handleCreditsForVideo(videoId, ytTitle) {
 
     let artist = "Desconhecido", song = "Faixa Desconhecida", director = "", album = "", year = "";
 
-    // MIGRADO PARA A NOVA TABELA musicas_backup
+    // Busca no DB Backup
     const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
     
     if (data) {
@@ -649,7 +616,6 @@ function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
 function updateCreditsDOM(artist, song, album, year, director) {
     const set = (el, txt) => { 
         el.parentElement.style.display = txt ? 'block' : 'none'; 
-        // Use innerHTML to allow for custom bolding/formatting
         el.innerHTML = formatCreditHtml(txt) || ''; 
     };
     set(els.credits.artist, artist); 
@@ -659,7 +625,7 @@ function updateCreditsDOM(artist, song, album, year, director) {
     set(els.credits.director, director);
 }
 
-// --- MONITOR LOOP (CREDITS & AI CHECKPOINTS) ---
+// --- MONITOR LOOP ---
 function startMonitorLoop() {
     stopMonitorLoop();
     state.monitorInterval = setInterval(() => {
@@ -669,55 +635,27 @@ function startMonitorLoop() {
         const duration = player.getDuration();
         if (!duration) return;
 
-        // 1. Monitor de Créditos
-        // Rule: Start 10s after video starts, lasts for 10s (10s to 20s)
-        // Rule: Reappear 20s before end, lasts for 10s (Duration-20 to Duration-10)
         const isIntroTime = currentTime >= 10 && currentTime < 20;
         const isOutroTime = currentTime >= (duration - 20) && currentTime < (duration - 10);
         
         if (isIntroTime || isOutroTime) showCredits();
         else hideCredits();
 
-        // 2. Monitor de AI Checkpoints (0%, 25%, 50%, 75%)
         const progress = currentTime / duration;
-        
-        // Stage 1: Intro (~5%)
-        if (progress > 0.05 && progress < 0.1 && !state.aiCheckpoints.intro) {
-            state.aiCheckpoints.intro = true;
-            triggerAutoAICommentary('intro');
-        }
-        // Stage 2: 25%
-        if (progress > 0.25 && progress < 0.3 && !state.aiCheckpoints.q1) {
-            state.aiCheckpoints.q1 = true;
-            triggerAutoAICommentary('q1');
-        }
-        // Stage 3: 50%
-        if (progress > 0.50 && progress < 0.55 && !state.aiCheckpoints.half) {
-            state.aiCheckpoints.half = true;
-            triggerAutoAICommentary('half');
-        }
-        // Stage 4: 75%
-        if (progress > 0.75 && progress < 0.8 && !state.aiCheckpoints.q3) {
-            state.aiCheckpoints.q3 = true;
-            triggerAutoAICommentary('q3');
-        }
+        if (progress > 0.05 && progress < 0.1 && !state.aiCheckpoints.intro) { state.aiCheckpoints.intro = true; triggerAutoAICommentary('intro'); }
+        if (progress > 0.25 && progress < 0.3 && !state.aiCheckpoints.q1) { state.aiCheckpoints.q1 = true; triggerAutoAICommentary('q1'); }
+        if (progress > 0.50 && progress < 0.55 && !state.aiCheckpoints.half) { state.aiCheckpoints.half = true; triggerAutoAICommentary('half'); }
+        if (progress > 0.75 && progress < 0.8 && !state.aiCheckpoints.q3) { state.aiCheckpoints.q3 = true; triggerAutoAICommentary('q3'); }
 
     }, 1000); 
 }
 
 function stopMonitorLoop() {
-    if (state.monitorInterval) {
-        clearInterval(state.monitorInterval);
-        state.monitorInterval = null;
-    }
+    if (state.monitorInterval) { clearInterval(state.monitorInterval); state.monitorInterval = null; }
 }
 
-function showCredits() { 
-    if(!els.credits.container.classList.contains('visible')) els.credits.container.classList.add('visible'); 
-}
-function hideCredits() { 
-    if(els.credits.container.classList.contains('visible')) els.credits.container.classList.remove('visible'); 
-}
+function showCredits() { if(!els.credits.container.classList.contains('visible')) els.credits.container.classList.add('visible'); }
+function hideCredits() { if(els.credits.container.classList.contains('visible')) els.credits.container.classList.remove('visible'); }
 
 // --- EFEITOS DE TV ---
 function togglePower() {
@@ -730,11 +668,11 @@ function togglePower() {
         els.screenOn.classList.add('crt-turn-on');
         showStatus("INITIALIZING...", true);
         
-        if(state.currentPlaylistId && player && state.playerReady) {
+        const channels = Object.keys(state.virtualChannels);
+        if(state.currentChannelName && player && state.playerReady) {
             player.playVideo();
-        } else if (state.playlists.length > 0 && player && state.playerReady) {
-            const first = state.playlists[0];
-            changeChannel(first.id, first.snippet.title);
+        } else if (channels.length > 0 && player && state.playerReady) {
+            playVirtualChannel(channels[0]);
         }
     } else {
         if (player && typeof player.pauseVideo === 'function' && state.playerReady) player.pauseVideo();
@@ -777,9 +715,7 @@ function toggleSearchMode() {
         }
     } else {
         els.internalGuide.classList.add('hidden');
-        if (player && state.playerReady && player.getVideoData() && player.getVideoData().video_id) {
-            player.playVideo();
-        }
+        if (player && state.playerReady) player.playVideo();
     }
 }
 

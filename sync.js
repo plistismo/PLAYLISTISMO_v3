@@ -1,20 +1,16 @@
 
-
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÕES ---
-const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
-const CHANNEL_ID = 'UCFUgNd9YfUTX8tSpaPEobgA';
-
+// Nota: API KEY do YouTube removida pois não será mais utilizada.
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
 const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M';
 
 const supabase = createClient(SB_URL, SB_KEY);
 
-// --- UTILITÁRIOS ---
-
-// Função para classificar o Grupo da Playlist (Mesma lógica do Frontend)
+// --- LÓGICA DE GRUPOS ---
 const getPlaylistCategory = (title) => {
+    if (!title) return 'OTHERS';
     const t = title.toUpperCase();
     if (t.includes('UPLOAD')) return 'UPLOADS';
     if (t.includes('ZONE')) return 'ZONES';
@@ -23,154 +19,118 @@ const getPlaylistCategory = (title) => {
     return 'OTHERS';
 };
 
-// Função para remover acentos e caracteres especiais para comparação
-const normalizeStr = (str) => {
-    if (!str) return "";
-    return str
-        .toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
-        .replace(/official video/g, '')
-        .replace(/video oficial/g, '')
-        .replace(/videoclipe/g, '')
-        .replace(/[({\[]/g, '')
-        .replace(/[)}\]]/g, '')
-        .replace(/-/g, ' ')
-        .trim();
-};
+// --- FUNÇÕES AUXILIARES ---
 
-// --- FUNÇÕES DE BUSCA ---
+// Busca apenas os nomes das playlists existentes no banco para evitar duplicatas e chamadas de API
+async function fetchUniquePlaylistsFromDB() {
+    let allPlaylists = new Set();
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-async function fetchChannelPlaylists() {
-    let allPlaylists = [];
-    let nextPageToken = '';
-    console.log("📂 Buscando playlists do canal...");
+    process.stdout.write("\n"); // Pula linha
+
     try {
-        do {
-            const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${CHANNEL_ID}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            if (data.items) allPlaylists = [...allPlaylists, ...data.items];
-            nextPageToken = data.nextPageToken || '';
-        } while (nextPageToken);
-        console.log(`✅ ${allPlaylists.length} playlists encontradas.`);
-        return allPlaylists;
-    } catch (error) {
-        console.error("❌ Erro ao buscar playlists:", error);
+        while (hasMore) {
+            // Feedback visual para evitar sensação de travamento
+            process.stdout.write(`   ⏳ Lendo registros do DB: ${from} a ${from + pageSize}...\r`);
+
+            const { data, error } = await supabase
+                .from('musicas_backup')
+                .select('playlist')
+                .not('playlist', 'is', null) // Ignora nulos
+                .range(from, from + pageSize - 1);
+
+            if (error) {
+                console.error("\n   ❌ Erro ao ler lote do Supabase:", error.message);
+                throw error;
+            }
+
+            if (data && data.length > 0) {
+                data.forEach(row => {
+                    if (row.playlist) allPlaylists.add(row.playlist);
+                });
+                from += pageSize;
+                // Se retornou menos que o tamanho da página, acabaram os dados
+                if (data.length < pageSize) hasMore = false;
+            } else {
+                hasMore = false;
+            }
+        }
+    } catch (err) {
+        console.error("\n   ❌ Erro Fatal no Loop de Leitura:", err);
         return [];
     }
+
+    console.log(`\n   ✅ Leitura concluída. Total de registros varridos: ${from}`);
+    return Array.from(allPlaylists);
 }
 
-async function fetchAllVideosFromPlaylist(playlist) {
-    let videos = [];
-    let nextPageToken = '';
-    // Determina o grupo com base no título da playlist atual
-    const groupCategory = getPlaylistCategory(playlist.snippet.title);
+// --- PROCESSO DE MIGRAÇÃO ---
 
-    try {
-        do {
-            const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlist.id}&maxResults=50&key=${API_KEY}&pageToken=${nextPageToken}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            if (data.items) {
-                // Anexa o grupo ao objeto do vídeo para uso posterior
-                const videosWithGroup = data.items.map(item => ({
-                    ...item,
-                    _derivedGroup: groupCategory
-                }));
-                videos = [...videos, ...videosWithGroup];
-            }
-            nextPageToken = data.nextPageToken || '';
-        } while (nextPageToken);
-    } catch (e) { 
-        // Silencia erros de playlist vazia ou privada
+async function runMigration() {
+    console.clear();
+    console.log("=================================================");
+    console.log("🚀 MIGRATOR V3 (DB-ONLY) - INTERNAL PROCESSING");
+    console.log("=================================================");
+    console.log("");
+
+    // PASSO 1: Ler do Banco
+    console.log("📥 [PASSO 1/3] Lendo catálogo do Banco de Dados (Supabase)...");
+    const uniquePlaylistNames = await fetchUniquePlaylistsFromDB();
+    
+    const totalPlaylists = uniquePlaylistNames.length;
+    console.log(`   ✅ Playlists Únicas Identificadas: ${totalPlaylists}`);
+    console.log("");
+
+    if (totalPlaylists === 0) {
+        console.log("   ⚠️  Nenhuma playlist encontrada no banco. O script será encerrado.");
+        return;
     }
-    return videos;
-}
 
-// --- PROCESSO PRINCIPAL ---
+    // PASSO 2: Atualização
+    console.log("💾 [PASSO 2/3] Calculando Grupos e Atualizando Registros...");
+    console.log("   ℹ️  Atualizando coluna 'playlist_group' baseado no nome da playlist.");
+    console.log("");
 
-async function enrichDatabaseWithVideoLinks() {
-    console.log("🚀 INICIANDO SINCRONIZAÇÃO + GROUPING...");
-
-    // 1. Busca músicas sem link OU sem grupo no banco
-    const { data: dbMusics, error } = await supabase
-        .from('musicas_backup')
-        .select('*')
-        .or('video_id.is.null,playlist_group.is.null'); // Busca se faltar ID ou Grupo
-
-    if (error) { console.error("❌ Erro Supabase:", error.message); return; }
-    if (!dbMusics || dbMusics.length === 0) { console.log("✅ Banco de dados já está 100% preenchido!"); return; }
-
-    console.log(`📋 Processando ${dbMusics.length} registros incompletos...`);
-
-    // 2. Busca vídeos do YouTube e suas Playlists
-    const playlists = await fetchChannelPlaylists();
+    let successCount = 0;
+    let errorCount = 0;
     
-    console.log("⏳ Baixando catálogo e categorizando...");
-    // Passa o objeto playlist inteiro agora
-    const promises = playlists.map(pl => fetchAllVideosFromPlaylist(pl));
-    const rawResults = await Promise.all(promises);
-    
-    // 3. Mapeamento de Vídeos
-    const uniqueVideosMap = new Map();
-    
-    rawResults.flat().forEach(item => {
-        if (item.snippet && item.snippet.resourceId && item.snippet.resourceId.videoId) {
-            // Se o vídeo já existe no mapa, mantemos o primeiro (ou poderíamos priorizar grupos específicos)
-            // Aqui, o item contém a propriedade `_derivedGroup` calculada anteriormente
-            if (!uniqueVideosMap.has(item.snippet.resourceId.videoId)) {
-                uniqueVideosMap.set(item.snippet.resourceId.videoId, item);
-            }
-        }
-    });
-
-    const allYoutubeVideos = Array.from(uniqueVideosMap.values());
-    console.log(`🎥 Catálogo carregado: ${allYoutubeVideos.length} vídeos únicos com categorias.`);
-
-    // 4. Cruzamento e Atualização
-    let updates = 0;
-    
-    for (const dbRow of dbMusics) {
-        const dbArtist = normalizeStr(dbRow.artista);
-        const dbSong = normalizeStr(dbRow.musica);
+    for (let i = 0; i < totalPlaylists; i++) {
+        const playlistName = uniquePlaylistNames[i];
+        const group = getPlaylistCategory(playlistName);
         
-        // Filtra vídeos candidatos
-        const matches = allYoutubeVideos.filter(ytVid => {
-            const ytTitle = normalizeStr(ytVid.snippet.title);
-            return ytTitle.includes(dbArtist) && ytTitle.includes(dbSong);
-        });
+        // UX: Mostra o progresso atual
+        process.stdout.write(`   🔨 [${i + 1}/${totalPlaylists}] Atualizando: "${playlistName.substring(0, 30)}..." -> GRUPO: ${group}          \r`);
 
-        if (matches.length > 0) {
-            const match = matches[0]; 
-            const videoId = match.snippet.resourceId.videoId;
-            const videoTitle = match.snippet.title;
-            const category = match._derivedGroup || 'OTHERS';
+        try {
+            const { error } = await supabase
+                .from('musicas_backup')
+                .update({ playlist_group: group })
+                .eq('playlist', playlistName);
 
-            console.log(`✅ MATCH: "${dbRow.artista} - ${dbRow.musica}"`);
-            console.log(`   ↳ YouTube: "${videoTitle}" | Grupo: ${category}`);
-
-            // Prepara update dinâmico (só atualiza o que falta ou se video_id mudar)
-            const updatePayload = {};
-            if (!dbRow.video_id) updatePayload.video_id = videoId;
-            if (!dbRow.playlist_group) updatePayload.playlist_group = category;
-
-            if (Object.keys(updatePayload).length > 0) {
-                const { error: upErr } = await supabase
-                    .from('musicas_backup')
-                    .update(updatePayload)
-                    .eq('id', dbRow.id);
-
-                if (!upErr) updates++;
-                else console.error(`   ❌ Erro update: ${upErr.message}`);
+            if (error) {
+                // Loga o erro mas não para o loop
+                console.log(`\n   ❌ Erro ao atualizar "${playlistName}": ${error.message}`);
+                errorCount++;
+            } else {
+                successCount++;
             }
-
-        } else {
-            console.log(`🚫 NÃO ACHEI: "${dbRow.artista} - ${dbRow.musica}"`);
+        } catch (err) {
+            console.log(`\n   ❌ Exceção ao atualizar "${playlistName}":`, err);
+            errorCount++;
         }
     }
 
-    console.log("-----------------------------------------");
-    console.log(`🏁 FIM! ${updates} músicas atualizadas.`);
+    console.log("\n");
+
+    // RESUMO
+    console.log("=================================================");
+    console.log("🏁 MIGRAÇÃO CONCLUÍDA!");
+    console.log(`   - Playlists Únicas Processadas: ${totalPlaylists}`);
+    console.log(`   - Updates com Sucesso: ${successCount}`);
+    console.log(`   - Falhas: ${errorCount}`);
+    console.log("=================================================");
 }
 
-enrichDatabaseWithVideoLinks();
+runMigration();

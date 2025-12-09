@@ -33,7 +33,7 @@
     
     <!-- ADMIN BUTTON (CRUD) - VISIBLE -->
     <a href="admin.html" class="fixed top-2 left-2 z-[9999] bg-amber-900/50 text-amber-500 hover:text-black hover:bg-amber-500 border border-amber-600 px-3 py-1 font-vt323 text-lg font-bold tracking-widest transition-all shadow-[0_0_10px_rgba(217,119,6,0.2)]">
-        ADMIN / CRUD
+        ADMIN / CRUD v1
     </a>
     
     <div id="dev-debug-console" class="fixed top-0 right-0 bg-black/95 border-l-2 border-b-2 border-red-500 z-[10000] hidden flex flex-col font-mono text-base shadow-2xl">
@@ -64,7 +64,7 @@
             </div>
         </div>
         
-        <div class="flex-1 flex flex-col p-4 md:p-10 max-w-7xl mx-auto w-full">
+        <div class="flex-1 flex flex-col p-4 md:p-10 max-w-7xl mx-auto w-full overflow-hidden">
             
             <!-- NOW PLAYING BAR -->
             <div id="guide-now-playing" class="bg-black border-2 border-white p-4 mb-6 hidden">
@@ -77,20 +77,20 @@
             </div>
 
             <!-- SEARCH INPUT -->
-            <div class="relative bg-black border-2 border-[#ffff00] p-2 mb-8 flex items-center">
+            <div class="relative bg-black border-2 border-[#ffff00] p-2 mb-8 flex items-center shrink-0">
                 <span class="text-[#00ff00] text-3xl mr-2">>>></span>
                 <input type="text" id="channel-search" class="w-full bg-transparent text-white text-3xl md:text-4xl uppercase outline-none font-vt323 placeholder-white/30" placeholder="DIGITE PARA BUSCAR..." autocomplete="off" autofocus>
             </div>
 
-            <!-- CHANNEL GRID -->
-            <div id="channel-guide-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-2 overflow-y-auto custom-scrollbar pr-4 pb-20">
-                <!-- JS injects items here -->
+            <!-- CHANNEL LIST (ACCORDION STYLE) -->
+            <div id="channel-guide-container" class="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-4 pb-20">
+                <!-- JS injects accordion items here -->
                 <div class="text-white text-2xl animate-pulse">BUSCANDO SINAL...</div>
             </div>
         </div>
 
         <!-- Footer -->
-        <div class="bg-black p-2 text-center text-white text-lg border-t-2 border-white/20">
+        <div class="bg-black p-2 text-center text-white text-lg border-t-2 border-white/20 shrink-0">
              <span class="text-red-500 font-bold">VERMELHO</span> SAIR  |  <span class="text-green-500 font-bold">VERDE</span> SELECIONAR  |  <span class="text-yellow-500 font-bold">AMARELO</span> INFO  |  <a href="admin.html" class="text-gray-500 hover:text-white font-bold ml-2">SERVICE MODE (ADMIN)</a>
         </div>
         

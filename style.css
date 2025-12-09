@@ -322,6 +322,28 @@ body {
     color: #0000aa;
 }
 
+/* ACCORDION STYLES */
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.6s ease-in-out, opacity 0.4s ease-in-out;
+}
+
+.accordion-content.open {
+    max-height: 2000px; /* Arbitrary large value to allow content */
+    opacity: 1;
+}
+
+.accordion-header {
+    cursor: pointer;
+    user-select: none;
+}
+.accordion-header:hover span:first-child {
+    background-color: #fff;
+    color: #000;
+}
+
 /* AI Avatar Animation */
 @keyframes bob {
     0% { transform: translateY(0); }
