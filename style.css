@@ -1,4 +1,6 @@
 
+
+
 /* Custom Fonts & Base */
 body {
     font-family: 'VT323', monospace;
@@ -199,7 +201,8 @@ body {
     filter: sepia(0.2) contrast(1.15) brightness(1.1) saturate(1.1) blur(0.5px);
 }
 
-/* Credits Overlay (MTV STYLE REFACTORED V7) */
+/* Credits Overlay (MTV STYLE REFACTORED V9) */
+/* Restored Retro Vibe */
 .credits-overlay {
     position: absolute;
     bottom: 8%; /* Ajuste para não colar na borda inferior da tela curva */
@@ -208,7 +211,8 @@ body {
     flex-direction: column;
     align-items: flex-start;
     
-    font-family: 'Jost', sans-serif;
+    font-family: 'VT323', monospace; /* RESTORED 90s FONT */
+    text-transform: uppercase;
     
     opacity: 0; 
     transform: translateX(-50px);
@@ -218,7 +222,6 @@ body {
     z-index: 60;
     max-width: 40%;
     
-    /* REMOVE BACKGROUND - Fix "Blue applied wrong" */
     background: transparent !important;
     width: fit-content;
 }
@@ -229,12 +232,29 @@ body {
 }
 
 .credit-block {
-    /* Efeito de sombra pesada para legibilidade sobre vídeo */
-    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-    /* Ensure no background on blocks either */
+    /* Shadow com cor sólida para dar leitura e estilo retro */
+    text-shadow: 3px 3px 0px #000;
     background: transparent;
     padding: 0;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+}
+
+/* Cores Estilo OSD/Teletext */
+#cr-artist {
+    color: #ffff00; /* Yellow */
+}
+
+#cr-song {
+    color: #ffffff; /* White */
+}
+
+#cr-album {
+    color: #00ffff; /* Cyan */
+}
+
+#cr-director {
+    color: #cccccc; /* Grey */
 }
 
 /* PLAYER STYLES (RESET FROM ZOOM HACK) */

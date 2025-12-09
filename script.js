@@ -2,6 +2,8 @@
 
 
 
+
+
 import { createClient } from '@supabase/supabase-js';
 import { fetchTrackDetails } from './lastFmAPI.js';
 import { GoogleGenAI } from "@google/genai";
@@ -694,20 +696,23 @@ function updateInfoPanel(fmData, fallbackArtist, fallbackSong) {
 
 function updateCreditsDOM(artist, song, album, year, director) {
     // Helper para preencher ou esconder linhas e remover classes "hidden"
+    // ATUALIZADO V9: Adicionado suporte a ícones (prefix)
     const fill = (el, text, prefix = "", suffix = "") => {
         if (!text || text.trim() === "") {
             el.innerHTML = "";
             el.classList.add("hidden");
         } else {
             // Garante que o texto tenha sombra e seja visível
+            // V9: Adiciona ícone
             el.innerHTML = prefix + formatCreditHtml(text) + suffix;
             el.classList.remove("hidden");
         }
     };
 
-    fill(els.credits.artist, artist);
-    fill(els.credits.song, song, '"', '"'); // Aspas na música
-    fill(els.credits.album, album);
+    // V9: Ícones Retro (Emojis)
+    fill(els.credits.artist, artist, "🎤 ");
+    fill(els.credits.song, song, "🎵 ", ""); 
+    fill(els.credits.album, album, "💿 ");
     
     // Combina Diretor e Ano se ambos existirem, ou mostra só um
     let extraInfo = "";
@@ -715,7 +720,7 @@ function updateCreditsDOM(artist, song, album, year, director) {
     if (director && year) extraInfo += " // ";
     if (year) extraInfo += year;
     
-    fill(els.credits.director, extraInfo);
+    fill(els.credits.director, extraInfo, "🎬 ");
 }
 
 // --- MONITOR LOOP ---
