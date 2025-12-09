@@ -1,5 +1,4 @@
 
-
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from "@google/genai";
 
@@ -100,10 +99,28 @@ function startClocks() {
         if (state.isOn && state.playerReady && state.isPlaying) {
             monitorCredits();
         }
-    }, 1000);
+    }, 500); // Verificação mais rápida para precisão
 }
 
-// --- MONITORAMENTO DE CRÉDITOS (LÓGICA AJUSTADA) ---
+// --- ALGORITMO DE SHUFFLE (FISHER-YATES) ---
+// Garante embaralhamento real e sem repetições na sequência
+function fisherYatesShuffle(array) {
+    let currentIndex = array.length, randomIndex;
+
+    // Enquanto restarem elementos para embaralhar...
+    while (currentIndex != 0) {
+        // Escolhe um elemento restante...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // E troca com o elemento atual.
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+
+    return array;
+}
+
+// --- MONITORAMENTO DE CRÉDITOS ---
 function monitorCredits() {
     if (!player || typeof player.getCurrentTime !== 'function') return;
 
@@ -112,7 +129,7 @@ function monitorCredits() {
     
     if (!duration || duration < 1) return;
 
-    // DEFINIÇÃO DAS JANELAS DE TEMPO (Solicitado pelo usuário)
+    // LÓGICA DE TEMPO DOS CRÉDITOS
     
     // Intro: Aparece aos 10s, fica por 10s (sai aos 20s)
     const isIntroWindow = currentTime >= 10 && currentTime < 20;
@@ -132,6 +149,12 @@ function monitorCredits() {
 // --- YOUTUBE API ---
 
 function loadYouTubeAPI() {
+    if (window.YT && window.YT.Player) {
+        // API já carregada (navegação SPA ou reload rápido)
+        onYouTubeIframeAPIReady();
+        return;
+    }
+
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -140,6 +163,7 @@ function loadYouTubeAPI() {
 
 // Callback global do YouTube API
 window.onYouTubeIframeAPIReady = () => {
+    console.log("📺 TV Tube: Inicializando Player...");
     player = new YT.Player('player', {
         height: '100%',
         width: '100%',
@@ -151,7 +175,9 @@ window.onYouTubeIframeAPIReady = () => {
             'iv_load_policy': 3,
             'modestbranding': 1,
             'disablekb': 1,
-            'fs': 0
+            'fs': 0,
+            'enablejsapi': 1,
+            'origin': window.location.origin
         },
         events: {
             'onReady': onPlayerReady,
@@ -164,6 +190,11 @@ window.onYouTubeIframeAPIReady = () => {
 function onPlayerReady(event) {
     state.playerReady = true;
     console.log("📺 TV Tube: Sintonizador Pronto.");
+    
+    // Se a TV foi ligada antes do player carregar, inicia o vídeo agora
+    if (state.isOn && state.currentVideoData) {
+        playCurrentVideo();
+    }
 }
 
 function onPlayerStateChange(event) {
@@ -193,6 +224,7 @@ function onPlayerStateChange(event) {
 function onPlayerError(event) {
     console.warn("Sinal fraco ou interferência (Erro YT):", event.data);
     showStatus("NO SIGNAL - SKIPPING");
+    // Pula para o próximo vídeo após breve delay
     setTimeout(() => changeChannel(1), 2000);
 }
 
@@ -215,7 +247,12 @@ function togglePower() {
         if (state.currentChannelList.length === 0) {
             loadDefaultChannel();
         } else {
-            if (player && state.playerReady) player.playVideo();
+            // Se já tem canal, retoma
+            if (player && state.playerReady) {
+                player.playVideo();
+            } else if (state.playerReady && state.currentVideoData) {
+                playCurrentVideo();
+            }
         }
 
         setTimeout(() => {
@@ -272,11 +309,13 @@ async function loadChannelContent(playlistName) {
 
     if (error || !data || data.length === 0) {
         showStatus("CHANNEL EMPTY");
+        console.error("Erro ao carregar canal:", error);
         return;
     }
 
-    // Shuffle simples
-    state.currentChannelList = data.sort(() => Math.random() - 0.5);
+    // APLICAÇÃO DO SHUFFLE REAL (FISHER-YATES)
+    // Isso garante uma ordem nova e aleatória toda vez que o canal é carregado.
+    state.currentChannelList = fisherYatesShuffle([...data]);
     state.currentIndex = 0;
     
     updateGuideNowPlaying();
@@ -289,8 +328,15 @@ function playCurrentVideo() {
     const videoData = state.currentChannelList[state.currentIndex];
     state.currentVideoData = videoData;
     
-    if (player && state.playerReady) {
+    if (player && state.playerReady && videoData.video_id) {
+        console.log(`▶️ Tocando: ${videoData.musica} (${videoData.video_id})`);
         player.loadVideoById(videoData.video_id);
+    } else {
+        console.log("⏳ Aguardando player ou ID inválido...");
+        if (!videoData.video_id) {
+            console.warn("⚠️ Vídeo sem ID. Pulando...");
+            changeChannel(1);
+        }
     }
     
     updateCreditsInfo(videoData);
@@ -531,7 +577,6 @@ function setupEventListeners() {
         if (e.key === 'Escape' && state.isSearchOpen) toggleGuide();
         if (e.key === 'ArrowRight') changeChannel(1);
         if (e.key === 'ArrowLeft') changeChannel(-1);
-        if (e.key === ' ') { /* Toggle Play/Pause maybe? */ }
     });
 }
 
