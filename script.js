@@ -1,9 +1,11 @@
+
+
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from "@google/genai";
 
 // --- CONFIGURAÇÃO API & CHAVES ---
-// A chave deve vir exclusivamente de variáveis de ambiente por segurança
-const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const GEMINI_API_KEY = 'AIzaSyAU0rLoRsAYns1W7ecNP0Drtw3fplbTgR0'; 
+const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const AI_MODEL = 'gemini-2.5-flash';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -615,13 +617,10 @@ async function generateAILyrics(videoData) {
             contents: [{ parts: [{ text: prompt }] }],
         });
 
-        if (state.isLyricsOn && response.text) {
+        if (state.isLyricsOn) {
             els.lyricsContent.innerText = response.text;
-        } else {
-            throw new Error("Empty response");
         }
     } catch (e) {
-        console.error(e);
         els.lyricsContent.innerText = "[CC UNAVAILABLE]";
     } finally {
         state.lyricsLoading = false;
