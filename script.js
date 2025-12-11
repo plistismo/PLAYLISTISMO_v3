@@ -13,6 +13,9 @@ const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
 const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M';
 const supabase = createClient(SB_URL, SB_KEY);
 
+// --- CONFIGURAÇÃO ADMIN ---
+const ADMIN_UID = '6660f82c-5b54-4879-ab40-edbc6e482416';
+
 // --- ESTADO GLOBAL ---
 const state = {
     isOn: false,
@@ -51,6 +54,10 @@ const els = {
     btnSearch: document.getElementById('tv-search-btn'),
     btnCC: document.getElementById('tv-cc-btn'),
     
+    // Admin Buttons
+    headerAdminBtn: document.getElementById('header-admin-btn'),
+    guideAdminLink: document.getElementById('guide-admin-link'),
+
     // OSD Cleaned
     osdLayer: document.getElementById('osd-layer'),
     playlistLabel: document.getElementById('tv-playlist-label'),
@@ -84,10 +91,31 @@ const els = {
 // --- INICIALIZAÇÃO ---
 
 function init() {
+    checkAdminAccess(); // Verifica se é o admin para liberar botões
     startClocks();
     loadYouTubeAPI();
     setupEventListeners();
     fetchGuideData(); // Pré-carrega o guia em segundo plano
+}
+
+// Verifica sessão e compara ID com ADMIN_UID
+async function checkAdminAccess() {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user && session.user.id === ADMIN_UID) {
+            console.log("🔓 ADMIN ACCESS GRANTED");
+            // Mostra botão no cabeçalho
+            if (els.headerAdminBtn) els.headerAdminBtn.classList.remove('hidden');
+            // Mostra link no guia
+            if (els.guideAdminLink) els.guideAdminLink.classList.remove('hidden');
+        } else {
+            // Garante que esteja oculto para outros usuários
+            if (els.headerAdminBtn) els.headerAdminBtn.classList.add('hidden');
+            if (els.guideAdminLink) els.guideAdminLink.classList.add('hidden');
+        }
+    } catch (e) {
+        console.warn("Auth Check failed:", e);
+    }
 }
 
 function startClocks() {

@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -27,6 +25,11 @@
     </script>
 </head>
 <body class="bg-[#050505] min-h-screen overflow-x-hidden flex flex-col items-center justify-center p-2 selection:bg-yellow-400 selection:text-black font-sans">
+
+    <!-- ADMIN BUTTON (HEADER) - Default Hidden -->
+    <a id="header-admin-btn" href="admin.html" class="hidden fixed top-4 left-4 z-[9990] bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm">
+        ⚙ SERVICE MODE
+    </a>
 
     <!-- DEV CONSOLE TRIGGER & PANEL -->
     <button id="dev-debug-trigger" class="fixed top-2 right-2 z-[9999] bg-red-900/80 text-white p-2 rounded-full hover:bg-red-600 transition-colors border border-white/20 shadow-lg hidden" title="Abrir Console de Erros">
@@ -104,7 +107,8 @@
                      <span class="text-green-500 font-bold drop-shadow-[1px_1px_0_black]">SELECIONAR</span>
                  </div>
                  <div>
-                    <a href="admin.html" class="text-gray-600 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors">Service Mode (Admin)</a>
+                    <!-- Hidden by default, visible only for admin via JS -->
+                    <a id="guide-admin-link" href="admin.html" class="hidden text-gray-600 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors">Service Mode (Admin)</a>
                  </div>
             </div>
             
