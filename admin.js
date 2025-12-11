@@ -50,6 +50,7 @@ async function checkAuth() {
 async function fetchMusics() {
     tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4">LENDO MEMÓRIA...</td></tr>';
     
+    // Carrega registros (limite padrão do Supabase pode cortar registros antigos, por isso a lógica de fallback abaixo é necessária)
     const { data, error } = await supabase
         .from('musicas_backup')
         .select('*')
@@ -68,15 +69,38 @@ async function fetchMusics() {
     // Renderiza tabela inicial
     applyFilters();
 
-    // AUTO-EDIT CHECK
+    // AUTO-EDIT CHECK: Verifica se existe parametro na URL para editar imediatamente
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit_id');
     
     if (editId) {
-        const target = allMusics.find(m => m.id == editId);
+        // Tenta encontrar nos dados carregados
+        let target = allMusics.find(m => m.id == editId);
+        
+        // Se não encontrar (ex: paginação ou ID muito antigo), busca especificamente no DB
+        if (!target) {
+            showMessage(`BUSCANDO REGISTRO #${editId} NO SERVIDOR...`);
+            const { data: specificRecord, error: specificError } = await supabase
+                .from('musicas_backup')
+                .select('*')
+                .eq('id', editId)
+                .single();
+                
+            if (specificRecord) {
+                target = specificRecord;
+                // Adiciona ao cache local para que editMusic funcione
+                allMusics.push(target);
+            } else {
+                showMessage(`ERRO: ID #${editId} NÃO ENCONTRADO.`);
+            }
+        }
+
+        // Se encontrou o alvo (no cache ou via fetch específico), edita
         if(target) {
             editMusic(editId);
             showMessage(`REGISTRO #${editId} CARREGADO PARA EDIÇÃO.`);
+            
+            // Limpa a URL para evitar re-edição no refresh
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
@@ -140,7 +164,10 @@ window.deleteMusic = async (id) => {
 // 4. EDIT (Populate Form)
 window.editMusic = (id) => {
     const music = allMusics.find(m => m.id == id);
-    if (!music) return;
+    if (!music) {
+        console.error("Registro não encontrado no cache local:", id);
+        return;
+    }
 
     inputId.value = music.id;
     inputArtista.value = music.artista || '';
