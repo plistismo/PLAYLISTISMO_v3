@@ -62,7 +62,8 @@ const els = {
     btnCC: document.getElementById('tv-cc-btn'),
     
     // Admin Buttons
-    headerAdminBtn: document.getElementById('header-admin-btn'),
+    adminPanelHeader: document.getElementById('admin-panel-header'),
+    headerEditBtn: document.getElementById('header-edit-btn'),
     guideAdminLink: document.getElementById('guide-admin-link'),
 
     // OSD Cleaned
@@ -111,13 +112,13 @@ async function checkAdminAccess() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session && session.user && session.user.id === ADMIN_UID) {
             console.log("🔓 ADMIN ACCESS GRANTED");
-            // Mostra botão no cabeçalho
-            if (els.headerAdminBtn) els.headerAdminBtn.classList.remove('hidden');
+            // Mostra o painel do cabeçalho
+            if (els.adminPanelHeader) els.adminPanelHeader.classList.remove('hidden');
             // Mostra link no guia
             if (els.guideAdminLink) els.guideAdminLink.classList.remove('hidden');
         } else {
             // Garante que esteja oculto para outros usuários
-            if (els.headerAdminBtn) els.headerAdminBtn.classList.add('hidden');
+            if (els.adminPanelHeader) els.adminPanelHeader.classList.add('hidden');
             if (els.guideAdminLink) els.guideAdminLink.classList.add('hidden');
         }
     } catch (e) {
@@ -755,6 +756,18 @@ function setupEventListeners() {
     // Botão de Busca/Guide
     els.btnSearch.addEventListener('click', toggleGuide);
     els.guideBackdrop.addEventListener('click', toggleGuide);
+
+    // ADMIN: Botão de Edição Rápida
+    if(els.headerEditBtn) {
+        els.headerEditBtn.addEventListener('click', () => {
+            if (state.currentVideoData && state.currentVideoData.id) {
+                // Redireciona para o admin com o ID na URL para edição automática
+                window.location.href = `admin.html?edit_id=${state.currentVideoData.id}`;
+            } else {
+                showStatus("NO VIDEO DATA TO EDIT");
+            }
+        });
+    }
     
     // Teclado
     document.addEventListener('keydown', (e) => {

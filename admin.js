@@ -58,6 +58,22 @@ async function fetchMusics() {
 
     allMusics = data;
     renderTable(allMusics);
+
+    // AUTO-EDIT CHECK: Verifica se existe parametro na URL para editar imediatamente
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit_id');
+    
+    if (editId) {
+        // Verifica se o ID existe nos dados carregados
+        const target = allMusics.find(m => m.id == editId);
+        if(target) {
+            editMusic(editId);
+            showMessage(`REGISTRO #${editId} CARREGADO PARA EDIÇÃO.`);
+            
+            // Limpa a URL para que o refresh não re-edite
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
 }
 
 // 2. CREATE & UPDATE

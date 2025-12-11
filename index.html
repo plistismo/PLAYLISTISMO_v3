@@ -26,10 +26,15 @@
 </head>
 <body class="bg-[#050505] min-h-screen overflow-x-hidden flex flex-col items-center justify-center p-4 selection:bg-yellow-400 selection:text-black font-sans">
 
-    <!-- ADMIN BUTTON (HEADER) - Default Hidden -->
-    <a id="header-admin-btn" href="admin.html" class="hidden fixed top-4 left-4 z-[9990] bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm">
-        ⚙ SERVICE MODE
-    </a>
+    <!-- ADMIN PANEL (HEADER) - Default Hidden -->
+    <div id="admin-panel-header" class="hidden fixed top-4 left-4 z-[9990] flex gap-2">
+        <a href="admin.html" class="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">
+            ⚙ SERVICE MODE
+        </a>
+        <button id="header-edit-btn" class="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">
+            ✎ EDIT VIDEO
+        </button>
+    </div>
 
     <!-- DEV CONSOLE TRIGGER & PANEL -->
     <button id="dev-debug-trigger" class="fixed top-2 right-2 z-[9999] bg-red-900/80 text-white p-2 rounded-full hover:bg-red-600 transition-colors border border-white/20 shadow-lg hidden" title="Abrir Console de Erros">
