@@ -347,7 +347,7 @@ async function loadDefaultChannel() {
 }
 
 async function loadChannelContent(playlistName) {
-    showStatic(500);
+    showStatic(1500); // Feedback de 1.5s
     // Atualizado: Feedback genérico, o OSD cuida do detalhe
     state.currentChannelName = playlistName;
     updateOSDDisplay();
@@ -409,7 +409,7 @@ function handleVideoEnd() {
 async function changeGroup(direction) {
     if (!state.isOn || Object.keys(state.channelsByCategory).length === 0) return;
 
-    showStatic(400);
+    showStatic(1500); // Feedback de 1.5s
 
     // Atualiza índice do grupo
     state.currentGroupIndex += direction;
