@@ -67,7 +67,6 @@ const els = {
     // OSD Cleaned
     osdLayer: document.getElementById('osd-layer'),
     playlistLabel: document.getElementById('tv-playlist-label'),
-    groupLabel: document.getElementById('tv-group-label'), // NEW: Label do Grupo
     statusMsg: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
     
@@ -228,7 +227,9 @@ function onPlayerReady(event) {
     console.log("📺 TV Tube: Sintonizador Pronto.");
     
     // Se a TV foi ligada antes do player carregar, inicia o vídeo agora
-    // NOTA: Se a sequência de inicialização estiver rodando, o video será chamado via timeout
+    if (state.isOn && state.currentVideoData) {
+        playCurrentVideo();
+    }
 }
 
 function onPlayerStateChange(event) {
@@ -277,54 +278,36 @@ function togglePower() {
     state.isOn = !state.isOn;
     
     if (state.isOn) {
-        // --- SEQUÊNCIA DE LIGAR (WARM UP) ---
-        
-        // 1. LED Vermelho Aceso
+        // Ligar
         els.powerLed.classList.add('bg-red-500', 'shadow-[0_0_8px_#ff0000]');
         els.powerLed.classList.remove('bg-red-900');
         
-        // 2. Animação da Tela (CRT Expand)
         els.screenOff.classList.add('hidden');
         els.screenOn.classList.remove('hidden');
         els.screenOn.classList.add('crt-turn-on');
         els.screenOn.classList.remove('crt-turn-off');
 
-        // 3. Efeito de Ruído/Sintonia Imediato (Bloqueia imagem)
-        els.staticOverlay.classList.add('active', 'tuning-mode');
-        
-        // 4. Mensagens de Status durante o aquecimento
-        showStatus("INITIALIZING CRT...");
-        setTimeout(() => showStatus("AUTO-TUNING..."), 1200);
-
-        // 5. Após 2.5s, libera o vídeo e remove o ruído
-        setTimeout(() => {
-            // Remove o ruído intenso
-            els.staticOverlay.classList.remove('tuning-mode', 'active');
-            
-            // Lógica de Tocar Vídeo
-            if (state.currentChannelList.length === 0) {
-                loadDefaultChannel();
-            } else {
-                if (player && state.playerReady) {
-                    player.playVideo();
-                } else if (state.playerReady && state.currentVideoData) {
-                    playCurrentVideo();
-                }
+        // Se não tem canal carregado, carrega o primeiro canal do primeiro grupo
+        if (state.currentChannelList.length === 0) {
+            loadDefaultChannel();
+        } else {
+            // Se já tem canal, retoma
+            if (player && state.playerReady) {
+                player.playVideo();
+            } else if (state.playerReady && state.currentVideoData) {
+                playCurrentVideo();
             }
-            
-            showStatus("SIGNAL LOCKED"); // Sucesso breve
-            setTimeout(showOSD, 500); // Mostra info do canal
+        }
 
-        }, 2500); // Duração do aquecimento
+        setTimeout(() => {
+            showOSD();
+        }, 1000);
 
     } else {
-        // --- SEQUÊNCIA DE DESLIGAR ---
-        
-        // 1. LED Apagado
+        // Desligar
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]');
         els.powerLed.classList.add('bg-red-900');
         
-        // 2. Animação CRT Off
         els.screenOn.classList.remove('crt-turn-on');
         els.screenOn.classList.add('crt-turn-off');
         
@@ -338,7 +321,6 @@ function togglePower() {
         // Reset estados visuais
         els.creditsOverlay.classList.remove('visible');
         els.lyricsOverlay.classList.add('hidden');
-        els.staticOverlay.classList.remove('tuning-mode', 'active');
     }
 }
 
@@ -364,10 +346,12 @@ async function loadDefaultChannel() {
 }
 
 async function loadChannelContent(playlistName) {
-    showStatic(1500); // Feedback de 1.5s
-    // Atualizado: Feedback genérico, o OSD cuida do detalhe
+    showStatic(500);
+    showStatus(`TUNING: ${playlistName}`);
     state.currentChannelName = playlistName;
-    updateOSDDisplay();
+    
+    // Atualiza apenas o nome da Playlist na tela
+    els.playlistLabel.innerText = playlistName.toUpperCase();
 
     // Busca vídeos dessa playlist
     const { data, error } = await supabase
@@ -426,7 +410,7 @@ function handleVideoEnd() {
 async function changeGroup(direction) {
     if (!state.isOn || Object.keys(state.channelsByCategory).length === 0) return;
 
-    showStatic(1500); // Feedback de 1.5s
+    showStatic(400);
 
     // Atualiza índice do grupo
     state.currentGroupIndex += direction;
@@ -437,12 +421,8 @@ async function changeGroup(direction) {
 
     const groupName = state.groupsOrder[state.currentGroupIndex];
     
-    // Feedback Visual Específico de Grupo
-    showStatus(`SCANNING BAND: ${groupName}`);
-    
-    // Atualiza OSD imediatamente para feedback
-    if(els.groupLabel) els.groupLabel.innerText = `BAND: ${groupName}`;
-    if(els.playlistLabel) els.playlistLabel.innerText = "SEARCHING...";
+    // Feedback Visual
+    showStatus(`GROUP: ${groupName}`);
 
     // Verifica se o grupo tem playlists
     const playlists = state.channelsByCategory[groupName];
@@ -478,8 +458,6 @@ async function changeChannel(direction) {
 
     const nextPlaylist = playlists[currentPlIndex];
     
-    // Feedback Visual Específico de Playlist
-    showStatus(`TUNING: ${nextPlaylist.name}`);
     await loadChannelContent(nextPlaylist.name);
 }
 
@@ -511,13 +489,6 @@ function showOSD() {
     window.osdTimeout = setTimeout(() => {
         els.osdLayer.classList.add('fade-out');
     }, 4000);
-}
-
-function updateOSDDisplay() {
-    const groupName = state.groupsOrder[state.currentGroupIndex];
-    if(els.groupLabel) els.groupLabel.innerText = `BAND: ${groupName}`;
-    if(els.playlistLabel) els.playlistLabel.innerText = state.currentChannelName;
-    showOSD();
 }
 
 // --- SMART CREDITS LOGIC ---
