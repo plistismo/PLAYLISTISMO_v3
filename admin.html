@@ -22,13 +22,13 @@
     <!-- Scanlines -->
     <div class="fixed inset-0 scanlines pointer-events-none z-50 opacity-20"></div>
 
-    <div class="max-w-7xl mx-auto border-2 border-amber-800/50 p-6 shadow-[0_0_20px_rgba(217,119,6,0.1)] relative">
+    <div class="max-w-[90rem] mx-auto border-2 border-amber-800/50 p-6 shadow-[0_0_20px_rgba(217,119,6,0.1)] relative">
         
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-amber-800/50 pb-4 mb-6">
             <div>
                 <h1 class="text-4xl md:text-5xl font-bold tracking-widest text-amber-500 drop-shadow-[2px_2px_0_rgba(0,0,0,1)]">
-                    SERVICE MODE <span class="text-sm align-top opacity-50">V.1.1</span>
+                    SERVICE MODE <span class="text-sm align-top opacity-50">V.1.2</span>
                 </h1>
                 <p class="text-amber-700 uppercase tracking-wider text-sm mt-1">Database Manipulation System</p>
             </div>
@@ -41,10 +41,10 @@
         <!-- Feedback Message -->
         <div id="status-msg" class="hidden w-full p-2 mb-4 text-center text-xl font-bold border border-current"></div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
             
             <!-- FORMULÁRIO (Esquerda) -->
-            <div class="lg:col-span-1 bg-[#0a0a0a] border border-amber-900/30 p-4">
+            <div class="xl:col-span-1 bg-[#0a0a0a] border border-amber-900/30 p-4 h-fit sticky top-4">
                 <h2 id="form-title" class="text-2xl mb-4 border-b border-amber-900/30 pb-2 flex justify-between">
                     <span>NOVO REGISTRO</span>
                     <button id="btn-clear" class="text-sm underline opacity-50 hover:opacity-100">LIMPAR</button>
@@ -87,9 +87,14 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm opacity-70 mb-1">DIREÇÃO</label>
-                            <input type="text" id="input-direcao" class="w-full p-2 text-xl service-mode-input" placeholder="Diretor">
+                            <label class="block text-sm opacity-70 mb-1">PLAYLIST (NOME)</label>
+                            <input type="text" id="input-playlist" class="w-full p-2 text-xl service-mode-input" placeholder="Nome exato">
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm opacity-70 mb-1">DIREÇÃO</label>
+                        <input type="text" id="input-direcao" class="w-full p-2 text-xl service-mode-input" placeholder="Diretor do Clipe">
                     </div>
 
                     <div>
@@ -106,26 +111,52 @@
             </div>
 
             <!-- TABELA (Direita) -->
-            <div class="lg:col-span-2 flex flex-col h-full max-h-[800px]">
-                <div class="flex justify-between items-center mb-2">
-                    <h2 class="text-2xl">BANCO DE DADOS (<span id="total-count">0</span>)</h2>
-                    <input type="text" id="search-db" placeholder="BUSCAR REGISTRO..." class="service-mode-input px-2 py-1 w-64 text-lg">
+            <div class="xl:col-span-3 flex flex-col h-full min-h-[800px]">
+                
+                <!-- Filtros e Busca -->
+                <div class="flex flex-col md:flex-row gap-4 mb-4 items-end md:items-center bg-[#0a0a0a] p-3 border border-amber-900/30">
+                    <div class="flex-1 w-full">
+                        <label class="block text-xs opacity-50 mb-1">BUSCAR (GLOBAL)</label>
+                        <input type="text" id="search-db" placeholder="DIGITE PARA FILTRAR..." class="service-mode-input px-2 py-2 w-full text-lg">
+                    </div>
+                    
+                    <div class="w-full md:w-48">
+                        <label class="block text-xs opacity-50 mb-1">FILTRAR POR GRUPO</label>
+                        <select id="filter-group-list" class="service-mode-input px-2 py-2 w-full text-lg cursor-pointer">
+                            <option value="">TODOS</option>
+                            <!-- JS popula aqui -->
+                        </select>
+                    </div>
+
+                    <div class="w-full md:w-64">
+                        <label class="block text-xs opacity-50 mb-1">FILTRAR POR PLAYLIST</label>
+                        <select id="filter-playlist-list" class="service-mode-input px-2 py-2 w-full text-lg cursor-pointer">
+                            <option value="">TODAS</option>
+                            <!-- JS popula aqui -->
+                        </select>
+                    </div>
+                    
+                    <div class="text-right pl-4 border-l border-amber-900/30 flex flex-col justify-center h-full">
+                         <span class="text-xs opacity-50">REGISTROS</span>
+                         <span id="total-count" class="text-2xl font-bold">0</span>
+                    </div>
                 </div>
                 
-                <div class="overflow-auto custom-scrollbar border border-amber-900/30 bg-[#0a0a0a] flex-1">
+                <div class="overflow-auto custom-scrollbar border border-amber-900/30 bg-[#0a0a0a] flex-1 max-h-[750px]">
                     <table class="w-full text-left border-collapse service-mode-table">
-                        <thead class="sticky top-0 bg-[#111] z-10">
+                        <thead class="sticky top-0 bg-[#111] z-10 shadow-md">
                             <tr>
-                                <th class="w-16">ID</th>
+                                <th class="w-16 text-center">ID</th>
                                 <th>ARTISTA / MÚSICA</th>
-                                <th class="hidden md:table-cell">INFO</th>
-                                <th class="hidden md:table-cell">GRUPO</th>
+                                <th class="hidden lg:table-cell">INFO</th>
+                                <th class="hidden md:table-cell">PLAYLIST (GRUPO)</th>
+                                <th class="hidden xl:table-cell">DIRETOR</th>
                                 <th class="w-32 text-center">AÇÃO</th>
                             </tr>
                         </thead>
                         <tbody id="table-body">
                             <!-- JS INJECTS HERE -->
-                            <tr><td colspan="5" class="text-center p-8 animate-pulse">CARREGANDO DADOS...</td></tr>
+                            <tr><td colspan="6" class="text-center p-8 animate-pulse">CARREGANDO DADOS...</td></tr>
                         </tbody>
                     </table>
                 </div>
