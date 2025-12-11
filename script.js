@@ -27,6 +27,10 @@ const state = {
     currentIndex: 0,
     currentChannelName: '',
     
+    // Navigation System
+    groupsOrder: ['UPLOADS', 'GENRES', 'ZONES', 'ERAS', 'OTHERS'],
+    currentGroupIndex: 0, // Índice do grupo atual na array groupsOrder
+
     // Player State
     playerReady: false,
     currentVideoData: null, // Dados do DB da música atual
@@ -49,8 +53,11 @@ const els = {
     staticOverlay: document.getElementById('static-overlay'),
     
     // Controls
-    btnNext: document.getElementById('tv-ch-next'),
-    btnPrev: document.getElementById('tv-ch-prev'),
+    btnNextCh: document.getElementById('tv-ch-next'), // Agora troca Playlist
+    btnPrevCh: document.getElementById('tv-ch-prev'), // Agora troca Playlist
+    btnNextGrp: document.getElementById('tv-grp-next'), // Troca Grupo
+    btnPrevGrp: document.getElementById('tv-grp-prev'), // Troca Grupo
+
     btnSearch: document.getElementById('tv-search-btn'),
     btnCC: document.getElementById('tv-cc-btn'),
     
@@ -258,8 +265,12 @@ function onPlayerStateChange(event) {
 function onPlayerError(event) {
     console.warn("Sinal fraco ou interferência (Erro YT):", event.data);
     showStatus("NO SIGNAL - SKIPPING");
-    // Pula para o próximo vídeo após breve delay
-    setTimeout(() => changeChannel(1), 2000);
+    // Pula para o próximo vídeo após breve delay (track skip logic only for errors)
+    setTimeout(() => {
+        state.currentIndex++;
+        if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
+        playCurrentVideo();
+    }, 2000);
 }
 
 // --- CONTROLE DA TV ---
@@ -277,7 +288,7 @@ function togglePower() {
         els.screenOn.classList.add('crt-turn-on');
         els.screenOn.classList.remove('crt-turn-off');
 
-        // Se não tem canal carregado, carrega um padrão
+        // Se não tem canal carregado, carrega o primeiro canal do primeiro grupo
         if (state.currentChannelList.length === 0) {
             loadDefaultChannel();
         } else {
@@ -315,16 +326,24 @@ function togglePower() {
 }
 
 async function loadDefaultChannel() {
-    // Tenta carregar o canal "MTV 90s" ou o primeiro que achar
-    showStatus("SEARCHING SATELLITE...");
-    
-    // Busca uma playlist popular ou random
-    const { data } = await supabase.from('playlists').select('name').limit(1);
-    if (data && data.length > 0) {
-        await loadChannelContent(data[0].name);
-    } else {
-        showStatus("NO SERVICE");
+    // Carrega o primeiro grupo disponível e a primeira playlist dele
+    // Isso garante que state.currentGroupIndex e o canal estejam sincronizados
+    if (Object.keys(state.channelsByCategory).length === 0) {
+        await fetchGuideData(); // Garante que temos dados
     }
+    
+    // Tenta encontrar o primeiro grupo com conteúdo
+    for (let i = 0; i < state.groupsOrder.length; i++) {
+        const groupName = state.groupsOrder[i];
+        if (state.channelsByCategory[groupName] && state.channelsByCategory[groupName].length > 0) {
+            state.currentGroupIndex = i;
+            const firstPlaylist = state.channelsByCategory[groupName][0];
+            await loadChannelContent(firstPlaylist.name);
+            return;
+        }
+    }
+    
+    showStatus("NO SIGNAL");
 }
 
 async function loadChannelContent(playlistName) {
@@ -367,8 +386,10 @@ function playCurrentVideo() {
     } else {
         console.log("⏳ Aguardando player ou ID inválido...");
         if (!videoData.video_id) {
-            console.warn("⚠️ Vídeo sem ID. Pulando...");
-            changeChannel(1);
+            // Pula para o próximo vídeo se não tiver ID (Auto-skip logic local)
+            state.currentIndex++;
+            if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
+            playCurrentVideo();
         }
     }
     
@@ -378,23 +399,69 @@ function playCurrentVideo() {
 }
 
 function handleVideoEnd() {
-    changeChannel(1); // Auto next
+    // Auto next track (video)
+    state.currentIndex++;
+    if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
+    playCurrentVideo();
 }
 
-function changeChannel(direction) {
-    if (!state.isOn || state.currentChannelList.length === 0) return;
+// --- CHANNEL & GROUP NAVIGATION LOGIC ---
+
+// Troca de Grupo (Categoria)
+async function changeGroup(direction) {
+    if (!state.isOn || Object.keys(state.channelsByCategory).length === 0) return;
+
+    showStatic(400);
+
+    // Atualiza índice do grupo
+    state.currentGroupIndex += direction;
     
-    showStatic(300); // Ruído de troca de canal
+    // Wrap around
+    if (state.currentGroupIndex >= state.groupsOrder.length) state.currentGroupIndex = 0;
+    if (state.currentGroupIndex < 0) state.currentGroupIndex = state.groupsOrder.length - 1;
+
+    const groupName = state.groupsOrder[state.currentGroupIndex];
     
-    state.currentIndex += direction;
-    
-    // Loop da playlist
-    if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
-    if (state.currentIndex < 0) state.currentIndex = state.currentChannelList.length - 1;
-    
-    playCurrentVideo();
-    showOSD();
+    // Feedback Visual
+    showStatus(`GROUP: ${groupName}`);
+
+    // Verifica se o grupo tem playlists
+    const playlists = state.channelsByCategory[groupName];
+    if (playlists && playlists.length > 0) {
+        // Carrega a primeira playlist deste grupo
+        await loadChannelContent(playlists[0].name);
+    } else {
+        showStatus(`${groupName}: NO SIGNAL`);
+        // Opcional: Tentar pular automaticamente se vazio
+    }
 }
+
+// Troca de Canal (Playlist) dentro do Grupo Atual
+async function changeChannel(direction) {
+    if (!state.isOn || !state.currentChannelName) return;
+    
+    const groupName = state.groupsOrder[state.currentGroupIndex];
+    const playlists = state.channelsByCategory[groupName];
+
+    if (!playlists || playlists.length === 0) return;
+
+    // Encontra índice da playlist atual
+    let currentPlIndex = playlists.findIndex(pl => pl.name === state.currentChannelName);
+    
+    if (currentPlIndex === -1) currentPlIndex = 0; // Fallback
+
+    // Atualiza índice
+    currentPlIndex += direction;
+
+    // Wrap around
+    if (currentPlIndex >= playlists.length) currentPlIndex = 0;
+    if (currentPlIndex < 0) currentPlIndex = playlists.length - 1;
+
+    const nextPlaylist = playlists[currentPlIndex];
+    
+    await loadChannelContent(nextPlaylist.name);
+}
+
 
 // --- VISUAL EFFECTS ---
 
@@ -583,9 +650,7 @@ function renderGuide() {
     els.guideChannelList.innerHTML = '';
     
     // Ordem preferencial de categorias
-    const order = ['UPLOADS', 'GENRES', 'ZONES', 'ERAS', 'OTHERS'];
-    
-    order.forEach(category => {
+    state.groupsOrder.forEach(category => {
         if (state.channelsByCategory[category]) {
             // Cria Header do Grupo
             const groupDiv = document.createElement('div');
@@ -679,8 +744,13 @@ els.guideSearch.addEventListener('input', (e) => {
 function setupEventListeners() {
     els.tvPowerBtn.addEventListener('click', togglePower);
     
-    els.btnNext.addEventListener('click', () => changeChannel(1));
-    els.btnPrev.addEventListener('click', () => changeChannel(-1));
+    // Listeners de navegação de Canal (Playlist)
+    els.btnNextCh.addEventListener('click', () => changeChannel(1));
+    els.btnPrevCh.addEventListener('click', () => changeChannel(-1));
+
+    // Listeners de navegação de Grupo (NEW)
+    els.btnNextGrp.addEventListener('click', () => changeGroup(1));
+    els.btnPrevGrp.addEventListener('click', () => changeGroup(-1));
     
     // Botão de Busca/Guide
     els.btnSearch.addEventListener('click', toggleGuide);
@@ -691,8 +761,14 @@ function setupEventListeners() {
         if (!state.isOn && e.key !== 'p') return;
         
         if (e.key === 'Escape' && state.isSearchOpen) toggleGuide();
+        
+        // Arrows Right/Left mudam Playlist (Canal)
         if (e.key === 'ArrowRight') changeChannel(1);
         if (e.key === 'ArrowLeft') changeChannel(-1);
+
+        // Arrows Up/Down mudam Grupo (Opcional, mas intuitivo)
+        if (e.key === 'ArrowUp') changeGroup(1);
+        if (e.key === 'ArrowDown') changeGroup(-1);
     });
 }
 
