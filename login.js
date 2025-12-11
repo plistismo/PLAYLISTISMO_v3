@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -16,6 +17,7 @@ const loginPass = document.getElementById('login-password');
 const loginMsg = document.getElementById('msg-login');
 const btnLoginSubmit = document.getElementById('btn-submit-login');
 const btnGithub = document.getElementById('btn-github'); // GitHub Button
+const btnGuest = document.getElementById('btn-guest'); // Guest Button
 
 const formRegister = document.getElementById('form-register');
 const regEmail = document.getElementById('reg-email');
@@ -69,6 +71,13 @@ function showFeedback(element, msg, isError = true) {
 }
 
 // --- HANDLERS ---
+
+// GUEST LOGIN (No Auth)
+if (btnGuest) {
+    btnGuest.addEventListener('click', () => {
+        window.location.href = 'index.html';
+    });
+}
 
 // GITHUB LOGIN
 if (btnGithub) {

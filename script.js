@@ -99,15 +99,17 @@ const els = {
 // --- INICIALIZAÇÃO ---
 
 async function init() {
-    // 1. AUTH CHECK: Redireciona para login se não houver sessão
+    // 1. AUTH CHECK: Tenta pegar sessão, mas NÃO redireciona se falhar (Guest Mode)
     const { data: { session } } = await supabase.auth.getSession();
     
+    // Log apenas para debug
     if (!session) {
-        window.location.href = 'login.html';
-        return; // Interrompe a execução para forçar o redirect
+        console.log("👤 Iniciando em Modo Convidado (Sem login)");
+    } else {
+        console.log("👤 Usuário Autenticado:", session.user.email);
     }
 
-    checkAdminAccess(session); // Verifica se é o admin para liberar botões (passando sessão)
+    checkAdminAccess(session); // Verifica se é o admin para liberar botões (passando sessão ou null)
     startClocks();
     loadYouTubeAPI();
     setupEventListeners();
@@ -124,7 +126,7 @@ function checkAdminAccess(session) {
             // Mostra link no guia
             if (els.guideAdminLink) els.guideAdminLink.classList.remove('hidden');
         } else {
-            // Garante que esteja oculto para outros usuários
+            // Garante que esteja oculto para outros usuários ou guests
             if (els.adminPanelHeader) els.adminPanelHeader.classList.add('hidden');
             if (els.guideAdminLink) els.guideAdminLink.classList.add('hidden');
         }
