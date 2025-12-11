@@ -125,14 +125,14 @@
             PlayListismo V6
         </div>
 
-        <!-- TV WRAPPER (Responsive 80%) -->
-        <div class="flex flex-col w-[95%] md:w-[80%] relative transition-all duration-500 ease-out">
+        <!-- TV WRAPPER (Fixed Layout: 70vw Width, 80vh Height) -->
+        <div class="relative w-[95vw] h-[60vh] md:w-[70vw] md:h-[80vh] flex flex-col mx-auto transition-all duration-500 ease-out">
             
             <!-- TV UNIT -->
-            <div id="tv-unit" class="relative w-full transition-transform duration-500 md:perspective-[1500px] group">
+            <div id="tv-unit" class="relative w-full h-full transition-transform duration-500 md:perspective-[1500px] group">
                 
                 <!-- TV Chassis -->
-                <div class="relative bg-[#1a1a1a] texture-plastic rounded-[16px] md:rounded-[24px] p-2 md:p-8 md:pb-12 shadow-[0_20px_50px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.1)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10">
+                <div class="relative bg-[#1a1a1a] texture-plastic rounded-[16px] md:rounded-[24px] p-2 md:p-8 md:pb-8 shadow-[0_20px_50px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.1)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 h-full flex flex-col justify-between">
                     
                     <!-- Back Casing Illusion -->
                     <div class="hidden md:block absolute inset-0 bg-[#111] translate-z-back rounded-[20px] z-[-1] shadow-2xl"></div>
@@ -142,14 +142,14 @@
                         <!-- JS fills this -->
                     </div>
 
-                    <!-- Front Bezel -->
-                    <div class="flex flex-col md:flex-row bg-[#111] rounded-[1rem] md:rounded-[2.5rem] p-2 md:p-6 shadow-[inset_0_0_20px_rgba(0,0,0,1)] border border-[#222]">
+                    <!-- Front Bezel & Screen -->
+                    <div class="flex flex-col md:flex-row bg-[#111] rounded-[1rem] md:rounded-[2.5rem] p-2 md:p-6 shadow-[inset_0_0_20px_rgba(0,0,0,1)] border border-[#222] flex-1 min-h-0">
                         
                         <!-- Left Speaker -->
                         <div class="hidden md:flex flex-col justify-center w-12 mr-3 space-y-0.5 opacity-60 speaker-grid"></div>
 
-                        <!-- SCREEN CONTAINER -->
-                        <div class="relative flex-1 aspect-[4/3] bg-[#050505] rounded-[1rem] md:rounded-[3rem] overflow-hidden screen-container border-[2px] md:border-[4px] border-[#080808] z-10 w-full">
+                        <!-- SCREEN CONTAINER (Fills available space) -->
+                        <div class="relative flex-1 bg-[#050505] rounded-[1rem] md:rounded-[3rem] overflow-hidden screen-container border-[2px] md:border-[4px] border-[#080808] z-10 w-full h-full">
                             
                             <!-- CRT Glass Effects -->
                             <div class="absolute inset-0 crt-overlay z-40 rounded-[1rem] md:rounded-[3rem]"></div>
@@ -214,7 +214,7 @@
                     </div>
 
                     <!-- CONTROL DECK (VCR STYLE) -->
-                    <div class="mt-4 md:mt-6 bg-[#111] rounded-lg border border-[#333] shadow-[inset_0_2px_5px_rgba(0,0,0,1)] p-3 md:px-6 md:py-4 relative z-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="mt-4 md:mt-2 bg-[#111] rounded-lg border border-[#333] shadow-[inset_0_2px_5px_rgba(0,0,0,1)] p-3 md:px-6 md:py-4 relative z-50 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
                         
                         <!-- Branding -->
                         <div class="flex flex-col items-start select-none">
