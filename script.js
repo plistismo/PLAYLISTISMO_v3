@@ -1,11 +1,9 @@
-
-
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from "@google/genai";
 
 // --- CONFIGURAÇÃO API & CHAVES ---
-const GEMINI_API_KEY = 'AIzaSyAU0rLoRsAYns1W7ecNP0Drtw3fplbTgR0'; 
-const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+// A chave deve vir exclusivamente de variáveis de ambiente por segurança
+const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const AI_MODEL = 'gemini-2.5-flash';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -69,6 +67,7 @@ const els = {
     // OSD Cleaned
     osdLayer: document.getElementById('osd-layer'),
     playlistLabel: document.getElementById('tv-playlist-label'),
+    groupLabel: document.getElementById('tv-group-label'), // NEW: Label do Grupo
     statusMsg: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
     
@@ -349,11 +348,9 @@ async function loadDefaultChannel() {
 
 async function loadChannelContent(playlistName) {
     showStatic(500);
-    showStatus(`TUNING: ${playlistName}`);
+    // Atualizado: Feedback genérico, o OSD cuida do detalhe
     state.currentChannelName = playlistName;
-    
-    // Atualiza apenas o nome da Playlist na tela
-    els.playlistLabel.innerText = playlistName.toUpperCase();
+    updateOSDDisplay();
 
     // Busca vídeos dessa playlist
     const { data, error } = await supabase
@@ -423,8 +420,12 @@ async function changeGroup(direction) {
 
     const groupName = state.groupsOrder[state.currentGroupIndex];
     
-    // Feedback Visual
-    showStatus(`GROUP: ${groupName}`);
+    // Feedback Visual Específico de Grupo
+    showStatus(`SCANNING BAND: ${groupName}`);
+    
+    // Atualiza OSD imediatamente para feedback
+    if(els.groupLabel) els.groupLabel.innerText = `BAND: ${groupName}`;
+    if(els.playlistLabel) els.playlistLabel.innerText = "SEARCHING...";
 
     // Verifica se o grupo tem playlists
     const playlists = state.channelsByCategory[groupName];
@@ -460,6 +461,8 @@ async function changeChannel(direction) {
 
     const nextPlaylist = playlists[currentPlIndex];
     
+    // Feedback Visual Específico de Playlist
+    showStatus(`TUNING: ${nextPlaylist.name}`);
     await loadChannelContent(nextPlaylist.name);
 }
 
@@ -491,6 +494,13 @@ function showOSD() {
     window.osdTimeout = setTimeout(() => {
         els.osdLayer.classList.add('fade-out');
     }, 4000);
+}
+
+function updateOSDDisplay() {
+    const groupName = state.groupsOrder[state.currentGroupIndex];
+    if(els.groupLabel) els.groupLabel.innerText = `BAND: ${groupName}`;
+    if(els.playlistLabel) els.playlistLabel.innerText = state.currentChannelName;
+    showOSD();
 }
 
 // --- SMART CREDITS LOGIC ---
@@ -617,10 +627,13 @@ async function generateAILyrics(videoData) {
             contents: [{ parts: [{ text: prompt }] }],
         });
 
-        if (state.isLyricsOn) {
+        if (state.isLyricsOn && response.text) {
             els.lyricsContent.innerText = response.text;
+        } else {
+            throw new Error("Empty response");
         }
     } catch (e) {
+        console.error(e);
         els.lyricsContent.innerText = "[CC UNAVAILABLE]";
     } finally {
         state.lyricsLoading = false;
