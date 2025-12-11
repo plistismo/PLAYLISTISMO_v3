@@ -52,26 +52,27 @@ async function checkAuth() {
     }
 }
 
-// --- CORE: CARREGAMENTO DE FILTROS (INDEPENDENTE) ---
+// --- CORE: CARREGAMENTO DE FILTROS (OTIMIZADO) ---
 async function loadDatabaseFilterOptions() {
-    // Busca apenas as colunas de metadados para popular os selects.
-    // Range aumentado para 9999 para tentar pegar todo o histórico sem pesar a rede com dados inúteis.
+    // ALTERAÇÃO: Busca na tabela 'playlists' (leve) em vez de 'musicas_backup' (pesada).
+    // Mapeamento: 'name' -> playlist, 'group_name' -> playlist_group
     const { data, error } = await supabase
-        .from('musicas_backup')
-        .select('playlist, playlist_group')
-        .range(0, 9999); 
+        .from('playlists')
+        .select('name, group_name')
+        .order('name', { ascending: true });
 
     if (error) {
-        console.error("Erro ao carregar lista de filtros:", error);
+        console.error("Erro ao carregar lista de filtros (tabela playlists):", error);
         return;
     }
 
-    // Processa valores únicos
-    const groups = [...new Set(data.map(item => item.playlist_group).filter(Boolean))].sort();
-    const playlists = [...new Set(data.map(item => item.playlist).filter(Boolean))].sort();
+    // Extrai grupos únicos
+    const groups = [...new Set(data.map(item => item.group_name).filter(Boolean))].sort();
+    
+    // Extrai playlists (a tabela playlists já deve ter nomes únicos, mas filtramos por segurança)
+    const playlists = data.map(item => item.name).filter(Boolean); // Já vem ordenado do banco
 
     // Popula Select de Grupos
-    // Mantém a opção atual se já estiver selecionada
     const currentGroup = filterGroupList.value;
     filterGroupList.innerHTML = '<option value="">TODOS OS GRUPOS</option>';
     groups.forEach(g => {
@@ -103,7 +104,7 @@ async function fetchMusics() {
     const selectedGroup = filterGroupList.value;
     const selectedPlaylist = filterPlaylistList.value;
 
-    // Inicia Query Base
+    // Inicia Query Base na tabela PRINCIPAL de dados
     let query = supabase
         .from('musicas_backup')
         .select('*')
@@ -120,12 +121,11 @@ async function fetchMusics() {
 
     if (searchTerm) {
         // Busca textual em várias colunas (ilike = case insensitive)
-        // Sintaxe: coluna.ilike.%termo%
         const term = `%${searchTerm}%`;
         query = query.or(`artista.ilike.${term},musica.ilike.${term},direcao.ilike.${term},id.eq.${Number(searchTerm) || 0}`);
     }
 
-    // Limite de segurança para visualização (paginação implícita)
+    // Limite de segurança para visualização
     query = query.limit(200);
 
     const { data, error } = await query;
