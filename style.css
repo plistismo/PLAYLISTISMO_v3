@@ -325,6 +325,13 @@ body {
     animation: static-shift 0.1s steps(4) infinite;
 }
 
+/* TUNING MODE: Heavy Static for warmup/tuning */
+#static-overlay.tuning-mode {
+    opacity: 1 !important;
+    filter: contrast(200%) brightness(150%);
+    z-index: 999; /* Ensure it covers video */
+}
+
 @keyframes static-shift {
     0% { background-position: 0 0; }
     25% { background-position: -20px -20px; }

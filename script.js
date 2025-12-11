@@ -228,9 +228,7 @@ function onPlayerReady(event) {
     console.log("📺 TV Tube: Sintonizador Pronto.");
     
     // Se a TV foi ligada antes do player carregar, inicia o vídeo agora
-    if (state.isOn && state.currentVideoData) {
-        playCurrentVideo();
-    }
+    // NOTA: Se a sequência de inicialização estiver rodando, o video será chamado via timeout
 }
 
 function onPlayerStateChange(event) {
@@ -279,36 +277,54 @@ function togglePower() {
     state.isOn = !state.isOn;
     
     if (state.isOn) {
-        // Ligar
+        // --- SEQUÊNCIA DE LIGAR (WARM UP) ---
+        
+        // 1. LED Vermelho Aceso
         els.powerLed.classList.add('bg-red-500', 'shadow-[0_0_8px_#ff0000]');
         els.powerLed.classList.remove('bg-red-900');
         
+        // 2. Animação da Tela (CRT Expand)
         els.screenOff.classList.add('hidden');
         els.screenOn.classList.remove('hidden');
         els.screenOn.classList.add('crt-turn-on');
         els.screenOn.classList.remove('crt-turn-off');
 
-        // Se não tem canal carregado, carrega o primeiro canal do primeiro grupo
-        if (state.currentChannelList.length === 0) {
-            loadDefaultChannel();
-        } else {
-            // Se já tem canal, retoma
-            if (player && state.playerReady) {
-                player.playVideo();
-            } else if (state.playerReady && state.currentVideoData) {
-                playCurrentVideo();
-            }
-        }
+        // 3. Efeito de Ruído/Sintonia Imediato (Bloqueia imagem)
+        els.staticOverlay.classList.add('active', 'tuning-mode');
+        
+        // 4. Mensagens de Status durante o aquecimento
+        showStatus("INITIALIZING CRT...");
+        setTimeout(() => showStatus("AUTO-TUNING..."), 1200);
 
+        // 5. Após 2.5s, libera o vídeo e remove o ruído
         setTimeout(() => {
-            showOSD();
-        }, 1000);
+            // Remove o ruído intenso
+            els.staticOverlay.classList.remove('tuning-mode', 'active');
+            
+            // Lógica de Tocar Vídeo
+            if (state.currentChannelList.length === 0) {
+                loadDefaultChannel();
+            } else {
+                if (player && state.playerReady) {
+                    player.playVideo();
+                } else if (state.playerReady && state.currentVideoData) {
+                    playCurrentVideo();
+                }
+            }
+            
+            showStatus("SIGNAL LOCKED"); // Sucesso breve
+            setTimeout(showOSD, 500); // Mostra info do canal
+
+        }, 2500); // Duração do aquecimento
 
     } else {
-        // Desligar
+        // --- SEQUÊNCIA DE DESLIGAR ---
+        
+        // 1. LED Apagado
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]');
         els.powerLed.classList.add('bg-red-900');
         
+        // 2. Animação CRT Off
         els.screenOn.classList.remove('crt-turn-on');
         els.screenOn.classList.add('crt-turn-off');
         
@@ -322,6 +338,7 @@ function togglePower() {
         // Reset estados visuais
         els.creditsOverlay.classList.remove('visible');
         els.lyricsOverlay.classList.add('hidden');
+        els.staticOverlay.classList.remove('tuning-mode', 'active');
     }
 }
 
