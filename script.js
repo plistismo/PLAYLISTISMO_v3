@@ -98,8 +98,16 @@ const els = {
 
 // --- INICIALIZAÇÃO ---
 
-function init() {
-    checkAdminAccess(); // Verifica se é o admin para liberar botões
+async function init() {
+    // 1. AUTH CHECK: Redireciona para login se não houver sessão
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+        window.location.href = 'login.html';
+        return; // Interrompe a execução para forçar o redirect
+    }
+
+    checkAdminAccess(session); // Verifica se é o admin para liberar botões (passando sessão)
     startClocks();
     loadYouTubeAPI();
     setupEventListeners();
@@ -107,9 +115,8 @@ function init() {
 }
 
 // Verifica sessão e compara ID com ADMIN_UID
-async function checkAdminAccess() {
+function checkAdminAccess(session) {
     try {
-        const { data: { session } } = await supabase.auth.getSession();
         if (session && session.user && session.user.id === ADMIN_UID) {
             console.log("🔓 ADMIN ACCESS GRANTED");
             // Mostra o painel do cabeçalho
