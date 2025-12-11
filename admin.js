@@ -28,230 +28,160 @@ const inputMusica = document.getElementById('input-musica');
 const inputAno = document.getElementById('input-ano');
 const inputAlbum = document.getElementById('input-album');
 const inputGroup = document.getElementById('input-group');
-const inputPlaylist = document.getElementById('input-playlist'); // NOVO
+const inputPlaylist = document.getElementById('input-playlist'); 
 const inputDirecao = document.getElementById('input-direcao');
 const inputVideoId = document.getElementById('input-video-id');
 
-let allMusics = []; // Cache local para busca rápida
+let currentData = []; // Dados exibidos na tabela atualmente
+let debounceTimeout = null;
 
-// --- AUTH CHECK ---
+// --- AUTH CHECK & INIT ---
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
         window.location.href = 'login.html';
     } else {
-        fetchMusics();
+        // 1. Carrega opções dos dropdowns (Todas as playlists do banco)
+        loadDatabaseFilterOptions();
+        
+        // 2. Carrega tabela inicial
+        fetchMusics(); 
+        
+        // 3. Verifica se há edição pendente via URL
+        checkUrlForEdit();
     }
 }
 
-// --- CRUD OPERATIONS ---
-
-// 1. READ
-async function fetchMusics() {
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4">LENDO MEMÓRIA...</td></tr>';
-    
-    // Carrega registros (limite padrão do Supabase pode cortar registros antigos, por isso a lógica de fallback abaixo é necessária)
+// --- CORE: CARREGAMENTO DE FILTROS (INDEPENDENTE) ---
+async function loadDatabaseFilterOptions() {
+    // Busca apenas as colunas de metadados para popular os selects.
+    // Range aumentado para 9999 para tentar pegar todo o histórico sem pesar a rede com dados inúteis.
     const { data, error } = await supabase
         .from('musicas_backup')
-        .select('*')
-        .order('id', { ascending: false });
+        .select('playlist, playlist_group')
+        .range(0, 9999); 
 
     if (error) {
-        showMessage(`ERRO DE LEITURA: ${error.message}`, true);
+        console.error("Erro ao carregar lista de filtros:", error);
         return;
     }
 
-    allMusics = data;
-    
-    // Popula Filtros Dinamicamente
-    populateFilters(data);
-    
-    // Renderiza tabela inicial
-    applyFilters();
-
-    // AUTO-EDIT CHECK: Verifica se existe parametro na URL para editar imediatamente
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit_id');
-    
-    if (editId) {
-        // Tenta encontrar nos dados carregados
-        let target = allMusics.find(m => m.id == editId);
-        
-        // Se não encontrar (ex: paginação ou ID muito antigo), busca especificamente no DB
-        if (!target) {
-            showMessage(`BUSCANDO REGISTRO #${editId} NO SERVIDOR...`);
-            const { data: specificRecord, error: specificError } = await supabase
-                .from('musicas_backup')
-                .select('*')
-                .eq('id', editId)
-                .single();
-                
-            if (specificRecord) {
-                target = specificRecord;
-                // Adiciona ao cache local para que editMusic funcione
-                allMusics.push(target);
-            } else {
-                showMessage(`ERRO: ID #${editId} NÃO ENCONTRADO.`);
-            }
-        }
-
-        // Se encontrou o alvo (no cache ou via fetch específico), edita
-        if(target) {
-            editMusic(editId);
-            showMessage(`REGISTRO #${editId} CARREGADO PARA EDIÇÃO.`);
-            
-            // Limpa a URL para evitar re-edição no refresh
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-    }
-}
-
-// 2. CREATE & UPDATE
-musicForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = inputId.value;
-    const formData = {
-        artista: inputArtista.value.trim(),
-        musica: inputMusica.value.trim(),
-        ano: inputAno.value ? String(inputAno.value) : null,
-        album: inputAlbum.value.trim() || null,
-        playlist_group: inputGroup.value || null,
-        playlist: inputPlaylist.value.trim() || null, // NOVO
-        direcao: inputDirecao.value.trim() || null,
-        video_id: inputVideoId.value.trim() || null
-    };
-
-    btnSave.disabled = true;
-    btnSave.innerText = "PROCESSANDO...";
-
-    let error = null;
-
-    if (id) {
-        const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
-        error = err;
-        if(!error) showMessage(`REGISTRO #${id} ATUALIZADO COM SUCESSO!`);
-    } else {
-        const { error: err } = await supabase.from('musicas_backup').insert([formData]);
-        error = err;
-        if(!error) showMessage("NOVO REGISTRO GRAVADO!");
-    }
-
-    if (error) {
-        showMessage(`ERRO: ${error.message}`, true);
-    } else {
-        resetForm();
-        fetchMusics(); // Recarrega tudo para atualizar filtros se necessário
-    }
-
-    btnSave.disabled = false;
-    btnSave.innerText = "GRAVAR DADOS";
-});
-
-// 3. DELETE
-window.deleteMusic = async (id) => {
-    if(!confirm(`ATENÇÃO: Deletar registro #${id}? Esta ação é irreversível.`)) return;
-
-    const { error } = await supabase.from('musicas_backup').delete().eq('id', id);
-
-    if (error) {
-        showMessage(`ERRO AO DELETAR: ${error.message}`, true);
-    } else {
-        showMessage(`REGISTRO #${id} APAGADO.`);
-        fetchMusics();
-    }
-};
-
-// 4. EDIT (Populate Form)
-window.editMusic = (id) => {
-    const music = allMusics.find(m => m.id == id);
-    if (!music) {
-        console.error("Registro não encontrado no cache local:", id);
-        return;
-    }
-
-    inputId.value = music.id;
-    inputArtista.value = music.artista || '';
-    inputMusica.value = music.musica || '';
-    inputAno.value = music.ano || ''; 
-    inputAlbum.value = music.album || '';
-    inputGroup.value = music.playlist_group || '';
-    inputPlaylist.value = music.playlist || ''; // NOVO
-    inputDirecao.value = music.direcao || '';
-    inputVideoId.value = music.video_id || '';
-
-    document.getElementById('form-title').querySelector('span').innerText = `EDITANDO #${id}`;
-    btnSave.innerText = "ATUALIZAR DADOS";
-    
-    // Scroll mobile
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-// --- FILTERS & RENDER LOGIC ---
-
-function populateFilters(data) {
-    // Extrai grupos únicos
+    // Processa valores únicos
     const groups = [...new Set(data.map(item => item.playlist_group).filter(Boolean))].sort();
-    
-    // Extrai playlists únicas
     const playlists = [...new Set(data.map(item => item.playlist).filter(Boolean))].sort();
 
     // Popula Select de Grupos
+    // Mantém a opção atual se já estiver selecionada
+    const currentGroup = filterGroupList.value;
     filterGroupList.innerHTML = '<option value="">TODOS OS GRUPOS</option>';
     groups.forEach(g => {
         const opt = document.createElement('option');
         opt.value = g;
         opt.innerText = g;
+        if(g === currentGroup) opt.selected = true;
         filterGroupList.appendChild(opt);
     });
 
     // Popula Select de Playlists
+    const currentPlaylist = filterPlaylistList.value;
     filterPlaylistList.innerHTML = '<option value="">TODAS AS PLAYLISTS</option>';
     playlists.forEach(p => {
         const opt = document.createElement('option');
         opt.value = p;
         opt.innerText = p;
+        if(p === currentPlaylist) opt.selected = true;
         filterPlaylistList.appendChild(opt);
     });
 }
 
-function applyFilters() {
-    const searchTerm = searchInput.value.toLowerCase();
+// --- CORE: LEITURA DE DADOS (SERVER-SIDE FILTERING) ---
+async function fetchMusics() {
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-amber-500 animate-pulse">BUSCANDO DADOS NO SERVIDOR...</td></tr>';
+    
+    // Captura valores dos filtros
+    const searchTerm = searchInput.value.trim();
     const selectedGroup = filterGroupList.value;
     const selectedPlaylist = filterPlaylistList.value;
 
-    const filtered = allMusics.filter(m => {
-        // 1. Text Search
-        const matchesText = 
-            (m.artista && m.artista.toLowerCase().includes(searchTerm)) ||
-            (m.musica && m.musica.toLowerCase().includes(searchTerm)) ||
-            (m.id && m.id.toString().includes(searchTerm)) ||
-            (m.direcao && m.direcao.toLowerCase().includes(searchTerm));
+    // Inicia Query Base
+    let query = supabase
+        .from('musicas_backup')
+        .select('*')
+        .order('id', { ascending: false });
 
-        // 2. Group Filter
-        const matchesGroup = selectedGroup === "" || m.playlist_group === selectedGroup;
+    // Aplica Filtros Server-Side
+    if (selectedGroup) {
+        query = query.eq('playlist_group', selectedGroup);
+    }
 
-        // 3. Playlist Filter
-        const matchesPlaylist = selectedPlaylist === "" || m.playlist === selectedPlaylist;
+    if (selectedPlaylist) {
+        query = query.eq('playlist', selectedPlaylist);
+    }
 
-        return matchesText && matchesGroup && matchesPlaylist;
-    });
+    if (searchTerm) {
+        // Busca textual em várias colunas (ilike = case insensitive)
+        // Sintaxe: coluna.ilike.%termo%
+        const term = `%${searchTerm}%`;
+        query = query.or(`artista.ilike.${term},musica.ilike.${term},direcao.ilike.${term},id.eq.${Number(searchTerm) || 0}`);
+    }
 
-    renderTable(filtered);
-}
+    // Limite de segurança para visualização (paginação implícita)
+    query = query.limit(200);
 
-function renderTable(data) {
-    totalCount.innerText = data.length;
-    tableBody.innerHTML = '';
+    const { data, error } = await query;
 
-    if (data.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4 opacity-50">NENHUM DADO ENCONTRADO PARA ESTE FILTRO</td></tr>';
+    if (error) {
+        showMessage(`ERRO DE LEITURA: ${error.message}`, true);
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-red-500">ERRO: ${error.message}</td></tr>`;
         return;
     }
 
-    // Paginação simples (limitada a 100 itens para performance se a lista for gigante)
-    const displayData = data.slice(0, 200);
+    currentData = data;
+    renderTable(currentData);
+}
 
-    displayData.forEach(item => {
+// --- AUTO-EDIT (URL PARAM) ---
+async function checkUrlForEdit() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit_id');
+    
+    if (editId) {
+        // Tenta achar nos dados já carregados
+        let target = currentData.find(m => m.id == editId);
+        
+        // Se não achou (ex: filtro inicial não pegou), busca individualmente
+        if (!target) {
+            showMessage(`LOCALIZANDO REGISTRO #${editId}...`);
+            const { data } = await supabase.from('musicas_backup').select('*').eq('id', editId).single();
+            target = data;
+            // Adiciona visualmente no topo se encontrar
+            if (target) {
+                currentData.unshift(target);
+                renderTable(currentData);
+            }
+        }
+
+        if(target) {
+            editMusicData(target);
+            showMessage(`REGISTRO #${editId} PRONTO PARA EDIÇÃO.`);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+            showMessage(`REGISTRO #${editId} NÃO ENCONTRADO.`);
+        }
+    }
+}
+
+// --- RENDER ---
+function renderTable(data) {
+    totalCount.innerText = data.length + (data.length === 200 ? "+" : ""); // Indica se atingiu o limite
+    tableBody.innerHTML = '';
+
+    if (data.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4 opacity-50">NENHUM REGISTRO ENCONTRADO COM ESTES FILTROS.</td></tr>';
+        return;
+    }
+
+    data.forEach(item => {
         const row = document.createElement('tr');
         row.className = 'hover:bg-amber-900/10 transition-colors group border-b border-amber-900/10';
         row.innerHTML = `
@@ -278,20 +208,98 @@ function renderTable(data) {
 
             <td class="text-center align-middle px-2 py-2">
                 <div class="flex justify-center gap-2">
-                    <button onclick="editMusic(${item.id})" class="text-amber-500 hover:bg-amber-500 hover:text-black px-2 py-1 border border-amber-500 text-sm font-bold">EDIT</button>
+                    <button onclick="editMusicById(${item.id})" class="text-amber-500 hover:bg-amber-500 hover:text-black px-2 py-1 border border-amber-500 text-sm font-bold">EDIT</button>
                     <button onclick="deleteMusic(${item.id})" class="text-red-500 hover:bg-red-500 hover:text-black px-2 py-1 border border-red-500 text-sm font-bold">X</button>
                 </div>
             </td>
         `;
         tableBody.appendChild(row);
     });
-
-    if (data.length > 200) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="6" class="text-center p-2 opacity-50 text-xs italic">MOSTRANDO 200 DE ${data.length} REGISTROS. REFINE SUA BUSCA.</td>`;
-        tableBody.appendChild(row);
-    }
 }
+
+// --- CRUD LOGIC ---
+
+// Helper para editar vindo do botão
+window.editMusicById = (id) => {
+    const music = currentData.find(m => m.id == id);
+    if(music) editMusicData(music);
+};
+
+function editMusicData(music) {
+    inputId.value = music.id;
+    inputArtista.value = music.artista || '';
+    inputMusica.value = music.musica || '';
+    inputAno.value = music.ano || ''; 
+    inputAlbum.value = music.album || '';
+    inputGroup.value = music.playlist_group || '';
+    inputPlaylist.value = music.playlist || '';
+    inputDirecao.value = music.direcao || '';
+    inputVideoId.value = music.video_id || '';
+
+    document.getElementById('form-title').querySelector('span').innerText = `EDITANDO #${music.id}`;
+    btnSave.innerText = "ATUALIZAR DADOS";
+    
+    // Scroll mobile
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// CREATE / UPDATE
+musicForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = inputId.value;
+    const formData = {
+        artista: inputArtista.value.trim(),
+        musica: inputMusica.value.trim(),
+        ano: inputAno.value ? String(inputAno.value) : null,
+        album: inputAlbum.value.trim() || null,
+        playlist_group: inputGroup.value || null,
+        playlist: inputPlaylist.value.trim() || null,
+        direcao: inputDirecao.value.trim() || null,
+        video_id: inputVideoId.value.trim() || null
+    };
+
+    btnSave.disabled = true;
+    btnSave.innerText = "PROCESSANDO...";
+
+    let error = null;
+
+    if (id) {
+        const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
+        error = err;
+        if(!error) showMessage(`REGISTRO #${id} ATUALIZADO!`);
+    } else {
+        const { error: err } = await supabase.from('musicas_backup').insert([formData]);
+        error = err;
+        if(!error) showMessage("NOVO REGISTRO GRAVADO!");
+    }
+
+    if (error) {
+        showMessage(`ERRO: ${error.message}`, true);
+    } else {
+        resetForm();
+        fetchMusics(); // Recarrega tabela para mostrar alterações
+        loadDatabaseFilterOptions(); // Recarrega filtros caso haja nova playlist/grupo
+    }
+
+    btnSave.disabled = false;
+    btnSave.innerText = "GRAVAR DADOS";
+});
+
+// DELETE
+window.deleteMusic = async (id) => {
+    if(!confirm(`ATENÇÃO: Deletar registro #${id}? Esta ação é irreversível.`)) return;
+
+    const { error } = await supabase.from('musicas_backup').delete().eq('id', id);
+
+    if (error) {
+        showMessage(`ERRO AO DELETAR: ${error.message}`, true);
+    } else {
+        showMessage(`REGISTRO #${id} APAGADO.`);
+        fetchMusics(); // Recarrega tabela
+    }
+};
+
+// --- UTILS ---
 
 function resetForm() {
     musicForm.reset();
@@ -313,10 +321,19 @@ function showMessage(msg, isError = false) {
     setTimeout(() => statusMsg.classList.add('hidden'), 3000);
 }
 
-// Event Listeners for Filters
-searchInput.addEventListener('input', applyFilters);
-filterGroupList.addEventListener('change', applyFilters);
-filterPlaylistList.addEventListener('change', applyFilters);
+// --- EVENT LISTENERS (Server-Side Trigger) ---
+
+// Busca com Debounce (espera usuario parar de digitar)
+searchInput.addEventListener('input', (e) => {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+        fetchMusics();
+    }, 500);
+});
+
+// Filtros Dropdown (Disparam busca imediata)
+filterGroupList.addEventListener('change', fetchMusics);
+filterPlaylistList.addEventListener('change', fetchMusics);
 
 // Logout
 btnLogout.addEventListener('click', async () => {
