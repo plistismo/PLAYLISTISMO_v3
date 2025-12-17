@@ -1,5 +1,4 @@
 
-
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -16,22 +15,22 @@ const state = {
     isSearchOpen: false,
     
     // Playlist System
-    channelsByCategory: {}, // Cache: { 'GENRES': [...], 'ERAS': [...] }
-    currentChannelList: [], // Lista de vídeos do canal atual
+    channelsByCategory: {}, 
+    currentChannelList: [], 
     currentIndex: 0,
     currentChannelName: '',
     
     // Navigation System
     groupsOrder: ['UPLOADS', 'GENRES', 'ZONES', 'ERAS', 'OTHERS'],
-    currentGroupIndex: 0, // Índice do grupo atual na array groupsOrder
+    currentGroupIndex: 0, 
 
     // Player State
     playerReady: false,
-    currentVideoData: null, // Dados do DB da música atual
+    currentVideoData: null, 
     isPlaying: false
 };
 
-let player; // Instância do Player YT
+let player; 
 
 // --- ELEMENTOS DOM ---
 const els = {
@@ -41,7 +40,6 @@ const els = {
     tvPowerBtn: document.getElementById('tv-power-btn'),
     staticOverlay: document.getElementById('static-overlay'),
     
-    // Controls
     btnNextCh: document.getElementById('tv-ch-next'),
     btnPrevCh: document.getElementById('tv-ch-prev'),
     btnNextGrp: document.getElementById('tv-grp-next'),
@@ -49,18 +47,15 @@ const els = {
 
     btnSearch: document.getElementById('tv-search-btn'),
     
-    // Admin Buttons
     adminPanelHeader: document.getElementById('admin-panel-header'),
     headerEditBtn: document.getElementById('header-edit-btn'),
     guideAdminLink: document.getElementById('guide-admin-link'),
 
-    // OSD Cleaned
     osdLayer: document.getElementById('osd-layer'),
     playlistLabel: document.getElementById('tv-playlist-label'),
     statusMsg: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
     
-    // Guide (Teletext)
     guideContainer: document.getElementById('tv-internal-guide'),
     guideSidebar: document.getElementById('guide-sidebar'),
     guideBackdrop: document.getElementById('guide-backdrop'),
@@ -71,7 +66,6 @@ const els = {
     guideNpPlaylist: document.getElementById('np-playlist'),
     guideNowPlayingBox: document.getElementById('guide-now-playing'),
 
-    // Credits Overlay
     creditsOverlay: document.getElementById('video-credits'),
     credArtist: document.getElementById('artist-name'),
     credSong: document.getElementById('song-name'),
@@ -83,11 +77,10 @@ const els = {
 // --- INICIALIZAÇÃO ---
 
 async function init() {
-    // 1. AUTH CHECK
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
-        console.log("👤 Iniciando em Modo Convidado (Sem login)");
+        console.log("👤 Modo Convidado Ativo");
     } else {
         console.log("👤 Usuário Autenticado:", session.user.email);
     }
@@ -109,7 +102,7 @@ function checkAdminAccess(session) {
             if (els.guideAdminLink) els.guideAdminLink.classList.add('hidden');
         }
     } catch (e) {
-        console.warn("Auth Check failed:", e);
+        console.warn("Auth check error:", e);
     }
 }
 
@@ -159,7 +152,6 @@ function loadYouTubeAPI() {
         onYouTubeIframeAPIReady();
         return;
     }
-
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -167,6 +159,9 @@ function loadYouTubeAPI() {
 }
 
 window.onYouTubeIframeAPIReady = () => {
+    // Definindo a origem exata para evitar erros de postMessage/Cross-Origin
+    const origin = window.location.origin;
+
     player = new YT.Player('player', {
         height: '100%',
         width: '100%',
@@ -180,7 +175,7 @@ window.onYouTubeIframeAPIReady = () => {
             'disablekb': 1,
             'fs': 0,
             'enablejsapi': 1,
-            'origin': window.location.origin
+            'origin': origin // Crucial para o postMessage
         },
         events: {
             'onReady': onPlayerReady,
@@ -217,6 +212,7 @@ function onPlayerStateChange(event) {
 }
 
 function onPlayerError(event) {
+    console.warn("Player Error:", event.data);
     showStatus("NO SIGNAL - SKIPPING");
     setTimeout(() => {
         state.currentIndex++;
@@ -246,25 +242,18 @@ function togglePower() {
                 playCurrentVideo();
             }
         }
-
-        setTimeout(() => {
-            showOSD();
-        }, 1000);
-
+        setTimeout(() => showOSD(), 1000);
     } else {
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]');
         els.powerLed.classList.add('bg-red-900');
-        
         els.screenOn.classList.remove('crt-turn-on');
         els.screenOn.classList.add('crt-turn-off');
-        
         setTimeout(() => {
             els.screenOn.classList.add('hidden');
             els.screenOff.classList.remove('hidden');
             if (player && state.playerReady) player.pauseVideo();
             state.isPlaying = false;
         }, 400);
-        
         els.creditsOverlay.classList.remove('visible');
     }
 }
@@ -273,7 +262,6 @@ async function loadDefaultChannel() {
     if (Object.keys(state.channelsByCategory).length === 0) {
         await fetchGuideData();
     }
-    
     for (let i = 0; i < state.groupsOrder.length; i++) {
         const groupName = state.groupsOrder[i];
         if (state.channelsByCategory[groupName] && state.channelsByCategory[groupName].length > 0) {
@@ -283,7 +271,6 @@ async function loadDefaultChannel() {
             return;
         }
     }
-    
     showStatus("NO SIGNAL");
 }
 
@@ -305,14 +292,12 @@ async function loadChannelContent(playlistName) {
 
     state.currentChannelList = fisherYatesShuffle([...data]);
     state.currentIndex = 0;
-    
     updateGuideNowPlaying();
     playCurrentVideo();
 }
 
 function playCurrentVideo() {
     if (!state.currentChannelList.length) return;
-    
     const videoData = state.currentChannelList[state.currentIndex];
     state.currentVideoData = videoData;
     
@@ -323,7 +308,6 @@ function playCurrentVideo() {
         if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
         playCurrentVideo();
     }
-    
     updateCreditsInfo(videoData);
     updateGuideNowPlaying();
 }
@@ -336,15 +320,12 @@ function handleVideoEnd() {
 
 async function changeGroup(direction) {
     if (!state.isOn || Object.keys(state.channelsByCategory).length === 0) return;
-
     showStatic(400);
     state.currentGroupIndex += direction;
     if (state.currentGroupIndex >= state.groupsOrder.length) state.currentGroupIndex = 0;
     if (state.currentGroupIndex < 0) state.currentGroupIndex = state.groupsOrder.length - 1;
-
     const groupName = state.groupsOrder[state.currentGroupIndex];
     showStatus(`GROUP: ${groupName}`);
-
     const playlists = state.channelsByCategory[groupName];
     if (playlists && playlists.length > 0) {
         await loadChannelContent(playlists[0].name);
@@ -358,21 +339,17 @@ async function changeChannel(direction) {
     const groupName = state.groupsOrder[state.currentGroupIndex];
     const playlists = state.channelsByCategory[groupName];
     if (!playlists || playlists.length === 0) return;
-
     let currentPlIndex = playlists.findIndex(pl => pl.name === state.currentChannelName);
     if (currentPlIndex === -1) currentPlIndex = 0;
     currentPlIndex += direction;
     if (currentPlIndex >= playlists.length) currentPlIndex = 0;
     if (currentPlIndex < 0) currentPlIndex = playlists.length - 1;
-
     await loadChannelContent(playlists[currentPlIndex].name);
 }
 
 function showStatic(duration) {
     els.staticOverlay.classList.add('active');
-    setTimeout(() => {
-        els.staticOverlay.classList.remove('active');
-    }, duration);
+    setTimeout(() => els.staticOverlay.classList.remove('active'), duration);
 }
 
 function showStatus(text) {
@@ -489,9 +466,7 @@ function renderGuide() {
                 const item = document.createElement('div');
                 item.className = 'teletext-link p-1 px-2 text-sm text-gray-300 font-mono border-b border-gray-800 flex justify-between hover:bg-white hover:text-blue-800 cursor-pointer';
                 item.innerHTML = `<span>${pl.name.substring(0,25)}</span> <span class="text-xs opacity-50">${pl.video_count || 0}</span>`;
-                item.onclick = () => {
-                    selectChannelFromGuide(pl.name);
-                };
+                item.onclick = () => selectChannelFromGuide(pl.name);
                 contentDiv.appendChild(item);
             });
             groupDiv.appendChild(headerBtn);
