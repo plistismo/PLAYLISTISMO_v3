@@ -1,12 +1,6 @@
 
 
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from "@google/genai";
-
-// --- CONFIGURAÇÃO API & CHAVES ---
-const GEMINI_API_KEY = 'AIzaSyAU0rLoRsAYns1W7ecNP0Drtw3fplbTgR0'; 
-const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-const AI_MODEL = 'gemini-2.5-flash';
 
 // --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
@@ -34,15 +28,10 @@ const state = {
     // Player State
     playerReady: false,
     currentVideoData: null, // Dados do DB da música atual
-    isPlaying: false,
-
-    // Lyrics State
-    isLyricsOn: false,
-    lyricsLoading: false
+    isPlaying: false
 };
 
 let player; // Instância do Player YT
-let timeInterval; // Loop de monitoramento de tempo
 
 // --- ELEMENTOS DOM ---
 const els = {
@@ -53,13 +42,12 @@ const els = {
     staticOverlay: document.getElementById('static-overlay'),
     
     // Controls
-    btnNextCh: document.getElementById('tv-ch-next'), // Agora troca Playlist
-    btnPrevCh: document.getElementById('tv-ch-prev'), // Agora troca Playlist
-    btnNextGrp: document.getElementById('tv-grp-next'), // Troca Grupo
-    btnPrevGrp: document.getElementById('tv-grp-prev'), // Troca Grupo
+    btnNextCh: document.getElementById('tv-ch-next'),
+    btnPrevCh: document.getElementById('tv-ch-prev'),
+    btnNextGrp: document.getElementById('tv-grp-next'),
+    btnPrevGrp: document.getElementById('tv-grp-prev'),
 
     btnSearch: document.getElementById('tv-search-btn'),
-    btnCC: document.getElementById('tv-cc-btn'),
     
     // Admin Buttons
     adminPanelHeader: document.getElementById('admin-panel-header'),
@@ -89,44 +77,34 @@ const els = {
     credSong: document.getElementById('song-name'),
     credAlbum: document.getElementById('album-name'),
     credYear: document.getElementById('release-year'),
-    credDirector: document.getElementById('director-name'),
-    
-    // Lyrics
-    lyricsOverlay: document.getElementById('lyrics-overlay'),
-    lyricsContent: document.getElementById('lyrics-content')
+    credDirector: document.getElementById('director-name')
 };
 
 // --- INICIALIZAÇÃO ---
 
 async function init() {
-    // 1. AUTH CHECK: Tenta pegar sessão, mas NÃO redireciona se falhar (Guest Mode)
+    // 1. AUTH CHECK
     const { data: { session } } = await supabase.auth.getSession();
     
-    // Log apenas para debug
     if (!session) {
         console.log("👤 Iniciando em Modo Convidado (Sem login)");
     } else {
         console.log("👤 Usuário Autenticado:", session.user.email);
     }
 
-    checkAdminAccess(session); // Verifica se é o admin para liberar botões (passando sessão ou null)
+    checkAdminAccess(session);
     startClocks();
     loadYouTubeAPI();
     setupEventListeners();
-    fetchGuideData(); // Pré-carrega o guia em segundo plano
+    fetchGuideData();
 }
 
-// Verifica sessão e compara ID com ADMIN_UID
 function checkAdminAccess(session) {
     try {
         if (session && session.user && session.user.id === ADMIN_UID) {
-            console.log("🔓 ADMIN ACCESS GRANTED");
-            // Mostra o painel do cabeçalho
             if (els.adminPanelHeader) els.adminPanelHeader.classList.remove('hidden');
-            // Mostra link no guia
             if (els.guideAdminLink) els.guideAdminLink.classList.remove('hidden');
         } else {
-            // Garante que esteja oculto para outros usuários ou guests
             if (els.adminPanelHeader) els.adminPanelHeader.classList.add('hidden');
             if (els.guideAdminLink) els.guideAdminLink.classList.add('hidden');
         }
@@ -138,35 +116,24 @@ function checkAdminAccess(session) {
 function startClocks() {
     setInterval(() => {
         const now = new Date();
-        // Apenas o relógio do guia (teletexto) é mantido
-        els.guideClock.innerText = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        if(els.guideClock) els.guideClock.innerText = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         
-        // Monitoramento constante de Créditos e Estado
         if (state.isOn && state.playerReady && state.isPlaying) {
             monitorCredits();
         }
-    }, 500); // Verificação mais rápida para precisão
+    }, 500);
 }
 
-// --- ALGORITMO DE SHUFFLE (FISHER-YATES) ---
-// Garante embaralhamento real e sem repetições na sequência
 function fisherYatesShuffle(array) {
     let currentIndex = array.length, randomIndex;
-
-    // Enquanto restarem elementos para embaralhar...
     while (currentIndex != 0) {
-        // Escolhe um elemento restante...
         randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
-
-        // E troca com o elemento atual.
         [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
     }
-
     return array;
 }
 
-// --- MONITORAMENTO DE CRÉDITOS ---
 function monitorCredits() {
     if (!player || typeof player.getCurrentTime !== 'function') return;
 
@@ -175,12 +142,7 @@ function monitorCredits() {
     
     if (!duration || duration < 1) return;
 
-    // LÓGICA DE TEMPO DOS CRÉDITOS
-    
-    // Intro: Aparece aos 10s, fica por 10s (sai aos 20s)
     const isIntroWindow = currentTime >= 10 && currentTime < 20;
-    
-    // Outro: Aparece 20s antes do fim, fica por 10s (sai 10s antes do fim)
     const outroStartTime = duration - 20;
     const outroEndTime = duration - 10;
     const isOutroWindow = (duration > 40) && (currentTime >= outroStartTime && currentTime < outroEndTime);
@@ -192,11 +154,8 @@ function monitorCredits() {
     }
 }
 
-// --- YOUTUBE API ---
-
 function loadYouTubeAPI() {
     if (window.YT && window.YT.Player) {
-        // API já carregada (navegação SPA ou reload rápido)
         onYouTubeIframeAPIReady();
         return;
     }
@@ -207,9 +166,7 @@ function loadYouTubeAPI() {
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 }
 
-// Callback global do YouTube API
 window.onYouTubeIframeAPIReady = () => {
-    console.log("📺 TV Tube: Inicializando Player...");
     player = new YT.Player('player', {
         height: '100%',
         width: '100%',
@@ -235,9 +192,6 @@ window.onYouTubeIframeAPIReady = () => {
 
 function onPlayerReady(event) {
     state.playerReady = true;
-    console.log("📺 TV Tube: Sintonizador Pronto.");
-    
-    // Se a TV foi ligada antes do player carregar, inicia o vídeo agora
     if (state.isOn && state.currentVideoData) {
         playCurrentVideo();
     }
@@ -247,24 +201,14 @@ function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.ENDED) {
         handleVideoEnd();
         state.isPlaying = false;
-        els.creditsOverlay.classList.remove('visible'); // Força esconder
+        els.creditsOverlay.classList.remove('visible');
     } else if (event.data === YT.PlayerState.PLAYING) {
         state.isPlaying = true;
         hideStatus();
-        
-        // Reset visual imediato ao iniciar
         els.creditsOverlay.classList.remove('visible');
-
-        // Tenta atualizar créditos agora que o vídeo começou (para pegar o título se necessário)
         if (state.currentVideoData) {
             updateCreditsInfo(state.currentVideoData);
         }
-
-        // Se CC estiver ligado, gera letras
-        if (state.isLyricsOn && state.currentVideoData) {
-            generateAILyrics(state.currentVideoData);
-        }
-        
     } else if (event.data === YT.PlayerState.BUFFERING) {
         showStatus("TUNING...");
     } else if (event.data === YT.PlayerState.PAUSED) {
@@ -273,9 +217,7 @@ function onPlayerStateChange(event) {
 }
 
 function onPlayerError(event) {
-    console.warn("Sinal fraco ou interferência (Erro YT):", event.data);
     showStatus("NO SIGNAL - SKIPPING");
-    // Pula para o próximo vídeo após breve delay (track skip logic only for errors)
     setTimeout(() => {
         state.currentIndex++;
         if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
@@ -283,13 +225,10 @@ function onPlayerError(event) {
     }, 2000);
 }
 
-// --- CONTROLE DA TV ---
-
 function togglePower() {
     state.isOn = !state.isOn;
     
     if (state.isOn) {
-        // Ligar
         els.powerLed.classList.add('bg-red-500', 'shadow-[0_0_8px_#ff0000]');
         els.powerLed.classList.remove('bg-red-900');
         
@@ -298,11 +237,9 @@ function togglePower() {
         els.screenOn.classList.add('crt-turn-on');
         els.screenOn.classList.remove('crt-turn-off');
 
-        // Se não tem canal carregado, carrega o primeiro canal do primeiro grupo
         if (state.currentChannelList.length === 0) {
             loadDefaultChannel();
         } else {
-            // Se já tem canal, retoma
             if (player && state.playerReady) {
                 player.playVideo();
             } else if (state.playerReady && state.currentVideoData) {
@@ -315,7 +252,6 @@ function togglePower() {
         }, 1000);
 
     } else {
-        // Desligar
         els.powerLed.classList.remove('bg-red-500', 'shadow-[0_0_8px_#ff0000]');
         els.powerLed.classList.add('bg-red-900');
         
@@ -329,20 +265,15 @@ function togglePower() {
             state.isPlaying = false;
         }, 400);
         
-        // Reset estados visuais
         els.creditsOverlay.classList.remove('visible');
-        els.lyricsOverlay.classList.add('hidden');
     }
 }
 
 async function loadDefaultChannel() {
-    // Carrega o primeiro grupo disponível e a primeira playlist dele
-    // Isso garante que state.currentGroupIndex e o canal estejam sincronizados
     if (Object.keys(state.channelsByCategory).length === 0) {
-        await fetchGuideData(); // Garante que temos dados
+        await fetchGuideData();
     }
     
-    // Tenta encontrar o primeiro grupo com conteúdo
     for (let i = 0; i < state.groupsOrder.length; i++) {
         const groupName = state.groupsOrder[i];
         if (state.channelsByCategory[groupName] && state.channelsByCategory[groupName].length > 0) {
@@ -360,11 +291,8 @@ async function loadChannelContent(playlistName) {
     showStatic(500);
     showStatus(`TUNING: ${playlistName}`);
     state.currentChannelName = playlistName;
-    
-    // Atualiza apenas o nome da Playlist na tela
     els.playlistLabel.innerText = playlistName.toUpperCase();
 
-    // Busca vídeos dessa playlist
     const { data, error } = await supabase
         .from('musicas_backup')
         .select('*')
@@ -372,11 +300,9 @@ async function loadChannelContent(playlistName) {
 
     if (error || !data || data.length === 0) {
         showStatus("CHANNEL EMPTY");
-        console.error("Erro ao carregar canal:", error);
         return;
     }
 
-    // APLICAÇÃO DO SHUFFLE REAL (FISHER-YATES)
     state.currentChannelList = fisherYatesShuffle([...data]);
     state.currentIndex = 0;
     
@@ -391,89 +317,56 @@ function playCurrentVideo() {
     state.currentVideoData = videoData;
     
     if (player && state.playerReady && videoData.video_id) {
-        console.log(`▶️ Tocando: ${videoData.musica} (${videoData.video_id})`);
         player.loadVideoById(videoData.video_id);
-    } else {
-        console.log("⏳ Aguardando player ou ID inválido...");
-        if (!videoData.video_id) {
-            // Pula para o próximo vídeo se não tiver ID (Auto-skip logic local)
-            state.currentIndex++;
-            if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
-            playCurrentVideo();
-        }
+    } else if (videoData) {
+        state.currentIndex++;
+        if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
+        playCurrentVideo();
     }
     
-    // Atualiza info inicial (tentativa com dados do DB)
     updateCreditsInfo(videoData);
     updateGuideNowPlaying();
 }
 
 function handleVideoEnd() {
-    // Auto next track (video)
     state.currentIndex++;
     if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
     playCurrentVideo();
 }
 
-// --- CHANNEL & GROUP NAVIGATION LOGIC ---
-
-// Troca de Grupo (Categoria)
 async function changeGroup(direction) {
     if (!state.isOn || Object.keys(state.channelsByCategory).length === 0) return;
 
     showStatic(400);
-
-    // Atualiza índice do grupo
     state.currentGroupIndex += direction;
-    
-    // Wrap around
     if (state.currentGroupIndex >= state.groupsOrder.length) state.currentGroupIndex = 0;
     if (state.currentGroupIndex < 0) state.currentGroupIndex = state.groupsOrder.length - 1;
 
     const groupName = state.groupsOrder[state.currentGroupIndex];
-    
-    // Feedback Visual
     showStatus(`GROUP: ${groupName}`);
 
-    // Verifica se o grupo tem playlists
     const playlists = state.channelsByCategory[groupName];
     if (playlists && playlists.length > 0) {
-        // Carrega a primeira playlist deste grupo
         await loadChannelContent(playlists[0].name);
     } else {
         showStatus(`${groupName}: NO SIGNAL`);
-        // Opcional: Tentar pular automaticamente se vazio
     }
 }
 
-// Troca de Canal (Playlist) dentro do Grupo Atual
 async function changeChannel(direction) {
     if (!state.isOn || !state.currentChannelName) return;
-    
     const groupName = state.groupsOrder[state.currentGroupIndex];
     const playlists = state.channelsByCategory[groupName];
-
     if (!playlists || playlists.length === 0) return;
 
-    // Encontra índice da playlist atual
     let currentPlIndex = playlists.findIndex(pl => pl.name === state.currentChannelName);
-    
-    if (currentPlIndex === -1) currentPlIndex = 0; // Fallback
-
-    // Atualiza índice
+    if (currentPlIndex === -1) currentPlIndex = 0;
     currentPlIndex += direction;
-
-    // Wrap around
     if (currentPlIndex >= playlists.length) currentPlIndex = 0;
     if (currentPlIndex < 0) currentPlIndex = playlists.length - 1;
 
-    const nextPlaylist = playlists[currentPlIndex];
-    
-    await loadChannelContent(nextPlaylist.name);
+    await loadChannelContent(playlists[currentPlIndex].name);
 }
-
-
-// --- VISUAL EFFECTS ---
 
 function showStatic(duration) {
     els.staticOverlay.classList.add('active');
@@ -485,7 +378,6 @@ function showStatic(duration) {
 function showStatus(text) {
     els.statusText.innerText = text;
     els.statusMsg.classList.remove('hidden');
-    // Auto hide
     setTimeout(hideStatus, 3000);
 }
 
@@ -502,13 +394,10 @@ function showOSD() {
     }, 4000);
 }
 
-// --- SMART CREDITS LOGIC ---
-
-// Helper: Limpa títulos do YouTube (remove "Official Video", "Lyrics", etc)
 function cleanYouTubeTitle(title) {
     if (!title) return "";
     return title
-        .replace(/[\(\[\{].*?[\)\]\}]/g, '') // Remove parênteses/colchetes e conteúdo
+        .replace(/[\(\[\{].*?[\)\]\}]/g, '')
         .replace(/official video/gi, '')
         .replace(/official music video/gi, '')
         .replace(/video clip/gi, '')
@@ -516,48 +405,32 @@ function cleanYouTubeTitle(title) {
         .replace(/hq/gi, '')
         .replace(/4k/gi, '')
         .replace(/hd/gi, '')
-        .replace(/\s+/g, ' ') // Remove espaços duplos
-        .replace(/\s*[–—|:]\s*/g, ' - ') // Normaliza separadores (hífen, travessão, pipe)
+        .replace(/\s+/g, ' ')
+        .replace(/\s*[–—|:]\s*/g, ' - ')
         .trim();
 }
 
 function updateCreditsInfo(data) {
-    // 1. Prioriza dados do Banco de Dados
     let artist = data.artista;
     let song = data.musica;
     
-    // 2. Fallback: Se não tem no DB, tenta pegar do título do YouTube
     if ((!artist || !song || artist === 'Unknown' || song === 'Unknown' || artist.trim() === '') && player && typeof player.getVideoData === 'function') {
         const ytData = player.getVideoData();
-        
         if (ytData && ytData.title) {
             const cleanTitle = cleanYouTubeTitle(ytData.title);
-            
-            // Tenta separar por hífen padrão "Artist - Song"
             const parts = cleanTitle.split(' - ');
-            
             if (parts.length >= 2) {
-                // Se encontrou separador, assume Artista - Música
                 if (!artist) artist = parts[0].trim();
-                // Junta o resto caso tenha mais hifens no nome da música
                 if (!song) song = parts.slice(1).join(' - ').trim(); 
             } else {
-                // FALLBACK DE ÚLTIMO RECURSO:
-                // Se não tem separador no título, pegamos o Nome do Canal (Author) como Artista
                 if (!artist && ytData.author) {
-                    // Remove sufixos comuns de canais oficiais para limpar o nome
                     artist = ytData.author.replace(/VEVO/gi, '').replace(/Official/gi, '').replace(/Topic/gi, '').trim();
                 }
-                
                 if (!song) {
-                    // VERIFICAÇÃO DE REPETIÇÃO:
-                    // Se temos o artista (vindo do canal) e o título começa com esse nome,
-                    // removemos o artista do título para evitar "Madonna: Madonna - Like a Prayer"
                     if (artist && cleanTitle.toLowerCase().startsWith(artist.toLowerCase())) {
                         let tempSong = cleanTitle.substring(artist.length).trim();
-                        // Remove separadores que podem ter sobrado no início (ex: " - Like a Prayer")
                         tempSong = tempSong.replace(/^[-: ]+/, '').trim();
-                        song = tempSong || cleanTitle; // Se sobrar vazio, volta ao original
+                        song = tempSong || cleanTitle;
                     } else {
                         song = cleanTitle;
                     }
@@ -566,19 +439,16 @@ function updateCreditsInfo(data) {
         }
     }
 
-    // 3. Função auxiliar para mostrar/esconder linha
     const updateLine = (element, text) => {
-        const lineParent = element.parentElement; // A div .credit-line
-        
+        const lineParent = element.parentElement;
         if (text && text.toString().trim() !== '' && text !== 'null' && text !== 'undefined') {
             element.innerText = text;
-            lineParent.style.display = 'flex'; // Mostra se tem dado
+            lineParent.style.display = 'flex';
         } else {
-            lineParent.style.display = 'none'; // Esconde se vazio
+            lineParent.style.display = 'none';
         }
     };
 
-    // 4. Aplica lógica linha a linha
     updateLine(els.credArtist, artist);
     updateLine(els.credSong, song);
     updateLine(els.credAlbum, data.album);
@@ -586,101 +456,35 @@ function updateCreditsInfo(data) {
     updateLine(els.credDirector, data.direcao);
 }
 
-
-// --- GEMINI AI (CC) ---
-
-// CC / Lyrics Logic
-els.btnCC.addEventListener('click', () => {
-    state.isLyricsOn = !state.isLyricsOn;
-    const btnSpan = els.btnCC.querySelector('span:last-child');
-    
-    if (state.isLyricsOn) {
-        btnSpan.classList.add('text-yellow-400', 'border-yellow-400');
-        showStatus("CC: AI CAPTIONING ON");
-        els.lyricsOverlay.classList.remove('hidden');
-        if (state.currentVideoData) generateAILyrics(state.currentVideoData);
-    } else {
-        btnSpan.classList.remove('text-yellow-400', 'border-yellow-400');
-        showStatus("CC: OFF");
-        els.lyricsOverlay.classList.add('hidden');
-    }
-});
-
-async function generateAILyrics(videoData) {
-    if (state.lyricsLoading) return;
-    state.lyricsLoading = true;
-    els.lyricsContent.innerText = "Scanning audio patterns...";
-
-    try {
-        // Usa fallback name também para a AI se necessário
-        let searchName = videoData.musica;
-        if (!searchName && player && player.getVideoData) {
-             searchName = cleanYouTubeTitle(player.getVideoData().title);
-        }
-
-        const prompt = `Gere uma interpretação poética curta ou a letra (se for famosa) da música "${searchName}" do artista "${videoData.artista || 'Unknown'}". 
-        Formate como legendas de Closed Caption.`;
-
-        const response = await genAI.models.generateContent({
-            model: AI_MODEL,
-            contents: [{ parts: [{ text: prompt }] }],
-        });
-
-        if (state.isLyricsOn) {
-            els.lyricsContent.innerText = response.text;
-        }
-    } catch (e) {
-        els.lyricsContent.innerText = "[CC UNAVAILABLE]";
-    } finally {
-        state.lyricsLoading = false;
-    }
-}
-
-
-// --- TELETEXT GUIDE LOGIC ---
-
 async function fetchGuideData() {
-    // Busca todas playlists agrupadas
     const { data } = await supabase.from('playlists').select('*');
-    
     if (data) {
-        // Agrupa por categoria
         state.channelsByCategory = data.reduce((acc, curr) => {
             const group = curr.group_name || 'OTHERS';
             if (!acc[group]) acc[group] = [];
             acc[group].push(curr);
             return acc;
         }, {});
-        
         renderGuide();
     }
 }
 
 function renderGuide() {
     els.guideChannelList.innerHTML = '';
-    
-    // Ordem preferencial de categorias
     state.groupsOrder.forEach(category => {
         if (state.channelsByCategory[category]) {
-            // Cria Header do Grupo
             const groupDiv = document.createElement('div');
             groupDiv.className = 'mb-1';
-            
             const headerBtn = document.createElement('div');
             headerBtn.className = 'accordion-header text-white font-bold bg-[#0000aa] border border-white p-1 px-2 flex justify-between items-center hover:bg-blue-900 transition-colors';
             headerBtn.innerHTML = `<span>${category}</span> <span class="text-yellow-400 text-xs">▼</span>`;
-            
             const contentDiv = document.createElement('div');
             contentDiv.className = 'accordion-content bg-black border-l border-r border-white/30 ml-2';
-            
-            // Toggle Accordion
             headerBtn.onclick = () => {
                 contentDiv.classList.toggle('open');
                 const arrow = headerBtn.querySelector('span:last-child');
                 arrow.innerText = contentDiv.classList.contains('open') ? '▲' : '▼';
             };
-            
-            // Popula Playlists
             state.channelsByCategory[category].forEach(pl => {
                 const item = document.createElement('div');
                 item.className = 'teletext-link p-1 px-2 text-sm text-gray-300 font-mono border-b border-gray-800 flex justify-between hover:bg-white hover:text-blue-800 cursor-pointer';
@@ -690,7 +494,6 @@ function renderGuide() {
                 };
                 contentDiv.appendChild(item);
             });
-            
             groupDiv.appendChild(headerBtn);
             groupDiv.appendChild(contentDiv);
             els.guideChannelList.appendChild(groupDiv);
@@ -700,7 +503,7 @@ function renderGuide() {
 
 function selectChannelFromGuide(name) {
     loadChannelContent(name);
-    toggleGuide(); // Fecha guia
+    toggleGuide();
 }
 
 function updateGuideNowPlaying() {
@@ -713,10 +516,8 @@ function updateGuideNowPlaying() {
 
 function toggleGuide() {
     state.isSearchOpen = !state.isSearchOpen;
-    
     if (state.isSearchOpen) {
         els.guideContainer.classList.remove('hidden');
-        // Animação de entrada
         setTimeout(() => {
             els.guideBackdrop.classList.remove('opacity-0');
             els.guideSidebar.classList.remove('-translate-x-full');
@@ -731,16 +532,13 @@ function toggleGuide() {
     }
 }
 
-// Filtro de Busca no Guia
 els.guideSearch.addEventListener('input', (e) => {
     const term = e.target.value.toUpperCase();
     const links = document.querySelectorAll('.teletext-link');
-    
     links.forEach(link => {
         const text = link.querySelector('span').innerText.toUpperCase();
         if (text.includes(term)) {
             link.style.display = 'flex';
-            // Abre o accordion pai se encontrar
             link.parentElement.classList.add('open');
         } else {
             link.style.display = 'none';
@@ -748,29 +546,18 @@ els.guideSearch.addEventListener('input', (e) => {
     });
 });
 
-
-// --- EVENT LISTENERS GERAIS ---
-
 function setupEventListeners() {
     els.tvPowerBtn.addEventListener('click', togglePower);
-    
-    // Listeners de navegação de Canal (Playlist)
     els.btnNextCh.addEventListener('click', () => changeChannel(1));
     els.btnPrevCh.addEventListener('click', () => changeChannel(-1));
-
-    // Listeners de navegação de Grupo (NEW)
     els.btnNextGrp.addEventListener('click', () => changeGroup(1));
     els.btnPrevGrp.addEventListener('click', () => changeGroup(-1));
-    
-    // Botão de Busca/Guide
     els.btnSearch.addEventListener('click', toggleGuide);
     els.guideBackdrop.addEventListener('click', toggleGuide);
 
-    // ADMIN: Botão de Edição Rápida
     if(els.headerEditBtn) {
         els.headerEditBtn.addEventListener('click', () => {
             if (state.currentVideoData && state.currentVideoData.id) {
-                // Redireciona para o admin com o ID na URL para edição automática
                 window.location.href = `admin.html?edit_id=${state.currentVideoData.id}`;
             } else {
                 showStatus("NO VIDEO DATA TO EDIT");
@@ -778,21 +565,14 @@ function setupEventListeners() {
         });
     }
     
-    // Teclado
     document.addEventListener('keydown', (e) => {
         if (!state.isOn && e.key !== 'p') return;
-        
         if (e.key === 'Escape' && state.isSearchOpen) toggleGuide();
-        
-        // Arrows Right/Left mudam Playlist (Canal)
         if (e.key === 'ArrowRight') changeChannel(1);
         if (e.key === 'ArrowLeft') changeChannel(-1);
-
-        // Arrows Up/Down mudam Grupo (Opcional, mas intuitivo)
         if (e.key === 'ArrowUp') changeGroup(1);
         if (e.key === 'ArrowDown') changeGroup(-1);
     });
 }
 
-// Start
 init();

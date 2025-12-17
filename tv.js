@@ -1,4 +1,4 @@
-import { editImageWithGemini } from './gemini.js';
+
 
 // --- State Management ---
 const state = {
@@ -28,15 +28,12 @@ const els = {
     
     // Inputs
     fileInput: document.getElementById('file-input'),
-    promptInput: document.getElementById('prompt-input'),
-    transmitBtn: document.getElementById('transmit-btn'),
     
     // Buttons
     tvPowerBtn: document.getElementById('tv-power-btn'),
     remotePowerBtn: document.getElementById('remote-power-btn'),
     uploadBtn: document.getElementById('upload-btn'),
     resetBtn: document.getElementById('reset-btn'),
-    commandForm: document.getElementById('command-form'),
     
     // Vents (just to populate)
     ventContainer: document.querySelector('.vent-strip').parentElement,
@@ -44,7 +41,6 @@ const els = {
 };
 
 // --- Assets ---
-// Assuming the assets folder is at the root level relative to v2/
 const VIDEO_ASSET = "../assets/alt bump.mp4"; 
 
 // --- Initialization ---
@@ -133,67 +129,7 @@ function handleReset() {
     updateUI();
 }
 
-async function handleCommand(e) {
-    e.preventDefault();
-    if (!state.isOn || state.isProcessing) return;
-    
-    const input = els.promptInput.value.trim();
-    if (!input) return;
-    
-    const lowerInput = input.toLowerCase();
-    els.promptInput.value = '';
-
-    // Video Mode Check
-    if (lowerInput.includes('video') || lowerInput.includes('tv') || lowerInput === 'play' || lowerInput.endsWith('.mp4')) {
-        startProcessing("TUNING...");
-        setTimeout(() => {
-            state.videoSrc = lowerInput.startsWith('http') ? input : VIDEO_ASSET;
-            state.mode = 'VIDEO';
-            endProcessing("SIGNAL LOCKED");
-        }, 1500);
-        return;
-    }
-
-    // Image Edit Check
-    if (state.mode !== 'IMAGE' || !state.currentImage) {
-        setStatus("NO IMAGE SOURCE");
-        setTimeout(clearStatus, 2000);
-        return;
-    }
-
-    // Gemini Call
-    startProcessing("TRANSMITTING...");
-    try {
-        const result = await editImageWithGemini(state.currentImage, input);
-        state.currentImage = result;
-        endProcessing("EDIT COMPLETE");
-    } catch (err) {
-        console.error(err);
-        endProcessing("SIGNAL ERROR");
-    }
-}
-
 // --- UI Updates ---
-
-function startProcessing(msg) {
-    state.isProcessing = true;
-    setStatus(msg);
-    updateUI();
-    
-    // Simulate remote LED activity
-    els.remoteLight.classList.add('animate-pulse', 'bg-red-500', 'shadow-[0_0_5px_red]');
-    els.remoteLight.classList.remove('bg-red-900');
-}
-
-function endProcessing(msg) {
-    state.isProcessing = false;
-    setStatus(msg);
-    setTimeout(clearStatus, 2000);
-    updateUI();
-
-    els.remoteLight.classList.remove('animate-pulse', 'bg-red-500', 'shadow-[0_0_5px_red]');
-    els.remoteLight.classList.add('bg-red-900');
-}
 
 function setStatus(msg) {
     state.statusMessage = msg;
@@ -207,7 +143,6 @@ function clearStatus() {
 }
 
 function updateUI() {
-    // Power LED
     if (state.isOn) {
         els.powerLed.classList.add('bg-red-500', 'shadow-[0_0_8px_#ff0000]', 'saturate-200');
         els.powerLed.classList.remove('bg-red-900');
@@ -215,10 +150,6 @@ function updateUI() {
         els.screenOff.classList.add('hidden');
         els.screenOn.classList.remove('hidden');
         
-        // Input States
-        els.promptInput.disabled = false;
-        els.promptInput.placeholder = "TYPE COMMAND...";
-        els.transmitBtn.disabled = false;
         els.uploadBtn.disabled = false;
         els.resetBtn.disabled = false;
     } else {
@@ -228,29 +159,14 @@ function updateUI() {
         els.screenOff.classList.remove('hidden');
         els.screenOn.classList.add('hidden');
         
-        // Input States
-        els.promptInput.disabled = true;
-        els.promptInput.placeholder = "OFFLINE";
-        els.transmitBtn.disabled = true;
         els.uploadBtn.disabled = true;
         els.resetBtn.disabled = true;
     }
 
-    if (state.isProcessing) {
-        els.promptInput.disabled = true;
-        els.transmitBtn.disabled = true;
-        els.uploadBtn.disabled = true;
-        els.resetBtn.disabled = true;
-        els.osdStatus.innerText = "REC ●";
-        els.osdStatus.classList.remove('text-green-500/80');
-        els.osdStatus.classList.add('text-red-500/80');
-    } else {
-        els.osdStatus.innerText = "PLAY ►";
-        els.osdStatus.classList.add('text-green-500/80');
-        els.osdStatus.classList.remove('text-red-500/80');
-    }
+    els.osdStatus.innerText = "PLAY ►";
+    els.osdStatus.classList.add('text-green-500/80');
+    els.osdStatus.classList.remove('text-red-500/80');
 
-    // Screen Modes
     els.blueScreen.classList.add('hidden');
     els.video.classList.add('hidden');
     els.image.classList.add('hidden');
@@ -274,13 +190,9 @@ function updateUI() {
 function setupEventListeners() {
     els.tvPowerBtn.addEventListener('click', togglePower);
     els.remotePowerBtn.addEventListener('click', togglePower);
-    
     els.uploadBtn.addEventListener('click', () => els.fileInput.click());
     els.fileInput.addEventListener('change', handleUpload);
-    
     els.resetBtn.addEventListener('click', handleReset);
-    els.commandForm.addEventListener('submit', handleCommand);
 }
 
-// Run
 init();

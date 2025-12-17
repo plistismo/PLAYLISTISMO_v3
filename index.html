@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -18,8 +19,7 @@
     <script type="importmap">
     {
       "imports": {
-        "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.86.0",
-        "@google/genai": "https://esm.run/@google/genai"
+        "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.86.0"
       }
     }
     </script>
@@ -131,14 +131,12 @@
         </div>
 
         <!-- TV WRAPPER (CORRECTED ASPECT RATIO) -->
-        <!-- AUMENTADO: de max-w-3xl para max-w-5xl em telas grandes -->
         <div class="relative w-full max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto flex flex-col transition-all duration-500 ease-out">
             
             <!-- TV UNIT -->
             <div id="tv-unit" class="relative w-full transition-transform duration-500 md:perspective-[1500px] group">
                 
                 <!-- TV Chassis -->
-                <!-- Removed fixed height, letting aspect-ratio dictate size -->
                 <div class="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
                     
                     <!-- Back Casing Illusion -->
@@ -150,14 +148,12 @@
                     </div>
 
                     <!-- Front Bezel & Screen -->
-                    <!-- Flex Row to accommodate side speaker -->
                     <div class="flex flex-col md:flex-row bg-[#111] rounded-[16px] md:rounded-[36px] p-2 md:p-5 shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222]">
                         
                         <!-- Left Speaker (Visual) -->
                         <div class="hidden md:flex flex-col justify-center w-8 md:w-10 mr-3 space-y-0.5 opacity-50 speaker-grid shrink-0"></div>
 
                         <!-- SCREEN CONTAINER (STRICT 4:3 ASPECT RATIO) -->
-                        <!-- This enforces the retro shape. Widescreen videos will letterbox naturally. -->
                         <div class="relative w-full aspect-[4/3] bg-[#050505] rounded-[24px] md:rounded-[48px] overflow-hidden screen-container border-[4px] md:border-[8px] border-[#080808] z-10 box-content shadow-[0_0_0_1px_rgba(255,255,255,0.05)]">
                             
                             <!-- CRT Glass Effects (Enhanced) -->
@@ -175,14 +171,6 @@
                                 <!-- YouTube Player -->
                                 <div class="absolute inset-0 z-0 pointer-events-auto flex items-center justify-center bg-black">
                                     <div id="player" class="w-full h-full"></div>
-                                </div>
-                                
-                                <!-- LYRICS OVERLAY -->
-                                <div id="lyrics-overlay" class="absolute inset-0 z-30 pointer-events-none hidden flex flex-col items-center justify-end pb-12">
-                                    <div class="bg-black/80 p-4 max-w-[90%] max-h-[60%] overflow-y-auto custom-scrollbar pointer-events-auto rounded border border-gray-800 backdrop-blur-sm">
-                                        <div class="text-yellow-400 font-vt323 text-center mb-2 text-sm uppercase tracking-widest border-b border-yellow-400/30 pb-1">AI Closed Captioning</div>
-                                        <div id="lyrics-content" class="text-white font-vt323 text-xl md:text-2xl leading-relaxed text-center whitespace-pre-wrap"></div>
-                                    </div>
                                 </div>
                                 
                                 <!-- STATIC NOISE OVERLAY -->
@@ -223,12 +211,11 @@
                     </div>
 
                     <!-- CONTROL DECK (VCR STYLE) -->
-                    <!-- Tucked immediately below the bezel -->
                     <div class="mt-4 bg-[#111] rounded-b-lg rounded-t-sm border-t border-[#333] border-b border-[#050505] shadow-[inset_0_2px_5px_rgba(0,0,0,0.8)] p-3 md:px-5 md:py-4 relative z-50 flex flex-col md:flex-row justify-between items-center gap-3 shrink-0">
                         
                         <!-- Branding -->
                         <div class="flex flex-col items-start select-none opacity-80 hover:opacity-100 transition-opacity">
-                            <span class="font-serif italic font-bold text-[#bbb] text-base md:text-xl drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">Gemini<span class="text-[#888]">Trinitron</span></span>
+                            <span class="font-serif italic font-bold text-[#bbb] text-base md:text-xl drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">Playli<span class="text-[#888]">trinitron</span></span>
                             <div class="flex gap-0.5 mt-0.5">
                                 <div class="w-6 h-1 bg-red-700"></div>
                                 <div class="w-6 h-1 bg-green-700"></div>
@@ -245,16 +232,11 @@
                                     <span class="text-[6px] absolute -top-3 text-gray-500 font-bold tracking-widest group-hover:text-yellow-500">GUIDE</span>
                                     <svg class="w-4 h-4 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
                                 </button>
-                                
-                                <button id="tv-cc-btn" class="btn-retro-push w-10 h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative" title="AI Lyrics">
-                                    <span class="text-[6px] absolute -top-3 text-gray-500 font-bold tracking-widest group-hover:text-yellow-500">CC</span>
-                                    <span class="text-[10px] font-bold text-gray-400 group-hover:text-white font-vt323 tracking-widest px-1">TXT</span>
-                                </button>
                             </div>
 
                             <div class="w-px h-8 bg-[#222] border-r border-[#444]"></div>
 
-                            <!-- Botões de Grupo (NEW) -->
+                            <!-- Botões de Grupo -->
                             <div class="flex flex-col items-center">
                                 <span class="text-[6px] text-gray-500 font-bold tracking-widest mb-1">GRP</span>
                                 <div class="flex gap-1.5">
@@ -267,7 +249,7 @@
                                 </div>
                             </div>
 
-                            <!-- Botões de Canal (Mudança de Playlist) -->
+                            <!-- Botões de Canal -->
                             <div class="flex flex-col items-center">
                                 <span class="text-[6px] text-gray-500 font-bold tracking-widest mb-1">CH</span>
                                 <div class="flex gap-1.5">
