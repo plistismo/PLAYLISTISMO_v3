@@ -279,7 +279,6 @@ async function loadChannelContent(playlistName) {
     state.currentChannelName = playlistName;
     els.playlistLabel.innerText = playlistName.toUpperCase();
 
-    // GARANTIA: Carrega até 5000 vídeos para playlists completas e ordenação desc para metadados novos
     const { data, error } = await supabase
         .from('musicas_backup')
         .select('*')
@@ -389,6 +388,27 @@ function cleanYouTubeTitle(title) {
         .trim();
 }
 
+/**
+ * REGRAS DE EXIBIÇÃO: Conectores não negritos (ft., &, vs.)
+ */
+function formatCredits(text, isDirector = false) {
+    if (!text) return "";
+    let formatted = text.toString();
+    
+    // Conectores de Artista
+    if (!isDirector) {
+        const connectors = [/ ft\./gi, / & /g, / vs\./gi];
+        connectors.forEach(reg => {
+            formatted = formatted.replace(reg, (match) => `<span class="credit-connector">${match}</span>`);
+        });
+    } else {
+        // Conector de Diretor
+        formatted = formatted.replace(/ & /g, (match) => `<span class="credit-connector">${match}</span>`);
+    }
+    
+    return formatted;
+}
+
 function updateCreditsInfo(data) {
     let artist = data.artista;
     let song = data.musica;
@@ -418,30 +438,29 @@ function updateCreditsInfo(data) {
         }
     }
 
-    const updateLine = (element, text) => {
+    const updateLine = (element, text, isDirector = false, isArtist = false) => {
         const lineParent = element.parentElement;
         if (text && text.toString().trim() !== '' && text !== 'null' && text !== 'undefined') {
-            element.innerText = text;
+            // Aplicando a formatação de conectores (innerHTML para permitir tags de span)
+            element.innerHTML = formatCredits(text, isDirector);
             lineParent.style.display = 'flex';
         } else {
             lineParent.style.display = 'none';
         }
     };
 
-    updateLine(els.credArtist, artist);
+    updateLine(els.credArtist, artist, false, true);
     updateLine(els.credSong, song);
     updateLine(els.credAlbum, data.album);
     updateLine(els.credYear, data.ano);
-    updateLine(els.credDirector, data.direcao);
+    updateLine(els.credDirector, data.direcao, true);
 }
 
 async function fetchGuideData() {
-    // AJUSTE CRÍTICO: Removido qualquer limite restritivo para as playlists (Guia Infinito)
-    // Solicitamos um range massivo de 10.000 para garantir que novas playlists nunca parem de aparecer
     const { data } = await supabase
         .from('playlists')
         .select('*')
-        .order('updated_at', { ascending: false }) // Novas playlists aparecem no topo do processamento
+        .order('updated_at', { ascending: false }) 
         .range(0, 9999); 
         
     if (data) {
