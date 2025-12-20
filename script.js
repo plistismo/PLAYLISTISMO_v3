@@ -57,8 +57,7 @@ const els = {
     statusText: document.getElementById('status-text'),
     
     guideContainer: document.getElementById('tv-internal-guide'),
-    guideSidebar: document.getElementById('guide-sidebar'),
-    guideBackdrop: document.getElementById('guide-backdrop'),
+    guideSidebar: document.getElementById('tv-internal-guide'), // Redirecionado para o contêiner fixo
     guideClock: document.getElementById('guide-clock'),
     guideChannelList: document.getElementById('channel-guide-container'),
     guideSearch: document.getElementById('channel-search'),
@@ -517,21 +516,18 @@ function updateGuideNowPlaying() {
     }
 }
 
+/**
+ * TOGGLE GUIDE (NON-STOP VERSION)
+ * Gerencia a classe 'guide-active' no body para orquestrar o push da TV
+ */
 function toggleGuide() {
     state.isSearchOpen = !state.isSearchOpen;
     if (state.isSearchOpen) {
-        els.guideContainer.classList.remove('hidden');
-        setTimeout(() => {
-            els.guideBackdrop.classList.remove('opacity-0');
-            els.guideSidebar.classList.remove('-translate-x-full');
-        }, 10);
+        document.body.classList.add('guide-active');
         els.guideSearch.focus();
     } else {
-        els.guideBackdrop.classList.add('opacity-0');
-        els.guideSidebar.classList.add('-translate-x-full');
-        setTimeout(() => {
-            els.guideContainer.classList.add('hidden');
-        }, 300);
+        document.body.classList.remove('guide-active');
+        els.guideSearch.blur();
     }
 }
 
@@ -556,7 +552,11 @@ function setupEventListeners() {
     els.btnNextGrp.addEventListener('click', () => changeGroup(1));
     els.btnPrevGrp.addEventListener('click', () => changeGroup(-1));
     els.btnSearch.addEventListener('click', toggleGuide);
-    els.guideBackdrop.addEventListener('click', toggleGuide);
+    
+    // Fechar ao clicar na área da TV quando o guia estiver aberto
+    document.getElementById('app-viewport').addEventListener('click', () => {
+        if (state.isSearchOpen) toggleGuide();
+    });
 
     if(els.headerEditBtn) {
         els.headerEditBtn.addEventListener('click', () => {
@@ -571,6 +571,10 @@ function setupEventListeners() {
     document.addEventListener('keydown', (e) => {
         if (!state.isOn && e.key !== 'p') return;
         if (e.key === 'Escape' && state.isSearchOpen) toggleGuide();
+        
+        // Evita navegação de canais se estiver digitando na busca
+        if (document.activeElement === els.guideSearch) return;
+
         if (e.key === 'ArrowRight') changeChannel(1);
         if (e.key === 'ArrowLeft') changeChannel(-1);
         if (e.key === 'ArrowUp') changeGroup(1);

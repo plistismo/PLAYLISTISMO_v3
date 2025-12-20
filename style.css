@@ -13,6 +13,25 @@ body {
     font-family: 'VT323', monospace;
 }
 
+/* --- NON-STOP NAVIGATION ENGINE --- */
+body.guide-active #tv-internal-guide {
+    transform: translateX(0);
+}
+
+body.guide-active #app-viewport {
+    transform: translateX(225px) scale(0.85); /* Empurra a TV para a direita e reduz levemente */
+    filter: blur(2px) brightness(0.7);
+    pointer-events: none; /* Evita cliques na TV enquanto no guia */
+}
+
+/* Responsividade do Push */
+@media (max-width: 1024px) {
+    body.guide-active #app-viewport {
+        transform: translateX(50%) scale(0.6);
+        opacity: 0.5;
+    }
+}
+
 /* Texture Classes */
 .texture-plastic {
     background-color: #1a1a1a;
@@ -35,7 +54,6 @@ body {
 }
 
 /* --- REALISTIC BUTTONS CSS --- */
-
 .btn-retro-push {
     background: linear-gradient(to bottom, #3a3a3a 0%, #222 100%);
     color: #999;
@@ -86,7 +104,6 @@ body {
     border-color: #000;
 }
 
-
 /* CRT & 3D Effects */
 .tv-3d-tilt {
     transform: rotateX(2deg);
@@ -101,46 +118,17 @@ body {
 }
 
 /* --- CRT ANIMATIONS --- */
-
 @keyframes turn-on {
-    0% {
-        transform: scale(1, 0.002) scaleX(0);
-        opacity: 0;
-        filter: brightness(30);
-    }
-    30% {
-        transform: scale(1, 0.002) scaleX(1);
-        opacity: 1;
-        filter: brightness(30);
-    }
-    60% {
-        transform: scale(1, 0.002) scaleX(1);
-        opacity: 1;
-        filter: brightness(30);
-    }
-    100% {
-        transform: scale(1, 1) scaleX(1);
-        opacity: 1;
-        filter: brightness(1);
-    }
+    0% { transform: scale(1, 0.002) scaleX(0); opacity: 0; filter: brightness(30); }
+    30% { transform: scale(1, 0.002) scaleX(1); opacity: 1; filter: brightness(30); }
+    60% { transform: scale(1, 0.002) scaleX(1); opacity: 1; filter: brightness(30); }
+    100% { transform: scale(1, 1) scaleX(1); opacity: 1; filter: brightness(1); }
 }
 
 @keyframes turn-off {
-    0% {
-        transform: scale(1, 1.3) scaleX(1);
-        opacity: 1;
-        filter: brightness(1);
-    }
-    60% {
-        transform: scale(1, 0.002) scaleX(1);
-        opacity: 1;
-        filter: brightness(10);
-    }
-    100% {
-        transform: scale(0, 0) scaleX(0);
-        opacity: 0;
-        filter: brightness(0);
-    }
+    0% { transform: scale(1, 1.3) scaleX(1); opacity: 1; filter: brightness(1); }
+    60% { transform: scale(1, 0.002) scaleX(1); opacity: 1; filter: brightness(10); }
+    100% { transform: scale(0, 0) scaleX(0); opacity: 0; filter: brightness(0); }
 }
 
 .crt-turn-on {
@@ -149,33 +137,6 @@ body {
 
 .crt-turn-off {
     animation: turn-off 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-}
-
-@keyframes flicker {
-    0% { opacity: 0.98; }
-    5% { opacity: 0.96; }
-    10% { opacity: 0.93; }
-    15% { opacity: 0.96; }
-    20% { opacity: 0.99; }
-    25% { opacity: 0.96; }
-    30% { opacity: 0.93; }
-    35% { opacity: 0.97; }
-    40% { opacity: 0.99; }
-    45% { opacity: 0.96; }
-    50% { opacity: 0.99; }
-    55% { opacity: 0.95; }
-    60% { opacity: 0.93; }
-    65% { opacity: 0.97; }
-    70% { opacity: 1; }
-    75% { opacity: 0.98; }
-    80% { opacity: 0.96; }
-    85% { opacity: 0.94; }
-    90% { opacity: 0.97; }
-    95% { opacity: 0.99; }
-    100% { opacity: 0.96; }
-}
-.crt-flicker {
-    animation: flicker 0.1s infinite;
 }
 
 /* Scanlines */
@@ -225,42 +186,29 @@ body {
     animation: rgb-shift-text 3s infinite alternate;
 }
 
-/* Image Filter */
-.vhs-filter {
-    filter: sepia(0.2) contrast(1.15) brightness(1.1) saturate(1.1) blur(0.5px);
-}
-
-/* Credits Overlay (ELEGANT SIZE ADJUSTMENT & POP EFFECT) */
+/* Credits Overlay */
 .credits-overlay {
     position: absolute;
     bottom: 8%;   
     left: 6%;     
     color: #f8f8f8; 
-    
-    /* Multilayer shadow for 'POP' effect and maximum legibility */
     text-shadow: 
-        2px 2px 0px #000,           /* Bottom-Right Solid */
-        -1px -1px 0px #000,         /* Top-Left Outline */
-        1px -1px 0px #000,          /* Top-Right Outline */
-        -1px 1px 0px #000,          /* Bottom-Left Outline */
-        0 0 10px rgba(0,0,0,0.9),   /* Deep Diffusion */
-        -1.5px 0px 0.5px rgba(255,0,0,0.6), /* Subtle RGB Left */
-        1.5px 0px 0.5px rgba(0,0,255,0.6);  /* Subtle RGB Right */
-    
+        2px 2px 0px #000, 
+        -1px -1px 0px #000, 
+        1px -1px 0px #000, 
+        -1px 1px 0px #000, 
+        0 0 10px rgba(0,0,0,0.9),
+        -1.5px 0px 0.5px rgba(255,0,0,0.6),
+        1.5px 0px 0.5px rgba(0,0,255,0.6);
     font-size: clamp(1rem, 2.2vmin, 1.45rem);
-    
     font-family: 'Jost', sans-serif;
     font-weight: 700; 
     line-height: 1.15;
-    
     opacity: 0; 
     transition: opacity 0.8s ease-in-out; 
-    
     pointer-events: none;
     z-index: 60;
     width: auto;
-    
-    /* Apply subtle glitch logic to credits as well */
     animation: rgb-shift-text 5s infinite alternate;
 }
 
@@ -276,7 +224,6 @@ body {
     align-items: center;
 }
 
-/* Non-bold connector class */
 .credit-connector {
     font-weight: 400 !important;
     opacity: 0.8;
@@ -291,21 +238,6 @@ body {
     margin-right: 0.5em;
     color: #ffff00; 
     filter: drop-shadow(2px 2px 0px #000);
-}
-
-/* Info Panel (Last.FM) */
-#info-panel {
-    transform: translateX(20px);
-}
-#info-panel.active {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-/* OSD FADE */
-.fade-out {
-    opacity: 0;
-    transition: opacity 1s ease-out;
 }
 
 /* Static Noise Animation */
@@ -361,61 +293,7 @@ body {
     color: #000;
 }
 
-/* Service Mode Styles */
-.service-mode-input {
-    background: #111;
-    border: 1px solid #78350f; 
-    color: #d97706; 
-    font-family: 'VT323', monospace;
-    text-transform: uppercase;
-}
-.service-mode-input:focus {
-    outline: none;
-    border-color: #d97706;
-    background: rgba(217, 119, 6, 0.1);
-    box-shadow: 0 0 10px rgba(217, 119, 6, 0.2);
-}
-.service-mode-input::placeholder {
-    color: #451a03;
-    opacity: 0.7;
-}
-
-.service-mode-btn {
-    border: 1px solid #d97706;
-    color: #d97706;
-    background: transparent;
-    transition: all 0.2s;
-    font-family: 'VT323', monospace;
-    text-transform: uppercase;
-    cursor: pointer;
-}
-.service-mode-btn:hover {
-    background: #d97706;
-    color: #000;
-    box-shadow: 0 0 15px #d97706;
-}
-
-.service-mode-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'VT323', monospace;
-}
-.service-mode-table th, .service-mode-table td {
-    border: 1px solid #451a03; 
-    padding: 0.5rem;
-}
-.service-mode-table th {
-    background: #222;
-    color: #d97706;
-    text-transform: uppercase;
-    position: sticky;
-    top: 0;
-}
-.service-mode-table tr:hover {
-    background-color: rgba(217, 119, 6, 0.1);
-}
-
-/* Responsividade */
+/* Responsividade de Créditos */
 @media (max-width: 768px) {
     .credits-overlay {
         left: 6%;
