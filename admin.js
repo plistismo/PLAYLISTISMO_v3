@@ -47,10 +47,12 @@ async function checkAuth() {
 }
 
 async function loadDatabaseFilterOptions() {
+    // AJUSTE: Carrega todas as playlists disponíveis (Guia Infinita no Admin)
     const { data, error } = await supabase
         .from('playlists')
         .select('name, group_name')
-        .order('name', { ascending: true });
+        .order('name', { ascending: true })
+        .range(0, 9999);
 
     if (error) {
         console.error("Erro ao carregar lista de filtros:", error);

@@ -279,7 +279,7 @@ async function loadChannelContent(playlistName) {
     state.currentChannelName = playlistName;
     els.playlistLabel.innerText = playlistName.toUpperCase();
 
-    // AJUSTE: Solicitando range de 0-5000 e ordenando para pegar os mais novos primeiro caso atinja o limite
+    // GARANTIA: Carrega até 5000 vídeos para playlists completas e ordenação desc para metadados novos
     const { data, error } = await supabase
         .from('musicas_backup')
         .select('*')
@@ -436,8 +436,14 @@ function updateCreditsInfo(data) {
 }
 
 async function fetchGuideData() {
-    // AJUSTE: Aumentado range para evitar corte no menu de canais
-    const { data } = await supabase.from('playlists').select('*').range(0, 999);
+    // AJUSTE CRÍTICO: Removido qualquer limite restritivo para as playlists (Guia Infinito)
+    // Solicitamos um range massivo de 10.000 para garantir que novas playlists nunca parem de aparecer
+    const { data } = await supabase
+        .from('playlists')
+        .select('*')
+        .order('updated_at', { ascending: false }) // Novas playlists aparecem no topo do processamento
+        .range(0, 9999); 
+        
     if (data) {
         state.channelsByCategory = data.reduce((acc, curr) => {
             const group = curr.group_name || 'OTHERS';
