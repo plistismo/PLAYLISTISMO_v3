@@ -159,7 +159,6 @@ function loadYouTubeAPI() {
 }
 
 window.onYouTubeIframeAPIReady = () => {
-    // Definindo a origem exata para evitar erros de postMessage/Cross-Origin
     const origin = window.location.origin;
 
     player = new YT.Player('player', {
@@ -175,7 +174,7 @@ window.onYouTubeIframeAPIReady = () => {
             'disablekb': 1,
             'fs': 0,
             'enablejsapi': 1,
-            'origin': origin // Crucial para o postMessage
+            'origin': origin 
         },
         events: {
             'onReady': onPlayerReady,
@@ -280,10 +279,13 @@ async function loadChannelContent(playlistName) {
     state.currentChannelName = playlistName;
     els.playlistLabel.innerText = playlistName.toUpperCase();
 
+    // AJUSTE: Solicitando range de 0-5000 e ordenando para pegar os mais novos primeiro caso atinja o limite
     const { data, error } = await supabase
         .from('musicas_backup')
         .select('*')
-        .eq('playlist', playlistName);
+        .eq('playlist', playlistName)
+        .order('id', { ascending: false })
+        .range(0, 4999); 
 
     if (error || !data || data.length === 0) {
         showStatus("CHANNEL EMPTY");
@@ -434,7 +436,8 @@ function updateCreditsInfo(data) {
 }
 
 async function fetchGuideData() {
-    const { data } = await supabase.from('playlists').select('*');
+    // AJUSTE: Aumentado range para evitar corte no menu de canais
+    const { data } = await supabase.from('playlists').select('*').range(0, 999);
     if (data) {
         state.channelsByCategory = data.reduce((acc, curr) => {
             const group = curr.group_name || 'OTHERS';
