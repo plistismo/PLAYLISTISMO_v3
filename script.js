@@ -26,7 +26,10 @@ const state = {
     // Player State
     playerReady: false,
     currentVideoData: null, 
-    isPlaying: false
+    isPlaying: false,
+
+    // Animation Engine
+    animationTimer: null
 };
 
 let player; 
@@ -79,6 +82,7 @@ async function init() {
     
     checkAdminAccess(session);
     startClocks();
+    startAnimationEngine();
     loadYouTubeAPI();
     setupEventListeners();
     await fetchGuideData();
@@ -99,11 +103,9 @@ async function init() {
             }
             
             if (groupIndex !== -1) {
-                // RESTAURAÇÃO DE ESTADO APÓS EDIT
                 state.currentGroupIndex = groupIndex;
-                state.isOn = true; // Força a TV a ligar
+                state.isOn = true; 
 
-                // Aplica visual de TV Ligada IMEDIATAMENTE
                 els.powerLed.classList.add('bg-red-500', 'shadow-[0_0_8px_#ff0000]');
                 els.powerLed.classList.remove('bg-red-900');
                 els.screenOff.classList.add('hidden');
@@ -143,6 +145,69 @@ function startClocks() {
             monitorCredits();
         }
     }, 500);
+}
+
+/**
+ * Motor de Animações Temáticas Contextuais
+ */
+function startAnimationEngine() {
+    if (state.animationTimer) clearInterval(state.animationTimer);
+    
+    state.animationTimer = setInterval(() => {
+        if (state.isOn && state.isPlaying && !state.isSearchOpen) {
+            triggerThematicAnimation();
+        }
+    }, 20000); // Executa a cada 20 segundos
+}
+
+function triggerThematicAnimation() {
+    if (!els.playlistLabel) return;
+    
+    // Aplica a classe de gatilho
+    els.playlistLabel.classList.add('animate-trigger');
+    
+    // Remove a classe após 2 segundos (tempo máximo das animações)
+    setTimeout(() => {
+        els.playlistLabel.classList.remove('animate-trigger');
+    }, 2000);
+}
+
+function getThemeForPlaylist(name) {
+    const n = name.toUpperCase();
+    if (n.includes('RIDE') || n.includes('DRIVE') || n.includes('CAR') || n.includes('LIST')) return 'theme-ride';
+    if (n.includes('ROCK') || n.includes('METAL') || n.includes('PUNK') || n.includes('GUITAR')) return 'theme-rock';
+    if (n.includes('UPLOAD') || n.includes('TOP') || n.includes('NEWS')) return 'theme-glitch';
+    if (n.includes('90S') || n.includes('80S') || n.includes('VHS') || n.includes('RETRO') || n.includes('ERAS')) return 'theme-retro';
+    return 'theme-default';
+}
+
+function updatePlaylistOSD(name) {
+    if (!els.playlistLabel) return;
+
+    // Remove temas anteriores
+    els.playlistLabel.className = 'vhs-text-shadow bg-black/50 px-2';
+    
+    // Identifica e aplica novo tema
+    const themeClass = getThemeForPlaylist(name);
+    els.playlistLabel.classList.add(themeClass);
+
+    // Lógica de Quebra por ":"
+    const parts = name.split(':');
+    if (parts.length > 1) {
+        els.playlistLabel.innerHTML = `
+            <div class="osd-line-1">${parts[0].trim()}:</div>
+            <div class="osd-line-2">${parts[1].trim()}</div>
+        `;
+        els.playlistLabel.classList.add('osd-small');
+    } else {
+        els.playlistLabel.innerHTML = `<div class="osd-line-1">${name.toUpperCase()}</div>`;
+        // Se o nome for muito longo (mais de 20 chars), reduz a fonte mesmo sem quebra
+        if (name.length > 20) {
+            els.playlistLabel.classList.add('osd-small');
+        } else {
+            els.playlistLabel.classList.remove('osd-small');
+        }
+    }
 }
 
 function fisherYatesShuffle(array) {
@@ -285,9 +350,6 @@ function togglePower() {
     }
 }
 
-/**
- * Carregamento Randômico de Grupo e Canal (Início Normal)
- */
 async function loadDefaultChannel() {
     if (Object.keys(state.channelsByCategory).length === 0) {
         await fetchGuideData();
@@ -315,7 +377,7 @@ async function loadChannelContent(playlistName, targetVideoId = null) {
     showStatic(500);
     showStatus(`TUNING: ${playlistName}`);
     state.currentChannelName = playlistName;
-    els.playlistLabel.innerText = playlistName.toUpperCase();
+    updatePlaylistOSD(playlistName);
 
     const { data, error } = await supabase
         .from('musicas_backup')
@@ -348,7 +410,7 @@ function playCurrentVideo() {
     state.currentVideoData = videoData;
     
     if (player && state.playerReady && videoData.video_id) {
-        player.loadVideoById(videoData.video_id, 0); // Sempre inicia do zero (0)
+        player.loadVideoById(videoData.video_id, 0); 
     } else if (videoData) {
         state.currentIndex++;
         if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
@@ -417,21 +479,38 @@ function showOSD() {
     }, 4000);
 }
 
+function formatCredits(text, isDirector = false) {
+    if (!text) return "";
+    let formatted = text.toString();
+    
+    if (!isDirector) {
+        const connectors = [/ ft\./gi, / & /g, / vs\./gi];
+        connectors.forEach(reg => {
+            formatted = formatted.replace(reg, (match) => `<span class="credit-connector">${match}</span>`);
+        });
+    } else {
+        formatted = formatted.replace(/ & /g, (match) => `<span class="credit-connector">${match}</span>`);
+    }
+    
+    return formatted;
+}
+
 function updateCreditsInfo(data) {
     const updateLine = (element, text, isDirector = false) => {
-        const lineParent = element.parentElement;
+        const lineParent = element.closest('.credit-line');
         if (text && text.toString().trim() !== '' && text !== 'null' && text !== 'undefined') {
-            element.innerHTML = text;
+            element.innerHTML = formatCredits(text, isDirector);
             lineParent.style.display = 'flex';
         } else {
             lineParent.style.display = 'none';
         }
     };
+    
     updateLine(els.credArtist, data.artista);
     updateLine(els.credSong, data.musica);
     updateLine(els.credAlbum, data.album);
     updateLine(els.credYear, data.ano);
-    updateLine(els.credDirector, data.direcao);
+    updateLine(els.credDirector, data.direcao, true);
 }
 
 async function fetchGuideData() {
@@ -526,7 +605,6 @@ function setupEventListeners() {
         els.headerEditBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (state.currentVideoData && state.currentVideoData.id) {
-                // PAUSA ANTES DE SAIR
                 if (player && state.playerReady) player.pauseVideo();
 
                 const resumeState = {

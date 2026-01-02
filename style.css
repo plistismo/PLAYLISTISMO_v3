@@ -18,22 +18,125 @@ body.guide-active #tv-internal-guide {
 }
 
 body.guide-active #app-viewport {
-    transform: translateX(225px) scale(0.85); /* Empurra a TV para a direita e reduz levemente */
-    filter: none !important; /* Remove qualquer filtro de blur ou brightness */
-    cursor: pointer; /* Indica que clicar na TV irá fechar o guia */
+    transform: translateX(225px) scale(0.85);
+    filter: none !important;
+    cursor: pointer;
 }
 
-/* Garante que o player não interfira no clique de fechamento quando o guia está aberto */
 body.guide-active #player {
     pointer-events: none;
 }
 
-/* Responsividade do Push */
 @media (max-width: 1024px) {
     body.guide-active #app-viewport {
         transform: translateX(50%) scale(0.6);
-        opacity: 1; /* Mantém opacidade total */
+        opacity: 1;
     }
+}
+
+/* --- OSD LAYOUT & TYPOGRAPHY --- */
+#osd-layer {
+    padding: 1.5rem;
+}
+
+#tv-playlist-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    line-height: 1;
+    transition: all 0.3s ease;
+    max-width: 300px;
+}
+
+.osd-line-1 {
+    font-size: 1.8rem;
+    color: #fff;
+}
+
+.osd-line-2 {
+    font-size: 1.4rem;
+    color: #ffff00;
+    margin-top: 0.2rem;
+}
+
+/* Redução de fonte para textos longos ou com quebra */
+.osd-small .osd-line-1 { font-size: 1.4rem; }
+.osd-small .osd-line-2 { font-size: 1.1rem; }
+
+/* --- THEMATIC ANIMATIONS --- */
+
+/* 1. THEME: RIDE / DRIVE (Car passage) */
+@keyframes theme-ride-anim {
+    0% { transform: translateX(0); }
+    10% { transform: translateX(-5px); }
+    20% { transform: translateX(0); }
+}
+
+@keyframes car-move {
+    0% { left: 110%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { left: -20%; opacity: 0; }
+}
+
+.theme-ride.animate-trigger {
+    animation: theme-ride-anim 0.5s ease-in-out;
+}
+
+.theme-ride.animate-trigger::after {
+    content: '🚗';
+    position: absolute;
+    bottom: -5px;
+    font-size: 1.2rem;
+    animation: car-move 1.5s linear forwards;
+    z-index: 100;
+}
+
+/* 2. THEME: ROCK / METAL (Aggressive Shake) */
+@keyframes theme-rock-anim {
+    0% { transform: translate(0,0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0,0); }
+}
+
+.theme-rock.animate-trigger {
+    animation: theme-rock-anim 0.2s linear infinite;
+}
+
+/* 3. THEME: GLITCH (RGB Split) */
+@keyframes theme-glitch-anim {
+    0% { text-shadow: 2px 0 red, -2px 0 blue; opacity: 1; }
+    50% { text-shadow: -2px 0 red, 2px 0 blue; opacity: 0.8; transform: skewX(5deg); }
+    100% { text-shadow: 2px 0 red, -2px 0 blue; opacity: 1; }
+}
+
+.theme-glitch.animate-trigger {
+    animation: theme-glitch-anim 0.3s steps(2) infinite;
+}
+
+/* 4. THEME: RETRO / VHS (Tracking pulse) */
+@keyframes theme-retro-anim {
+    0% { filter: blur(0px) brightness(1); }
+    50% { filter: blur(1px) brightness(1.5); transform: scaleY(1.05); }
+    100% { filter: blur(0px) brightness(1); }
+}
+
+.theme-retro.animate-trigger {
+    animation: theme-retro-anim 0.4s linear;
+}
+
+/* 5. THEME: DEFAULT (Blink) */
+@keyframes theme-default-anim {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.theme-default.animate-trigger {
+    animation: theme-default-anim 1s ease-in-out 2;
 }
 
 /* Texture Classes */
@@ -213,6 +316,7 @@ body.guide-active #player {
     pointer-events: none;
     z-index: 60;
     width: auto;
+    max-width: 85%;
     animation: rgb-shift-text 5s infinite alternate;
 }
 
@@ -221,11 +325,17 @@ body.guide-active #player {
 }
 
 .credit-line {
-    margin-bottom: 0.3rem; 
+    margin-bottom: 0.35rem; 
     letter-spacing: 0.6px;
-    white-space: nowrap; 
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.credit-text-content {
+    flex: 1;
+    min-width: 0;
 }
 
 .credit-connector {
@@ -236,10 +346,10 @@ body.guide-active #player {
 }
 
 .icon {
-    display: inline-block;
-    width: 1.2em; 
-    text-align: center;
-    margin-right: 0.5em;
+    flex-shrink: 0;
+    width: 1.8rem;
+    text-align: left;
+    margin-right: 0.1rem;
     color: #ffff00; 
     filter: drop-shadow(2px 2px 0px #000);
 }
