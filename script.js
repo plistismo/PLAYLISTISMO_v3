@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -546,12 +545,36 @@ els.guideSearch.addEventListener('input', (e) => {
 });
 
 function setupEventListeners() {
-    els.tvPowerBtn.addEventListener('click', togglePower);
-    els.btnNextCh.addEventListener('click', () => changeChannel(1));
-    els.btnPrevCh.addEventListener('click', () => changeChannel(-1));
-    els.btnNextGrp.addEventListener('click', () => changeGroup(1));
-    els.btnPrevGrp.addEventListener('click', () => changeGroup(-1));
-    els.btnSearch.addEventListener('click', toggleGuide);
+    // BOTÕES DA TV - Usamos stopPropagation para evitar que o clique na TV feche o menu aberto
+    els.tvPowerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePower();
+    });
+    
+    els.btnNextCh.addEventListener('click', (e) => {
+        e.stopPropagation();
+        changeChannel(1);
+    });
+    
+    els.btnPrevCh.addEventListener('click', (e) => {
+        e.stopPropagation();
+        changeChannel(-1);
+    });
+    
+    els.btnNextGrp.addEventListener('click', (e) => {
+        e.stopPropagation();
+        changeGroup(1);
+    });
+    
+    els.btnPrevGrp.addEventListener('click', (e) => {
+        e.stopPropagation();
+        changeGroup(-1);
+    });
+    
+    els.btnSearch.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleGuide();
+    });
     
     // Fechar ao clicar na área da TV quando o guia estiver aberto
     document.getElementById('app-viewport').addEventListener('click', () => {
@@ -559,7 +582,8 @@ function setupEventListeners() {
     });
 
     if(els.headerEditBtn) {
-        els.headerEditBtn.addEventListener('click', () => {
+        els.headerEditBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             if (state.currentVideoData && state.currentVideoData.id) {
                 window.location.href = `admin.html?edit_id=${state.currentVideoData.id}`;
             } else {

@@ -1,4 +1,3 @@
-
 /* Custom Fonts & Base */
 body {
     font-family: 'VT323', monospace;
@@ -21,7 +20,12 @@ body.guide-active #tv-internal-guide {
 body.guide-active #app-viewport {
     transform: translateX(225px) scale(0.85); /* Empurra a TV para a direita e reduz levemente */
     filter: blur(2px) brightness(0.7);
-    pointer-events: none; /* Evita cliques na TV enquanto no guia */
+    cursor: pointer; /* Indica que clicar na TV irá fechar o guia */
+}
+
+/* Garante que o player não interfira no clique de fechamento quando o guia está aberto */
+body.guide-active #player {
+    pointer-events: none;
 }
 
 /* Responsividade do Push */
