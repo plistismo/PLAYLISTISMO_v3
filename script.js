@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
+// --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
 const SB_KEY = 'sb_publishable_B_pNNMFJR044JCaY5YIh6A_vPtDHf1M';
 const supabase = createClient(SB_URL, SB_KEY);
@@ -36,20 +37,20 @@ const els = {
     videoCredits: document.getElementById('video-credits'),
     statusMsg: document.getElementById('status-message'),
     statusText: document.getElementById('status-text'),
-    // Buttons
+    // Buttons Físicos Original
     btnNextCh: document.getElementById('tv-ch-next'),
     btnPrevCh: document.getElementById('tv-ch-prev'),
     btnNextGrp: document.getElementById('tv-grp-next'),
     btnPrevGrp: document.getElementById('tv-grp-prev'),
     btnSearch: document.getElementById('tv-search-btn'),
     headerEditBtn: document.getElementById('header-edit-btn'),
-    // Credits
+    // Credits Original
     credArtist: document.getElementById('artist-name'),
     credSong: document.getElementById('song-name'),
     credAlbum: document.getElementById('album-name'),
     credYear: document.getElementById('release-year'),
     credDirector: document.getElementById('director-name'),
-    // Guide
+    // Guide Original
     guideClock: document.getElementById('guide-clock'),
     guideChannelList: document.getElementById('channel-guide-container'),
     guideSearch: document.getElementById('channel-search'),
@@ -58,6 +59,8 @@ const els = {
     guideNowPlayingBox: document.getElementById('guide-now-playing'),
     speakerGrids: document.querySelectorAll('.speaker-grid')
 };
+
+// --- INICIALIZAÇÃO ---
 
 async function init() {
     populateSpeakers();
@@ -92,7 +95,7 @@ function startClocks() {
     }, 1000);
 }
 
-// --- MOTOR DE IDENTIDADE V7 ---
+// --- MOTOR DE IDENTIDADE V7 (MIV-7) ---
 function getThematicSetup(name) {
     const n = name.toUpperCase();
     if (n.includes('RIDE') || n.includes('DRIVE') || n.includes('SPEED') || n.includes('CAR')) {
@@ -110,6 +113,9 @@ function getThematicSetup(name) {
     return { theme: 'default', bumpClass: 'bump-noise', logo: '📺 TV' };
 }
 
+/**
+ * Sistema de Bump (Vinheta MTV) disparado na troca de vídeo ou canal
+ */
 function triggerBump(playlistName) {
     if (state.isBumping || !state.isOn) return;
     state.isBumping = true;
@@ -119,8 +125,8 @@ function triggerBump(playlistName) {
 
     els.bumpContent.innerHTML = `
         <div class="bump-ident ${setup.bumpClass}">
-            <div class="text-[clamp(1rem,4vmin,2rem)] opacity-50 mb-4 font-vt323">${setup.logo}</div>
-            <div class="text-[clamp(2rem,10vmin,6rem)] font-black uppercase leading-tight">${title}</div>
+            <div class="text-[clamp(1rem,4vmin,2.5rem)] opacity-60 mb-6 font-vt323 tracking-[0.4em]">${setup.logo}</div>
+            <div class="text-[clamp(2rem,12vmin,8rem)] font-black uppercase leading-[0.9] tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">${title}</div>
         </div>
     `;
     els.bumpLayer.classList.remove('hidden');
@@ -146,7 +152,7 @@ function updatePlaylistOSD(name) {
     }
 }
 
-// --- PLAYER & NAV ---
+// --- PLAYER & NAVEGAÇÃO ---
 function loadYouTubeAPI() {
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
@@ -183,6 +189,7 @@ function startCreditsMonitor() {
         if (!player || typeof player.getCurrentTime !== 'function') return;
         const cur = player.getCurrentTime();
         const dur = player.getDuration();
+        // Exibe no início (4-14s) e no final (últimos 15s)
         const show = (cur > 4 && cur < 14) || (dur > 40 && cur > dur - 15 && cur < dur - 4);
         els.videoCredits.classList.toggle('visible', show);
     }, 1000);
@@ -213,6 +220,8 @@ function playCurrentVideo() {
 }
 
 function handleVideoEnd() {
+    // Dispara bump na troca automática de vídeo
+    triggerBump(state.currentChannelName);
     state.currentIndex = (state.currentIndex + 1) % state.currentChannelList.length;
     playCurrentVideo();
 }
@@ -301,10 +310,10 @@ function renderGuide() {
         if (!state.channelsByCategory[cat]) return;
         const div = document.createElement('div');
         div.className = 'mb-2';
-        div.innerHTML = `<div class="bg-[#0000aa] p-1 px-2 text-white font-bold border border-white/20 uppercase">${cat}</div>`;
+        div.innerHTML = `<div class="bg-[#0000aa] p-1 px-2 text-white font-bold border border-white/20 uppercase tracking-widest text-xs">${cat}</div>`;
         state.channelsByCategory[cat].forEach(pl => {
             const btn = document.createElement('button');
-            btn.className = 'w-full text-left p-1 px-2 text-gray-300 hover:bg-white hover:text-[#0000aa] border-b border-white/5 uppercase text-sm';
+            btn.className = 'w-full text-left p-1 px-2 text-gray-300 hover:bg-white hover:text-[#0000aa] border-b border-white/5 uppercase text-sm font-vt323';
             btn.innerText = pl.name;
             btn.onclick = () => { loadChannelContent(pl.name); toggleGuide(); };
             div.appendChild(btn);
@@ -340,7 +349,9 @@ function checkResumeState() {
         const { playlist, videoId } = JSON.parse(saved);
         localStorage.removeItem('tv_resume_state');
         state.isOn = true;
-        togglePower();
+        els.screenOff.classList.add('hidden');
+        els.screenOn.classList.remove('hidden');
+        els.powerLed.classList.add('bg-red-500');
         loadChannelContent(playlist, videoId);
     }
 }
