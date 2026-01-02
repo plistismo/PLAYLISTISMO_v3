@@ -56,7 +56,7 @@ const els = {
     statusText: document.getElementById('status-text'),
     
     guideContainer: document.getElementById('tv-internal-guide'),
-    guideSidebar: document.getElementById('tv-internal-guide'), // Redirecionado para o contêiner fixo
+    guideSidebar: document.getElementById('tv-internal-guide'), 
     guideClock: document.getElementById('guide-clock'),
     guideChannelList: document.getElementById('channel-guide-container'),
     guideSearch: document.getElementById('channel-search'),
@@ -77,27 +77,18 @@ const els = {
 async function init() {
     const { data: { session } } = await supabase.auth.getSession();
     
-    if (!session) {
-        console.log("👤 Modo Convidado Ativo");
-    } else {
-        console.log("👤 Usuário Autenticado:", session.user.email);
-    }
-
     checkAdminAccess(session);
     startClocks();
     loadYouTubeAPI();
     setupEventListeners();
-    
-    // Carregar dados e verificar se deve restaurar estado ou iniciar randômico
     await fetchGuideData();
     
     const resumeData = localStorage.getItem('tv_resume_state');
     if (resumeData) {
         try {
             const savedState = JSON.parse(resumeData);
-            localStorage.removeItem('tv_resume_state'); // Limpa após usar
+            localStorage.removeItem('tv_resume_state'); 
             
-            // Localiza o grupo da playlist salva
             let groupIndex = -1;
             for (let i = 0; i < state.groupsOrder.length; i++) {
                 const groupName = state.groupsOrder[i];
@@ -108,17 +99,25 @@ async function init() {
             }
             
             if (groupIndex !== -1) {
+                // RESTAURAÇÃO DE ESTADO APÓS EDIT
                 state.currentGroupIndex = groupIndex;
+                state.isOn = true; // Força a TV a ligar
+
+                // Aplica visual de TV Ligada IMEDIATAMENTE
+                els.powerLed.classList.add('bg-red-500', 'shadow-[0_0_8px_#ff0000]');
+                els.powerLed.classList.remove('bg-red-900');
+                els.screenOff.classList.add('hidden');
+                els.screenOn.classList.remove('hidden');
+                els.screenOn.classList.add('crt-turn-on');
+
                 await loadChannelContent(savedState.playlist, savedState.videoId);
+                setTimeout(() => showOSD(), 1000);
                 return;
             }
         } catch (e) {
             console.error("Erro ao restaurar estado:", e);
         }
     }
-    
-    // Se não houver retorno de edit, o loadDefaultChannel agora é randômico
-    // Mas não carregamos ainda, esperamos o usuário ligar a TV
 }
 
 function checkAdminAccess(session) {
@@ -287,14 +286,13 @@ function togglePower() {
 }
 
 /**
- * Carregamento Randômico de Grupo e Canal
+ * Carregamento Randômico de Grupo e Canal (Início Normal)
  */
 async function loadDefaultChannel() {
     if (Object.keys(state.channelsByCategory).length === 0) {
         await fetchGuideData();
     }
 
-    // Filtra apenas grupos que possuem playlists
     const validGroups = state.groupsOrder.filter(group => 
         state.channelsByCategory[group] && state.channelsByCategory[group].length > 0
     );
@@ -304,20 +302,15 @@ async function loadDefaultChannel() {
         return;
     }
 
-    // Sorteia um grupo
     const randomGroup = validGroups[Math.floor(Math.random() * validGroups.length)];
     state.currentGroupIndex = state.groupsOrder.indexOf(randomGroup);
 
-    // Sorteia uma playlist dentro desse grupo
     const playlists = state.channelsByCategory[randomGroup];
     const randomPlaylist = playlists[Math.floor(Math.random() * playlists.length)];
 
     await loadChannelContent(randomPlaylist.name);
 }
 
-/**
- * Carrega conteúdo do canal, opcionalmente focando em um vídeo específico (p/ retorno de edit)
- */
 async function loadChannelContent(playlistName, targetVideoId = null) {
     showStatic(500);
     showStatus(`TUNING: ${playlistName}`);
@@ -336,9 +329,8 @@ async function loadChannelContent(playlistName, targetVideoId = null) {
         return;
     }
 
-    // Se tivermos um vídeo alvo (retorno de edit), não embaralhamos ou garantimos que ele seja o primeiro
     if (targetVideoId) {
-        state.currentChannelList = [...data]; // Mantém ordem original ou específica
+        state.currentChannelList = [...data]; 
         const foundIndex = data.findIndex(v => v.video_id === targetVideoId);
         state.currentIndex = foundIndex !== -1 ? foundIndex : 0;
     } else {
@@ -356,7 +348,7 @@ function playCurrentVideo() {
     state.currentVideoData = videoData;
     
     if (player && state.playerReady && videoData.video_id) {
-        player.loadVideoById(videoData.video_id);
+        player.loadVideoById(videoData.video_id, 0); // Sempre inicia do zero (0)
     } else if (videoData) {
         state.currentIndex++;
         if (state.currentIndex >= state.currentChannelList.length) state.currentIndex = 0;
@@ -425,88 +417,21 @@ function showOSD() {
     }, 4000);
 }
 
-function cleanYouTubeTitle(title) {
-    if (!title) return "";
-    return title
-        .replace(/[\(\[\{].*?[\)\]\}]/g, '')
-        .replace(/official video/gi, '')
-        .replace(/official music video/gi, '')
-        .replace(/video clip/gi, '')
-        .replace(/lyrics/gi, '')
-        .replace(/hq/gi, '')
-        .replace(/4k/gi, '')
-        .replace(/hd/gi, '')
-        .replace(/\s+/g, ' ')
-        .replace(/\s*[–—|:]\s*/g, ' - ')
-        .trim();
-}
-
-/**
- * REGRAS DE EXIBIÇÃO: Conectores não negritos (ft., &, vs.)
- */
-function formatCredits(text, isDirector = false) {
-    if (!text) return "";
-    let formatted = text.toString();
-    
-    // Conectores de Artista
-    if (!isDirector) {
-        const connectors = [/ ft\./gi, / & /g, / vs\./gi];
-        connectors.forEach(reg => {
-            formatted = formatted.replace(reg, (match) => `<span class="credit-connector">${match}</span>`);
-        });
-    } else {
-        // Conector de Diretor
-        formatted = formatted.replace(/ & /g, (match) => `<span class="credit-connector">${match}</span>`);
-    }
-    
-    return formatted;
-}
-
 function updateCreditsInfo(data) {
-    let artist = data.artista;
-    let song = data.musica;
-    
-    if ((!artist || !song || artist === 'Unknown' || song === 'Unknown' || artist.trim() === '') && player && typeof player.getVideoData === 'function') {
-        const ytData = player.getVideoData();
-        if (ytData && ytData.title) {
-            const cleanTitle = cleanYouTubeTitle(ytData.title);
-            const parts = cleanTitle.split(' - ');
-            if (parts.length >= 2) {
-                if (!artist) artist = parts[0].trim();
-                if (!song) song = parts.slice(1).join(' - ').trim(); 
-            } else {
-                if (!artist && ytData.author) {
-                    artist = ytData.author.replace(/VEVO/gi, '').replace(/Official/gi, '').replace(/Topic/gi, '').trim();
-                }
-                if (!song) {
-                    if (artist && cleanTitle.toLowerCase().startsWith(artist.toLowerCase())) {
-                        let tempSong = cleanTitle.substring(artist.length).trim();
-                        tempSong = tempSong.replace(/^[-: ]+/, '').trim();
-                        song = tempSong || cleanTitle;
-                    } else {
-                        song = cleanTitle;
-                    }
-                }
-            }
-        }
-    }
-
-    const updateLine = (element, text, isDirector = false, isArtist = false) => {
+    const updateLine = (element, text, isDirector = false) => {
         const lineParent = element.parentElement;
         if (text && text.toString().trim() !== '' && text !== 'null' && text !== 'undefined') {
-            // Aplicando a formatação de conectores (innerHTML para permitir tags de span)
-            element.innerHTML = formatCredits(text, isDirector);
+            element.innerHTML = text;
             lineParent.style.display = 'flex';
         } else {
             lineParent.style.display = 'none';
         }
     };
-
-    updateLine(els.credArtist, artist, false, true);
-    updateLine(els.credSong, song);
+    updateLine(els.credArtist, data.artista);
+    updateLine(els.credSong, data.musica);
     updateLine(els.credAlbum, data.album);
     updateLine(els.credYear, data.ano);
-    updateLine(els.credDirector, data.direcao, true);
+    updateLine(els.credDirector, data.direcao);
 }
 
 async function fetchGuideData() {
@@ -570,9 +495,6 @@ function updateGuideNowPlaying() {
     }
 }
 
-/**
- * TOGGLE GUIDE (NON-STOP VERSION)
- */
 function toggleGuide() {
     state.isSearchOpen = !state.isSearchOpen;
     if (state.isSearchOpen) {
@@ -584,53 +506,18 @@ function toggleGuide() {
     }
 }
 
-els.guideSearch.addEventListener('input', (e) => {
-    const term = e.target.value.toUpperCase();
-    const links = document.querySelectorAll('.teletext-link');
-    links.forEach(link => {
-        const text = link.querySelector('span').innerText.toUpperCase();
-        if (text.includes(term)) {
-            link.style.display = 'flex';
-            link.parentElement.classList.add('open');
-        } else {
-            link.style.display = 'none';
-        }
-    });
-});
-
 function setupEventListeners() {
-    // BOTÕES DA TV
     els.tvPowerBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         togglePower();
     });
     
-    els.btnNextCh.addEventListener('click', (e) => {
-        e.stopPropagation();
-        changeChannel(1);
-    });
+    els.btnNextCh.addEventListener('click', (e) => { e.stopPropagation(); changeChannel(1); });
+    els.btnPrevCh.addEventListener('click', (e) => { e.stopPropagation(); changeChannel(-1); });
+    els.btnNextGrp.addEventListener('click', (e) => { e.stopPropagation(); changeGroup(1); });
+    els.btnPrevGrp.addEventListener('click', (e) => { e.stopPropagation(); changeGroup(-1); });
+    els.btnSearch.addEventListener('click', (e) => { e.stopPropagation(); toggleGuide(); });
     
-    els.btnPrevCh.addEventListener('click', (e) => {
-        e.stopPropagation();
-        changeChannel(-1);
-    });
-    
-    els.btnNextGrp.addEventListener('click', (e) => {
-        e.stopPropagation();
-        changeGroup(1);
-    });
-    
-    els.btnPrevGrp.addEventListener('click', (e) => {
-        e.stopPropagation();
-        changeGroup(-1);
-    });
-    
-    els.btnSearch.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleGuide();
-    });
-    
-    // Fechar ao clicar na área da TV quando o guia estiver aberto
     document.getElementById('app-viewport').addEventListener('click', () => {
         if (state.isSearchOpen) toggleGuide();
     });
@@ -639,16 +526,15 @@ function setupEventListeners() {
         els.headerEditBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (state.currentVideoData && state.currentVideoData.id) {
-                // PERSISTÊNCIA: Salva estado atual antes de ir para o admin
+                // PAUSA ANTES DE SAIR
+                if (player && state.playerReady) player.pauseVideo();
+
                 const resumeState = {
                     playlist: state.currentChannelName,
                     videoId: state.currentVideoData.video_id
                 };
                 localStorage.setItem('tv_resume_state', JSON.stringify(resumeState));
-                
                 window.location.href = `admin.html?edit_id=${state.currentVideoData.id}`;
-            } else {
-                showStatus("NO VIDEO DATA TO EDIT");
             }
         });
     }
@@ -656,7 +542,6 @@ function setupEventListeners() {
     document.addEventListener('keydown', (e) => {
         if (!state.isOn && e.key !== 'p') return;
         if (e.key === 'Escape' && state.isSearchOpen) toggleGuide();
-        
         if (document.activeElement === els.guideSearch) return;
 
         if (e.key === 'ArrowRight') changeChannel(1);

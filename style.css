@@ -19,7 +19,7 @@ body.guide-active #tv-internal-guide {
 
 body.guide-active #app-viewport {
     transform: translateX(225px) scale(0.85); /* Empurra a TV para a direita e reduz levemente */
-    /* Removido blur e brightness para manter a TV visível e nítida */
+    filter: none !important; /* Remove qualquer filtro de blur ou brightness */
     cursor: pointer; /* Indica que clicar na TV irá fechar o guia */
 }
 
@@ -32,7 +32,7 @@ body.guide-active #player {
 @media (max-width: 1024px) {
     body.guide-active #app-viewport {
         transform: translateX(50%) scale(0.6);
-        opacity: 0.8; /* Aumentado de 0.5 para 0.8 para melhor visibilidade em mobile */
+        opacity: 1; /* Mantém opacidade total */
     }
 }
 
