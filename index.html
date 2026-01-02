@@ -4,20 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PlayListismo V6 | Playlitronitron</title>
-    
-    <!-- Evitar erro 404 de Favicon -->
     <link rel="icon" href="data:,">
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Jost:wght@300;700&family=Permanent+Marker&family=Bungee&family=Metal+Mania&display=swap" rel="stylesheet">
-    
-    <!-- Custom Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Orbitron:wght@400;900&family=Rajdhani:wght@500;700&family=Jost:wght@300;700&family=Permanent+Marker&family=Monoton&family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-
-    <!-- Import Map for Modules -->
     <script type="importmap">
     {
       "imports": {
@@ -28,7 +18,7 @@
 </head>
 <body class="bg-[#050505] min-h-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
 
-    <!-- ADMIN PANEL (HEADER) -->
+    <!-- BOTÕES ADMINISTRATIVOS (RESTORED) -->
     <div id="admin-panel-header" class="hidden fixed top-4 right-4 z-[9990] flex gap-2">
         <a href="admin.html" class="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">
             ⚙ SERVICE MODE
@@ -38,12 +28,7 @@
         </button>
     </div>
 
-    <!-- Ambient Background -->
-    <div class="fixed inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#1a1a1a] via-[#080808] to-black pointer-events-none">
-        <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#333 1px, transparent 1px); background-size: 40px 40px;"></div>
-    </div>
-
-    <!-- SIDEBAR GUIDE (NON-STOP MODE) -->
+    <!-- GUIDE (TELETEXTO ORIGINAL) -->
     <div id="tv-internal-guide" class="fixed inset-y-0 left-0 z-[100] w-full md:w-[450px] teletext-bg flex flex-col shadow-[20px_0_60px_rgba(0,0,0,0.9)] border-r-4 border-white/10 transform -translate-x-full transition-transform duration-500 ease-in-out font-vt323 h-full">
         <div class="bg-black p-4 flex justify-between items-center border-b-2 border-white/20 shrink-0">
             <div class="flex flex-col leading-none">
@@ -52,67 +37,55 @@
                 </span>
                 <span class="text-xs text-gray-400 tracking-[0.2em] uppercase">Playlitronitron</span>
             </div>
-            <div class="text-white text-xl animate-pulse">
-                <span id="guide-clock">00:00</span>
-            </div>
+            <div class="text-white text-xl animate-pulse"><span id="guide-clock">00:00</span></div>
         </div>
         <div class="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
             <div id="guide-now-playing" class="bg-black border-2 border-white p-3 mb-6 hidden shrink-0 shadow-[4px_4px_0_rgba(0,0,0,0.5)]">
-                <div class="text-[#00ffff] text-sm mb-1 uppercase tracking-wider">Tocando Agora:</div>
                 <div id="np-title" class="text-[#ffff00] text-xl uppercase leading-tight mb-1 line-clamp-2">--</div>
-                <div class="flex justify-between text-white text-sm opacity-80">
-                    <span id="np-playlist">PLAYLIST: --</span>
-                </div>
+                <div id="np-playlist" class="text-white text-sm opacity-80 uppercase">CANAL: --</div>
             </div>
             <div class="relative bg-black border-2 border-[#ffff00] p-2 mb-6 flex items-center shrink-0 shadow-[0_0_10px_rgba(255,0,0,0.2)]">
-                <span class="text-[#00ff00] text-2xl mr-2">>>></span>
                 <input type="text" id="channel-search" class="w-full bg-transparent text-white text-2xl uppercase outline-none font-vt323 placeholder-white/30" placeholder="BUSCAR..." autocomplete="off">
             </div>
-            <div id="channel-guide-container" class="flex flex-col gap-3 overflow-y-auto custom-scrollbar pr-2 pb-10 flex-1">
-                <div class="text-white text-xl animate-pulse text-center mt-10">BUSCANDO SINAL...</div>
-            </div>
+            <div id="channel-guide-container" class="flex flex-col gap-3 overflow-y-auto custom-scrollbar pr-2 pb-10 flex-1"></div>
         </div>
-        <div class="bg-black p-3 text-center text-white text-sm border-t-2 border-white/20 shrink-0">
-             <div class="flex justify-center gap-4 mb-2">
-                 <span class="text-red-500 font-bold drop-shadow-[1px_1px_0_black]">FECHAR (ESC)</span>
-                 <span class="text-green-500 font-bold drop-shadow-[1px_1px_0_black]">SELECIONAR</span>
-             </div>
-             <a id="guide-admin-link" href="admin.html" class="hidden text-gray-600 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors">Service Mode</a>
-        </div>
-        <div class="absolute inset-0 scanlines pointer-events-none opacity-10"></div>
     </div>
 
-    <!-- MAIN APP WRAPPER (This slides) -->
-    <main id="app-viewport" class="relative z-10 w-full flex flex-col items-center justify-center transition-all duration-500 ease-in-out p-4">
-        
-        <div id="top-branding" class="text-white/30 font-vt323 text-xl md:text-2xl tracking-[0.5em] uppercase drop-shadow-[0_0_5px_rgba(255,255,255,0.2)] select-none pointer-events-none whitespace-nowrap mb-6 transition-all duration-500">
-            Playlitronitron V6
-        </div>
+    <main id="app-viewport" class="relative z-10 w-full flex flex-col items-center justify-center transition-all duration-500 p-4">
+        <div id="top-branding" class="text-white/30 font-vt323 text-xl md:text-2xl tracking-[0.5em] uppercase mb-6 drop-shadow-[0_0_5px_rgba(255,255,255,0.2)]">Playlitronitron V6</div>
 
         <div id="tv-stage" class="relative w-full max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto flex flex-col transition-all duration-500 ease-out">
             <div id="tv-unit" class="relative w-full transition-all duration-500 md:perspective-[1500px] group">
                 <div class="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
-                    <div class="hidden md:block absolute inset-0 bg-[#111] translate-z-back rounded-[28px] z-[-1] shadow-2xl"></div>
                     
                     <div class="flex flex-col md:flex-row bg-[#111] rounded-[16px] md:rounded-[36px] p-2 md:p-5 shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222]">
-                        <div class="hidden md:flex flex-col justify-center w-8 md:w-10 mr-3 space-y-0.5 opacity-50 speaker-grid shrink-0"></div>
+                        <div class="hidden md:flex flex-col justify-center w-10 mr-3 space-y-0.5 opacity-50 speaker-grid shrink-0"></div>
                         
                         <!-- SCREEN CONTAINER -->
                         <div class="relative w-full aspect-[4/3] bg-[#050505] rounded-[24px] md:rounded-[48px] overflow-hidden screen-container border-[4px] md:border-[8px] border-[#080808] z-10 box-content">
                             <div class="absolute inset-0 crt-overlay z-40 rounded-[24px] md:rounded-[48px] pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]"></div>
-                            <div id="screen-off" class="absolute inset-0 bg-[#080808] flex items-center justify-center z-20"></div>
+                            <div id="screen-off" class="absolute inset-0 bg-[#080808] z-20"></div>
                             
                             <div id="screen-on" class="hidden relative w-full h-full rounded-[20px] md:rounded-[44px] overflow-hidden bg-black">
-                                <div class="absolute inset-0 z-0 flex items-center justify-center bg-black">
-                                    <div id="player" class="w-full h-full"></div>
+                                <div id="player" class="w-full h-full"></div>
+                                
+                                <!-- BUMP LAYER (MTV STYLE - PRESERVED) -->
+                                <div id="bump-layer" class="absolute inset-0 z-[70] hidden flex items-center justify-center bg-transparent pointer-events-none overflow-hidden">
+                                    <div id="bump-content" class="relative w-full h-full flex items-center justify-center"></div>
                                 </div>
+
                                 <div id="static-overlay" class="absolute inset-0 z-30 opacity-0 pointer-events-none transition-opacity duration-100 bg-repeat"></div>
-                                <div id="osd-layer" class="absolute inset-0 z-30 pointer-events-none transition-opacity duration-1000">
+                                
+                                <div id="osd-layer" class="absolute inset-0 z-30 pointer-events-none">
                                     <div class="absolute top-4 right-6 text-right">
-                                        <!-- OSD TITLE BOX -->
-                                        <div id="tv-playlist-label" class="bg-black/50 px-3 py-1 border-r-4 border-yellow-500">--</div>
+                                        <div id="tv-playlist-label" class="osd-futuristic">--</div>
+                                    </div>
+                                    <div id="status-message" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center">
+                                        <div id="status-text" class="inline-block text-[#00ff00] font-pixel text-xs md:text-xl bg-black/90 px-4 py-3 border-2 border-[#00ff00] uppercase tracking-widest shadow-[0_0_15px_#00ff00]">INITIALIZING...</div>
                                     </div>
                                 </div>
+
+                                <!-- CRÉDITOS ORIGINAIS (RESTORED) -->
                                 <div id="video-credits" class="credits-overlay">
                                     <div class="credit-line"><span class="icon">🎤</span> <div class="credit-text-content"><span id="artist-name">Artist</span></div></div>
                                     <div class="credit-line"><span class="icon">🎼</span> <div class="credit-text-content"><span id="song-name">Song</span></div></div>
@@ -120,54 +93,48 @@
                                     <div class="credit-line"><span class="icon">📅</span> <div class="credit-text-content"><span id="release-year">Year</span></div></div>
                                     <div class="credit-line"><span class="icon">🎬</span> <div class="credit-text-content"><span id="director-name">Director</span></div></div>
                                 </div>
-                                <div id="status-message" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-full text-center pointer-events-none">
-                                    <div id="status-text" class="inline-block text-[#00ff00] font-pixel text-xs md:text-xl bg-black/90 px-4 py-3 border-2 border-[#00ff00] tracking-widest uppercase shadow-[0_0_15px_#00ff00] backdrop-blur-sm">
-                                        INITIALIZING...
-                                    </div>
-                                </div>
+
                                 <div class="vhs-noise z-40 mix-blend-overlay pointer-events-none"></div>
                                 <div class="vhs-tracking z-40 pointer-events-none"></div>
                                 <div class="absolute inset-0 scanlines pointer-events-none z-50 opacity-60"></div>
                             </div>
                         </div>
-                        <div class="hidden md:flex flex-col justify-center w-8 md:w-10 ml-3 space-y-0.5 opacity-50 speaker-grid shrink-0"></div>
+                        <div class="hidden md:flex flex-col justify-center w-10 ml-3 space-y-0.5 opacity-50 speaker-grid shrink-0"></div>
                     </div>
 
-                    <!-- BOTTOM PANEL -->
-                    <div class="mt-4 bg-[#111] rounded-b-lg rounded-t-sm border-t border-[#333] border-b border-[#050505] shadow-[inset_0_2px_5px_rgba(0,0,0,0.8)] p-3 md:px-5 md:py-4 relative z-50 flex flex-col md:flex-row justify-between items-center gap-3 shrink-0">
-                        <div class="flex flex-col items-start select-none opacity-80 hover:opacity-100 transition-opacity">
+                    <!-- PAINEL DE BOTÕES FÍSICOS (RESTORED) -->
+                    <div class="mt-4 bg-[#111] rounded-b-lg p-3 md:px-5 md:py-4 relative z-50 flex flex-col md:flex-row justify-between items-center gap-3 border-t border-[#333] shadow-[inset_0_2px_5px_rgba(0,0,0,0.8)]">
+                        <div class="flex flex-col items-start select-none opacity-80">
                             <span class="font-serif italic font-bold text-[#bbb] text-base md:text-xl drop-shadow-[1px_1px_0_rgba(0,0,0,1)]">Playli<span class="text-[#888]">trinitron</span></span>
                             <div class="flex gap-0.5 mt-0.5">
-                                <div class="w-6 h-1 bg-red-700"></div>
-                                <div class="w-6 h-1 bg-green-700"></div>
-                                <div class="w-6 h-1 bg-blue-700"></div>
+                                <div class="w-6 h-1 bg-red-700"></div><div class="w-6 h-1 bg-green-700"></div><div class="w-6 h-1 bg-blue-700"></div>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 md:gap-4">
-                            <button id="tv-search-btn" class="btn-retro-push w-10 h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative" title="Guide">
-                                <span class="text-[6px] absolute -top-3 text-gray-500 font-bold tracking-widest group-hover:text-yellow-500">GUIDE</span>
+                            <button id="tv-search-btn" class="btn-retro-push w-10 h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative">
+                                <span class="text-[6px] absolute -top-3 text-gray-500 font-bold uppercase tracking-widest group-hover:text-yellow-500">Guide</span>
                                 <svg class="w-4 h-4 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
                             </button>
                             <div class="w-px h-8 bg-[#222] border-r border-[#444]"></div>
                             <div class="flex flex-col items-center">
-                                <span class="text-[6px] text-gray-500 font-bold tracking-widest mb-1">GRP</span>
+                                <span class="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Grp</span>
                                 <div class="flex gap-1.5">
-                                    <button id="tv-grp-prev" class="btn-retro-push w-8 h-8 md:w-10 md:h-10 rounded-sm flex items-center justify-center group"><span class="text-gray-400 group-hover:text-white font-bold text-lg leading-none">-</span></button>
-                                    <button id="tv-grp-next" class="btn-retro-push w-8 h-8 md:w-10 md:h-10 rounded-sm flex items-center justify-center group"><span class="text-gray-400 group-hover:text-white font-bold text-lg leading-none">+</span></button>
+                                    <button id="tv-grp-prev" class="btn-retro-push w-8 h-8 md:w-10 md:h-10 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white">-</button>
+                                    <button id="tv-grp-next" class="btn-retro-push w-8 h-8 md:w-10 md:h-10 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white">+</button>
                                 </div>
                             </div>
                             <div class="flex flex-col items-center">
-                                <span class="text-[6px] text-gray-500 font-bold tracking-widest mb-1">CH</span>
+                                <span class="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Ch</span>
                                 <div class="flex gap-1.5">
-                                    <button id="tv-ch-prev" class="btn-retro-push w-8 h-8 md:w-10 md:h-10 rounded-sm flex items-center justify-center group"><svg class="w-4 h-4 text-gray-400 group-hover:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M11 19l-9-7 9-7v14zM20 19l-9-7 9-7v14z"/></svg></button>
-                                    <button id="tv-ch-next" class="btn-retro-push w-8 h-8 md:w-10 md:h-10 rounded-sm flex items-center justify-center group"><svg class="w-4 h-4 text-gray-400 group-hover:text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z"/></svg></button>
+                                    <button id="tv-ch-prev" class="btn-retro-push w-8 h-8 md:w-10 md:h-10 rounded-sm flex justify-center items-center group"><svg class="w-3 h-3 text-gray-400 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M11 19l-9-7 9-7v14zM20 19l-9-7 9-7v14z"/></svg></button>
+                                    <button id="tv-ch-next" class="btn-retro-push w-8 h-8 md:w-10 md:h-10 rounded-sm flex justify-center items-center group"><svg class="w-3 h-3 text-gray-400 group-hover:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z"/></svg></button>
                                 </div>
                             </div>
                         </div>
                         <div class="flex items-center gap-4 pl-4 border-l border-[#222] shadow-[inset_1px_0_0_#444]">
                             <div class="flex flex-col items-center">
                                 <div id="power-led" class="w-1.5 h-1.5 rounded-full bg-red-900 border border-black shadow-[0_0_2px_black] transition-all duration-300"></div>
-                                <span class="text-[6px] text-gray-500 mt-1 font-bold tracking-widest">PWR</span>
+                                <span class="text-[6px] text-gray-500 mt-1 font-bold uppercase">Pwr</span>
                             </div>
                             <button id="tv-power-btn" class="btn-power-push w-10 h-10 md:w-12 md:h-12 rounded-sm flex items-center justify-center group transition-all">
                                 <svg class="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
