@@ -87,7 +87,38 @@ async function init() {
     startClocks();
     loadYouTubeAPI();
     setupEventListeners();
-    fetchGuideData();
+    
+    // Carregar dados e verificar se deve restaurar estado ou iniciar randômico
+    await fetchGuideData();
+    
+    const resumeData = localStorage.getItem('tv_resume_state');
+    if (resumeData) {
+        try {
+            const savedState = JSON.parse(resumeData);
+            localStorage.removeItem('tv_resume_state'); // Limpa após usar
+            
+            // Localiza o grupo da playlist salva
+            let groupIndex = -1;
+            for (let i = 0; i < state.groupsOrder.length; i++) {
+                const groupName = state.groupsOrder[i];
+                if (state.channelsByCategory[groupName]?.some(p => p.name === savedState.playlist)) {
+                    groupIndex = i;
+                    break;
+                }
+            }
+            
+            if (groupIndex !== -1) {
+                state.currentGroupIndex = groupIndex;
+                await loadChannelContent(savedState.playlist, savedState.videoId);
+                return;
+            }
+        } catch (e) {
+            console.error("Erro ao restaurar estado:", e);
+        }
+    }
+    
+    // Se não houver retorno de edit, o loadDefaultChannel agora é randômico
+    // Mas não carregamos ainda, esperamos o usuário ligar a TV
 }
 
 function checkAdminAccess(session) {
@@ -255,23 +286,39 @@ function togglePower() {
     }
 }
 
+/**
+ * Carregamento Randômico de Grupo e Canal
+ */
 async function loadDefaultChannel() {
     if (Object.keys(state.channelsByCategory).length === 0) {
         await fetchGuideData();
     }
-    for (let i = 0; i < state.groupsOrder.length; i++) {
-        const groupName = state.groupsOrder[i];
-        if (state.channelsByCategory[groupName] && state.channelsByCategory[groupName].length > 0) {
-            state.currentGroupIndex = i;
-            const firstPlaylist = state.channelsByCategory[groupName][0];
-            await loadChannelContent(firstPlaylist.name);
-            return;
-        }
+
+    // Filtra apenas grupos que possuem playlists
+    const validGroups = state.groupsOrder.filter(group => 
+        state.channelsByCategory[group] && state.channelsByCategory[group].length > 0
+    );
+
+    if (validGroups.length === 0) {
+        showStatus("NO SIGNAL");
+        return;
     }
-    showStatus("NO SIGNAL");
+
+    // Sorteia um grupo
+    const randomGroup = validGroups[Math.floor(Math.random() * validGroups.length)];
+    state.currentGroupIndex = state.groupsOrder.indexOf(randomGroup);
+
+    // Sorteia uma playlist dentro desse grupo
+    const playlists = state.channelsByCategory[randomGroup];
+    const randomPlaylist = playlists[Math.floor(Math.random() * playlists.length)];
+
+    await loadChannelContent(randomPlaylist.name);
 }
 
-async function loadChannelContent(playlistName) {
+/**
+ * Carrega conteúdo do canal, opcionalmente focando em um vídeo específico (p/ retorno de edit)
+ */
+async function loadChannelContent(playlistName, targetVideoId = null) {
     showStatic(500);
     showStatus(`TUNING: ${playlistName}`);
     state.currentChannelName = playlistName;
@@ -289,8 +336,16 @@ async function loadChannelContent(playlistName) {
         return;
     }
 
-    state.currentChannelList = fisherYatesShuffle([...data]);
-    state.currentIndex = 0;
+    // Se tivermos um vídeo alvo (retorno de edit), não embaralhamos ou garantimos que ele seja o primeiro
+    if (targetVideoId) {
+        state.currentChannelList = [...data]; // Mantém ordem original ou específica
+        const foundIndex = data.findIndex(v => v.video_id === targetVideoId);
+        state.currentIndex = foundIndex !== -1 ? foundIndex : 0;
+    } else {
+        state.currentChannelList = fisherYatesShuffle([...data]);
+        state.currentIndex = 0;
+    }
+
     updateGuideNowPlaying();
     playCurrentVideo();
 }
@@ -517,7 +572,6 @@ function updateGuideNowPlaying() {
 
 /**
  * TOGGLE GUIDE (NON-STOP VERSION)
- * Gerencia a classe 'guide-active' no body para orquestrar o push da TV
  */
 function toggleGuide() {
     state.isSearchOpen = !state.isSearchOpen;
@@ -545,7 +599,7 @@ els.guideSearch.addEventListener('input', (e) => {
 });
 
 function setupEventListeners() {
-    // BOTÕES DA TV - Usamos stopPropagation para evitar que o clique na TV feche o menu aberto
+    // BOTÕES DA TV
     els.tvPowerBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         togglePower();
@@ -585,6 +639,13 @@ function setupEventListeners() {
         els.headerEditBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (state.currentVideoData && state.currentVideoData.id) {
+                // PERSISTÊNCIA: Salva estado atual antes de ir para o admin
+                const resumeState = {
+                    playlist: state.currentChannelName,
+                    videoId: state.currentVideoData.video_id
+                };
+                localStorage.setItem('tv_resume_state', JSON.stringify(resumeState));
+                
                 window.location.href = `admin.html?edit_id=${state.currentVideoData.id}`;
             } else {
                 showStatus("NO VIDEO DATA TO EDIT");
@@ -596,7 +657,6 @@ function setupEventListeners() {
         if (!state.isOn && e.key !== 'p') return;
         if (e.key === 'Escape' && state.isSearchOpen) toggleGuide();
         
-        // Evita navegação de canais se estiver digitando na busca
         if (document.activeElement === els.guideSearch) return;
 
         if (e.key === 'ArrowRight') changeChannel(1);
