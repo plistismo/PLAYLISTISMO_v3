@@ -28,6 +28,10 @@ const state = {
     currentVideoData: null, 
     isPlaying: false,
 
+    // UI Identity
+    currentTheme: 'theme-default',
+    currentVariant: 'v1',
+
     // Animation Engine
     animationTimer: null
 };
@@ -148,7 +152,7 @@ function startClocks() {
 }
 
 /**
- * Motor de Animações Temáticas Contextuais
+ * Motor de Animações Temáticas Contextuais (MIVD)
  */
 function startAnimationEngine() {
     if (state.animationTimer) clearInterval(state.animationTimer);
@@ -157,26 +161,30 @@ function startAnimationEngine() {
         if (state.isOn && state.isPlaying && !state.isSearchOpen) {
             triggerThematicAnimation();
         }
-    }, 20000); // Executa a cada 20 segundos
+    }, 20000); 
 }
 
 function triggerThematicAnimation() {
     if (!els.playlistLabel) return;
     
-    // Aplica a classe de gatilho
     els.playlistLabel.classList.add('animate-trigger');
     
-    // Remove a classe após 2 segundos (tempo máximo das animações)
+    // O tempo varia de acordo com a animação no CSS, mas 2s é a média
     setTimeout(() => {
         els.playlistLabel.classList.remove('animate-trigger');
-    }, 2000);
+    }, 3000);
 }
 
+/**
+ * Identifica o "alma" da playlist pelo nome
+ */
 function getThemeForPlaylist(name) {
     const n = name.toUpperCase();
-    if (n.includes('RIDE') || n.includes('DRIVE') || n.includes('CAR') || n.includes('LIST')) return 'theme-ride';
-    if (n.includes('ROCK') || n.includes('METAL') || n.includes('PUNK') || n.includes('GUITAR')) return 'theme-rock';
-    if (n.includes('UPLOAD') || n.includes('TOP') || n.includes('NEWS')) return 'theme-glitch';
+    if (n.includes('RIDE') || n.includes('DRIVE') || n.includes('CAR') || n.includes('LIST') || n.includes('SPEED')) return 'theme-ride';
+    if (n.includes('ROCK') || n.includes('METAL') || n.includes('PUNK') || n.includes('GUITAR') || n.includes('GRUNGE')) return 'theme-rock';
+    if (n.includes('HIP') || n.includes('RAP') || n.includes('RHYMES') || n.includes('BEAT') || n.includes('STREET')) return 'theme-street';
+    if (n.includes('POP') || n.includes('DIVA') || n.includes('DANCE') || n.includes('GLITTER') || n.includes('LOVE')) return 'theme-pop';
+    if (n.includes('UPLOAD') || n.includes('TOP') || n.includes('NEWS') || n.includes('TECH') || n.includes('DIGITAL')) return 'theme-tech';
     if (n.includes('90S') || n.includes('80S') || n.includes('VHS') || n.includes('RETRO') || n.includes('ERAS')) return 'theme-retro';
     return 'theme-default';
 }
@@ -184,12 +192,19 @@ function getThemeForPlaylist(name) {
 function updatePlaylistOSD(name) {
     if (!els.playlistLabel) return;
 
-    // Remove temas anteriores
-    els.playlistLabel.className = 'vhs-text-shadow bg-black/50 px-2';
+    // Sorteia variante para esta visualização (V1 ou V2)
+    const variant = Math.random() > 0.5 ? 'v1' : 'v2';
+    state.currentVariant = variant;
     
-    // Identifica e aplica novo tema
-    const themeClass = getThemeForPlaylist(name);
-    els.playlistLabel.classList.add(themeClass);
+    // Reseta classes
+    els.playlistLabel.className = 'vhs-text-shadow bg-black/50 px-3 py-1';
+    
+    // Identifica e aplica novo tema e variante
+    const theme = getThemeForPlaylist(name);
+    state.currentTheme = theme;
+    
+    els.playlistLabel.classList.add(theme);
+    els.playlistLabel.classList.add(`${theme}-${variant}`);
 
     // Lógica de Quebra por ":"
     const parts = name.split(':');
@@ -201,7 +216,6 @@ function updatePlaylistOSD(name) {
         els.playlistLabel.classList.add('osd-small');
     } else {
         els.playlistLabel.innerHTML = `<div class="osd-line-1">${name.toUpperCase()}</div>`;
-        // Se o nome for muito longo (mais de 20 chars), reduz a fonte mesmo sem quebra
         if (name.length > 20) {
             els.playlistLabel.classList.add('osd-small');
         } else {
