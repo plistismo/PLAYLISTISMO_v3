@@ -120,16 +120,16 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     position: relative;
     color: #ffffff;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
+    letter-spacing: 1px;
+    font-family: 'Rajdhani', sans-serif; /* Trocado de Orbitron para Rajdhani por ser mais legível */
+    font-weight: 500; /* Removido o negrito (900 -> 500) para maior clareza */
     line-height: 1.1;
     border-right: 4px solid #00ff00;
     /* Fundo de alto contraste para garantir legibilidade */
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(4px);
     box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
-    text-shadow: 2px 2px 0px rgba(0,0,0,1);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
     
     transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
     opacity: 0;
@@ -143,13 +143,13 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 
 /* Configurações de Cores Temáticas Mantidas no Bordo para Estilo */
 .osd-futuristic.bump-chrome { border-right-color: #ffffff; color: #ffffff; font-style: italic; }
-.osd-futuristic.bump-urban { border-right-color: #ffff00; color: #ffff00; font-family: 'Permanent Marker', cursive; }
+.osd-futuristic.bump-urban { border-right-color: #ffff00; color: #ffff00; font-family: 'Jost', sans-serif; font-weight: 700; } /* Trocado Permanent Marker por Jost 700 para legibilidade */
 .osd-futuristic.bump-cyber { border-right-color: #00ff00; color: #00ff00; }
 /* Removido o invert do bump-noise para não prejudicar a leitura do texto */
 .osd-futuristic.bump-noise { border-right-color: #ff0000; color: #ffffff; }
 
-.osd-line-1 { font-size: clamp(0.7rem, 2vmin, 1.1rem); }
-.osd-line-2 { font-size: clamp(0.55rem, 1.6vmin, 0.9rem); opacity: 0.9; }
+.osd-line-1 { font-size: clamp(0.75rem, 2vmin, 1.2rem); }
+.osd-line-2 { font-size: clamp(0.6rem, 1.6vmin, 0.95rem); opacity: 0.9; }
 
 /* --- BUMP LAYER MTV --- */
 #bump-layer { z-index: 999; }
