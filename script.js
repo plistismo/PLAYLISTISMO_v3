@@ -212,8 +212,12 @@ function startCreditsMonitor() {
         
         if (dur <= 0) return;
 
-        // Visibilidade dos Créditos (MTV Style)
-        const showCredits = (cur >= 10 && cur < 22) || (dur > 30 && cur >= dur - 15);
+        /**
+         * Visibilidade dos Créditos (MTV Style)
+         * - Aparecem aos 10s e somem aos 20s (Duração: 10s)
+         * - Reaparecem 20s antes do fim e somem 10s antes do fim (Duração: 10s)
+         */
+        const showCredits = (cur >= 10 && cur < 20) || (dur > 35 && cur >= (dur - 20) && cur < (dur - 10));
         if(els.videoCredits) els.videoCredits.classList.toggle('visible', showCredits);
 
         // Visibilidade do Rótulo da Playlist
