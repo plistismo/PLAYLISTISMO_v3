@@ -393,7 +393,7 @@ function renderGuide() {
         header.innerHTML = `<span>${cat}</span> <span class="arrow text-xs transition-transform transform">▼</span>`;
 
         const listContainer = document.createElement('div');
-        listContainer.className = 'guide-cat-content hidden flex flex-col bg-black/40';
+        listContainer.className = 'guide-cat-content flex flex-col bg-black/40';
 
         state.channelsByCategory[cat].forEach(pl => {
             const btn = document.createElement('button');
@@ -408,13 +408,13 @@ function renderGuide() {
         });
 
         header.onclick = () => {
-            const isCurrentlyHidden = listContainer.classList.contains('hidden');
-            document.querySelectorAll('.guide-cat-content').forEach(el => el.classList.add('hidden'));
+            const isCurrentlyShown = listContainer.classList.contains('show');
+            document.querySelectorAll('.guide-cat-content').forEach(el => el.classList.remove('show'));
             document.querySelectorAll('.guide-cat-header').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.guide-cat-header .arrow').forEach(el => el.classList.remove('rotate-180'));
 
-            if (isCurrentlyHidden) {
-                listContainer.classList.remove('hidden');
+            if (!isCurrentlyShown) {
+                listContainer.classList.add('show');
                 header.classList.add('active');
                 header.querySelector('.arrow').classList.add('rotate-180');
             }
@@ -572,12 +572,13 @@ function setupEventListeners() {
                 });
                 group.classList.toggle('hidden', !hasVisible && term !== '');
                 
+                const listContent = group.querySelector('.guide-cat-content');
                 if (term !== '' && hasVisible) {
-                    group.querySelector('.guide-cat-content').classList.remove('hidden');
+                    listContent.classList.add('show');
                     group.querySelector('.guide-cat-header').classList.add('active');
                     group.querySelector('.arrow').classList.add('rotate-180');
                 } else if (term === '') {
-                    group.querySelector('.guide-cat-content').classList.add('hidden');
+                    listContent.classList.remove('show');
                     group.querySelector('.guide-cat-header').classList.remove('active');
                     group.querySelector('.arrow').classList.remove('rotate-180');
                 }

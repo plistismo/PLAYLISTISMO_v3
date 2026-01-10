@@ -12,6 +12,29 @@ body {
 body.guide-active #tv-internal-guide { transform: translateX(0); }
 body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filter: none !important; }
 
+/* --- GUIDE INTERNAL LAYOUT --- */
+#tv-internal-guide {
+    display: flex;
+    flex-direction: column;
+    max-height: 100vh;
+    height: 100%;
+}
+
+/* --- SCROLLBAR CUSTOMIZATION --- */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #000;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #444;
+    border: 2px solid #000;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #ffff00;
+}
+
 /* --- ACCORDION UI --- */
 .guide-cat-header.active {
     background-color: #0000ff;
@@ -20,6 +43,17 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 
 .rotate-180 {
     transform: rotate(180deg);
+}
+
+.guide-cat-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.guide-cat-content.show {
+    max-height: 1000px; /* Suficiente para os itens */
+    overflow-y: visible;
 }
 
 /* --- SMART MARQUEE (LETREIRO DIGITAL) --- */
