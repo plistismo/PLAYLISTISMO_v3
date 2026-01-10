@@ -6,13 +6,39 @@ body {
 
 .font-pixel { font-family: 'Press Start 2P', cursive; }
 .font-vt323 { font-family: 'VT323', monospace; }
+.font-jost { font-family: 'Jost', sans-serif !important; }
 
 /* --- NAVIGATION ENGINE --- */
 body.guide-active #tv-internal-guide { transform: translateX(0); }
 body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filter: none !important; cursor: pointer; }
-body.guide-active #player { pointer-events: none; }
 
-/* --- OSD DINÂMICO MIV-7 --- */
+/* --- ACCORDION UI --- */
+.guide-cat-header.active {
+    background-color: #0000ff;
+    border-left: 6px solid #ffff00;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+}
+
+/* Jost specific application for status parts */
+#guide-clock, #guide-now-playing, .font-jost {
+    font-family: 'Jost', sans-serif !important;
+}
+
+/* --- YOUTUBE PLAYER (STANDARD) --- */
+#player {
+    position: absolute;
+    width: 100% !important;
+    height: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 10;
+    pointer-events: auto; /* Permite interagir com cards e UI nativa do YouTube */
+}
+
+/* --- OSD DINÂMICO --- */
 .osd-futuristic {
     display: flex;
     flex-direction: column;
@@ -33,11 +59,11 @@ body.guide-active #player { pointer-events: none; }
     transform: translateX(10px);
 }
 .osd-futuristic.visible { 
-    opacity: 0.7; /* Bem discreto conforme solicitado */
+    opacity: 0.7;
     transform: translateX(0); 
 }
 
-/* Temas do OSD Playlist (Mesmo estilo dos Bumps) */
+/* Temas do OSD Playlist */
 .osd-futuristic.bump-chrome { border-right-color: #fff; color: #fff; font-style: italic; }
 .osd-futuristic.bump-urban { border-right-color: #ffff00; color: #ffff00; font-family: 'Permanent Marker', cursive; }
 .osd-futuristic.bump-cyber { border-right-color: #00ff00; color: #00ff00; letter-spacing: 2px; }
@@ -48,7 +74,7 @@ body.guide-active #player { pointer-events: none; }
 .osd-compact .osd-line-1 { font-size: clamp(0.6rem, 1.5vmin, 0.85rem); }
 .osd-compact .osd-line-2 { font-size: clamp(0.5rem, 1.3vmin, 0.7rem); }
 
-/* --- BUMP LAYER MTV MIV-7 --- */
+/* --- BUMP LAYER MTV --- */
 #bump-layer { z-index: 999; }
 @keyframes bump-enter {
     0% { transform: scale(2.5); opacity: 0; filter: blur(15px); }
@@ -74,7 +100,6 @@ body.guide-active #player { pointer-events: none; }
 .bump-cyber { font-family: 'Orbitron', sans-serif; color: #00ff00; text-shadow: 0 0 15px #00ff00; letter-spacing: 0.1em; }
 .bump-noise { font-family: 'Monoton', cursive; color: #fff; filter: invert(1); mix-blend-mode: difference; }
 
-/* Fontes do Bump com proteção contra corte */
 .bump-ident .main-title {
     font-size: clamp(1.2rem, 8vmin, 5rem);
     line-height: 0.9;
@@ -83,7 +108,7 @@ body.guide-active #player { pointer-events: none; }
     max-width: 100%;
 }
 
-/* --- CRÉDITOS ORIGINAIS (FONTE JOST) --- */
+/* --- CRÉDITOS --- */
 .credits-overlay {
     position: absolute; bottom: 8%; left: 6%; color: #f8f8f8; 
     text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 0 0 8px rgba(0,0,0,0.9);

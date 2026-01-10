@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
@@ -66,17 +65,14 @@ async function init() {
     startClocks();
     setupEventListeners();
     
-    // Auth Check Independente
     supabase.auth.getSession().then(({ data: { session } }) => {
         checkAdminAccess(session);
     });
 
     loadYouTubeAPI();
     
-    // Carregamento de dados paralelo
     try {
         await fetchGuideData();
-        // Check Resume State após carregar o guia
         checkResumeState();
     } catch (e) {
         console.error("Erro ao carregar dados do guia:", e);
@@ -109,7 +105,6 @@ function startClocks() {
     }, 1000);
 }
 
-// --- MIV-7 ENGINE ---
 function getThematicSetup(name) {
     const n = name.toUpperCase();
     if (n.includes('RIDE') || n.includes('DRIVE') || n.includes('SPEED') || n.includes('CAR')) return { theme: 'ride', bumpClass: 'bump-chrome', logo: '🏎️ SPEED' };
@@ -147,7 +142,6 @@ function updatePlaylistOSD(name) {
     const setup = getThematicSetup(name);
     const parts = name.split(':');
     
-    // Estilo visual condizente com o Bump
     els.playlistLabel.className = `osd-futuristic ${setup.bumpClass}`;
     if (name.length > 20) els.playlistLabel.classList.add('osd-compact');
     
@@ -158,7 +152,6 @@ function updatePlaylistOSD(name) {
     }
 }
 
-// --- PLAYER & NAVIGATION ---
 function loadYouTubeAPI() {
     if (window.YT) return;
     const tag = document.createElement('script');
@@ -169,7 +162,16 @@ function loadYouTubeAPI() {
 window.onYouTubeIframeAPIReady = () => {
     player = new YT.Player('player', {
         height: '100%', width: '100%',
-        playerVars: { 'controls': 0, 'modestbranding': 1, 'rel': 0, 'iv_load_policy': 3, 'enablejsapi': 1 },
+        playerVars: { 
+            'controls': 0, 
+            'modestbranding': 1, 
+            'rel': 0, 
+            'iv_load_policy': 3, 
+            'enablejsapi': 1,
+            'showinfo': 0,
+            'disablekb': 1,
+            'fs': 0
+        },
         events: {
             'onReady': () => { 
                 state.playerReady = true; 
@@ -200,13 +202,15 @@ function startCreditsMonitor() {
         const cur = player.getCurrentTime();
         const dur = player.getDuration();
         
-        // REGRAS DE CRÉDITOS (Aos 10s e no final):
-        const showCredits = (cur >= 10 && cur < 22) || (dur > 44 && cur >= dur - 22 && cur < dur - 10);
+        if (dur <= 0) return;
+
+        // Visibilidade dos Créditos (MTV Style)
+        // Aparecem no início (10-22s) e no final real do vídeo
+        const showCredits = (cur >= 10 && cur < 22) || (dur > 30 && cur >= dur - 15);
         if(els.videoCredits) els.videoCredits.classList.toggle('visible', showCredits);
 
-        // REGRA DO TÍTULO DA PLAYLIST (Fixo após o bump até 10s antes do fim):
-        // Consideramos 1.5s como o tempo de "passagem" do bump.
-        const showPlaylist = (cur >= 1.5 && cur < (dur - 10));
+        // Visibilidade do Rótulo da Playlist (Fixo após bump até o final do vídeo)
+        const showPlaylist = (cur >= 1.5 && cur < dur);
         if(els.playlistLabel) els.playlistLabel.classList.toggle('visible', showPlaylist);
     }, 1000);
 }
@@ -236,6 +240,7 @@ function playCurrentVideo() {
 }
 
 function handleVideoEnd() {
+    if (state.isBumping) return;
     triggerBump(state.currentChannelName);
     state.currentIndex = (state.currentIndex + 1) % state.currentChannelList.length;
     playCurrentVideo();
@@ -354,19 +359,50 @@ async function fetchGuideData() {
 function renderGuide() {
     if(!els.guideChannelList) return;
     els.guideChannelList.innerHTML = '';
+    
     state.groupsOrder.forEach(cat => {
         if (!state.channelsByCategory[cat]) return;
-        const div = document.createElement('div');
-        div.className = 'mb-2';
-        div.innerHTML = `<div class="bg-[#0000aa] p-1 px-2 text-white font-bold border border-white/20 uppercase text-xs">${cat}</div>`;
+
+        const groupWrapper = document.createElement('div');
+        groupWrapper.className = 'guide-group mb-1 overflow-hidden';
+
+        const header = document.createElement('button');
+        header.className = 'guide-cat-header w-full flex justify-between items-center bg-[#0000aa] p-3 text-white font-bold border-b border-white/20 uppercase text-lg transition-all hover:bg-[#0000ff]';
+        header.innerHTML = `<span>${cat}</span> <span class="arrow text-xs transition-transform transform">▼</span>`;
+
+        const listContainer = document.createElement('div');
+        listContainer.className = 'guide-cat-content hidden flex flex-col bg-black/40';
+
         state.channelsByCategory[cat].forEach(pl => {
             const btn = document.createElement('button');
-            btn.className = 'w-full text-left p-1 px-2 text-gray-300 hover:bg-white hover:text-[#0000aa] border-b border-white/5 uppercase text-sm font-vt323';
+            btn.className = 'w-full text-left p-2.5 px-6 text-gray-300 hover:bg-[#ffff00] hover:text-[#0000aa] border-b border-white/5 uppercase text-sm font-vt323 transition-colors';
             btn.innerText = pl.name;
-            btn.onclick = () => { loadChannelContent(pl.name); toggleGuide(); };
-            div.appendChild(btn);
+            btn.onclick = (e) => { 
+                e.stopPropagation();
+                loadChannelContent(pl.name); 
+                toggleGuide(); 
+            };
+            listContainer.appendChild(btn);
         });
-        els.guideChannelList.appendChild(div);
+
+        header.onclick = () => {
+            const isCurrentlyHidden = listContainer.classList.contains('hidden');
+            
+            // Close all others
+            document.querySelectorAll('.guide-cat-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.guide-cat-header').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.guide-cat-header .arrow').forEach(el => el.classList.remove('rotate-180'));
+
+            if (isCurrentlyHidden) {
+                listContainer.classList.remove('hidden');
+                header.classList.add('active');
+                header.querySelector('.arrow').classList.add('rotate-180');
+            }
+        };
+
+        groupWrapper.appendChild(header);
+        groupWrapper.appendChild(listContainer);
+        els.guideChannelList.appendChild(groupWrapper);
     });
 }
 
@@ -434,6 +470,34 @@ function setupEventListeners() {
             window.location.href = `admin.html?edit_id=${state.currentVideoData.id}`;
         }
     });
+
+    if(els.guideSearch) {
+        els.guideSearch.addEventListener('input', (e) => {
+            const term = e.target.value.toUpperCase();
+            document.querySelectorAll('.guide-group').forEach(group => {
+                let hasVisible = false;
+                const buttons = group.querySelectorAll('.guide-cat-content button');
+                buttons.forEach(btn => {
+                    const match = btn.innerText.toUpperCase().includes(term);
+                    btn.classList.toggle('hidden', !match);
+                    if(match) hasVisible = true;
+                });
+                group.classList.toggle('hidden', !hasVisible && term !== '');
+                
+                // Auto-open group if searching and it has results
+                if (term !== '' && hasVisible) {
+                    group.querySelector('.guide-cat-content').classList.remove('hidden');
+                    group.querySelector('.guide-cat-header').classList.add('active');
+                    group.querySelector('.arrow').classList.add('rotate-180');
+                } else if (term === '') {
+                    // Reset to default closed when search empty
+                    group.querySelector('.guide-cat-content').classList.add('hidden');
+                    group.querySelector('.guide-cat-header').classList.remove('active');
+                    group.querySelector('.arrow').classList.remove('rotate-180');
+                }
+            });
+        });
+    }
 }
 
 init();
