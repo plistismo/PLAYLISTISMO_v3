@@ -304,8 +304,24 @@ function updateTVVisualState() {
 }
 
 async function loadDefaultChannel() {
-    const cat = state.groupsOrder.find(g => state.channelsByCategory[g]?.length > 0);
-    if(cat) loadChannelContent(state.channelsByCategory[cat][0].name);
+    // Coleta todas as playlists de todas as categorias
+    const allPlaylists = [];
+    Object.values(state.channelsByCategory).forEach(list => {
+        list.forEach(pl => allPlaylists.push(pl.name));
+    });
+
+    if (allPlaylists.length > 0) {
+        // Seleciona um canal aleatório
+        const randomPlaylist = allPlaylists[Math.floor(Math.random() * allPlaylists.length)];
+        
+        // Atualiza o índice do grupo atual para corresponder ao canal sorteado
+        const cat = Object.keys(state.channelsByCategory).find(k => 
+            state.channelsByCategory[k].some(p => p.name === randomPlaylist)
+        );
+        state.currentGroupIndex = state.groupsOrder.indexOf(cat);
+        
+        loadChannelContent(randomPlaylist);
+    }
 }
 
 function showOSD() {
@@ -467,18 +483,27 @@ function checkResumeState() {
 }
 
 function setupEventListeners() {
-    // CRÍTICO: e.stopPropagation() adicionado para evitar bubbling até tvStage
+    // CRÍTICO: e.stopPropagation() em todos os botões para evitar o "click-to-close" da TV Stage
     if(els.tvPowerBtn) els.tvPowerBtn.onclick = (e) => { e.stopPropagation(); togglePower(); };
-    if(els.btnSearch) els.btnSearch.onclick = (e) => { e.stopPropagation(); toggleGuide(); };
-    if(els.guideCloseBtn) els.guideCloseBtn.onclick = (e) => { e.stopPropagation(); toggleGuide(); };
     
-    // Fechar ao clicar na TV (Somente se clicar fora dos controles)
+    // Botão de Busca (Guide)
+    if(els.btnSearch) els.btnSearch.onclick = (e) => { 
+        e.stopPropagation(); 
+        toggleGuide(); 
+    };
+
+    if(els.guideCloseBtn) els.guideCloseBtn.onclick = (e) => { 
+        e.stopPropagation(); 
+        toggleGuide(); 
+    };
+    
+    // Fechar ao clicar na TV (Somente se clicar na carcaça e o guia estiver aberto)
     if(els.tvStage) {
-        els.tvStage.addEventListener('click', () => {
+        els.tvStage.onclick = () => {
             if (state.isSearchOpen) {
                 toggleGuide();
             }
-        });
+        };
     }
 
     if(els.btnNextCh) els.btnNextCh.onclick = (e) => { e.stopPropagation(); changeChannel(1); };
