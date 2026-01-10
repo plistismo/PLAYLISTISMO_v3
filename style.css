@@ -62,7 +62,8 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     overflow: hidden;
     white-space: nowrap;
     position: relative;
-    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    /* Removido o 'transparent' inicial que ocultava a primeira letra */
+    mask-image: linear-gradient(to right, black 95%, transparent);
 }
 
 .marquee-text {
