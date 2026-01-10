@@ -10,7 +10,7 @@ body {
 
 /* --- NAVIGATION ENGINE --- */
 body.guide-active #tv-internal-guide { transform: translateX(0); }
-body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filter: none !important; cursor: pointer; }
+body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filter: none !important; }
 
 /* --- ACCORDION UI --- */
 .guide-cat-header.active {
@@ -22,12 +22,24 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     transform: rotate(180deg);
 }
 
-/* Jost specific application for status parts */
+/* --- NOW PLAYING COLORIDO (GUIDE) --- */
+.gnp-row {
+    transition: transform 0.2s ease-out;
+}
+.gnp-row:hover {
+    transform: translateX(5px);
+}
+
+#guide-now-playing {
+    background: radial-gradient(circle at top left, #222, #000);
+}
+
+/* Jost specific application */
 #guide-clock, #guide-now-playing, .font-jost {
     font-family: 'Jost', sans-serif !important;
 }
 
-/* --- YOUTUBE PLAYER (STANDARD) --- */
+/* --- YOUTUBE PLAYER --- */
 #player {
     position: absolute;
     width: 100% !important;
@@ -35,7 +47,6 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     top: 0 !important;
     left: 0 !important;
     z-index: 10;
-    pointer-events: auto; /* Permite interagir com cards e UI nativa do YouTube */
 }
 
 /* --- OSD DINÂMICO --- */
@@ -63,7 +74,6 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     transform: translateX(0); 
 }
 
-/* Temas do OSD Playlist */
 .osd-futuristic.bump-chrome { border-right-color: #fff; color: #fff; font-style: italic; }
 .osd-futuristic.bump-urban { border-right-color: #ffff00; color: #ffff00; font-family: 'Permanent Marker', cursive; }
 .osd-futuristic.bump-cyber { border-right-color: #00ff00; color: #00ff00; letter-spacing: 2px; }
@@ -71,8 +81,6 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 
 .osd-line-1 { font-size: clamp(0.7rem, 2vmin, 1.1rem); }
 .osd-line-2 { font-size: clamp(0.55rem, 1.6vmin, 0.9rem); opacity: 0.8; }
-.osd-compact .osd-line-1 { font-size: clamp(0.6rem, 1.5vmin, 0.85rem); }
-.osd-compact .osd-line-2 { font-size: clamp(0.5rem, 1.3vmin, 0.7rem); }
 
 /* --- BUMP LAYER MTV --- */
 #bump-layer { z-index: 999; }
@@ -88,7 +96,6 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     position: relative; 
     text-align: center; 
     width: 85%;
-    max-width: 85%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -104,8 +111,6 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     font-size: clamp(1.2rem, 8vmin, 5rem);
     line-height: 0.9;
     word-break: break-word;
-    hyphens: auto;
-    max-width: 100%;
 }
 
 /* --- CRÉDITOS --- */

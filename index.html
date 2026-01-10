@@ -33,41 +33,55 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-white text-xl animate-pulse font-jost"><span id="guide-clock">00:00</span></div>
-                <button id="guide-close-btn" class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 flex items-center justify-center border-2 border-white shadow-[2px_2px_0_#000] transition-colors">
+                <button id="guide-close-btn" class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 flex items-center justify-center border-2 border-white shadow-[4px_4px_0_#000] transition-colors active:translate-y-1 active:shadow-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
         </div>
         <div class="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
-            <!-- NOW PLAYING NO ESTILO MTV -->
-            <div id="guide-now-playing" class="bg-black border-2 border-white p-4 mb-6 hidden shrink-0 shadow-[4px_4px_0_rgba(0,0,0,0.5)] font-jost relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 to-blue-400 opacity-50"></div>
-                <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-3 font-bold border-b border-white/10 pb-1">ON AIR NOW</div>
+            <!-- NOW PLAYING NO ESTILO MTV COLORIDO -->
+            <div id="guide-now-playing" class="bg-[#111] border-2 border-white/30 p-4 mb-6 hidden shrink-0 shadow-[8px_8px_0_rgba(0,0,0,1)] font-jost relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 via-cyan-400 via-pink-400 to-orange-500"></div>
                 
-                <div class="space-y-2">
-                    <div id="gnp-artist-row" class="flex gap-2 items-center">
-                        <span class="text-yellow-400">🎤</span>
-                        <span id="gnp-artist" class="text-yellow-400 font-bold uppercase truncate">--</span>
+                <div class="space-y-3">
+                    <div id="gnp-artist-row" class="flex gap-3 items-center gnp-row">
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000]">🎤</span>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none">ARTIST</span>
+                            <span id="gnp-artist" class="text-[#ffff00] text-xl font-bold uppercase truncate drop-shadow-[2px_2px_0_#000]">--</span>
+                        </div>
                     </div>
-                    <div id="gnp-song-row" class="flex gap-2 items-center">
-                        <span class="text-green-400">🎼</span>
-                        <span id="gnp-song" class="text-green-400 font-bold uppercase truncate">--</span>
+                    <div id="gnp-song-row" class="flex gap-3 items-center gnp-row">
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000]">🎼</span>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none">TRACK</span>
+                            <span id="gnp-song" class="text-[#00ff00] text-xl font-bold uppercase truncate drop-shadow-[2px_2px_0_#000]">--</span>
+                        </div>
                     </div>
-                    <div id="gnp-album-row" class="flex gap-2 items-center">
-                        <span class="text-cyan-400">💽</span>
-                        <span id="gnp-album" class="text-cyan-400 font-bold uppercase truncate">--</span>
+                    <div id="gnp-album-row" class="flex gap-3 items-center gnp-row">
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000]">💽</span>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none">ALBUM</span>
+                            <span id="gnp-album" class="text-[#00ffff] text-base font-bold uppercase truncate drop-shadow-[1px_1px_0_#000]">--</span>
+                        </div>
                     </div>
-                    <div id="gnp-year-row" class="flex gap-2 items-center">
-                        <span class="text-pink-400">📅</span>
-                        <span id="gnp-year" class="text-pink-400 font-bold uppercase truncate">--</span>
+                    <div id="gnp-year-row" class="flex gap-3 items-center gnp-row">
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000]">📅</span>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none">RELEASE</span>
+                            <span id="gnp-year" class="text-[#ff00ff] text-base font-bold uppercase truncate drop-shadow-[1px_1px_0_#000]">--</span>
+                        </div>
                     </div>
-                    <div id="gnp-director-row" class="flex gap-2 items-center">
-                        <span class="text-orange-500">🎬</span>
-                        <span id="gnp-director" class="text-orange-500 font-bold uppercase truncate">--</span>
+                    <div id="gnp-director-row" class="flex gap-3 items-center gnp-row">
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000]">🎬</span>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none">DIRECTOR</span>
+                            <span id="gnp-director" class="text-[#ff8800] text-base font-bold uppercase truncate drop-shadow-[1px_1px_0_#000]">--</span>
+                        </div>
                     </div>
                 </div>
 
-                <div id="np-playlist" class="mt-4 text-white/40 text-[9px] uppercase tracking-tighter border-t border-white/10 pt-2 italic">CHANNEL: --</div>
+                <div id="np-playlist" class="mt-4 text-white/40 text-[10px] uppercase tracking-tighter border-t border-white/10 pt-2 italic text-right">CHANNEL: --</div>
             </div>
 
             <div class="relative bg-black border-2 border-[#ffff00] p-2 mb-4 flex items-center shrink-0">
