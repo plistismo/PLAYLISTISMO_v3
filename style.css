@@ -102,6 +102,7 @@ body.guide-active #player { pointer-events: none; }
     background-color: #121212 !important; /* Cinza Escuro Profundo (Manual Info Entry) */
     color: #ffffff !important; /* Fonte Branca para Contraste */
     font-family: 'Jost', sans-serif !important; /* Fonte Jost EXCLUSIVA para campos de entrada */
+    font-weight: 700 !important; /* Fonte Jost sempre em negrito conforme solicitado */
     border: 1px solid #333 !important;
     padding: 0.6rem 0.8rem;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -120,6 +121,7 @@ body.guide-active #player { pointer-events: none; }
     color: #444;
     font-style: italic;
     opacity: 0.5;
+    font-weight: 400; /* Placeholder mais fino para não poluir */
 }
 
 /* Garante que Selects também sigam o padrão */
