@@ -64,11 +64,6 @@ const els = {
     gnpAlbum: document.getElementById('gnp-album'),
     gnpYear: document.getElementById('gnp-year'),
     gnpDirector: document.getElementById('gnp-director'),
-    gnpArtistRow: document.getElementById('gnp-artist-row'),
-    gnpSongRow: document.getElementById('gnp-song-row'),
-    gnpAlbumRow: document.getElementById('gnp-album-row'),
-    gnpYearRow: document.getElementById('gnp-year-row'),
-    gnpDirectorRow: document.getElementById('gnp-director-row'),
 
     speakerGrids: document.querySelectorAll('.speaker-grid')
 };
@@ -304,22 +299,17 @@ function updateTVVisualState() {
 }
 
 async function loadDefaultChannel() {
-    // Coleta todas as playlists de todas as categorias
     const allPlaylists = [];
     Object.values(state.channelsByCategory).forEach(list => {
         list.forEach(pl => allPlaylists.push(pl.name));
     });
 
     if (allPlaylists.length > 0) {
-        // Seleciona um canal aleatório
         const randomPlaylist = allPlaylists[Math.floor(Math.random() * allPlaylists.length)];
-        
-        // Atualiza o índice do grupo atual para corresponder ao canal sorteado
         const cat = Object.keys(state.channelsByCategory).find(k => 
             state.channelsByCategory[k].some(p => p.name === randomPlaylist)
         );
         state.currentGroupIndex = state.groupsOrder.indexOf(cat);
-        
         loadChannelContent(randomPlaylist);
     }
 }
@@ -432,20 +422,63 @@ function renderGuide() {
     });
 }
 
+/**
+ * Aplica o efeito de letreiro digital se o texto for maior que o container.
+ * @param {HTMLElement} element - O elemento span dentro do container marquee.
+ * @param {string} text - O conteúdo a ser exibido.
+ */
+function applySmartMarquee(element, text) {
+    if (!element) return;
+    const container = element.parentElement;
+    if (!container) return;
+
+    // Reset
+    element.classList.remove('marquee-active');
+    element.style.animationDuration = '0s';
+    
+    if (!text) {
+        element.innerText = '--';
+        return;
+    }
+
+    element.innerText = text;
+
+    // Aguarda o próximo frame para medição correta
+    requestAnimationFrame(() => {
+        const textWidth = element.scrollWidth;
+        const containerWidth = container.offsetWidth;
+
+        if (textWidth > containerWidth) {
+            // Se corta, adicionamos o separador e duplicamos para loop fluido
+            const separator = " // ";
+            element.innerText = text + separator + text + separator;
+            
+            // Calcula duração baseada no tamanho (ex: 50px por segundo)
+            const speed = 40; 
+            const duration = (element.scrollWidth / speed);
+            
+            element.style.animationDuration = `${duration}s`;
+            element.classList.add('marquee-active');
+        } else {
+            element.innerText = text;
+        }
+    });
+}
+
 function updateGuideNowPlaying() {
     const data = state.currentVideoData;
     if (data && els.guideNpPlaylist) {
-        els.gnpArtist.innerText = data.artista || '--';
-        els.gnpSong.innerText = data.musica || '--';
-        els.gnpAlbum.innerText = data.album || '--';
-        els.gnpYear.innerText = data.ano || '--';
-        els.gnpDirector.innerText = data.direcao || '--';
-        
-        els.gnpArtistRow.classList.toggle('hidden', !data.artista);
-        els.gnpSongRow.classList.toggle('hidden', !data.musica);
-        els.gnpAlbumRow.classList.toggle('hidden', !data.album);
-        els.gnpYearRow.classList.toggle('hidden', !data.ano);
-        els.gnpDirectorRow.classList.toggle('hidden', !data.direcao);
+        applySmartMarquee(els.gnpArtist, data.artista);
+        applySmartMarquee(els.gnpSong, data.musica);
+        applySmartMarquee(els.gnpAlbum, data.album);
+        applySmartMarquee(els.gnpYear, data.ano ? String(data.ano) : '');
+        applySmartMarquee(els.gnpDirector, data.direcao);
+
+        const rows = ['gnpArtist', 'gnpSong', 'gnpAlbum', 'gnpYear', 'gnpDirector'];
+        rows.forEach(r => {
+            const rowEl = document.getElementById(`${r}-row`);
+            if(rowEl) rowEl.classList.toggle('hidden', !data[r === 'gnpYear' ? 'ano' : r.replace('gnp', '').toLowerCase()]);
+        });
 
         els.guideNpPlaylist.innerText = `CHANNEL: ${state.currentChannelName}`;
         els.guideNowPlayingBox.classList.remove('hidden');
@@ -483,21 +516,10 @@ function checkResumeState() {
 }
 
 function setupEventListeners() {
-    // CRÍTICO: e.stopPropagation() em todos os botões para evitar o "click-to-close" da TV Stage
     if(els.tvPowerBtn) els.tvPowerBtn.onclick = (e) => { e.stopPropagation(); togglePower(); };
+    if(els.btnSearch) els.btnSearch.onclick = (e) => { e.stopPropagation(); toggleGuide(); };
+    if(els.guideCloseBtn) els.guideCloseBtn.onclick = (e) => { e.stopPropagation(); toggleGuide(); };
     
-    // Botão de Busca (Guide)
-    if(els.btnSearch) els.btnSearch.onclick = (e) => { 
-        e.stopPropagation(); 
-        toggleGuide(); 
-    };
-
-    if(els.guideCloseBtn) els.guideCloseBtn.onclick = (e) => { 
-        e.stopPropagation(); 
-        toggleGuide(); 
-    };
-    
-    // Fechar ao clicar na TV (Somente se clicar na carcaça e o guia estiver aberto)
     if(els.tvStage) {
         els.tvStage.onclick = () => {
             if (state.isSearchOpen) {

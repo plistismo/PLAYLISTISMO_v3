@@ -22,7 +22,7 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     transform: rotate(180deg);
 }
 
-/* --- MARQUEE ENGINE (LETREIRO DIGITAL) --- */
+/* --- SMART MARQUEE (LETREIRO DIGITAL) --- */
 .marquee-container {
     width: 100%;
     overflow: hidden;
@@ -33,19 +33,25 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 
 .marquee-text {
     display: inline-block;
-    padding-left: 10%;
-    animation: marquee-scroll 12s linear infinite;
+    padding-left: 0;
     will-change: transform;
+    transition: none;
+}
+
+.marquee-active {
+    animation: marquee-scroll linear infinite;
 }
 
 @keyframes marquee-scroll {
     0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
+    100% { transform: translateX(-50%); } /* Rola metade pois duplicamos o texto para loop infinito */
 }
 
 /* --- NOW PLAYING COLORIDO (GUIDE) --- */
 .gnp-row {
     transition: background 0.2s ease-out;
+    padding: 2px 4px;
+    border-radius: 4px;
 }
 .gnp-row:hover {
     background: rgba(255,255,255,0.05);
@@ -55,7 +61,6 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     background: radial-gradient(circle at top left, #222, #000);
 }
 
-/* Jost specific application */
 #guide-clock, #guide-now-playing, .font-jost {
     font-family: 'Jost', sans-serif !important;
 }
