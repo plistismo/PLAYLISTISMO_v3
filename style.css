@@ -44,7 +44,7 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 
 @keyframes marquee-scroll {
     0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); } /* Rola metade pois duplicamos o texto para loop infinito */
+    100% { transform: translateX(-50%); } /* Rola metade pois duplicamos o texto para loop fluido */
 }
 
 /* --- NOW PLAYING COLORIDO (GUIDE) --- */
@@ -81,32 +81,40 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     flex-direction: column;
     align-items: flex-end;
     text-align: right;
-    padding: 0.4rem 0.8rem;
+    padding: 0.5rem 1rem;
     position: relative;
-    color: #fff;
+    color: #ffffff;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     font-family: 'Orbitron', sans-serif;
     font-weight: 900;
     line-height: 1.1;
-    border-right: 3px solid #00ff00;
-    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.4));
+    border-right: 4px solid #00ff00;
+    /* Fundo de alto contraste para garantir legibilidade */
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+    text-shadow: 2px 2px 0px rgba(0,0,0,1);
+    
     transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
     opacity: 0;
     transform: translateX(10px);
 }
+
 .osd-futuristic.visible { 
-    opacity: 0.7;
+    opacity: 0.9;
     transform: translateX(0); 
 }
 
-.osd-futuristic.bump-chrome { border-right-color: #fff; color: #fff; font-style: italic; }
+/* Configurações de Cores Temáticas Mantidas no Bordo para Estilo */
+.osd-futuristic.bump-chrome { border-right-color: #ffffff; color: #ffffff; font-style: italic; }
 .osd-futuristic.bump-urban { border-right-color: #ffff00; color: #ffff00; font-family: 'Permanent Marker', cursive; }
-.osd-futuristic.bump-cyber { border-right-color: #00ff00; color: #00ff00; letter-spacing: 2px; }
-.osd-futuristic.bump-noise { border-right-color: #fff; color: #fff; filter: invert(1); mix-blend-mode: difference; }
+.osd-futuristic.bump-cyber { border-right-color: #00ff00; color: #00ff00; }
+/* Removido o invert do bump-noise para não prejudicar a leitura do texto */
+.osd-futuristic.bump-noise { border-right-color: #ff0000; color: #ffffff; }
 
 .osd-line-1 { font-size: clamp(0.7rem, 2vmin, 1.1rem); }
-.osd-line-2 { font-size: clamp(0.55rem, 1.6vmin, 0.9rem); opacity: 0.8; }
+.osd-line-2 { font-size: clamp(0.55rem, 1.6vmin, 0.9rem); opacity: 0.9; }
 
 /* --- BUMP LAYER MTV --- */
 #bump-layer { z-index: 999; }
