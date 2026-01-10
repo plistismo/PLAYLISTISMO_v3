@@ -240,6 +240,15 @@ musicForm.addEventListener('submit', async (e) => {
     if (error) {
         showMessage(`ERRO: ${error.message}`, true);
     } else {
+        // ATUALIZAÇÃO DO RESUME STATE:
+        // Salva a playlist e o video_id no localStorage para que a TV saiba onde retomar
+        if (formData.playlist && formData.video_id) {
+            localStorage.setItem('tv_resume_state', JSON.stringify({
+                playlist: formData.playlist,
+                videoId: formData.video_id
+            }));
+        }
+        
         resetForm();
         fetchMusics(); 
         loadDatabaseFilterOptions(); 
