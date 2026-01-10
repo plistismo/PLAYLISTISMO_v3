@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -239,6 +238,8 @@ musicForm.addEventListener('submit', async (e) => {
 
     if (error) {
         showMessage(`ERRO: ${error.message}`, true);
+        btnSave.disabled = false;
+        btnSave.innerText = "GRAVAR DADOS";
     } else {
         // ATUALIZAÇÃO DO RESUME STATE:
         // Salva a playlist e o video_id no localStorage para que a TV saiba onde retomar
@@ -249,12 +250,13 @@ musicForm.addEventListener('submit', async (e) => {
             }));
         }
         
-        resetForm();
-        fetchMusics(); 
-        loadDatabaseFilterOptions(); 
+        showMessage("DADOS GRAVADOS! RETORNANDO À TV...", false);
+        
+        // Redireciona para a TV após um curto delay para o usuário ver a confirmação
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1200);
     }
-    btnSave.disabled = false;
-    btnSave.innerText = "GRAVAR DADOS";
 });
 
 window.deleteMusic = async (id) => {
