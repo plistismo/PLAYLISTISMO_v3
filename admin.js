@@ -25,8 +25,6 @@ const inputArtista = document.getElementById('input-artista');
 const inputMusica = document.getElementById('input-musica');
 const inputAno = document.getElementById('input-ano');
 const inputAlbum = document.getElementById('input-album');
-const inputGroup = document.getElementById('input-group');
-const inputPlaylist = document.getElementById('input-playlist'); 
 const inputDirecao = document.getElementById('input-direcao');
 const inputVideoId = document.getElementById('input-video-id');
 
@@ -46,7 +44,7 @@ async function checkAuth() {
 }
 
 async function loadDatabaseFilterOptions() {
-    // AJUSTE: Carrega todas as playlists disponíveis (Guia Infinita no Admin)
+    // Carrega todas as playlists disponíveis para os filtros
     const { data, error } = await supabase
         .from('playlists')
         .select('name, group_name')
@@ -107,7 +105,6 @@ async function fetchMusics() {
         query = query.or(`artista.ilike.${term},musica.ilike.${term},direcao.ilike.${term},id.eq.${Number(searchTerm) || 0}`);
     }
 
-    // AJUSTE: Aumentado limite para 5000 para permitir ver playlists completas no admin
     query = query.limit(5000);
 
     const { data, error } = await query;
@@ -165,16 +162,14 @@ function renderTable(data) {
                 <div class="font-bold text-lg leading-none text-amber-500">${item.artista}</div>
                 <div class="text-sm opacity-90">${item.musica || '---'}</div>
             </td>
-            <td class="hidden lg:table-cell text-sm opacity-60 align-top border-r border-amber-900/30 px-2 py-2 font-mono">
-                ${item.album ? `<div title="Álbum">💿 ${item.album.substring(0,20)}${item.album.length>20?'...':''}</div>` : ''}
-                ${item.ano ? `<div title="Ano">📅 ${item.ano}</div>` : ''}
+            <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2">
+                ${item.album || '---'}
             </td>
-            <td class="hidden md:table-cell text-sm align-top border-r border-amber-900/30 px-2 py-2">
-                <div class="font-bold opacity-80">${item.playlist || '---'}</div>
-                <div class="text-xs text-amber-700 font-mono mt-1">${item.playlist_group || 'NO GROUP'}</div>
+            <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2 font-mono">
+                ${item.ano || '---'}
             </td>
-            <td class="hidden xl:table-cell text-sm opacity-70 align-top border-r border-amber-900/30 px-2 py-2 italic">
-                ${item.direcao || '--'}
+            <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2 italic">
+                ${item.direcao || '---'}
             </td>
             <td class="text-center align-middle px-2 py-2">
                 <div class="flex justify-center gap-2">
@@ -198,8 +193,6 @@ function editMusicData(music) {
     inputMusica.value = music.musica || '';
     inputAno.value = music.ano || ''; 
     inputAlbum.value = music.album || '';
-    inputGroup.value = music.playlist_group || '';
-    inputPlaylist.value = music.playlist || '';
     inputDirecao.value = music.direcao || '';
     inputVideoId.value = music.video_id || '';
 
@@ -216,8 +209,6 @@ musicForm.addEventListener('submit', async (e) => {
         musica: inputMusica.value.trim(),
         ano: inputAno.value ? String(inputAno.value) : null,
         album: inputAlbum.value.trim() || null,
-        playlist_group: inputGroup.value || null,
-        playlist: inputPlaylist.value.trim() || null,
         direcao: inputDirecao.value.trim() || null,
         video_id: inputVideoId.value.trim() || null
     };
@@ -241,18 +232,24 @@ musicForm.addEventListener('submit', async (e) => {
         btnSave.disabled = false;
         btnSave.innerText = "GRAVAR DADOS";
     } else {
-        // ATUALIZAÇÃO DO RESUME STATE:
-        // Salva a playlist e o video_id no localStorage para que a TV saiba onde retomar
-        if (formData.playlist && formData.video_id) {
+        // Obter dados atuais para manter a playlist no resume state se necessário
+        let playlist = null;
+        let video_id = formData.video_id;
+        
+        if (id) {
+            const currentItem = currentData.find(m => m.id == id);
+            if (currentItem) playlist = currentItem.playlist;
+        }
+
+        if (playlist && video_id) {
             localStorage.setItem('tv_resume_state', JSON.stringify({
-                playlist: formData.playlist,
-                videoId: formData.video_id
+                playlist: playlist,
+                videoId: video_id
             }));
         }
         
         showMessage("DADOS GRAVADOS! RETORNANDO À TV...", false);
         
-        // Redireciona para a TV após um curto delay para o usuário ver a confirmação
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 1200);
