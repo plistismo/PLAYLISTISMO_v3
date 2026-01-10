@@ -31,13 +31,45 @@
                 <span class="text-3xl font-bold text-white tracking-widest drop-shadow-[2px_2px_0_#000] font-jost"><span class="text-[#ffff00]">P</span><span class="text-[#00ff00]">100</span> GUIDE</span>
                 <span class="text-xs text-gray-400 tracking-[0.2em] uppercase font-jost">Playlitronitron</span>
             </div>
-            <div class="text-white text-xl animate-pulse font-jost"><span id="guide-clock">00:00</span></div>
+            <div class="flex items-center gap-4">
+                <div class="text-white text-xl animate-pulse font-jost"><span id="guide-clock">00:00</span></div>
+                <button id="guide-close-btn" class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 flex items-center justify-center border-2 border-white shadow-[2px_2px_0_#000] transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
         </div>
         <div class="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
-            <div id="guide-now-playing" class="bg-black border-2 border-white p-3 mb-6 hidden shrink-0 shadow-[4px_4px_0_rgba(0,0,0,0.5)] font-jost">
-                <div id="np-title" class="text-[#ffff00] text-xl uppercase leading-tight mb-1 line-clamp-2">--</div>
-                <div id="np-playlist" class="text-white text-sm opacity-80 uppercase">CANAL: --</div>
+            <!-- NOW PLAYING NO ESTILO MTV -->
+            <div id="guide-now-playing" class="bg-black border-2 border-white p-4 mb-6 hidden shrink-0 shadow-[4px_4px_0_rgba(0,0,0,0.5)] font-jost relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 to-blue-400 opacity-50"></div>
+                <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-3 font-bold border-b border-white/10 pb-1">ON AIR NOW</div>
+                
+                <div class="space-y-2">
+                    <div id="gnp-artist-row" class="flex gap-2 items-center">
+                        <span class="text-yellow-400">🎤</span>
+                        <span id="gnp-artist" class="text-yellow-400 font-bold uppercase truncate">--</span>
+                    </div>
+                    <div id="gnp-song-row" class="flex gap-2 items-center">
+                        <span class="text-green-400">🎼</span>
+                        <span id="gnp-song" class="text-green-400 font-bold uppercase truncate">--</span>
+                    </div>
+                    <div id="gnp-album-row" class="flex gap-2 items-center">
+                        <span class="text-cyan-400">💽</span>
+                        <span id="gnp-album" class="text-cyan-400 font-bold uppercase truncate">--</span>
+                    </div>
+                    <div id="gnp-year-row" class="flex gap-2 items-center">
+                        <span class="text-pink-400">📅</span>
+                        <span id="gnp-year" class="text-pink-400 font-bold uppercase truncate">--</span>
+                    </div>
+                    <div id="gnp-director-row" class="flex gap-2 items-center">
+                        <span class="text-orange-500">🎬</span>
+                        <span id="gnp-director" class="text-orange-500 font-bold uppercase truncate">--</span>
+                    </div>
+                </div>
+
+                <div id="np-playlist" class="mt-4 text-white/40 text-[9px] uppercase tracking-tighter border-t border-white/10 pt-2 italic">CHANNEL: --</div>
             </div>
+
             <div class="relative bg-black border-2 border-[#ffff00] p-2 mb-4 flex items-center shrink-0">
                 <input type="text" id="channel-search" class="w-full bg-transparent text-white text-2xl uppercase outline-none font-vt323 placeholder-white/30" placeholder="BUSCAR..." autocomplete="off">
             </div>
@@ -48,7 +80,7 @@
     <main id="app-viewport" class="relative z-10 w-full flex flex-col items-center justify-center transition-all duration-500 p-4">
         <div id="top-branding" class="text-white/30 font-vt323 text-xl md:text-2xl tracking-[0.5em] uppercase mb-6">Playlitronitron V6</div>
 
-        <div id="tv-stage" class="relative w-full max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto flex flex-col transition-all duration-500 ease-out">
+        <div id="tv-stage" class="relative w-full max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto flex flex-col transition-all duration-500 ease-out cursor-pointer">
             <div id="tv-unit" class="relative w-full transition-all duration-500 md:perspective-[1500px] group">
                 <div class="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
                     

@@ -28,6 +28,7 @@ const els = {
     screenOn: document.getElementById('screen-on'),
     powerLed: document.getElementById('power-led'),
     tvPowerBtn: document.getElementById('tv-power-btn'),
+    tvStage: document.getElementById('tv-stage'),
     staticOverlay: document.getElementById('static-overlay'),
     bumpLayer: document.getElementById('bump-layer'),
     bumpContent: document.getElementById('bump-content'),
@@ -51,12 +52,24 @@ const els = {
     credYear: document.getElementById('release-year'),
     credDirector: document.getElementById('director-name'),
     // Guide
+    guideCloseBtn: document.getElementById('guide-close-btn'),
     guideClock: document.getElementById('guide-clock'),
     guideChannelList: document.getElementById('channel-guide-container'),
     guideSearch: document.getElementById('channel-search'),
-    guideNpTitle: document.getElementById('np-title'),
     guideNpPlaylist: document.getElementById('np-playlist'),
     guideNowPlayingBox: document.getElementById('guide-now-playing'),
+    // Guide Now Playing Info
+    gnpArtist: document.getElementById('gnp-artist'),
+    gnpSong: document.getElementById('gnp-song'),
+    gnpAlbum: document.getElementById('gnp-album'),
+    gnpYear: document.getElementById('gnp-year'),
+    gnpDirector: document.getElementById('gnp-director'),
+    gnpArtistRow: document.getElementById('gnp-artist-row'),
+    gnpSongRow: document.getElementById('gnp-song-row'),
+    gnpAlbumRow: document.getElementById('gnp-album-row'),
+    gnpYearRow: document.getElementById('gnp-year-row'),
+    gnpDirectorRow: document.getElementById('gnp-director-row'),
+
     speakerGrids: document.querySelectorAll('.speaker-grid')
 };
 
@@ -407,10 +420,25 @@ function renderGuide() {
 }
 
 function updateGuideNowPlaying() {
-    if (state.currentVideoData && els.guideNpTitle) {
-        els.guideNpTitle.innerText = `${state.currentVideoData.artista || '?'} - ${state.currentVideoData.musica || '?'}`;
-        els.guideNpPlaylist.innerText = `CANAL: ${state.currentChannelName}`;
+    const data = state.currentVideoData;
+    if (data && els.guideNpPlaylist) {
+        els.gnpArtist.innerText = data.artista || '--';
+        els.gnpSong.innerText = data.musica || '--';
+        els.gnpAlbum.innerText = data.album || '--';
+        els.gnpYear.innerText = data.ano || '--';
+        els.gnpDirector.innerText = data.direcao || '--';
+        
+        // Hide empty rows
+        els.gnpArtistRow.classList.toggle('hidden', !data.artista);
+        els.gnpSongRow.classList.toggle('hidden', !data.musica);
+        els.gnpAlbumRow.classList.toggle('hidden', !data.album);
+        els.gnpYearRow.classList.toggle('hidden', !data.ano);
+        els.gnpDirectorRow.classList.toggle('hidden', !data.direcao);
+
+        els.guideNpPlaylist.innerText = `CHANNEL: ${state.currentChannelName}`;
         els.guideNowPlayingBox.classList.remove('hidden');
+    } else if(els.guideNowPlayingBox) {
+        els.guideNowPlayingBox.classList.add('hidden');
     }
 }
 
@@ -445,6 +473,17 @@ function checkResumeState() {
 function setupEventListeners() {
     if(els.tvPowerBtn) els.tvPowerBtn.onclick = togglePower;
     if(els.btnSearch) els.btnSearch.onclick = toggleGuide;
+    if(els.guideCloseBtn) els.guideCloseBtn.onclick = toggleGuide;
+    
+    // Fechar ao clicar na TV
+    if(els.tvStage) {
+        els.tvStage.addEventListener('click', (e) => {
+            if (state.isSearchOpen) {
+                toggleGuide();
+            }
+        });
+    }
+
     if(els.btnNextCh) els.btnNextCh.onclick = () => changeChannel(1);
     if(els.btnPrevCh) els.btnPrevCh.onclick = () => changeChannel(-1);
     if(els.btnNextGrp) els.btnNextGrp.onclick = () => changeGroup(1);
