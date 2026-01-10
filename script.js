@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
@@ -62,17 +63,29 @@ const els = {
 
 async function init() {
     populateSpeakers();
-    const { data: { session } } = await supabase.auth.getSession();
-    checkAdminAccess(session);
     startClocks();
-    loadYouTubeAPI();
     setupEventListeners();
-    await fetchGuideData();
-    checkResumeState();
+    
+    // Auth Check Independente
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        checkAdminAccess(session);
+    });
+
+    loadYouTubeAPI();
+    
+    // Carregamento de dados paralelo
+    try {
+        await fetchGuideData();
+        // Check Resume State após carregar o guia
+        checkResumeState();
+    } catch (e) {
+        console.error("Erro ao carregar dados do guia:", e);
+    }
 }
 
 function populateSpeakers() {
     els.speakerGrids.forEach(grid => {
+        if (!grid) return;
         grid.innerHTML = '';
         for(let i=0; i<40; i++) {
             const div = document.createElement('div');
@@ -84,6 +97,8 @@ function populateSpeakers() {
 function checkAdminAccess(session) {
     if (session?.user?.id === ADMIN_UID) {
         if(els.adminHeader) els.adminHeader.classList.remove('hidden');
+    } else {
+        if(els.adminHeader) els.adminHeader.classList.add('hidden');
     }
 }
 
@@ -141,6 +156,7 @@ function updatePlaylistOSD(name) {
 
 // --- PLAYER & NAVIGATION ---
 function loadYouTubeAPI() {
+    if (window.YT) return;
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.appendChild(tag);
@@ -151,7 +167,10 @@ window.onYouTubeIframeAPIReady = () => {
         height: '100%', width: '100%',
         playerVars: { 'controls': 0, 'modestbranding': 1, 'rel': 0, 'iv_load_policy': 3, 'enablejsapi': 1 },
         events: {
-            'onReady': () => { state.playerReady = true; if(state.isOn) playCurrentVideo(); },
+            'onReady': () => { 
+                state.playerReady = true; 
+                if(state.isOn) playCurrentVideo(); 
+            },
             'onStateChange': onPlayerStateChange
         }
     });
@@ -177,7 +196,7 @@ function startCreditsMonitor() {
         const cur = player.getCurrentTime();
         const dur = player.getDuration();
         const show = (cur > 4 && cur < 14) || (dur > 40 && cur > dur - 15 && cur < dur - 4);
-        els.videoCredits.classList.toggle('visible', show);
+        if(els.videoCredits) els.videoCredits.classList.toggle('visible', show);
     }, 1000);
 }
 
@@ -231,48 +250,58 @@ async function changeChannel(direction) {
 
 function togglePower() {
     state.isOn = !state.isOn;
-    els.screenOff.classList.toggle('hidden', state.isOn);
-    els.screenOn.classList.toggle('hidden', !state.isOn);
-    els.powerLed.classList.toggle('bg-red-500', state.isOn);
+    updateTVVisualState();
     
     if (state.isOn) {
-        els.screenOn.classList.add('crt-turn-on');
         if (!state.currentChannelName) loadDefaultChannel();
         else player?.playVideo();
         showOSD();
     } else {
         player?.pauseVideo();
+    }
+}
+
+function updateTVVisualState() {
+    els.screenOff.classList.toggle('hidden', state.isOn);
+    els.screenOn.classList.toggle('hidden', !state.isOn);
+    els.powerLed.classList.toggle('bg-red-500', state.isOn);
+    els.powerLed.classList.toggle('shadow-[0_0_8px_#ff0000]', state.isOn);
+    
+    if (state.isOn) {
+        els.screenOn.classList.add('crt-turn-on');
+    } else {
         els.screenOn.classList.remove('crt-turn-on');
     }
 }
 
 async function loadDefaultChannel() {
-    await fetchGuideData();
     const cat = state.groupsOrder.find(g => state.channelsByCategory[g]?.length > 0);
     if(cat) loadChannelContent(state.channelsByCategory[cat][0].name);
 }
 
 function showOSD() {
+    if(!els.osdLayer) return;
     els.osdLayer.style.opacity = 1;
     clearTimeout(window.osdTimeout);
     window.osdTimeout = setTimeout(() => { els.osdLayer.style.opacity = 0; }, 4000);
 }
 
 function showStatus(text) {
+    if(!els.statusText || !els.statusMsg) return;
     els.statusText.innerText = text;
     els.statusMsg.classList.remove('hidden');
     setTimeout(hideStatus, 3000);
 }
-function hideStatus() { els.statusMsg.classList.add('hidden'); }
-function showStatic(dur) { els.staticOverlay.classList.add('active'); setTimeout(() => els.staticOverlay.classList.remove('active'), dur); }
+function hideStatus() { if(els.statusMsg) els.statusMsg.classList.add('hidden'); }
+function showStatic(dur) { if(els.staticOverlay) els.staticOverlay.classList.add('active'); setTimeout(() => els.staticOverlay.classList.remove('active'), dur); }
 
 function updateCreditsInfo(data) {
     if (!data) return;
-    els.credArtist.innerText = data.artista || '';
-    els.credSong.innerText = data.musica || '';
-    els.credAlbum.innerText = data.album || '';
-    els.credYear.innerText = data.ano || '';
-    els.credDirector.innerText = data.direcao || '';
+    if(els.credArtist) els.credArtist.innerText = data.artista || '';
+    if(els.credSong) els.credSong.innerText = data.musica || '';
+    if(els.credAlbum) els.credAlbum.innerText = data.album || '';
+    if(els.credYear) els.credYear.innerText = data.ano || '';
+    if(els.credDirector) els.credDirector.innerText = data.direcao || '';
 }
 
 async function fetchGuideData() {
@@ -289,6 +318,7 @@ async function fetchGuideData() {
 }
 
 function renderGuide() {
+    if(!els.guideChannelList) return;
     els.guideChannelList.innerHTML = '';
     state.groupsOrder.forEach(cat => {
         if (!state.channelsByCategory[cat]) return;
@@ -307,7 +337,7 @@ function renderGuide() {
 }
 
 function updateGuideNowPlaying() {
-    if (state.currentVideoData) {
+    if (state.currentVideoData && els.guideNpTitle) {
         els.guideNpTitle.innerText = `${state.currentVideoData.artista || '?'} - ${state.currentVideoData.musica || '?'}`;
         els.guideNpPlaylist.innerText = `CANAL: ${state.currentChannelName}`;
         els.guideNowPlayingBox.classList.remove('hidden');
@@ -330,26 +360,33 @@ function fisherYatesShuffle(array) {
 function checkResumeState() {
     const saved = localStorage.getItem('tv_resume_state');
     if (saved) {
-        const { playlist, videoId } = JSON.parse(saved);
-        localStorage.removeItem('tv_resume_state');
-        state.isOn = true;
-        els.screenOff.classList.add('hidden');
-        els.screenOn.classList.remove('hidden');
-        els.powerLed.classList.add('bg-red-500');
-        loadChannelContent(playlist, videoId);
+        try {
+            const { playlist, videoId } = JSON.parse(saved);
+            localStorage.removeItem('tv_resume_state');
+            
+            // Força o estado ON
+            state.isOn = true;
+            updateTVVisualState();
+            
+            // Carrega o conteúdo específico
+            loadChannelContent(playlist, videoId);
+            showOSD();
+        } catch (e) {
+            console.error("Erro no resume state:", e);
+        }
     }
 }
 
 function setupEventListeners() {
-    els.tvPowerBtn.onclick = togglePower;
-    els.btnSearch.onclick = toggleGuide;
-    els.btnNextCh.onclick = () => changeChannel(1);
-    els.btnPrevCh.onclick = () => changeChannel(-1);
-    els.btnNextGrp.onclick = () => changeGroup(1);
-    els.btnPrevGrp.onclick = () => changeGroup(-1);
+    if(els.tvPowerBtn) els.tvPowerBtn.onclick = togglePower;
+    if(els.btnSearch) els.btnSearch.onclick = toggleGuide;
+    if(els.btnNextCh) els.btnNextCh.onclick = () => changeChannel(1);
+    if(els.btnPrevCh) els.btnPrevCh.onclick = () => changeChannel(-1);
+    if(els.btnNextGrp) els.btnNextGrp.onclick = () => changeGroup(1);
+    if(els.btnPrevGrp) els.btnPrevGrp.onclick = () => changeGroup(-1);
     
     document.addEventListener('keydown', (e) => {
-        if (!state.isOn) return;
+        if (!state.isOn && e.key !== 'p') return; // Atalho P para Power
         if (e.key === 'Escape' && state.isSearchOpen) toggleGuide();
         if (state.isOn && !state.isSearchOpen) {
             if (e.key === 'ArrowRight') changeChannel(1);
@@ -359,7 +396,7 @@ function setupEventListeners() {
         }
     });
 
-    els.headerEditBtn?.onclick = () => {
+    els.headerEditBtn?.addEventListener('click', () => {
         if (state.currentVideoData) {
             localStorage.setItem('tv_resume_state', JSON.stringify({
                 playlist: state.currentChannelName,
@@ -367,7 +404,8 @@ function setupEventListeners() {
             }));
             window.location.href = `admin.html?edit_id=${state.currentVideoData.id}`;
         }
-    };
+    });
 }
 
+// Inicializa o sistema
 init();
