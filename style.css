@@ -56,14 +56,14 @@ body.guide-active #player { pointer-events: none; }
 /* --- CRÉDITOS ORIGINAIS (FONTE JOST) --- */
 .credits-overlay {
     position: absolute; bottom: 8%; left: 6%; color: #f8f8f8; 
-    text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 0 0 10px rgba(0,0,0,0.9);
-    font-size: clamp(1rem, 2.2vmin, 1.45rem); font-family: 'Jost', sans-serif;
-    font-weight: 700; line-height: 1.15; opacity: 0; transition: opacity 0.8s ease-in-out;
-    pointer-events: none; z-index: 60; width: auto; max-width: 85%;
+    text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 0 0 8px rgba(0,0,0,0.9);
+    font-size: clamp(0.85rem, 1.8vmin, 1.25rem); font-family: 'Jost', sans-serif;
+    font-weight: 700; line-height: 1.1; opacity: 0; transition: opacity 0.8s ease-in-out;
+    pointer-events: none; z-index: 60; width: auto; max-width: 80%;
 }
 .credits-overlay.visible { opacity: 1; }
-.credit-line { margin-bottom: 0.35rem; display: flex; align-items: flex-start; overflow-wrap: break-word; }
-.icon { flex-shrink: 0; width: 1.8rem; text-align: left; color: #ffff00; filter: drop-shadow(2px 2px 0px #000); font-size: 1.2rem; }
+.credit-line { margin-bottom: 0.25rem; display: flex; align-items: flex-start; overflow-wrap: break-word; }
+.icon { flex-shrink: 0; width: 1.5rem; text-align: left; color: #ffff00; filter: drop-shadow(1px 1px 0px #000); font-size: 1rem; }
 
 /* --- UI TRINITRON (RESTAURADA) --- */
 .texture-plastic {

@@ -195,7 +195,12 @@ function startCreditsMonitor() {
         if (!player || typeof player.getCurrentTime !== 'function') return;
         const cur = player.getCurrentTime();
         const dur = player.getDuration();
-        const show = (cur > 4 && cur < 14) || (dur > 40 && cur > dur - 15 && cur < dur - 4);
+        
+        // REGRAS SOLICITADAS:
+        // 1. Aparecer aos 10s e ficar 12s (até 22s)
+        // 2. Voltar 22s antes do fim e ficar 12s (até 10s antes do fim)
+        const show = (cur >= 10 && cur < 22) || (dur > 44 && cur >= dur - 22 && cur < dur - 10);
+        
         if(els.videoCredits) els.videoCredits.classList.toggle('visible', show);
     }, 1000);
 }
