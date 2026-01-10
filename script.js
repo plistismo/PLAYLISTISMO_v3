@@ -128,8 +128,8 @@ function triggerBump(playlistName) {
 
     els.bumpContent.innerHTML = `
         <div class="bump-ident ${setup.bumpClass}">
-            <div class="text-[clamp(1rem,4vmin,2rem)] opacity-60 mb-6 font-vt323 tracking-widest">${setup.logo}</div>
-            <div class="text-[clamp(2rem,12vmin,7rem)] font-black uppercase leading-[0.9] tracking-tighter">${title}</div>
+            <div class="text-[clamp(1rem,3vmin,1.5rem)] opacity-60 mb-6 font-vt323 tracking-widest">${setup.logo}</div>
+            <div class="main-title font-black uppercase tracking-tighter">${title}</div>
         </div>
     `;
     els.bumpLayer.classList.remove('hidden');
@@ -144,9 +144,13 @@ function triggerBump(playlistName) {
 
 function updatePlaylistOSD(name) {
     if (!els.playlistLabel) return;
+    const setup = getThematicSetup(name);
     const parts = name.split(':');
-    els.playlistLabel.className = 'osd-futuristic';
-    if (name.length > 25) els.playlistLabel.classList.add('osd-compact');
+    
+    // Estilo visual condizente com o Bump
+    els.playlistLabel.className = `osd-futuristic ${setup.bumpClass}`;
+    if (name.length > 20) els.playlistLabel.classList.add('osd-compact');
+    
     if (parts.length > 1) {
         els.playlistLabel.innerHTML = `<div class="osd-line-1">${parts[0].trim()}:</div><div class="osd-line-2">${parts[1].trim()}</div>`;
     } else {
@@ -196,12 +200,14 @@ function startCreditsMonitor() {
         const cur = player.getCurrentTime();
         const dur = player.getDuration();
         
-        // REGRAS SOLICITADAS:
-        // 1. Aparecer aos 10s e ficar 12s (até 22s)
-        // 2. Voltar 22s antes do fim e ficar 12s (até 10s antes do fim)
-        const show = (cur >= 10 && cur < 22) || (dur > 44 && cur >= dur - 22 && cur < dur - 10);
-        
-        if(els.videoCredits) els.videoCredits.classList.toggle('visible', show);
+        // REGRAS DE CRÉDITOS (Aos 10s e no final):
+        const showCredits = (cur >= 10 && cur < 22) || (dur > 44 && cur >= dur - 22 && cur < dur - 10);
+        if(els.videoCredits) els.videoCredits.classList.toggle('visible', showCredits);
+
+        // REGRA DO TÍTULO DA PLAYLIST (Fixo após o bump até 10s antes do fim):
+        // Consideramos 1.5s como o tempo de "passagem" do bump.
+        const showPlaylist = (cur >= 1.5 && cur < (dur - 10));
+        if(els.playlistLabel) els.playlistLabel.classList.toggle('visible', showPlaylist);
     }, 1000);
 }
 
@@ -263,6 +269,7 @@ function togglePower() {
         showOSD();
     } else {
         player?.pauseVideo();
+        if(els.playlistLabel) els.playlistLabel.classList.remove('visible');
     }
 }
 
@@ -287,8 +294,6 @@ async function loadDefaultChannel() {
 function showOSD() {
     if(!els.osdLayer) return;
     els.osdLayer.style.opacity = 1;
-    clearTimeout(window.osdTimeout);
-    window.osdTimeout = setTimeout(() => { els.osdLayer.style.opacity = 0; }, 4000);
 }
 
 function showStatus(text) {
@@ -302,11 +307,35 @@ function showStatic(dur) { if(els.staticOverlay) els.staticOverlay.classList.add
 
 function updateCreditsInfo(data) {
     if (!data) return;
-    if(els.credArtist) els.credArtist.innerText = data.artista || '';
-    if(els.credSong) els.credSong.innerText = data.musica || '';
-    if(els.credAlbum) els.credAlbum.innerText = data.album || '';
-    if(els.credYear) els.credYear.innerText = data.ano || '';
-    if(els.credDirector) els.credDirector.innerText = data.direcao || '';
+
+    const formatSpecialChars = (text) => {
+        if (!text) return '';
+        return String(text).replace(/(ft\.|&)/gi, '<span class="font-normal">$1</span>');
+    };
+
+    const fields = [
+        { el: els.credArtist, val: data.artista, format: true },
+        { el: els.credSong, val: data.musica, format: false },
+        { el: els.credAlbum, val: data.album, format: false },
+        { el: els.credYear, val: data.ano, format: false },
+        { el: els.credDirector, val: data.direcao, format: true }
+    ];
+
+    fields.forEach(field => {
+        if (!field.el) return;
+        const line = field.el.closest('.credit-line');
+        const hasContent = field.val && String(field.val).trim() !== '';
+        if (hasContent) {
+            if (line) line.classList.remove('hidden');
+            if (field.format) {
+                field.el.innerHTML = formatSpecialChars(field.val);
+            } else {
+                field.el.innerText = field.val;
+            }
+        } else {
+            if (line) line.classList.add('hidden');
+        }
+    });
 }
 
 async function fetchGuideData() {
@@ -368,14 +397,9 @@ function checkResumeState() {
         try {
             const { playlist, videoId } = JSON.parse(saved);
             localStorage.removeItem('tv_resume_state');
-            
-            // Força o estado ON
             state.isOn = true;
             updateTVVisualState();
-            
-            // Carrega o conteúdo específico
             loadChannelContent(playlist, videoId);
-            showOSD();
         } catch (e) {
             console.error("Erro no resume state:", e);
         }
@@ -391,7 +415,7 @@ function setupEventListeners() {
     if(els.btnPrevGrp) els.btnPrevGrp.onclick = () => changeGroup(-1);
     
     document.addEventListener('keydown', (e) => {
-        if (!state.isOn && e.key !== 'p') return; // Atalho P para Power
+        if (!state.isOn && e.key !== 'p') return; 
         if (e.key === 'Escape' && state.isSearchOpen) toggleGuide();
         if (state.isOn && !state.isSearchOpen) {
             if (e.key === 'ArrowRight') changeChannel(1);
@@ -412,5 +436,4 @@ function setupEventListeners() {
     });
 }
 
-// Inicializa o sistema
 init();
