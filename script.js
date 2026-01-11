@@ -551,7 +551,8 @@ function setupEventListeners() {
                 playlist: state.currentChannelName,
                 videoId: state.currentVideoData.video_id
             }));
-            window.location.href = `admin.html?edit_id=${state.currentVideoData.id}`;
+            // Adicionado 'from=tv' para sinalizar o fluxo de volta após salvar
+            window.location.href = `admin.html?edit_id=${state.currentVideoData.id}&from=tv`;
         }
     });
 

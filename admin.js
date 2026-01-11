@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -30,6 +31,7 @@ const inputVideoId = document.getElementById('input-video-id');
 
 let currentData = []; 
 let debounceTimeout = null;
+let lastUpdatedId = null; // Para sinalizar o registro editado na tabela
 
 // --- AUTH CHECK & INIT ---
 async function checkAuth() {
@@ -37,14 +39,13 @@ async function checkAuth() {
     if (!session) {
         window.location.href = 'login.html';
     } else {
-        loadDatabaseFilterOptions();
-        fetchMusics(); 
+        await loadDatabaseFilterOptions();
+        await fetchMusics(); 
         checkUrlForEdit();
     }
 }
 
 async function loadDatabaseFilterOptions() {
-    // Carrega todas as playlists disponíveis para os filtros
     const { data, error } = await supabase
         .from('playlists')
         .select('name, group_name')
@@ -137,7 +138,6 @@ async function checkUrlForEdit() {
         if(target) {
             editMusicData(target);
             showMessage(`REGISTRO #${editId} PRONTO PARA EDIÇÃO.`);
-            window.history.replaceState({}, document.title, window.location.pathname);
         } else {
             showMessage(`REGISTRO #${editId} NÃO ENCONTRADO.`);
         }
@@ -155,7 +155,9 @@ function renderTable(data) {
 
     data.forEach(item => {
         const row = document.createElement('tr');
-        row.className = 'hover:bg-amber-900/10 transition-colors group border-b border-amber-900/10';
+        // Adiciona classe de sinalização se for o último registro atualizado
+        const isUpdated = item.id == lastUpdatedId;
+        row.className = `hover:bg-amber-900/10 transition-colors group border-b border-amber-900/10 ${isUpdated ? 'row-updated' : ''}`;
         row.innerHTML = `
             <td class="font-mono text-sm opacity-70 align-top border-r border-amber-900/30 px-2 text-center py-2">${item.id}</td>
             <td class="align-top border-r border-amber-900/30 px-2 py-2">
@@ -204,6 +206,9 @@ function editMusicData(music) {
 musicForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = inputId.value;
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromTv = urlParams.get('from') === 'tv';
+
     const formData = {
         artista: inputArtista.value.trim(),
         musica: inputMusica.value.trim(),
@@ -217,14 +222,19 @@ musicForm.addEventListener('submit', async (e) => {
     btnSave.innerText = "PROCESSANDO...";
 
     let error = null;
+    let operationId = id;
+
     if (id) {
         const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
         error = err;
         if(!error) showMessage(`REGISTRO #${id} ATUALIZADO!`);
     } else {
-        const { error: err } = await supabase.from('musicas_backup').insert([formData]);
+        const { data: inserted, error: err } = await supabase.from('musicas_backup').insert([formData]).select();
         error = err;
-        if(!error) showMessage("NOVO REGISTRO GRAVADO!");
+        if(!error && inserted) {
+            operationId = inserted[0].id;
+            showMessage("NOVO REGISTRO GRAVADO!");
+        }
     }
 
     if (error) {
@@ -232,27 +242,37 @@ musicForm.addEventListener('submit', async (e) => {
         btnSave.disabled = false;
         btnSave.innerText = "GRAVAR DADOS";
     } else {
-        // Obter dados atuais para manter a playlist no resume state se necessário
-        let playlist = null;
-        let video_id = formData.video_id;
-        
-        if (id) {
-            const currentItem = currentData.find(m => m.id == id);
-            if (currentItem) playlist = currentItem.playlist;
-        }
+        // Se veio do Edit Video da TV, redirecionamos de volta para a TV
+        if (fromTv) {
+            let playlist = null;
+            let video_id = formData.video_id;
+            
+            if (id) {
+                const currentItem = currentData.find(m => m.id == id);
+                if (currentItem) playlist = currentItem.playlist;
+            }
 
-        if (playlist && video_id) {
-            localStorage.setItem('tv_resume_state', JSON.stringify({
-                playlist: playlist,
-                videoId: video_id
-            }));
+            if (playlist && video_id) {
+                localStorage.setItem('tv_resume_state', JSON.stringify({
+                    playlist: playlist,
+                    videoId: video_id
+                }));
+            }
+            
+            showMessage("DADOS GRAVADOS! RETORNANDO À TV...", false);
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1200);
+        } else {
+            // Se for Service Mode, permanece no Admin e sinaliza na lista
+            lastUpdatedId = operationId;
+            btnSave.disabled = false;
+            resetForm();
+            // Limpa parâmetros da URL para evitar comportamentos estranhos no próximo save
+            window.history.replaceState({}, document.title, window.location.pathname);
+            await fetchMusics();
+            showMessage(`REGISTRO #${operationId} PROCESSADO COM SUCESSO!`);
         }
-        
-        showMessage("DADOS GRAVADOS! RETORNANDO À TV...", false);
-        
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1200);
     }
 });
 
@@ -305,6 +325,7 @@ btnLogout.addEventListener('click', async () => {
 btnClear.addEventListener('click', (e) => {
     e.preventDefault();
     resetForm();
+    window.history.replaceState({}, document.title, window.location.pathname);
 });
 
 checkAuth();
