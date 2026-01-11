@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -41,7 +40,7 @@
         </div>
         <div class="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
             
-            <!-- NOW PLAYING -->
+            <!-- NOW PLAYING COLORIDO COM LETREIRO DIGITAL -->
             <div id="guide-now-playing" class="bg-[#111] border-2 border-white/30 p-4 mb-6 hidden shrink-0 shadow-[8px_8px_0_rgba(0,0,0,1)] font-jost relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 via-cyan-400 via-pink-400 to-orange-500"></div>
                 
@@ -120,13 +119,18 @@
                             <div id="screen-on" class="hidden relative w-full h-full rounded-[20px] md:rounded-[44px] overflow-hidden bg-black">
                                 <div id="player" class="w-full h-full"></div>
                                 
+                                <!-- BUMP LAYER MTV (MIV-7) -->
                                 <div id="bump-layer" class="absolute inset-0 z-[70] hidden flex items-center justify-center bg-transparent pointer-events-none overflow-hidden">
                                     <div id="bump-content" class="relative w-full h-full flex items-center justify-center"></div>
                                 </div>
 
                                 <div id="static-overlay" class="absolute inset-0 z-30 opacity-0 pointer-events-none transition-opacity duration-100 bg-repeat"></div>
                                 
+                                <!-- OSD DINÂMICO -->
                                 <div id="osd-layer" class="absolute inset-0 z-30 pointer-events-none">
+                                    <div class="absolute top-4 left-6 text-left">
+                                        <div id="live-indicator" class="hidden bg-red-600 text-white font-pixel text-[10px] px-2 py-1 animate-pulse shadow-[0_0_10px_rgba(255,0,0,0.5)]">LIVE</div>
+                                    </div>
                                     <div class="absolute top-4 right-6 text-right">
                                         <div id="tv-playlist-label" class="osd-futuristic">--</div>
                                     </div>
@@ -135,6 +139,7 @@
                                     </div>
                                 </div>
 
+                                <!-- CRÉDITOS -->
                                 <div id="video-credits" class="credits-overlay">
                                     <div class="credit-line"><span class="icon">🎤</span> <div class="credit-text-content"><span id="artist-name">Artist</span></div></div>
                                     <div class="credit-line"><span class="icon">🎼</span> <div class="credit-text-content"><span id="song-name">Song</span></div></div>
@@ -159,7 +164,13 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2 md:gap-4">
-                            <button id="tv-search-btn" class="btn-retro-push w-10 h-8 md:w-16 md:h-10 rounded-sm flex items-center justify-center group relative">
+                            <button id="tv-linear-btn" class="btn-retro-push w-10 h-8 md:w-16 md:h-10 rounded-sm flex items-center justify-center group relative">
+                                <span class="text-[6px] absolute -top-3 text-gray-500 font-bold uppercase tracking-widest group-hover:text-red-500">Mode</span>
+                                <div id="linear-led" class="w-1.5 h-1.5 rounded-full bg-gray-800 border border-black mr-2"></div>
+                                <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase">Linear</span>
+                            </button>
+                            <div class="w-px h-8 bg-[#222] border-r border-[#444]"></div>
+                            <button id="tv-search-btn" class="btn-retro-push w-10 h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative">
                                 <span class="text-[6px] absolute -top-3 text-gray-500 font-bold uppercase tracking-widest group-hover:text-yellow-500">Guide</span>
                                 <svg class="w-4 h-4 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
                             </button>
@@ -191,6 +202,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Footer Credits -->
             <div class="text-[8px] md:text-[10px] text-white/20 mt-3 font-vt323 uppercase tracking-[0.3em] text-center w-full">
                 powered by addri0n4 & sandrobreaker
             </div>
