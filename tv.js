@@ -1,5 +1,3 @@
-
-
 // --- State Management ---
 const state = {
     isOn: false,

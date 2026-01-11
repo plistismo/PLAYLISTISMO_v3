@@ -12,29 +12,6 @@ body {
 body.guide-active #tv-internal-guide { transform: translateX(0); }
 body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filter: none !important; }
 
-/* --- GUIDE INTERNAL LAYOUT --- */
-#tv-internal-guide {
-    display: flex;
-    flex-direction: column;
-    max-height: 100vh;
-    height: 100%;
-}
-
-/* --- SCROLLBAR CUSTOMIZATION --- */
-.custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: #000;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #444;
-    border: 2px solid #000;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #ffff00;
-}
-
 /* --- ACCORDION UI --- */
 .guide-cat-header.active {
     background-color: #0000ff;
@@ -45,25 +22,13 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     transform: rotate(180deg);
 }
 
-.guide-cat-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-}
-
-.guide-cat-content.show {
-    max-height: 1000px; /* Suficiente para os itens */
-    overflow-y: visible;
-}
-
 /* --- SMART MARQUEE (LETREIRO DIGITAL) --- */
 .marquee-container {
     width: 100%;
     overflow: hidden;
     white-space: nowrap;
     position: relative;
-    /* Removido o 'transparent' inicial que ocultava a primeira letra */
-    mask-image: linear-gradient(to right, black 95%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
 }
 
 .marquee-text {
@@ -79,7 +44,7 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 
 @keyframes marquee-scroll {
     0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); } /* Rola metade pois duplicamos o texto para loop fluido */
+    100% { transform: translateX(-50%); } /* Rola metade pois duplicamos o texto para loop infinito */
 }
 
 /* --- NOW PLAYING COLORIDO (GUIDE) --- */
@@ -116,40 +81,32 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     flex-direction: column;
     align-items: flex-end;
     text-align: right;
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.8rem;
     position: relative;
-    color: #ffffff;
+    color: #fff;
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-family: 'Rajdhani', sans-serif; /* Trocado de Orbitron para Rajdhani por ser mais legível */
-    font-weight: 500; /* Removido o negrito (900 -> 500) para maior clareza */
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
     line-height: 1.1;
-    border-right: 4px solid #00ff00;
-    /* Fundo de alto contraste para garantir legibilidade */
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
-    box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-    
+    border-right: 3px solid #00ff00;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.4));
     transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
     opacity: 0;
     transform: translateX(10px);
 }
-
 .osd-futuristic.visible { 
-    opacity: 0.9;
+    opacity: 0.7;
     transform: translateX(0); 
 }
 
-/* Configurações de Cores Temáticas Mantidas no Bordo para Estilo */
-.osd-futuristic.bump-chrome { border-right-color: #ffffff; color: #ffffff; font-style: italic; }
-.osd-futuristic.bump-urban { border-right-color: #ffff00; color: #ffff00; font-family: 'Jost', sans-serif; font-weight: 700; } /* Trocado Permanent Marker por Jost 700 para legibilidade */
-.osd-futuristic.bump-cyber { border-right-color: #00ff00; color: #00ff00; }
-/* Removido o invert do bump-noise para não prejudicar a leitura do texto */
-.osd-futuristic.bump-noise { border-right-color: #ff0000; color: #ffffff; }
+.osd-futuristic.bump-chrome { border-right-color: #fff; color: #fff; font-style: italic; }
+.osd-futuristic.bump-urban { border-right-color: #ffff00; color: #ffff00; font-family: 'Permanent Marker', cursive; }
+.osd-futuristic.bump-cyber { border-right-color: #00ff00; color: #00ff00; letter-spacing: 2px; }
+.osd-futuristic.bump-noise { border-right-color: #fff; color: #fff; filter: invert(1); mix-blend-mode: difference; }
 
-.osd-line-1 { font-size: clamp(0.75rem, 2vmin, 1.2rem); }
-.osd-line-2 { font-size: clamp(0.6rem, 1.6vmin, 0.95rem); opacity: 0.9; }
+.osd-line-1 { font-size: clamp(0.7rem, 2vmin, 1.1rem); }
+.osd-line-2 { font-size: clamp(0.55rem, 1.6vmin, 0.9rem); opacity: 0.8; }
 
 /* --- BUMP LAYER MTV --- */
 #bump-layer { z-index: 999; }

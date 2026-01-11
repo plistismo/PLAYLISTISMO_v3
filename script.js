@@ -212,12 +212,8 @@ function startCreditsMonitor() {
         
         if (dur <= 0) return;
 
-        /**
-         * Visibilidade dos Créditos (MTV Style)
-         * - Aparecem aos 10s e somem aos 20s (Duração: 10s)
-         * - Reaparecem 20s antes do fim e somem 10s antes do fim (Duração: 10s)
-         */
-        const showCredits = (cur >= 10 && cur < 20) || (dur > 35 && cur >= (dur - 20) && cur < (dur - 10));
+        // Visibilidade dos Créditos (MTV Style)
+        const showCredits = (cur >= 10 && cur < 22) || (dur > 30 && cur >= dur - 15);
         if(els.videoCredits) els.videoCredits.classList.toggle('visible', showCredits);
 
         // Visibilidade do Rótulo da Playlist
@@ -393,7 +389,7 @@ function renderGuide() {
         header.innerHTML = `<span>${cat}</span> <span class="arrow text-xs transition-transform transform">▼</span>`;
 
         const listContainer = document.createElement('div');
-        listContainer.className = 'guide-cat-content flex flex-col bg-black/40';
+        listContainer.className = 'guide-cat-content hidden flex flex-col bg-black/40';
 
         state.channelsByCategory[cat].forEach(pl => {
             const btn = document.createElement('button');
@@ -408,13 +404,13 @@ function renderGuide() {
         });
 
         header.onclick = () => {
-            const isCurrentlyShown = listContainer.classList.contains('show');
-            document.querySelectorAll('.guide-cat-content').forEach(el => el.classList.remove('show'));
+            const isCurrentlyHidden = listContainer.classList.contains('hidden');
+            document.querySelectorAll('.guide-cat-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.guide-cat-header').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.guide-cat-header .arrow').forEach(el => el.classList.remove('rotate-180'));
 
-            if (!isCurrentlyShown) {
-                listContainer.classList.add('show');
+            if (isCurrentlyHidden) {
+                listContainer.classList.remove('hidden');
                 header.classList.add('active');
                 header.querySelector('.arrow').classList.add('rotate-180');
             }
@@ -426,11 +422,6 @@ function renderGuide() {
     });
 }
 
-/**
- * Aplica o efeito de letreiro digital se o texto for maior que o container.
- * @param {HTMLElement} element - O elemento span dentro do container marquee.
- * @param {string} text - O conteúdo a ser exibido.
- */
 function applySmartMarquee(element, text) {
     if (!element) return;
     const container = element.parentElement;
@@ -572,13 +563,12 @@ function setupEventListeners() {
                 });
                 group.classList.toggle('hidden', !hasVisible && term !== '');
                 
-                const listContent = group.querySelector('.guide-cat-content');
                 if (term !== '' && hasVisible) {
-                    listContent.classList.add('show');
+                    group.querySelector('.guide-cat-content').classList.remove('hidden');
                     group.querySelector('.guide-cat-header').classList.add('active');
                     group.querySelector('.arrow').classList.add('rotate-180');
                 } else if (term === '') {
-                    listContent.classList.remove('show');
+                    group.querySelector('.guide-cat-content').classList.add('hidden');
                     group.querySelector('.guide-cat-header').classList.remove('active');
                     group.querySelector('.arrow').classList.remove('rotate-180');
                 }

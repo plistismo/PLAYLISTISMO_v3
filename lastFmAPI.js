@@ -1,4 +1,3 @@
-
 /**
  * LAST.FM API MODULE
  * Adaptado para Frontend (ES Module)

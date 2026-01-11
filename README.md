@@ -1,4 +1,3 @@
-
 # 📺 Play-Listismo | Retro Edition
 
 > Uma experiência visual nostálgica que transforma playlists do YouTube em uma TV de Tubo interativa dos anos 90, enriquecida com metadados e curiosidades.
