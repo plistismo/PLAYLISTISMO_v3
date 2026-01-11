@@ -19,13 +19,13 @@
 </head>
 <body class="bg-[#050505] min-h-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
 
-    <!-- ADMIN HEADER (Apenas botões de gatilho) -->
+    <!-- ADMIN HEADER -->
     <div id="admin-panel-header" class="hidden fixed top-4 right-4 z-[9990] flex gap-2">
-        <button id="service-mode-btn" class="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">⚙ SERVICE MODE</button>
+        <a href="admin.html" id="service-mode-link" class="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">⚙ SERVICE MODE</a>
         <button id="header-edit-btn" class="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">✎ EDIT VIDEO</button>
     </div>
 
-    <!-- GUIDE (LEFT PANEL) -->
+    <!-- GUIDE -->
     <div id="tv-internal-guide" class="fixed inset-y-0 left-0 z-[100] w-full md:w-[450px] teletext-bg flex flex-col shadow-[20px_0_60px_rgba(0,0,0,0.9)] border-r-4 border-white/10 transform -translate-x-full transition-transform duration-500 ease-in-out font-vt323 h-full">
         <div class="bg-black p-4 flex justify-between items-center border-b-2 border-white/20 shrink-0">
             <div class="flex flex-col leading-none">
@@ -34,33 +34,68 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-white text-xl animate-pulse font-jost"><span id="guide-clock">00:00</span></div>
-                <button id="guide-close-btn" class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 flex items-center justify-center border-2 border-white shadow-[4px_4px_0_#000] transition-colors">
+                <button id="guide-close-btn" class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 flex items-center justify-center border-2 border-white shadow-[4px_4px_0_#000] transition-colors active:translate-y-1 active:shadow-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
         </div>
         <div class="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
+            
+            <!-- NOW PLAYING COLORIDO COM LETREIRO DIGITAL -->
             <div id="guide-now-playing" class="bg-[#111] border-2 border-white/30 p-4 mb-6 hidden shrink-0 shadow-[8px_8px_0_rgba(0,0,0,1)] font-jost relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 via-cyan-400 via-pink-400 to-orange-500"></div>
+                
                 <div class="space-y-3">
-                    <!-- Artista, Track, etc (Mantido igual) -->
                     <div id="gnp-artist-row" class="flex gap-3 items-center gnp-row group">
-                        <span class="text-2xl shrink-0">🎤</span>
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎤</span>
                         <div class="flex flex-col overflow-hidden w-full">
                             <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ARTIST</span>
-                            <div class="marquee-container"><span id="gnp-artist" class="marquee-text text-[#ffff00] text-xl font-bold uppercase">--</span></div>
+                            <div class="marquee-container">
+                                <span id="gnp-artist" class="marquee-text text-[#ffff00] text-xl font-bold uppercase drop-shadow-[2px_2px_0_#000]">--</span>
+                            </div>
                         </div>
                     </div>
                     <div id="gnp-song-row" class="flex gap-3 items-center gnp-row group">
-                        <span class="text-2xl shrink-0">🎼</span>
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎼</span>
                         <div class="flex flex-col overflow-hidden w-full">
                             <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">TRACK</span>
-                            <div class="marquee-container"><span id="gnp-song" class="marquee-text text-[#00ff00] text-xl font-bold uppercase">--</span></div>
+                            <div class="marquee-container">
+                                <span id="gnp-song" class="marquee-text text-[#00ff00] text-xl font-bold uppercase drop-shadow-[2px_2px_0_#000]">--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="gnp-album-row" class="flex gap-3 items-center gnp-row group">
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">💽</span>
+                        <div class="flex flex-col overflow-hidden w-full">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ALBUM</span>
+                            <div class="marquee-container">
+                                <span id="gnp-album" class="marquee-text text-[#00ffff] text-base font-bold uppercase drop-shadow-[1px_1px_0_#000]">--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="gnp-year-row" class="flex gap-3 items-center gnp-row group">
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">📅</span>
+                        <div class="flex flex-col overflow-hidden w-full">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">RELEASE</span>
+                            <div class="marquee-container">
+                                <span id="gnp-year" class="marquee-text text-[#ff00ff] text-base font-bold uppercase drop-shadow-[1px_1px_0_#000]">--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="gnp-director-row" class="flex gap-3 items-center gnp-row group">
+                        <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎬</span>
+                        <div class="flex flex-col overflow-hidden w-full">
+                            <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">DIRECTOR</span>
+                            <div class="marquee-container">
+                                <span id="gnp-director" class="marquee-text text-[#ff8800] text-base font-bold uppercase drop-shadow-[1px_1px_0_#000]">--</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
                 <div id="np-playlist" class="mt-4 text-white/40 text-[10px] uppercase tracking-tighter border-t border-white/10 pt-2 italic text-right">CHANNEL: --</div>
             </div>
+
             <div class="relative bg-black border-2 border-[#ffff00] p-2 mb-4 flex items-center shrink-0">
                 <input type="text" id="channel-search" class="w-full bg-transparent text-white text-2xl uppercase outline-none font-vt323 placeholder-white/30" placeholder="BUSCAR..." autocomplete="off">
             </div>
@@ -68,104 +103,31 @@
         </div>
     </div>
 
-    <!-- ADMIN PANEL (RIGHT PANEL) -->
-    <div id="tv-admin-panel" class="fixed inset-y-0 right-0 z-[100] w-full md:w-[600px] bg-black border-l-4 border-amber-600/30 flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.9)] transform translate-x-full transition-transform duration-500 ease-in-out font-jost text-amber-500">
-        <div class="bg-[#111] p-4 flex justify-between items-center border-b-2 border-amber-600/20 shrink-0">
-            <div class="flex flex-col leading-none">
-                <span class="text-2xl font-bold tracking-widest uppercase">Service <span class="text-white">Mode</span></span>
-                <span class="text-[10px] text-amber-700 tracking-[0.3em] uppercase">Database manipulation</span>
-            </div>
-            <button id="admin-close-btn" class="bg-amber-600 hover:bg-amber-500 text-black w-10 h-10 flex items-center justify-center border-2 border-black shadow-[4px_4px_0_#000] transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-        
-        <div id="admin-status-msg" class="hidden w-full p-2 text-center text-sm font-bold border-b border-amber-500 bg-amber-900/20"></div>
-
-        <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#050505]">
-            <!-- Form -->
-            <div class="mb-8 border border-amber-900/30 p-4 bg-black">
-                <h3 id="form-title" class="text-lg font-bold mb-4 border-b border-amber-900/30 pb-2 flex justify-between items-center">
-                    <span id="form-title-text">EDITAR VÍDEO ATUAL</span>
-                    <button id="admin-form-clear" class="text-[10px] underline opacity-50 uppercase">Novo Registro</button>
-                </h3>
-                <form id="admin-music-form" class="space-y-3">
-                    <input type="hidden" id="admin-input-id">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="col-span-2">
-                            <label class="block text-[10px] opacity-50 uppercase mb-1">Artista</label>
-                            <input type="text" id="admin-input-artista" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors" required>
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-[10px] opacity-50 uppercase mb-1">Música</label>
-                            <input type="text" id="admin-input-musica" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] opacity-50 uppercase mb-1">Ano</label>
-                            <input type="number" id="admin-input-ano" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] opacity-50 uppercase mb-1">Álbum</label>
-                            <input type="text" id="admin-input-album" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-[10px] opacity-50 uppercase mb-1">Vídeo ID (YouTube)</label>
-                            <input type="text" id="admin-input-video-id" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors">
-                        </div>
-                    </div>
-                    <button type="submit" id="admin-btn-save" class="w-full py-3 bg-amber-600 text-black font-bold uppercase hover:bg-amber-500 transition-colors mt-4">Gravar Dados</button>
-                </form>
-            </div>
-
-            <!-- Table Filters -->
-            <div class="mb-4 space-y-3">
-                <input type="text" id="admin-search-db" placeholder="BUSCAR NO BANCO..." class="w-full bg-black border border-amber-900/50 p-2 text-amber-500 outline-none focus:border-amber-500 transition-colors uppercase text-sm">
-                <div class="grid grid-cols-2 gap-2">
-                    <select id="admin-filter-group" class="bg-black border border-amber-900/50 p-2 text-xs text-amber-500 outline-none">
-                        <option value="">TODOS OS GRUPOS</option>
-                    </select>
-                    <select id="admin-filter-playlist" class="bg-black border border-amber-900/50 p-2 text-xs text-amber-500 outline-none">
-                        <option value="">TODAS AS PLAYLISTS</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Table -->
-            <div class="border border-amber-900/30 bg-black overflow-hidden">
-                <table class="w-full text-[11px] text-left border-collapse">
-                    <thead class="bg-[#111] text-amber-700 uppercase">
-                        <tr>
-                            <th class="p-2 border-b border-amber-900/30">ID</th>
-                            <th class="p-2 border-b border-amber-900/30">Artista / Música</th>
-                            <th class="p-2 border-b border-amber-900/30 text-center">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-table-body">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN VIEWPORT -->
     <main id="app-viewport" class="relative z-10 w-full flex flex-col items-center justify-center transition-all duration-500 p-4">
         <div id="top-branding" class="text-white/30 font-vt323 text-xl md:text-2xl tracking-[0.5em] uppercase mb-6">playlistismo</div>
 
         <div id="tv-stage" class="relative w-full max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto flex flex-col transition-all duration-500 ease-out cursor-pointer">
             <div id="tv-unit" class="relative w-full transition-all duration-500 md:perspective-[1500px] group">
                 <div class="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
+                    
                     <div class="flex flex-row bg-[#111] rounded-[16px] md:rounded-[36px] p-2 md:p-5 shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222]">
+                        <!-- Left Speaker Grid -->
                         <div class="hidden md:flex flex-col justify-center w-10 mr-3 space-y-0.5 opacity-50 speaker-grid shrink-0"></div>
+                        
+                        <!-- Screen Section -->
                         <div class="relative flex-1 aspect-[4/3] bg-[#050505] rounded-[24px] md:rounded-[48px] overflow-hidden screen-container border-[4px] md:border-[8px] border-[#080808] z-10 box-content">
                             <div class="absolute inset-0 crt-overlay z-40 rounded-[24px] md:rounded-[48px] pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]"></div>
                             <div id="screen-off" class="absolute inset-0 bg-[#080808] z-20"></div>
+                            
                             <div id="screen-on" class="hidden relative w-full h-full rounded-[20px] md:rounded-[44px] overflow-hidden bg-black">
                                 <div id="player" class="w-full h-full"></div>
+                                
                                 <div id="bump-layer" class="absolute inset-0 z-[70] hidden flex items-center justify-center bg-transparent pointer-events-none overflow-hidden">
                                     <div id="bump-content" class="relative w-full h-full flex items-center justify-center"></div>
                                 </div>
+
                                 <div id="static-overlay" class="absolute inset-0 z-30 opacity-0 pointer-events-none transition-opacity duration-100 bg-repeat"></div>
+                                
                                 <div id="osd-layer" class="absolute inset-0 z-30 pointer-events-none">
                                     <div class="absolute top-4 right-6 text-right">
                                         <div id="tv-playlist-label" class="osd-futuristic">--</div>
@@ -174,6 +136,7 @@
                                         <div id="status-text" class="inline-block text-[#00ff00] font-pixel text-xs md:text-xl bg-black/90 px-4 py-3 border-2 border-[#00ff00] uppercase tracking-widest shadow-[0_0_15px_#00ff00]">INITIALIZING...</div>
                                     </div>
                                 </div>
+
                                 <div id="video-credits" class="credits-overlay">
                                     <div class="credit-line"><span class="icon">🎤</span> <div class="credit-text-content"><span id="artist-name">Artist</span></div></div>
                                     <div class="credit-line"><span class="icon">🎼</span> <div class="credit-text-content"><span id="song-name">Song</span></div></div>
@@ -181,39 +144,79 @@
                                     <div class="credit-line"><span class="icon">📅</span> <div class="credit-text-content"><span id="release-year">Year</span></div></div>
                                     <div class="credit-line"><span class="icon">🎬</span> <div class="credit-text-content"><span id="director-name">Director</span></div></div>
                                 </div>
+
                                 <div class="vhs-noise z-40 mix-blend-overlay pointer-events-none"></div>
                                 <div class="vhs-tracking z-40 pointer-events-none"></div>
                                 <div class="absolute inset-0 scanlines pointer-events-none z-50 opacity-60"></div>
                             </div>
                         </div>
-                        <!-- Botões Físicos Direita (Mantido) -->
+
+                        <!-- Right Control Panel Section -->
                         <div class="flex flex-col w-16 md:w-32 ml-4 p-2 md:p-3 bg-[#111] border-l border-[#222] shadow-[inset_2px_0_5px_rgba(0,0,0,0.5)] justify-between items-center gap-4 shrink-0 rounded-r-lg">
+                            
+                            <!-- Branding Side Panel -->
                             <div class="flex flex-col items-center select-none opacity-80 mb-2">
                                 <span class="font-serif italic font-bold text-[#bbb] text-[8px] md:text-sm drop-shadow-[1px_1px_0_rgba(0,0,0,1)] tracking-tight uppercase vertical-text">playlist<span class="text-[#888]">ismo</span></span>
+                                <div class="flex flex-col gap-0.5 mt-2">
+                                    <div class="w-1 h-3 md:h-5 bg-red-700"></div>
+                                    <div class="w-1 h-3 md:h-5 bg-green-700"></div>
+                                    <div class="w-1 h-3 md:h-5 bg-blue-700"></div>
+                                </div>
                             </div>
+
+                            <!-- Controls Grid Vertical -->
                             <div class="flex flex-col items-center gap-4 md:gap-6">
+                                <!-- Guide Btn -->
                                 <div class="flex flex-col items-center">
                                     <span class="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Guide</span>
-                                    <button id="tv-search-btn" class="btn-retro-push w-10 h-8 md:w-14 md:h-12 rounded-sm flex items-center justify-center group"><svg class="w-4 h-4 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg></button>
+                                    <button id="tv-search-btn" class="btn-retro-push w-10 h-8 md:w-14 md:h-12 rounded-sm flex items-center justify-center group relative">
+                                        <svg class="w-4 h-4 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
+                                    </button>
                                 </div>
+
+                                <!-- Group Toggle -->
+                                <div class="flex flex-col items-center">
+                                    <span class="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Grp</span>
+                                    <div class="flex flex-col gap-2">
+                                        <button id="tv-grp-next" class="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white">+</button>
+                                        <button id="tv-grp-prev" class="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white">-</button>
+                                    </div>
+                                </div>
+
+                                <!-- Channel Toggle -->
                                 <div class="flex flex-col items-center">
                                     <span class="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Ch</span>
                                     <div class="flex flex-col gap-2">
-                                        <button id="tv-ch-next" class="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center group"><svg class="w-3 h-3 text-gray-400 group-hover:text-white -rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z"/></svg></button>
-                                        <button id="tv-ch-prev" class="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center group"><svg class="w-3 h-3 text-gray-400 group-hover:text-white rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z"/></svg></button>
+                                        <button id="tv-ch-next" class="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center group">
+                                            <svg class="w-3 h-3 text-gray-400 group-hover:text-white -rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z"/></svg>
+                                        </button>
+                                        <button id="tv-ch-prev" class="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center group">
+                                            <svg class="w-3 h-3 text-gray-400 group-hover:text-white rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z"/></svg>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Power Unit at Bottom of Panel -->
                             <div class="mt-auto flex flex-col items-center gap-3 pb-2">
-                                <div id="power-led" class="w-1.5 h-1.5 rounded-full bg-red-900 border border-black transition-all duration-300"></div>
-                                <button id="tv-power-btn" class="btn-power-push w-10 h-10 md:w-14 md:h-14 rounded-sm flex items-center justify-center group"><svg class="w-5 h-5 text-gray-400 group-hover:text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg></button>
+                                <div class="flex flex-col items-center">
+                                    <div id="power-led" class="w-1.5 h-1.5 rounded-full bg-red-900 border border-black shadow-[0_0_2px_black] transition-all duration-300"></div>
+                                    <span class="text-[6px] text-gray-500 mt-1 font-bold uppercase">Pwr</span>
+                                </div>
+                                <button id="tv-power-btn" class="btn-power-push w-10 h-10 md:w-14 md:h-14 rounded-sm flex items-center justify-center group">
+                                    <svg class="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="mt-8 text-center opacity-20 hover:opacity-100 transition-opacity duration-500 pointer-events-none select-none text-white font-vt323 tracking-widest uppercase">powered by @addri0n4 e @sandrobreaker</div>
+
+        <!-- FOOTER CREDITS -->
+        <div class="mt-8 text-center opacity-20 hover:opacity-100 transition-opacity duration-500 pointer-events-none select-none">
+            <span class="font-vt323 text-sm md:text-base text-white tracking-widest uppercase">powered by @addri0n4 e @sandrobreaker</span>
+        </div>
     </main>
 
     <script type="module" src="script.js"></script>
