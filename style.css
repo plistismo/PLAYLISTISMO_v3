@@ -11,7 +11,10 @@ body {
 
 /* --- NAVIGATION ENGINE --- */
 body.guide-active #tv-internal-guide { transform: translateX(0); }
-body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filter: none !important; }
+body.guide-active #app-viewport { transform: translateX(200px) scale(0.9); }
+
+body.admin-active #tv-admin-panel { transform: translateX(0); }
+body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 
 /* --- ACCORDION UI --- */
 .guide-cat-header.active {
@@ -25,13 +28,13 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 }
 
 /* Scrollbar customizada para as listas de canais */
-.guide-cat-content::-webkit-scrollbar {
+.guide-cat-content::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
 }
-.guide-cat-content::-webkit-scrollbar-track {
+.guide-cat-content::-webkit-scrollbar-track, .custom-scrollbar::-webkit-scrollbar-track {
     background: rgba(0,0,0,0.3);
 }
-.guide-cat-content::-webkit-scrollbar-thumb {
+.guide-cat-content::-webkit-scrollbar-thumb, .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #ffff00;
 }
 
@@ -260,10 +263,12 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     color: #fbbf24;
     text-transform: uppercase;
     letter-spacing: 1px;
+    padding: 0.5rem;
 }
 
 .service-mode-table td {
     font-family: 'Jost', sans-serif !important;
+    padding: 0.5rem;
 }
 
 .vertical-text {

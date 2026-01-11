@@ -21,11 +21,11 @@
 
     <!-- ADMIN HEADER -->
     <div id="admin-panel-header" class="hidden fixed top-4 right-4 z-[9990] flex gap-2">
-        <a href="admin.html" id="service-mode-link" class="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">⚙ SERVICE MODE</a>
+        <button id="service-mode-btn" class="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">⚙ SERVICE MODE</button>
         <button id="header-edit-btn" class="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">✎ EDIT VIDEO</button>
     </div>
 
-    <!-- GUIDE -->
+    <!-- GUIDE (LEFT) -->
     <div id="tv-internal-guide" class="fixed inset-y-0 left-0 z-[100] w-full md:w-[450px] teletext-bg flex flex-col shadow-[20px_0_60px_rgba(0,0,0,0.9)] border-r-4 border-white/10 transform -translate-x-full transition-transform duration-500 ease-in-out font-vt323 h-full">
         <div class="bg-black p-4 flex justify-between items-center border-b-2 border-white/20 shrink-0">
             <div class="flex flex-col leading-none">
@@ -40,62 +40,47 @@
             </div>
         </div>
         <div class="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
-            
-            <!-- NOW PLAYING COLORIDO COM LETREIRO DIGITAL -->
             <div id="guide-now-playing" class="bg-[#111] border-2 border-white/30 p-4 mb-6 hidden shrink-0 shadow-[8px_8px_0_rgba(0,0,0,1)] font-jost relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 via-cyan-400 via-pink-400 to-orange-500"></div>
-                
                 <div class="space-y-3">
                     <div id="gnp-artist-row" class="flex gap-3 items-center gnp-row group">
                         <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎤</span>
                         <div class="flex flex-col overflow-hidden w-full">
                             <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ARTIST</span>
-                            <div class="marquee-container">
-                                <span id="gnp-artist" class="marquee-text text-[#ffff00] text-xl font-bold uppercase drop-shadow-[2px_2px_0_#000]">--</span>
-                            </div>
+                            <div class="marquee-container"><span id="gnp-artist" class="marquee-text text-[#ffff00] text-xl font-bold uppercase drop-shadow-[2px_2px_0_#000]">--</span></div>
                         </div>
                     </div>
                     <div id="gnp-song-row" class="flex gap-3 items-center gnp-row group">
                         <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎼</span>
                         <div class="flex flex-col overflow-hidden w-full">
                             <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">TRACK</span>
-                            <div class="marquee-container">
-                                <span id="gnp-song" class="marquee-text text-[#00ff00] text-xl font-bold uppercase drop-shadow-[2px_2px_0_#000]">--</span>
-                            </div>
+                            <div class="marquee-container"><span id="gnp-song" class="marquee-text text-[#00ff00] text-xl font-bold uppercase drop-shadow-[2px_2px_0_#000]">--</span></div>
                         </div>
                     </div>
                     <div id="gnp-album-row" class="flex gap-3 items-center gnp-row group">
                         <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">💽</span>
                         <div class="flex flex-col overflow-hidden w-full">
                             <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ALBUM</span>
-                            <div class="marquee-container">
-                                <span id="gnp-album" class="marquee-text text-[#00ffff] text-base font-bold uppercase drop-shadow-[1px_1px_0_#000]">--</span>
-                            </div>
+                            <div class="marquee-container"><span id="gnp-album" class="marquee-text text-[#00ffff] text-base font-bold uppercase drop-shadow-[1px_1px_0_#000]">--</span></div>
                         </div>
                     </div>
                     <div id="gnp-year-row" class="flex gap-3 items-center gnp-row group">
                         <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">📅</span>
                         <div class="flex flex-col overflow-hidden w-full">
                             <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">RELEASE</span>
-                            <div class="marquee-container">
-                                <span id="gnp-year" class="marquee-text text-[#ff00ff] text-base font-bold uppercase drop-shadow-[1px_1px_0_#000]">--</span>
-                            </div>
+                            <div class="marquee-container"><span id="gnp-year" class="marquee-text text-[#ff00ff] text-base font-bold uppercase drop-shadow-[1px_1px_0_#000]">--</span></div>
                         </div>
                     </div>
                     <div id="gnp-director-row" class="flex gap-3 items-center gnp-row group">
                         <span class="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎬</span>
                         <div class="flex flex-col overflow-hidden w-full">
                             <span class="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">DIRECTOR</span>
-                            <div class="marquee-container">
-                                <span id="gnp-director" class="marquee-text text-[#ff8800] text-base font-bold uppercase drop-shadow-[1px_1px_0_#000]">--</span>
-                            </div>
+                            <div class="marquee-container"><span id="gnp-director" class="marquee-text text-[#ff8800] text-base font-bold uppercase drop-shadow-[1px_1px_0_#000]">--</span></div>
                         </div>
                     </div>
                 </div>
-
                 <div id="np-playlist" class="mt-4 text-white/40 text-[10px] uppercase tracking-tighter border-t border-white/10 pt-2 italic text-right">CHANNEL: --</div>
             </div>
-
             <div class="relative bg-black border-2 border-[#ffff00] p-2 mb-4 flex items-center shrink-0">
                 <input type="text" id="channel-search" class="w-full bg-transparent text-white text-2xl uppercase outline-none font-vt323 placeholder-white/30" placeholder="BUSCAR..." autocomplete="off">
             </div>
@@ -103,6 +88,91 @@
         </div>
     </div>
 
+    <!-- ADMIN PANEL (RIGHT) -->
+    <div id="tv-admin-panel" class="fixed inset-y-0 right-0 z-[100] w-full md:w-[600px] bg-black border-l-4 border-amber-600/30 flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.9)] transform translate-x-full transition-transform duration-500 ease-in-out font-jost text-amber-500">
+        <div class="bg-[#111] p-4 flex justify-between items-center border-b-2 border-amber-600/20 shrink-0">
+            <div class="flex flex-col leading-none">
+                <span class="text-2xl font-bold tracking-widest uppercase">Service <span class="text-white">Mode</span></span>
+                <span class="text-[10px] text-amber-700 tracking-[0.3em] uppercase">Database manipulation</span>
+            </div>
+            <button id="admin-close-btn" class="bg-amber-600 hover:bg-amber-500 text-black w-10 h-10 flex items-center justify-center border-2 border-black shadow-[4px_4px_0_#000] transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        
+        <div id="admin-status-msg" class="hidden w-full p-2 text-center text-sm font-bold border-b border-amber-500 bg-amber-900/20"></div>
+
+        <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-[#050505]">
+            <!-- Form -->
+            <div class="mb-8 border border-amber-900/30 p-4 bg-black">
+                <h3 id="form-title" class="text-lg font-bold mb-4 border-b border-amber-900/30 pb-2 flex justify-between items-center">
+                    <span id="form-title-text">EDITAR VÍDEO</span>
+                    <button id="admin-form-clear" class="text-[10px] underline opacity-50 uppercase">Novo Registro</button>
+                </h3>
+                <form id="admin-music-form" class="space-y-3">
+                    <input type="hidden" id="admin-input-id">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2">
+                            <label class="block text-[10px] opacity-50 uppercase mb-1">Artista</label>
+                            <input type="text" id="admin-input-artista" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors" required>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[10px] opacity-50 uppercase mb-1">Música</label>
+                            <input type="text" id="admin-input-musica" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] opacity-50 uppercase mb-1">Ano</label>
+                            <input type="number" id="admin-input-ano" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] opacity-50 uppercase mb-1">Álbum</label>
+                            <input type="text" id="admin-input-album" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[10px] opacity-50 uppercase mb-1">Direção</label>
+                            <input type="text" id="admin-input-direcao" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[10px] opacity-50 uppercase mb-1">Vídeo ID (YouTube)</label>
+                            <input type="text" id="admin-input-video-id" class="w-full bg-[#111] border border-amber-900/50 p-2 text-white outline-none focus:border-amber-500 transition-colors">
+                        </div>
+                    </div>
+                    <button type="submit" id="admin-btn-save" class="w-full py-3 bg-amber-600 text-black font-bold uppercase hover:bg-amber-500 transition-colors mt-4">Gravar Dados</button>
+                </form>
+            </div>
+
+            <!-- Table Filters -->
+            <div class="mb-4 space-y-3">
+                <input type="text" id="admin-search-db" placeholder="BUSCAR NO BANCO..." class="w-full bg-black border border-amber-900/50 p-2 text-amber-500 outline-none focus:border-amber-500 transition-colors uppercase text-sm">
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="admin-filter-group" class="bg-black border border-amber-900/50 p-2 text-xs text-amber-500 outline-none">
+                        <option value="">TODOS OS GRUPOS</option>
+                    </select>
+                    <select id="admin-filter-playlist" class="bg-black border border-amber-900/50 p-2 text-xs text-amber-500 outline-none">
+                        <option value="">TODAS AS PLAYLISTS</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="border border-amber-900/30 bg-black overflow-hidden">
+                <table class="w-full text-[11px] text-left border-collapse">
+                    <thead class="bg-[#111] text-amber-700 uppercase">
+                        <tr>
+                            <th class="p-2 border-b border-amber-900/30">ID</th>
+                            <th class="p-2 border-b border-amber-900/30">Artista / Música</th>
+                            <th class="p-2 border-b border-amber-900/30 text-center">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN VIEWPORT -->
     <main id="app-viewport" class="relative z-10 w-full flex flex-col items-center justify-center transition-all duration-500 p-4">
         <div id="top-branding" class="text-white/30 font-vt323 text-xl md:text-2xl tracking-[0.5em] uppercase mb-6">playlistismo</div>
 

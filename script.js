@@ -10,6 +10,7 @@ const ADMIN_UID = '6660f82c-5b54-4879-ab40-edbc6e482416';
 const state = {
     isOn: false,
     isSearchOpen: false,
+    isAdminOpen: false,
     channelsByCategory: {}, 
     currentChannelList: [], 
     currentIndex: 0,
@@ -19,7 +20,9 @@ const state = {
     playerReady: false,
     currentVideoData: null, 
     isPlaying: false,
-    isBumping: false
+    isBumping: false,
+    adminMusics: [],
+    lastUpdatedId: null
 };
 
 let player; 
@@ -45,8 +48,29 @@ const els = {
     btnPrevGrp: document.getElementById('tv-grp-prev'),
     btnSearch: document.getElementById('tv-search-btn'),
     headerEditBtn: document.getElementById('header-edit-btn'),
-    serviceModeLink: document.getElementById('service-mode-link'),
+    serviceModeBtn: document.getElementById('service-mode-btn'),
     adminHeader: document.getElementById('admin-panel-header'),
+    // Admin Panel
+    adminPanel: document.getElementById('tv-admin-panel'),
+    adminCloseBtn: document.getElementById('admin-close-btn'),
+    adminForm: document.getElementById('admin-music-form'),
+    adminTableBody: document.getElementById('admin-table-body'),
+    adminSearchDb: document.getElementById('admin-search-db'),
+    adminFilterGroup: document.getElementById('admin-filter-group'),
+    adminFilterPlaylist: document.getElementById('admin-filter-playlist'),
+    adminStatusMsg: document.getElementById('admin-status-msg'),
+    adminFormTitle: document.getElementById('form-title-text'),
+    adminFormClear: document.getElementById('admin-form-clear'),
+    // Admin Inputs
+    adminInputId: document.getElementById('admin-input-id'),
+    adminInputArtista: document.getElementById('admin-input-artista'),
+    adminInputMusica: document.getElementById('admin-input-musica'),
+    adminInputAno: document.getElementById('admin-input-ano'),
+    adminInputAlbum: document.getElementById('admin-input-album'),
+    adminInputDirecao: document.getElementById('admin-input-direcao'),
+    adminInputVideoId: document.getElementById('admin-input-video-id'),
+    adminBtnSave: document.getElementById('admin-btn-save'),
+
     // Créditos
     credArtist: document.getElementById('artist-name'),
     credSong: document.getElementById('song-name'),
@@ -103,6 +127,7 @@ function populateSpeakers() {
 function checkAdminAccess(session) {
     if (session?.user?.id === ADMIN_UID) {
         if(els.adminHeader) els.adminHeader.classList.remove('hidden');
+        loadAdminFilters();
     } else {
         if(els.adminHeader) els.adminHeader.classList.add('hidden');
     }
@@ -214,15 +239,10 @@ function startCreditsMonitor() {
         
         if (dur <= 0) return;
 
-        // Nova Regra de Créditos (MTV Style):
-        // 1. Aparece aos 10s, fica por 10s (some aos 20s)
-        // 2. Reaparece 20s antes do fim, fica por 10s (some aos 10s antes do fim)
         const showCredits = (cur >= 10 && cur < 20) || 
                            (dur > 30 && cur >= (dur - 20) && cur < (dur - 10));
         
         if(els.videoCredits) els.videoCredits.classList.toggle('visible', showCredits);
-
-        // Visibilidade do Rótulo da Playlist
         const showPlaylist = (cur >= 1.5 && cur < dur);
         if(els.playlistLabel) els.playlistLabel.classList.toggle('visible', showPlaylist);
     }, 1000);
@@ -250,14 +270,14 @@ function playCurrentVideo() {
     state.currentVideoData = video;
     player.loadVideoById(video.video_id);
     updateGuideNowPlaying();
-
-    // Atualiza o link do Service Mode para refletir a música atual
-    if (els.serviceModeLink && video) {
-        els.serviceModeLink.href = `admin.html?playlist=${encodeURIComponent(state.currentChannelName)}&edit_id=${video.id}`;
-    }
 }
 
 function handleVideoEnd() {
+    if (state.isAdminOpen) {
+        player.seekTo(0);
+        player.playVideo();
+        return;
+    }
     if (state.isBumping) return;
     triggerBump(state.currentChannelName);
     state.currentIndex = (state.currentIndex + 1) % state.currentChannelList.length;
@@ -437,32 +457,17 @@ function applySmartMarquee(element, text) {
     if (!element) return;
     const container = element.parentElement;
     if (!container) return;
-
-    // Reset
     element.classList.remove('marquee-active');
     element.style.animationDuration = '0s';
-    
-    if (!text) {
-        element.innerText = '--';
-        return;
-    }
-
+    if (!text) { element.innerText = '--'; return; }
     element.innerText = text;
-
-    // Aguarda o próximo frame para medição correta
     requestAnimationFrame(() => {
         const textWidth = element.scrollWidth;
         const containerWidth = container.offsetWidth;
-
         if (textWidth > containerWidth) {
-            // Se corta, adicionamos o separador e duplicamos para loop fluido
             const separator = " // ";
             element.innerText = text + separator + text + separator;
-            
-            // Calcula duração baseada no tamanho (ex: 50px por segundo)
-            const speed = 40; 
-            const duration = (element.scrollWidth / speed);
-            
+            const duration = (element.scrollWidth / 40);
             element.style.animationDuration = `${duration}s`;
             element.classList.add('marquee-active');
         } else {
@@ -479,13 +484,11 @@ function updateGuideNowPlaying() {
         applySmartMarquee(els.gnpAlbum, data.album);
         applySmartMarquee(els.gnpYear, data.ano ? String(data.ano) : '');
         applySmartMarquee(els.gnpDirector, data.direcao);
-
         const rows = ['gnpArtist', 'gnpSong', 'gnpAlbum', 'gnpYear', 'gnpDirector'];
         rows.forEach(r => {
             const rowEl = document.getElementById(`${r}-row`);
             if(rowEl) rowEl.classList.toggle('hidden', !data[r === 'gnpYear' ? 'ano' : r.replace('gnp', '').toLowerCase()]);
         });
-
         els.guideNpPlaylist.innerText = `CHANNEL: ${state.currentChannelName}`;
         els.guideNowPlayingBox.classList.remove('hidden');
     } else if(els.guideNowPlayingBox) {
@@ -495,6 +498,7 @@ function updateGuideNowPlaying() {
 
 function toggleGuide() {
     state.isSearchOpen = !state.isSearchOpen;
+    if (state.isSearchOpen && state.isAdminOpen) toggleAdmin(false);
     document.body.classList.toggle('guide-active', state.isSearchOpen);
 }
 
@@ -521,16 +525,123 @@ function checkResumeState() {
     }
 }
 
+// --- ADMIN LOGIC ---
+
+function toggleAdmin(open = null, mode = 'SERVICE') {
+    state.isAdminOpen = open !== null ? open : !state.isAdminOpen;
+    if (state.isAdminOpen && state.isSearchOpen) toggleGuide();
+    document.body.classList.toggle('admin-active', state.isAdminOpen);
+    
+    if (state.isAdminOpen) {
+        if (mode === 'EDIT' && state.currentVideoData) {
+            editMusicData(state.currentVideoData);
+            els.adminFormTitle.innerText = "EDITAR VÍDEO ATUAL";
+            if (state.currentChannelName) els.adminFilterPlaylist.value = state.currentChannelName;
+        } else {
+            resetAdminForm();
+            els.adminFormTitle.innerText = "SERVICE MODE";
+        }
+        fetchAdminMusics();
+    } else {
+        // Ao fechar, reinicia vídeo editado
+        if (player && typeof player.seekTo === 'function') {
+            player.seekTo(0);
+            player.playVideo();
+        }
+    }
+}
+
+async function loadAdminFilters() {
+    const { data } = await supabase.from('playlists').select('name, group_name').order('name');
+    if (!data) return;
+    const groups = [...new Set(data.map(i => i.group_name).filter(Boolean))].sort();
+    els.adminFilterGroup.innerHTML = '<option value="">TODOS OS GRUPOS</option>';
+    groups.forEach(g => els.adminFilterGroup.innerHTML += `<option value="${g}">${g}</option>`);
+    els.adminFilterPlaylist.innerHTML = '<option value="">TODAS AS PLAYLISTS</option>';
+    data.forEach(p => els.adminFilterPlaylist.innerHTML += `<option value="${p.name}">${p.name}</option>`);
+}
+
+async function fetchAdminMusics() {
+    els.adminTableBody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-amber-500 animate-pulse">BUSCANDO...</td></tr>';
+    const term = els.adminSearchDb.value.trim();
+    const group = els.adminFilterGroup.value;
+    const playlist = els.adminFilterPlaylist.value;
+    let query = supabase.from('musicas_backup').select('id, artista, musica, direcao, ano, album, video_id, playlist').order('id', { ascending: false }).limit(50);
+    if (group) query = query.eq('playlist_group', group);
+    if (playlist) query = query.eq('playlist', playlist);
+    if (term) query = query.or(`artista.ilike.%${term}%,musica.ilike.%${term}%`);
+    const { data } = await query;
+    state.adminMusics = data || [];
+    renderAdminTable();
+}
+
+function renderAdminTable() {
+    els.adminTableBody.innerHTML = '';
+    state.adminMusics.forEach(item => {
+        const row = document.createElement('tr');
+        const isUpdated = item.id == state.lastUpdatedId;
+        row.className = `hover:bg-amber-900/10 transition-colors border-b border-amber-900/10 ${isUpdated ? 'row-updated' : ''}`;
+        row.innerHTML = `
+            <td class="p-2 font-mono opacity-50 text-[10px]">${item.id}</td>
+            <td class="p-2">
+                <div class="font-bold text-amber-500 leading-tight">${item.artista}</div>
+                <div class="text-[9px] opacity-70">${item.musica || '---'}</div>
+            </td>
+            <td class="p-2 text-center">
+                <button onclick="window.editAdminItem(${item.id})" class="text-[10px] border border-amber-500 px-2 py-0.5 hover:bg-amber-500 hover:text-black">EDIT</button>
+            </td>
+        `;
+        els.adminTableBody.appendChild(row);
+    });
+}
+
+window.editAdminItem = (id) => {
+    const music = state.adminMusics.find(m => m.id == id);
+    if (music) editMusicData(music);
+};
+
+function editMusicData(music) {
+    els.adminInputId.value = music.id;
+    els.adminInputArtista.value = music.artista || '';
+    els.adminInputMusica.value = music.musica || '';
+    els.adminInputAno.value = music.ano || '';
+    els.adminInputAlbum.value = music.album || '';
+    els.adminInputDirecao.value = music.direcao || '';
+    els.adminInputVideoId.value = music.video_id || '';
+    els.adminFormTitle.innerText = `EDITANDO #${music.id}`;
+    els.adminBtnSave.innerText = "ATUALIZAR DADOS";
+    els.adminPanel.querySelector('.flex-1').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetAdminForm() {
+    els.adminForm.reset();
+    els.adminInputId.value = '';
+    els.adminFormTitle.innerText = "NOVO REGISTRO";
+    els.adminBtnSave.innerText = "GRAVAR DADOS";
+}
+
+function showAdminMsg(msg, isError = false) {
+    els.adminStatusMsg.innerText = msg;
+    els.adminStatusMsg.classList.remove('hidden', 'bg-red-900', 'bg-amber-900/20');
+    els.adminStatusMsg.classList.add(isError ? 'bg-red-900' : 'bg-amber-900/20');
+    setTimeout(() => els.adminStatusMsg.classList.add('hidden'), 3000);
+}
+
+// --- MAIN EVENTS ---
+
 function setupEventListeners() {
     if(els.tvPowerBtn) els.tvPowerBtn.onclick = (e) => { e.stopPropagation(); togglePower(); };
     if(els.btnSearch) els.btnSearch.onclick = (e) => { e.stopPropagation(); toggleGuide(); };
     if(els.guideCloseBtn) els.guideCloseBtn.onclick = (e) => { e.stopPropagation(); toggleGuide(); };
-    
+    if(els.serviceModeBtn) els.serviceModeBtn.onclick = (e) => { e.stopPropagation(); toggleAdmin(true, 'SERVICE'); };
+    if(els.adminCloseBtn) els.adminCloseBtn.onclick = (e) => { e.stopPropagation(); toggleAdmin(false); };
+    if(els.headerEditBtn) els.headerEditBtn.onclick = (e) => { e.stopPropagation(); toggleAdmin(true, 'EDIT'); };
+    if(els.adminFormClear) els.adminFormClear.onclick = (e) => { e.preventDefault(); resetAdminForm(); };
+
     if(els.tvStage) {
         els.tvStage.onclick = () => {
-            if (state.isSearchOpen) {
-                toggleGuide();
-            }
+            if (state.isSearchOpen) toggleGuide();
+            if (state.isAdminOpen) toggleAdmin(false);
         };
     }
 
@@ -541,8 +652,11 @@ function setupEventListeners() {
     
     document.addEventListener('keydown', (e) => {
         if (!state.isOn && e.key !== 'p') return; 
-        if (e.key === 'Escape' && state.isSearchOpen) toggleGuide();
-        if (state.isOn && !state.isSearchOpen) {
+        if (e.key === 'Escape') {
+            if (state.isSearchOpen) toggleGuide();
+            if (state.isAdminOpen) toggleAdmin(false);
+        }
+        if (state.isOn && !state.isSearchOpen && !state.isAdminOpen) {
             if (e.key === 'ArrowRight') changeChannel(1);
             if (e.key === 'ArrowLeft') changeChannel(-1);
             if (e.key === 'ArrowUp') changeGroup(1);
@@ -550,39 +664,64 @@ function setupEventListeners() {
         }
     });
 
-    els.headerEditBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (state.currentVideoData) {
-            localStorage.setItem('tv_resume_state', JSON.stringify({
-                playlist: state.currentChannelName,
-                videoId: state.currentVideoData.video_id
-            }));
-            window.location.href = `admin.html?edit_id=${state.currentVideoData.id}&from=tv`;
+    els.adminSearchDb.oninput = () => {
+        clearTimeout(window.adminSearchTimeout);
+        window.adminSearchTimeout = setTimeout(fetchAdminMusics, 500);
+    };
+    els.adminFilterGroup.onchange = fetchAdminMusics;
+    els.adminFilterPlaylist.onchange = fetchAdminMusics;
+
+    els.adminForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = els.adminInputId.value;
+        const formData = {
+            artista: els.adminInputArtista.value.trim(),
+            musica: els.adminInputMusica.value.trim(),
+            ano: els.adminInputAno.value ? String(els.adminInputAno.value) : null,
+            album: els.adminInputAlbum.value.trim() || null,
+            direcao: els.adminInputDirecao.value.trim() || null,
+            video_id: els.adminInputVideoId.value.trim() || null
+        };
+        els.adminBtnSave.disabled = true;
+        els.adminBtnSave.innerText = "PROCESSANDO...";
+        let error;
+        let opId = id;
+        if (id) {
+            const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
+            error = err;
+        } else {
+            const { data, error: err } = await supabase.from('musicas_backup').insert([formData]).select();
+            error = err;
+            if(data) opId = data[0].id;
         }
-    });
+        if (error) {
+            showAdminMsg(`ERRO: ${error.message}`, true);
+        } else {
+            state.lastUpdatedId = opId;
+            showAdminMsg(`REGISTRO #${opId} SALVO!`);
+            // Se editou o vídeo ATUAL da TV, atualiza os créditos na tela instantaneamente
+            if (state.currentVideoData && state.currentVideoData.id == opId) {
+                state.currentVideoData = { ...state.currentVideoData, ...formData };
+                updateCreditsInfo(state.currentVideoData);
+            }
+            fetchAdminMusics();
+            resetAdminForm();
+        }
+        els.adminBtnSave.disabled = false;
+        els.adminBtnSave.innerText = id ? "ATUALIZAR DADOS" : "GRAVAR DADOS";
+    };
 
     if(els.guideSearch) {
         els.guideSearch.addEventListener('input', (e) => {
             const term = e.target.value.toUpperCase();
             document.querySelectorAll('.guide-group').forEach(group => {
                 let hasVisible = false;
-                const buttons = group.querySelectorAll('.guide-cat-content button');
-                buttons.forEach(btn => {
+                group.querySelectorAll('.guide-cat-content button').forEach(btn => {
                     const match = btn.innerText.toUpperCase().includes(term);
                     btn.classList.toggle('hidden', !match);
                     if(match) hasVisible = true;
                 });
                 group.classList.toggle('hidden', !hasVisible && term !== '');
-                
-                if (term !== '' && hasVisible) {
-                    group.querySelector('.guide-cat-content').classList.remove('hidden');
-                    group.querySelector('.guide-cat-header').classList.add('active');
-                    group.querySelector('.arrow').classList.add('rotate-180');
-                } else if (term === '') {
-                    group.querySelector('.guide-cat-content').classList.add('hidden');
-                    group.querySelector('.guide-cat-header').classList.remove('active');
-                    group.querySelector('.arrow').classList.remove('rotate-180');
-                }
             });
         });
     }
