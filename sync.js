@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÕES ---
@@ -35,7 +36,7 @@ async function fetchUniquePlaylistsFromDB() {
             process.stdout.write(`   ⏳ Lendo registros do DB: ${from} a ${from + pageSize}...\r`);
 
             const { data, error } = await supabase
-                .from('musicas_backup')
+                .from('musicas')
                 .select('playlist')
                 .not('playlist', 'is', null) // Ignora nulos
                 .range(from, from + pageSize - 1);
@@ -102,7 +103,7 @@ async function runMigration() {
 
         try {
             const { error } = await supabase
-                .from('musicas_backup')
+                .from('musicas')
                 .update({ playlist_group: group })
                 .eq('playlist', playlistName);
 
@@ -130,7 +131,7 @@ async function runMigration() {
 
         // 1. Obter contagem exata
         const { count, error: countErr } = await supabase
-            .from('musicas_backup')
+            .from('musicas')
             .select('*', { count: 'exact', head: true })
             .eq('playlist', playlistName);
 
@@ -164,7 +165,7 @@ async function runMigration() {
     console.log("=================================================");
     console.log("🏁 MIGRAÇÃO CONCLUÍDA!");
     console.log(`   - Playlists Processadas: ${totalPlaylists}`);
-    console.log(`   - Updates 'musicas_backup': ${successCount}`);
+    console.log(`   - Updates 'musicas': ${successCount}`);
     console.log(`   - Entradas 'playlists' (Catálogo): ${catalogSuccess}`);
     console.log("=================================================");
 }

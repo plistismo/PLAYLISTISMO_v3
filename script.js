@@ -256,7 +256,7 @@ async function loadChannelContent(playlistName, targetId = null) {
     updatePlaylistOSD(playlistName);
     triggerBump(playlistName);
 
-    const { data } = await supabase.from('musicas_backup').select('*').eq('playlist', playlistName).order('id', { ascending: false });
+    const { data } = await supabase.from('musicas').select('*').eq('playlist', playlistName).order('id', { ascending: false });
     if (!data?.length) return;
 
     state.currentChannelList = targetId ? data : fisherYatesShuffle([...data]);
@@ -568,7 +568,7 @@ async function fetchAdminMusics() {
     const term = els.adminSearchDb.value.trim();
     const group = els.adminFilterGroup.value;
     const playlist = els.adminFilterPlaylist.value;
-    let query = supabase.from('musicas_backup').select('id, artista, musica, direcao, ano, album, video_id, playlist').order('id', { ascending: false }).limit(50);
+    let query = supabase.from('musicas').select('id, artista, musica, direcao, ano, album, video_id, playlist').order('id', { ascending: false }).limit(50);
     if (group) query = query.eq('playlist_group', group);
     if (playlist) query = query.eq('playlist', playlist);
     if (term) query = query.or(`artista.ilike.%${term}%,musica.ilike.%${term}%`);
@@ -728,10 +728,10 @@ function setupEventListeners() {
         let error;
         let opId = id;
         if (id) {
-            const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
+            const { error: err } = await supabase.from('musicas').update(formData).eq('id', id);
             error = err;
         } else {
-            const { data, error: err } = await supabase.from('musicas_backup').insert([formData]).select();
+            const { data, error: err } = await supabase.from('musicas').insert([formData]).select();
             error = err;
             if(data) opId = data[0].id;
         }
