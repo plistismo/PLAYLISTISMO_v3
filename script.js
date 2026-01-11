@@ -675,13 +675,19 @@ function setupEventListeners() {
 
             state.currentVideoData = previewData;
             
-            if (!state.isOn) togglePower(); // Liga a TV se estiver desligada
-            
-            if (state.playerReady) {
-                player.loadVideoById(vidId);
-                updateCreditsInfo(previewData);
-                showAdminMsg(`PREVIEW: ${previewData.artista} - ${previewData.musica}`);
+            // Força ligar a TV se estiver desligada
+            if (!state.isOn) {
+                togglePower();
             }
+            
+            // Pequeno delay para garantir que o player processe a ligação se necessário
+            setTimeout(() => {
+                if (state.playerReady && player) {
+                    player.loadVideoById(vidId);
+                    updateCreditsInfo(previewData);
+                    showAdminMsg(`PREVIEW: ${previewData.artista} - ${previewData.musica}`);
+                }
+            }, 100);
         };
     }
 
@@ -734,11 +740,18 @@ function setupEventListeners() {
         } else {
             state.lastUpdatedId = opId;
             showAdminMsg(`REGISTRO #${opId} SALVO!`);
-            // Se editou o vídeo ATUAL da TV, atualiza os créditos na tela instantaneamente
+            
+            // Se editou o vídeo ATUAL da TV (ou o vídeo ID bate), atualiza créditos e REINICIA na TV
             if (state.currentVideoData && (state.currentVideoData.id == opId || state.currentVideoData.video_id == formData.video_id)) {
                 state.currentVideoData = { ...state.currentVideoData, ...formData };
                 updateCreditsInfo(state.currentVideoData);
+                
+                // Reinicia o vídeo na TV se o player estiver pronto
+                if (state.isOn && state.playerReady && player) {
+                    player.loadVideoById(formData.video_id);
+                }
             }
+            
             fetchAdminMusics();
             resetAdminForm();
         }
