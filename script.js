@@ -71,6 +71,7 @@ const els = {
     adminInputDirecao: document.getElementById('admin-input-direcao'),
     adminInputVideoId: document.getElementById('admin-input-video-id'),
     adminBtnSave: document.getElementById('admin-btn-save'),
+    adminBtnPreview: document.getElementById('admin-btn-preview'),
 
     // Créditos
     credArtist: document.getElementById('artist-name'),
@@ -652,6 +653,38 @@ function setupEventListeners() {
     if(els.btnNextGrp) els.btnNextGrp.onclick = (e) => { e.stopPropagation(); changeGroup(1); };
     if(els.btnPrevGrp) els.btnPrevGrp.onclick = (e) => { e.stopPropagation(); changeGroup(-1); };
     
+    // Botão de Preview Admin
+    if(els.adminBtnPreview) {
+        els.adminBtnPreview.onclick = (e) => {
+            e.preventDefault();
+            const vidId = els.adminInputVideoId.value.trim();
+            if (!vidId) {
+                showAdminMsg("VÍDEO ID NÃO DEFINIDO", true);
+                return;
+            }
+
+            // Criamos um dado temporário de preview baseado nos inputs
+            const previewData = {
+                artista: els.adminInputArtista.value.trim(),
+                musica: els.adminInputMusica.value.trim(),
+                ano: els.adminInputAno.value,
+                album: els.adminInputAlbum.value.trim(),
+                direcao: els.adminInputDirecao.value.trim(),
+                video_id: vidId
+            };
+
+            state.currentVideoData = previewData;
+            
+            if (!state.isOn) togglePower(); // Liga a TV se estiver desligada
+            
+            if (state.playerReady) {
+                player.loadVideoById(vidId);
+                updateCreditsInfo(previewData);
+                showAdminMsg(`PREVIEW: ${previewData.artista} - ${previewData.musica}`);
+            }
+        };
+    }
+
     document.addEventListener('keydown', (e) => {
         if (!state.isOn && e.key !== 'p') return; 
         if (e.key === 'Escape') {
@@ -702,7 +735,7 @@ function setupEventListeners() {
             state.lastUpdatedId = opId;
             showAdminMsg(`REGISTRO #${opId} SALVO!`);
             // Se editou o vídeo ATUAL da TV, atualiza os créditos na tela instantaneamente
-            if (state.currentVideoData && state.currentVideoData.id == opId) {
+            if (state.currentVideoData && (state.currentVideoData.id == opId || state.currentVideoData.video_id == formData.video_id)) {
                 state.currentVideoData = { ...state.currentVideoData, ...formData };
                 updateCreditsInfo(state.currentVideoData);
             }
