@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
@@ -212,8 +213,12 @@ function startCreditsMonitor() {
         
         if (dur <= 0) return;
 
-        // Visibilidade dos Créditos (MTV Style)
-        const showCredits = (cur >= 10 && cur < 22) || (dur > 30 && cur >= dur - 15);
+        // Nova Regra de Créditos (MTV Style):
+        // 1. Aparece aos 10s, fica por 10s (some aos 20s)
+        // 2. Reaparece 20s antes do fim, fica por 10s (some aos 10s antes do fim)
+        const showCredits = (cur >= 10 && cur < 20) || 
+                           (dur > 30 && cur >= (dur - 20) && cur < (dur - 10));
+        
         if(els.videoCredits) els.videoCredits.classList.toggle('visible', showCredits);
 
         // Visibilidade do Rótulo da Playlist
