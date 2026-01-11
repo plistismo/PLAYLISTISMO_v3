@@ -63,7 +63,8 @@ async function handleUrlContext() {
         setTimeout(async () => {
             let target = currentData.find(m => m.id == editId);
             if (!target) {
-                const { data } = await supabase.from('musicas_backup').select('*').eq('id', editId).single();
+                // FIX: Tabela musicas
+                const { data } = await supabase.from('musicas').select('*').eq('id', editId).single();
                 target = data;
             }
             if(target) editMusicData(target);
@@ -114,8 +115,9 @@ async function fetchMusics() {
     const selectedGroup = filterGroupList.value;
     const selectedPlaylist = filterPlaylistList.value;
 
+    // FIX: Tabela musicas
     let query = supabase
-        .from('musicas_backup')
+        .from('musicas')
         .select('*')
         .order('id', { ascending: false });
 
@@ -226,11 +228,13 @@ musicForm.addEventListener('submit', async (e) => {
     let operationId = id;
 
     if (id) {
-        const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
+        // FIX: Tabela musicas
+        const { error: err } = await supabase.from('musicas').update(formData).eq('id', id);
         error = err;
         if(!error) showMessage(`REGISTRO #${id} ATUALIZADO!`);
     } else {
-        const { data: inserted, error: err } = await supabase.from('musicas_backup').insert([formData]).select();
+        // FIX: Tabela musicas
+        const { data: inserted, error: err } = await supabase.from('musicas').insert([formData]).select();
         error = err;
         if(!error && inserted) {
             operationId = inserted[0].id;
@@ -279,7 +283,8 @@ musicForm.addEventListener('submit', async (e) => {
 
 window.deleteMusic = async (id) => {
     if(!confirm(`ATENÇÃO: Deletar registro #${id}? Esta ação é irreversível.`)) return;
-    const { error } = await supabase.from('musicas_backup').delete().eq('id', id);
+    // FIX: Tabela musicas
+    const { error } = await supabase.from('musicas').delete().eq('id', id);
     if (error) {
         showMessage(`ERRO AO DELETAR: ${error.message}`, true);
     } else {
