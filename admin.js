@@ -40,8 +40,34 @@ async function checkAuth() {
         window.location.href = 'login.html';
     } else {
         await loadDatabaseFilterOptions();
+        await handleUrlContext(); // Gerencia parâmetros da URL (playlist e edit_id)
         await fetchMusics(); 
-        checkUrlForEdit();
+    }
+}
+
+async function handleUrlContext() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const playlist = urlParams.get('playlist');
+    const editId = urlParams.get('edit_id');
+
+    // Se houver uma playlist na URL, pré-seleciona ela no filtro
+    if (playlist) {
+        // Aguarda um pouco para o carregamento das opções do select terminar se necessário
+        filterPlaylistList.value = playlist;
+    }
+
+    // O edit_id será processado em fetchMusics -> renderTable -> editMusicById se necessário, 
+    // ou explicitamente aqui se quisermos carregar o formulário.
+    if (editId) {
+        // Tentaremos carregar os dados específicos após o fetch principal
+        setTimeout(async () => {
+            let target = currentData.find(m => m.id == editId);
+            if (!target) {
+                const { data } = await supabase.from('musicas_backup').select('*').eq('id', editId).single();
+                target = data;
+            }
+            if(target) editMusicData(target);
+        }, 500);
     }
 }
 
@@ -120,30 +146,6 @@ async function fetchMusics() {
     renderTable(currentData);
 }
 
-async function checkUrlForEdit() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit_id');
-    
-    if (editId) {
-        let target = currentData.find(m => m.id == editId);
-        if (!target) {
-            showMessage(`LOCALIZANDO REGISTRO #${editId}...`);
-            const { data } = await supabase.from('musicas_backup').select('*').eq('id', editId).single();
-            target = data;
-            if (target) {
-                currentData.unshift(target);
-                renderTable(currentData);
-            }
-        }
-        if(target) {
-            editMusicData(target);
-            showMessage(`REGISTRO #${editId} PRONTO PARA EDIÇÃO.`);
-        } else {
-            showMessage(`REGISTRO #${editId} NÃO ENCONTRADO.`);
-        }
-    }
-}
-
 function renderTable(data) {
     totalCount.innerText = data.length + (data.length === 5000 ? "+" : ""); 
     tableBody.innerHTML = '';
@@ -155,7 +157,6 @@ function renderTable(data) {
 
     data.forEach(item => {
         const row = document.createElement('tr');
-        // Adiciona classe de sinalização se for o último registro atualizado
         const isUpdated = item.id == lastUpdatedId;
         row.className = `hover:bg-amber-900/10 transition-colors group border-b border-amber-900/10 ${isUpdated ? 'row-updated' : ''}`;
         row.innerHTML = `
