@@ -233,3 +233,9 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 .service-mode-table td {
     font-family: 'Jost', sans-serif !important;
 }
+
+.vertical-text {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+}
