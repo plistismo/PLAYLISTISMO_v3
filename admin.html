@@ -8,10 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=VT323&family=Jost:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     
-    <!-- PDF Generation Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    
     <!-- Import Map -->
     <script type="importmap">
     {
@@ -32,12 +28,11 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-amber-800/50 pb-4 mb-6">
             <div>
                 <h1 class="text-4xl md:text-5xl font-bold tracking-widest text-amber-500 drop-shadow-[2px_2px_0_rgba(0,0,0,1)]">
-                    SERVICE MODE <span class="text-sm align-top opacity-50">V.1.3</span>
+                    SERVICE MODE <span class="text-sm align-top opacity-50">V.1.2</span>
                 </h1>
                 <p class="text-amber-700 uppercase tracking-wider text-sm mt-1">Database Manipulation System</p>
             </div>
             <div class="flex gap-4 mt-4 md:mt-0">
-                <button id="btn-export-pdf" class="service-mode-btn px-4 py-2 text-xl font-bold text-cyan-500 border-cyan-900 hover:bg-cyan-900 hover:text-white">EXPORT PDF</button>
                 <a href="index.html" class="service-mode-btn px-4 py-2 text-xl font-bold">VOLTAR TV</a>
                 <button id="btn-logout" class="service-mode-btn px-4 py-2 text-xl font-bold text-red-500 border-red-900 hover:bg-red-900 hover:text-white">LOGOUT</button>
             </div>
@@ -85,14 +80,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm opacity-70 mb-1">YOUTUBE VIDEO ID *</label>
-                        <input type="text" id="input-video-id" required class="w-full p-2 text-xl service-mode-input" placeholder="Ex: 6hzrDeceEKc">
-                    </div>
-
-                    <div class="bg-amber-900/10 p-3 border border-amber-900/40 rounded-sm">
-                        <label class="block text-sm font-bold text-amber-400 mb-1">NOME DA PLAYLIST (CANAL) *</label>
-                        <input type="text" id="input-playlist" required class="w-full p-2 text-xl service-mode-input bg-amber-900/20" placeholder="Ex: ZONE: Solar">
-                        <p class="text-[10px] mt-1 opacity-50">Isso define em qual canal o vídeo vai passar.</p>
+                        <label class="block text-sm opacity-70 mb-1">YOUTUBE VIDEO ID</label>
+                        <input type="text" id="input-video-id" class="w-full p-2 text-xl service-mode-input" placeholder="Ex: 6hzrDeceEKc">
                     </div>
 
                     <div class="pt-4">
@@ -116,7 +105,7 @@
                     <div class="w-full md:w-48">
                         <label class="block text-xs opacity-50 mb-1">FILTRAR POR GRUPO</label>
                         <select id="filter-group-list" class="service-mode-input px-2 py-2 w-full text-lg cursor-pointer">
-                            <option value="">TODOS OS GRUPOS</option>
+                            <option value="">TODOS</option>
                             <!-- JS popula aqui -->
                         </select>
                     </div>
@@ -124,7 +113,7 @@
                     <div class="w-full md:w-64">
                         <label class="block text-xs opacity-50 mb-1">FILTRAR POR PLAYLIST</label>
                         <select id="filter-playlist-list" class="service-mode-input px-2 py-2 w-full text-lg cursor-pointer">
-                            <option value="">TODAS AS PLAYLISTS</option>
+                            <option value="">TODAS</option>
                             <!-- JS popula aqui -->
                         </select>
                     </div>
@@ -141,7 +130,7 @@
                             <tr>
                                 <th class="w-16 text-center">ID</th>
                                 <th>ARTISTA / MÚSICA</th>
-                                <th>PLAYLIST / CANAL</th>
+                                <th>ÁLBUM</th>
                                 <th class="w-20">ANO</th>
                                 <th>DIREÇÃO</th>
                                 <th class="w-32 text-center">AÇÃO</th>

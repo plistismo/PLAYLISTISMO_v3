@@ -128,9 +128,6 @@
                                 
                                 <!-- OSD DINÂMICO -->
                                 <div id="osd-layer" class="absolute inset-0 z-30 pointer-events-none">
-                                    <div class="absolute top-4 left-6 text-left">
-                                        <div id="live-indicator" class="hidden bg-red-600 text-white font-pixel text-[10px] px-2 py-1 animate-pulse shadow-[0_0_10px_rgba(255,0,0,0.5)]">LIVE</div>
-                                    </div>
                                     <div class="absolute top-4 right-6 text-right">
                                         <div id="tv-playlist-label" class="osd-futuristic">--</div>
                                     </div>
@@ -164,12 +161,6 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2 md:gap-4">
-                            <button id="tv-linear-btn" class="btn-retro-push w-10 h-8 md:w-16 md:h-10 rounded-sm flex items-center justify-center group relative">
-                                <span class="text-[6px] absolute -top-3 text-gray-500 font-bold uppercase tracking-widest group-hover:text-red-500">Mode</span>
-                                <div id="linear-led" class="w-1.5 h-1.5 rounded-full bg-gray-800 border border-black mr-2"></div>
-                                <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase">Linear</span>
-                            </button>
-                            <div class="w-px h-8 bg-[#222] border-r border-[#444]"></div>
                             <button id="tv-search-btn" class="btn-retro-push w-10 h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative">
                                 <span class="text-[6px] absolute -top-3 text-gray-500 font-bold uppercase tracking-widest group-hover:text-yellow-500">Guide</span>
                                 <svg class="w-4 h-4 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
