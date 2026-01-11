@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -13,6 +14,7 @@ const statusMsg = document.getElementById('status-msg');
 const btnLogout = document.getElementById('btn-logout');
 const btnClear = document.getElementById('btn-clear');
 const btnSave = document.getElementById('btn-save');
+const btnExportPdf = document.getElementById('btn-export-pdf');
 
 // Filters
 const searchInput = document.getElementById('search-db');
@@ -27,9 +29,11 @@ const inputAno = document.getElementById('input-ano');
 const inputAlbum = document.getElementById('input-album');
 const inputDirecao = document.getElementById('input-direcao');
 const inputVideoId = document.getElementById('input-video-id');
+const inputPlaylist = document.getElementById('input-playlist');
 
 let currentData = []; 
 let debounceTimeout = null;
+let isFromTV = false; // Flag para identificar se viemos do player da TV
 
 // --- AUTH CHECK & INIT ---
 async function checkAuth() {
@@ -102,7 +106,7 @@ async function fetchMusics() {
 
     if (searchTerm) {
         const term = `%${searchTerm}%`;
-        query = query.or(`artista.ilike.${term},musica.ilike.${term},direcao.ilike.${term},id.eq.${Number(searchTerm) || 0}`);
+        query = query.or(`artista.ilike.${term},musica.ilike.${term},direcao.ilike.${term},playlist.ilike.${term},id.eq.${Number(searchTerm) || 0}`);
     }
 
     query = query.limit(5000);
@@ -122,7 +126,10 @@ async function fetchMusics() {
 async function checkUrlForEdit() {
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit_id');
+    const fromParam = urlParams.get('from');
     
+    if (fromParam === 'tv') isFromTV = true;
+
     if (editId) {
         let target = currentData.find(m => m.id == editId);
         if (!target) {
@@ -137,7 +144,10 @@ async function checkUrlForEdit() {
         if(target) {
             editMusicData(target);
             showMessage(`REGISTRO #${editId} PRONTO PARA EDIÇÃO.`);
-            window.history.replaceState({}, document.title, window.location.pathname);
+            // Apenas remove os params da URL se não estivermos no fluxo "from tv"
+            if (!isFromTV) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         } else {
             showMessage(`REGISTRO #${editId} NÃO ENCONTRADO.`);
         }
@@ -163,7 +173,7 @@ function renderTable(data) {
                 <div class="text-sm opacity-90">${item.musica || '---'}</div>
             </td>
             <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2">
-                ${item.album || '---'}
+                <span class="text-amber-600 font-bold">${item.playlist || 'SEM PLAYLIST'}</span>
             </td>
             <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2 font-mono">
                 ${item.ano || '---'}
@@ -184,7 +194,11 @@ function renderTable(data) {
 
 window.editMusicById = (id) => {
     const music = currentData.find(m => m.id == id);
-    if(music) editMusicData(music);
+    if(music) {
+        // Se clicar em EDIT na tabela, garantimos que não estamos no fluxo da TV
+        isFromTV = false;
+        editMusicData(music);
+    }
 };
 
 function editMusicData(music) {
@@ -194,7 +208,8 @@ function editMusicData(music) {
     inputAno.value = music.ano || ''; 
     inputAlbum.value = music.album || '';
     inputDirecao.value = music.direcao || '';
-    inputVideoId.value = music.video_id || '';
+    inputVideo_id = inputVideoId.value = music.video_id || '';
+    inputPlaylist.value = music.playlist || '';
 
     document.getElementById('form-title').querySelector('span').innerText = `EDITANDO #${music.id}`;
     btnSave.innerText = "ATUALIZAR DADOS";
@@ -210,7 +225,8 @@ musicForm.addEventListener('submit', async (e) => {
         ano: inputAno.value ? String(inputAno.value) : null,
         album: inputAlbum.value.trim() || null,
         direcao: inputDirecao.value.trim() || null,
-        video_id: inputVideoId.value.trim() || null
+        video_id: inputVideoId.value.trim() || null,
+        playlist: inputPlaylist.value.trim() || null
     };
 
     btnSave.disabled = true;
@@ -220,26 +236,19 @@ musicForm.addEventListener('submit', async (e) => {
     if (id) {
         const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
         error = err;
-        if(!error) showMessage(`REGISTRO #${id} ATUALIZADO!`);
     } else {
         const { error: err } = await supabase.from('musicas_backup').insert([formData]);
         error = err;
-        if(!error) showMessage("NOVO REGISTRO GRAVADO!");
     }
 
     if (error) {
         showMessage(`ERRO: ${error.message}`, true);
         btnSave.disabled = false;
-        btnSave.innerText = "GRAVAR DADOS";
+        btnSave.innerText = id ? "ATUALIZAR DADOS" : "GRAVAR DADOS";
     } else {
-        // Obter dados atuais para manter a playlist no resume state se necessário
-        let playlist = null;
+        // Atualizar resume state se houver dados suficientes
+        let playlist = formData.playlist;
         let video_id = formData.video_id;
-        
-        if (id) {
-            const currentItem = currentData.find(m => m.id == id);
-            if (currentItem) playlist = currentItem.playlist;
-        }
 
         if (playlist && video_id) {
             localStorage.setItem('tv_resume_state', JSON.stringify({
@@ -248,11 +257,21 @@ musicForm.addEventListener('submit', async (e) => {
             }));
         }
         
-        showMessage("DADOS GRAVADOS! RETORNANDO À TV...", false);
-        
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1200);
+        if (isFromTV) {
+            // Se veio do "Edit Video" da TV, mantém o redirecionamento
+            showMessage("DADOS GRAVADOS! RETORNANDO À TV...", false);
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1200);
+        } else {
+            // Se foi editado diretamente no Service Mode, permanece e atualiza a lista
+            showMessage(id ? `REGISTRO #${id} ATUALIZADO!` : "NOVO REGISTRO GRAVADO!", false);
+            resetForm();
+            fetchMusics();
+            loadDatabaseFilterOptions();
+            btnSave.disabled = false;
+            btnSave.innerText = "GRAVAR DADOS";
+        }
     }
 });
 
@@ -287,6 +306,76 @@ function showMessage(msg, isError = false) {
     setTimeout(() => statusMsg.classList.add('hidden'), 3000);
 }
 
+/**
+ * EXPORTAÇÃO PARA PDF
+ * Utiliza jsPDF + autoTable para gerar catálogo dos vídeos filtrados
+ */
+async function exportToPDF() {
+    if (!currentData || currentData.length === 0) {
+        showMessage("NENHUM DADO PARA EXPORTAR!", true);
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Título e Header do PDF
+    doc.setFontSize(22);
+    doc.setTextColor(180, 83, 9); // Amber-700 approx
+    doc.text('PLAYLISTISMO - DATABASE EXPORT', 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    const dateStr = new Date().toLocaleString('pt-BR');
+    doc.text(`Relatório gerado em: ${dateStr}`, 14, 28);
+    doc.text(`Total de registros: ${currentData.length}`, 14, 34);
+
+    // Mapeamento dos dados para a tabela
+    const rows = currentData.map(item => [
+        item.id,
+        item.artista,
+        item.musica || '---',
+        item.playlist || '---',
+        item.ano || '---',
+        item.direcao || '---'
+    ]);
+
+    // Geração da Tabela
+    doc.autoTable({
+        head: [['ID', 'ARTISTA', 'MÚSICA', 'PLAYLIST', 'ANO', 'DIREÇÃO']],
+        body: rows,
+        startY: 40,
+        theme: 'striped',
+        headStyles: { 
+            fillColor: [180, 83, 9], // Cor sólida do header (Amber-700)
+            textColor: [255, 255, 255],
+            fontSize: 10,
+            fontStyle: 'bold'
+        },
+        styles: { 
+            fontSize: 8,
+            cellPadding: 3
+        },
+        columnStyles: {
+            0: { cellWidth: 15 },
+            4: { cellWidth: 15 }
+        },
+        didDrawPage: function (data) {
+            // Rodapé com número de página
+            const str = "Página " + doc.internal.getNumberOfPages();
+            doc.setFontSize(10);
+            const pageSize = doc.internal.pageSize;
+            const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+            doc.text(str, data.settings.margin.left, pageHeight - 10);
+        }
+    });
+
+    // Salvar o arquivo
+    const fileName = `playlistismo_export_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+    showMessage("PDF GERADO COM SUCESSO!");
+}
+
 searchInput.addEventListener('input', (e) => {
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
@@ -296,6 +385,8 @@ searchInput.addEventListener('input', (e) => {
 
 filterGroupList.addEventListener('change', fetchMusics);
 filterPlaylistList.addEventListener('change', fetchMusics);
+
+btnExportPdf.addEventListener('click', exportToPDF);
 
 btnLogout.addEventListener('click', async () => {
     await supabase.auth.signOut();
