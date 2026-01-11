@@ -19,6 +19,22 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     border-left: 6px solid #ffff00;
 }
 
+.guide-cat-content {
+    max-height: 45vh; /* Limita a altura para permitir scroll interno se a lista for longa */
+    overflow-y: auto;
+}
+
+/* Scrollbar customizada para as listas de canais */
+.guide-cat-content::-webkit-scrollbar {
+    width: 4px;
+}
+.guide-cat-content::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.3);
+}
+.guide-cat-content::-webkit-scrollbar-thumb {
+    background: #ffff00;
+}
+
 .rotate-180 {
     transform: rotate(180deg);
 }
@@ -29,7 +45,7 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
     overflow: hidden;
     white-space: nowrap;
     position: relative;
-    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    /* Sombra removida conforme solicitação para não cobrir a primeira letra */
 }
 
 .marquee-text {
@@ -45,7 +61,7 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 
 @keyframes marquee-scroll {
     0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); } /* Rola metade pois duplicamos o texto para loop infinito */
+    100% { transform: translateX(-50%); } /* Rola metade pois duplicamos o texto para loop fluido */
 }
 
 /* --- NOW PLAYING COLORIDO (GUIDE) --- */
@@ -173,7 +189,7 @@ body.guide-active #app-viewport { transform: translateX(225px) scale(0.85); filt
 
 /* --- UI TRINITRON --- */
 .texture-plastic {
-    background-color: #1a1a1a;
+    background-color: #181818;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.07'/%3E%3C/svg%3E");
 }
 
