@@ -29,13 +29,14 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 
 /* Scrollbar customizada para as listas de canais */
 .guide-cat-content::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
 }
 .guide-cat-content::-webkit-scrollbar-track, .custom-scrollbar::-webkit-scrollbar-track {
     background: rgba(0,0,0,0.3);
 }
 .guide-cat-content::-webkit-scrollbar-thumb, .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #ffff00;
+    background: #fbbf24;
+    border-radius: 10px;
 }
 
 .rotate-180 {
@@ -215,17 +216,21 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 .scanlines { background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 50%); background-size: 100% 3px; }
 
 /* --- SERVICE MODE & EDIT FORM STYLES --- */
+#tv-admin-panel input,
+#tv-admin-panel select,
 .service-mode-input {
     background-color: #1a1a1a !important;
     color: #ffffff !important;
     border: 2px solid #333 !important;
     font-family: 'Jost', sans-serif !important;
-    font-weight: 700 !important;
+    font-weight: 700 !important; /* FORÇANDO NEGRITO */
     border-radius: 4px;
     padding: 0.75rem !important;
     transition: all 0.2s ease;
 }
 
+#tv-admin-panel input:focus,
+#tv-admin-panel select:focus,
 .service-mode-input:focus {
     border-color: #fbbf24 !important;
     background-color: #222 !important;

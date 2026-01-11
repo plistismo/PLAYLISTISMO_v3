@@ -28,6 +28,7 @@ const state = {
 let player; 
 
 const els = {
+    appViewport: document.getElementById('app-viewport'),
     screenOff: document.getElementById('screen-off'),
     screenOn: document.getElementById('screen-on'),
     powerLed: document.getElementById('power-led'),
@@ -638,8 +639,9 @@ function setupEventListeners() {
     if(els.headerEditBtn) els.headerEditBtn.onclick = (e) => { e.stopPropagation(); toggleAdmin(true, 'EDIT'); };
     if(els.adminFormClear) els.adminFormClear.onclick = (e) => { e.preventDefault(); resetAdminForm(); };
 
-    if(els.tvStage) {
-        els.tvStage.onclick = () => {
+    // Clique na página (viewport) fecha qualquer painel aberto
+    if(els.appViewport) {
+        els.appViewport.onclick = () => {
             if (state.isSearchOpen) toggleGuide();
             if (state.isAdminOpen) toggleAdmin(false);
         };
