@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
@@ -583,14 +584,23 @@ function renderAdminTable() {
         const row = document.createElement('tr');
         const isUpdated = item.id == state.lastUpdatedId;
         row.className = `hover:bg-amber-900/10 transition-colors border-b border-amber-900/10 ${isUpdated ? 'row-updated' : ''}`;
+        
+        // Coluna 1: Info (Artist, Music, Album)
+        // Coluna 2: Detalhes (Ano, Diretor)
+        // Coluna 3: Ação
+        
         row.innerHTML = `
-            <td class="p-2 font-mono opacity-50 text-[10px]">${item.id}</td>
-            <td class="p-2">
-                <div class="font-bold text-amber-500 leading-tight">${item.artista}</div>
-                <div class="text-[9px] opacity-70">${item.musica || '---'}</div>
+            <td class="p-2 align-top font-jost">
+                <div class="flex items-center gap-2 text-amber-500 mb-0.5"><span class="text-sm">🎤</span> <span class="text-sm leading-none">${item.artista || '---'}</span></div>
+                <div class="flex items-center gap-2 text-white mb-0.5"><span class="text-sm">🎼</span> <span class="font-bold text-lg leading-none">${item.musica || '---'}</span></div>
+                <div class="flex items-center gap-2 text-amber-700/80"><span class="text-sm">💽</span> <span class="text-xs leading-none">${item.album || '---'}</span></div>
             </td>
-            <td class="p-2 text-center">
-                <button onclick="window.editAdminItem(${item.id})" class="text-[10px] border border-amber-500 px-2 py-0.5 hover:bg-amber-500 hover:text-black">EDIT</button>
+            <td class="p-2 align-top font-jost">
+                <div class="flex items-center gap-2 text-amber-500 mb-0.5"><span class="text-sm">📅</span> <span class="text-sm leading-none">${item.ano || '---'}</span></div>
+                <div class="flex items-center gap-2 text-amber-600"><span class="text-sm">🎬</span> <span class="text-xs leading-none">${item.direcao || '---'}</span></div>
+            </td>
+            <td class="p-2 text-center align-middle">
+                <button onclick="window.editAdminItem(${item.id})" class="text-[10px] border border-amber-500 px-2 py-1 hover:bg-amber-500 hover:text-black uppercase font-vt323 tracking-widest">EDIT</button>
             </td>
         `;
         els.adminTableBody.appendChild(row);
