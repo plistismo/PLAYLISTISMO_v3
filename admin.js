@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -162,7 +163,7 @@ function renderTable(data) {
         row.innerHTML = `
             <td class="font-mono text-sm opacity-70 align-top border-r border-amber-900/30 px-2 text-center py-2">${item.id}</td>
             <td class="align-top border-r border-amber-900/30 px-2 py-2">
-                <div class="font-bold text-lg leading-none text-amber-500">${item.artista}</div>
+                <div class="font-bold text-lg leading-none text-[#00ff00]">${item.artista}</div>
                 <div class="text-sm opacity-90">${item.musica || '---'}</div>
             </td>
             <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2">
@@ -171,7 +172,7 @@ function renderTable(data) {
             <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2 font-mono">
                 ${item.ano || '---'}
             </td>
-            <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2 italic">
+            <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2 italic text-[#00ff00]">
                 ${item.direcao || '---'}
             </td>
             <td class="text-center align-middle px-2 py-2">

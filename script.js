@@ -591,13 +591,13 @@ function renderAdminTable() {
         
         row.innerHTML = `
             <td class="p-2 align-top font-jost">
-                <div class="flex items-center gap-2 text-amber-500 mb-0.5"><span class="text-sm">🎤</span> <span class="text-sm leading-none">${item.artista || '---'}</span></div>
+                <div class="flex items-center gap-2 text-[#00ff00] mb-0.5"><span class="text-sm">🎤</span> <span class="text-sm leading-none">${item.artista || '---'}</span></div>
                 <div class="flex items-center gap-2 text-white mb-0.5"><span class="text-sm">🎼</span> <span class="font-bold text-lg leading-none">${item.musica || '---'}</span></div>
                 <div class="flex items-center gap-2 text-amber-700/80"><span class="text-sm">💽</span> <span class="text-xs leading-none">${item.album || '---'}</span></div>
             </td>
             <td class="p-2 align-top font-jost">
                 <div class="flex items-center gap-2 text-amber-500 mb-0.5"><span class="text-sm">📅</span> <span class="text-sm leading-none">${item.ano || '---'}</span></div>
-                <div class="flex items-center gap-2 text-amber-600"><span class="text-sm">🎬</span> <span class="text-xs leading-none">${item.direcao || '---'}</span></div>
+                <div class="flex items-center gap-2 text-[#00ff00]"><span class="text-sm">🎬</span> <span class="text-xs leading-none">${item.direcao || '---'}</span></div>
             </td>
             <td class="p-2 text-center align-middle">
                 <button onclick="window.editAdminItem(${item.id})" class="text-[10px] border border-amber-500 px-2 py-1 hover:bg-amber-500 hover:text-black uppercase font-vt323 tracking-widest">EDIT</button>
