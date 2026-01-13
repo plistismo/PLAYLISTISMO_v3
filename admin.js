@@ -13,6 +13,7 @@ const statusMsg = document.getElementById('status-msg');
 const btnLogout = document.getElementById('btn-logout');
 const btnClear = document.getElementById('btn-clear');
 const btnSave = document.getElementById('btn-save');
+const btnNormalize = document.getElementById('btn-normalize');
 
 // Pagination Controls
 const btnPrevPage = document.getElementById('btn-prev-page');
@@ -292,7 +293,7 @@ musicForm.addEventListener('submit', async (e) => {
         btnSave.disabled = false;
         btnSave.innerText = "GRAVAR DADOS";
     } else {
-        // Se veio do Edit Video da TV, redirecionamos de volta para a TV
+        // Se editou o vídeo ATUAL da TV (ou o vídeo ID bate), atualiza créditos e REINICIA na TV
         if (fromTv) {
             let playlist = null;
             let video_id = formData.video_id;
@@ -358,6 +359,137 @@ function showMessage(msg, isError = false) {
     setTimeout(() => statusMsg.classList.add('hidden'), 3000);
 }
 
+// --- NORMALIZATION LOGIC ---
+
+function calculateRecordScore(row) {
+    let score = 0;
+    if (row.artista && row.artista !== 'Desconhecido') score += row.artista.length;
+    if (row.musica) score += row.musica.length;
+    if (row.album) score += 10;
+    if (row.ano) score += 5;
+    if (row.direcao) score += 10;
+    return score;
+}
+
+async function runNormalization() {
+    if (!confirm("Isso irá padronizar os metadados de todos os vídeos duplicados no banco de dados. Deseja continuar?")) return;
+
+    btnNormalize.disabled = true;
+    btnNormalize.innerText = "PROCESSANDO...";
+    showMessage("🔍 INICIANDO NORMALIZAÇÃO DE METADADOS...");
+
+    try {
+        const TARGET_TABLE = 'musicas_backup';
+        const BATCH_SIZE = 1000;
+        let allRecords = [];
+        let from = 0;
+        let hasMore = true;
+
+        // 1. BUSCA EXAUSTIVA (PAGINADA)
+        while (hasMore) {
+            showMessage(`📡 Lendo registros (${from} a ${from + BATCH_SIZE})...`);
+            const { data, error } = await supabase
+                .from(TARGET_TABLE)
+                .select('*')
+                .range(from, from + BATCH_SIZE - 1);
+
+            if (error) throw error;
+            allRecords = [...allRecords, ...data];
+            if (data.length < BATCH_SIZE) hasMore = false;
+            else from += BATCH_SIZE;
+        }
+
+        showMessage(`📦 Agrupando ${allRecords.length} registros...`);
+        
+        // 2. AGRUPAMENTO POR VIDEO_ID
+        const groups = allRecords.reduce((acc, row) => {
+            if (!row.video_id) return acc;
+            if (!acc[row.video_id]) acc[row.video_id] = [];
+            acc[row.video_id].push(row);
+            return acc;
+        }, {});
+
+        const videoIds = Object.keys(groups);
+        let updatedCount = 0;
+        let skippedCount = 0;
+
+        // 3. PROCESSAMENTO DOS GRUPOS
+        for (let i = 0; i < videoIds.length; i++) {
+            const videoId = videoIds[i];
+            const rows = groups[videoId];
+            
+            if (i % 20 === 0) {
+                showMessage(`⚡ Processando vídeos: ${i}/${videoIds.length}...`);
+            }
+
+            if (rows.length <= 1) {
+                skippedCount++;
+                continue;
+            }
+
+            // Encontrar Mestre
+            let master = rows[0];
+            let maxScore = -1;
+
+            for (const row of rows) {
+                const currentScore = calculateRecordScore(row);
+                if (currentScore > maxScore) {
+                    maxScore = currentScore;
+                    master = row;
+                }
+            }
+
+            if (maxScore <= 0 || (!master.artista && !master.musica)) {
+                skippedCount++;
+                continue;
+            }
+
+            const needsUpdate = rows.some(row => 
+                row.id !== master.id && (
+                    row.artista !== master.artista || 
+                    row.musica !== master.musica || 
+                    row.album !== master.album || 
+                    row.ano !== master.ano ||
+                    row.direcao !== master.direcao
+                )
+            );
+
+            if (needsUpdate) {
+                const updatePayload = {
+                    artista: master.artista,
+                    musica: master.musica,
+                    album: master.album,
+                    ano: master.ano,
+                    direcao: master.direcao
+                };
+
+                const { error: updateError } = await supabase
+                    .from(TARGET_TABLE)
+                    .update(updatePayload)
+                    .eq('video_id', videoId);
+
+                if (updateError) {
+                    console.error(`Erro no Video ID ${videoId}:`, updateError.message);
+                } else {
+                    updatedCount++;
+                }
+            } else {
+                skippedCount++;
+            }
+        }
+
+        showMessage(`🏁 CONCLUÍDO! Propagados: ${updatedCount} | Mantidos: ${skippedCount}`, false);
+        fetchMusics();
+
+    } catch (err) {
+        console.error(err);
+        showMessage(`❌ ERRO NA NORMALIZAÇÃO: ${err.message}`, true);
+    } finally {
+        btnNormalize.disabled = false;
+        btnNormalize.innerText = "NORMALIZAR DB";
+    }
+}
+
 // Event Listeners para Filtros: Reseta a página para 0 ao mudar filtros
 searchInput.addEventListener('input', (e) => {
     currentPage = 0; // Reset page
@@ -380,5 +512,7 @@ btnClear.addEventListener('click', (e) => {
     resetForm();
     window.history.replaceState({}, document.title, window.location.pathname);
 });
+
+btnNormalize.addEventListener('click', runNormalization);
 
 checkAuth();
