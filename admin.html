@@ -24,13 +24,13 @@
 
     <div class="h-[92vh] max-w-[90rem] mx-auto border-2 border-amber-800/50 p-6 shadow-[0_0_20px_rgba(217,119,6,0.1)] relative flex flex-col">
         
-        <!-- Header -->
+        <!-- Header (Fixo no topo do container) -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-amber-800/50 pb-4 mb-6 shrink-0">
             <div>
                 <h1 class="text-4xl md:text-5xl font-bold tracking-widest text-amber-500 drop-shadow-[2px_2px_0_rgba(0,0,0,1)]">
-                    SERVICE MODE <span class="text-sm align-top opacity-50">V.1.8</span>
+                    SERVICE MODE <span class="text-sm align-top opacity-50">V.1.6</span>
                 </h1>
-                <p class="text-amber-700 uppercase tracking-wider text-sm mt-1">Database Manipulation System (Full Access)</p>
+                <p class="text-amber-700 uppercase tracking-wider text-sm mt-1">Database Manipulation System</p>
             </div>
             <div class="flex gap-4 mt-4 md:mt-0">
                 <button id="btn-normalize" class="service-mode-btn px-4 py-2 text-xl font-bold text-cyan-500 border-cyan-900 hover:bg-cyan-900 hover:text-white">NORMALIZAR DB</button>
@@ -39,96 +39,119 @@
             </div>
         </div>
 
+        <!-- Feedback Message -->
         <div id="status-msg" class="hidden w-full p-2 mb-4 text-center text-xl font-bold border border-current shrink-0"></div>
 
         <div class="grid grid-cols-1 xl:grid-cols-4 gap-8 flex-1 overflow-hidden">
+            
+            <!-- FORMULÁRIO (Esquerda) -->
             <div class="xl:col-span-1 bg-[#0a0a0a] border border-amber-900/30 p-4 overflow-y-auto custom-scrollbar">
                 <h2 id="form-title" class="text-2xl mb-4 border-b border-amber-900/30 pb-2 flex justify-between">
                     <span>NOVO REGISTRO</span>
                     <button id="btn-clear" class="text-sm underline opacity-50 hover:opacity-100">LIMPAR</button>
                 </h2>
+                
                 <form id="music-form" class="space-y-4">
                     <input type="hidden" id="music-id">
+                    
                     <div>
-                        <label class="block text-sm opacity-70 mb-1 uppercase">Artista *</label>
+                        <label class="block text-sm opacity-70 mb-1">ARTISTA *</label>
                         <input type="text" id="input-artista" required class="w-full p-2 text-xl service-mode-input" placeholder="Ex: Oasis">
                     </div>
+                    
                     <div>
-                        <label class="block text-sm opacity-70 mb-1 uppercase">Música *</label>
+                        <label class="block text-sm opacity-70 mb-1">MÚSICA *</label>
                         <input type="text" id="input-musica" class="w-full p-2 text-xl service-mode-input" placeholder="Ex: Wonderwall">
                     </div>
+                    
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm opacity-70 mb-1 uppercase">Ano</label>
+                            <label class="block text-sm opacity-70 mb-1">ANO</label>
                             <input type="number" id="input-ano" class="w-full p-2 text-xl service-mode-input" placeholder="1995">
                         </div>
                         <div>
-                            <label class="block text-sm opacity-70 mb-1 uppercase">Álbum</label>
+                            <label class="block text-sm opacity-70 mb-1">ÁLBUM</label>
                             <input type="text" id="input-album" class="w-full p-2 text-xl service-mode-input" placeholder="(Opcional)">
                         </div>
                     </div>
+
                     <div>
-                        <label class="block text-sm opacity-70 mb-1 uppercase">Direção</label>
+                        <label class="block text-sm opacity-70 mb-1">DIREÇÃO</label>
                         <input type="text" id="input-direcao" class="w-full p-2 text-xl service-mode-input" placeholder="Diretor do Clipe">
                     </div>
+
                     <div>
-                        <label class="block text-sm opacity-70 mb-1 uppercase">YouTube ID</label>
+                        <label class="block text-sm opacity-70 mb-1">YOUTUBE VIDEO ID</label>
                         <input type="text" id="input-video-id" class="w-full p-2 text-xl service-mode-input" placeholder="Ex: 6hzrDeceEKc">
                     </div>
+
                     <div class="pt-4">
-                        <button type="submit" id="btn-save" class="w-full py-3 bg-amber-900/20 border border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-black font-bold text-2xl transition-all shadow-[0_0_10px_rgba(217,119,6,0.1)] uppercase">Gravar Dados</button>
+                        <button type="submit" id="btn-save" class="w-full py-3 bg-amber-900/20 border border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-black font-bold text-2xl transition-all shadow-[0_0_10px_rgba(217,119,6,0.1)]">
+                            GRAVAR DADOS
+                        </button>
                     </div>
                 </form>
             </div>
 
+            <!-- TABELA (Direita) -->
             <div class="xl:col-span-3 flex flex-col overflow-hidden bg-[#0a0a0a] border border-amber-900/30">
+                
+                <!-- Filtros (Header da Tabela) -->
                 <div class="p-3 border-b border-amber-900/30 bg-[#0d0d0d] shrink-0">
                     <div class="flex flex-col md:flex-row gap-4 items-end md:items-center">
                         <div class="flex-1 w-full">
                             <label class="block text-xs opacity-50 mb-1 uppercase">Busca Global</label>
                             <input type="text" id="search-db" placeholder="Pesquisar metadados..." class="service-mode-input px-2 py-2 w-full text-lg">
                         </div>
+                        
                         <div class="w-full md:w-48">
                             <label class="block text-xs opacity-50 mb-1 uppercase">Grupo</label>
                             <select id="filter-group-list" class="service-mode-input px-2 py-2 w-full text-lg cursor-pointer">
                                 <option value="">TODOS</option>
                             </select>
                         </div>
+
                         <div class="w-full md:w-56">
                             <label class="block text-xs opacity-50 mb-1 uppercase">Playlist</label>
                             <select id="filter-playlist-list" class="service-mode-input px-2 py-2 w-full text-lg cursor-pointer">
                                 <option value="">TODAS</option>
                             </select>
                         </div>
-                        <div class="text-right pl-4 border-l border-amber-900/30 flex flex-col justify-center">
+                        
+                        <div class="text-right pl-4 border-l border-amber-900/30 hidden md:flex flex-col justify-center">
                              <span class="text-xs opacity-50 uppercase">Total</span>
                              <span id="total-count" class="text-2xl font-bold tracking-tighter text-amber-500">0</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Area da Tabela (Scroll) -->
                 <div class="flex-1 overflow-y-auto custom-scrollbar relative">
                     <table class="w-full text-left border-collapse service-mode-table">
                         <thead class="sticky top-0 bg-[#111] z-10 shadow-md">
                             <tr>
-                                <th class="w-16 text-center uppercase">ID</th>
-                                <th class="uppercase">Artista / Música</th>
-                                <th class="uppercase">Álbum</th>
-                                <th class="w-20 uppercase">Ano</th>
-                                <th class="uppercase">Direção</th>
-                                <th class="w-32 text-center uppercase">Ação</th>
+                                <th class="w-16 text-center">ID</th>
+                                <th>ARTISTA / MÚSICA</th>
+                                <th>ÁLBUM</th>
+                                <th class="w-20">ANO</th>
+                                <th>DIREÇÃO</th>
+                                <th class="w-32 text-center">AÇÃO</th>
                             </tr>
                         </thead>
                         <tbody id="table-body">
-                            <tr><td colspan="6" class="text-center p-20 animate-pulse text-2xl uppercase">Carregando Frequência...</td></tr>
+                            <tr><td colspan="6" class="text-center p-20 animate-pulse text-2xl">CARREGANDO FREQUÊNCIA...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        <!-- Footer Decor -->
         <div class="mt-4 text-xs text-amber-900 text-center uppercase tracking-[0.5em] shrink-0">
-            Sony Trinitron Service System // Debug Mode Active // No Pagination Mode
+            Sony Trinitron Service System // Debug Mode Active
         </div>
     </div>
+
     <script type="module" src="admin.js"></script>
 </body>
 </html>
