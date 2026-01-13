@@ -15,7 +15,7 @@ const btnClear = document.getElementById('btn-clear');
 const btnSave = document.getElementById('btn-save');
 const btnNormalize = document.getElementById('btn-normalize');
 
-// Pagination UI Elements
+// Pagination UI Elements (Garantindo que os IDs batem com o admin.html)
 const btnPrevPage = document.getElementById('btn-prev-page');
 const btnNextPage = document.getElementById('btn-next-page');
 const pageInfoLabel = document.getElementById('page-info');
@@ -88,30 +88,26 @@ async function loadDatabaseFilterOptions() {
     const groups = [...new Set(data.map(item => item.group_name).filter(Boolean))].sort();
     const playlists = data.map(item => item.name).filter(Boolean);
 
-    const currentGroup = filterGroupList.value;
     filterGroupList.innerHTML = '<option value="">TODOS OS GRUPOS</option>';
     groups.forEach(g => {
         const opt = document.createElement('option');
         opt.value = g;
         opt.innerText = g;
-        if(g === currentGroup) opt.selected = true;
         filterGroupList.appendChild(opt);
     });
 
-    const currentPlaylist = filterPlaylistList.value;
     filterPlaylistList.innerHTML = '<option value="">TODAS AS PLAYLISTS</option>';
     playlists.forEach(p => {
         const opt = document.createElement('option');
         opt.value = p;
         opt.innerText = p;
-        if(p === currentPlaylist) opt.selected = true;
         filterPlaylistList.appendChild(opt);
     });
 }
 
 // LÓGICA PRINCIPAL DE BUSCA COM PAGINAÇÃO
 async function fetchMusics() {
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-12 text-amber-500 animate-pulse uppercase tracking-[0.2em]">Sincronizando Página ' + (currentPage + 1) + '...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-12 text-amber-500 animate-pulse uppercase tracking-[0.2em] text-xl">Requisitando Página ' + (currentPage + 1) + '...</td></tr>';
     
     const searchTerm = searchInput.value.trim();
     const selectedGroup = filterGroupList.value;
@@ -119,7 +115,7 @@ async function fetchMusics() {
 
     let query = supabase
         .from('musicas_backup')
-        .select('*', { count: 'exact' }) // Solicita o total para gerenciar botões de navegação
+        .select('*', { count: 'exact' }) 
         .order('id', { ascending: false });
 
     if (selectedGroup) {
@@ -161,28 +157,36 @@ function updatePaginationUI() {
     // Atualiza label de informação formatada
     const formattedPage = String(currentPage + 1).padStart(2, '0');
     const formattedTotal = String(totalPages).padStart(2, '0');
-    pageInfoLabel.innerText = `PÁGINA: ${formattedPage} / ${formattedTotal}`;
-    totalCountLabel.innerText = totalRecords;
+    
+    if (pageInfoLabel) {
+        pageInfoLabel.innerText = `PAG: ${formattedPage} / ${formattedTotal}`;
+    }
+    
+    if (totalCountLabel) {
+        totalCountLabel.innerText = totalRecords;
+    }
 
     // Gerencia estados dos botões
-    btnPrevPage.disabled = currentPage === 0;
-    btnNextPage.disabled = (currentPage + 1) * PAGE_SIZE >= totalRecords;
+    if (btnPrevPage) btnPrevPage.disabled = currentPage === 0;
+    if (btnNextPage) btnNextPage.disabled = (currentPage + 1) * PAGE_SIZE >= totalRecords;
 }
 
 // Handlers de Navegação
-btnPrevPage.addEventListener('click', () => {
+btnPrevPage?.addEventListener('click', () => {
     if (currentPage > 0) {
         currentPage--;
         fetchMusics();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const tableArea = document.querySelector('.overflow-y-auto');
+        if (tableArea) tableArea.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
 
-btnNextPage.addEventListener('click', () => {
+btnNextPage?.addEventListener('click', () => {
     if ((currentPage + 1) * PAGE_SIZE < totalRecords) {
         currentPage++;
         fetchMusics();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const tableArea = document.querySelector('.overflow-y-auto');
+        if (tableArea) tableArea.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
 
@@ -190,7 +194,7 @@ function renderTable(data) {
     tableBody.innerHTML = '';
 
     if (data.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-12 opacity-50 uppercase tracking-[0.2em]">Nenhum sinal detectado nesta frequência.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-12 opacity-50 uppercase tracking-[0.2em] text-xl">Nenhum sinal detectado nesta frequência.</td></tr>';
         return;
     }
 
@@ -238,9 +242,12 @@ function editMusicData(music) {
     inputDirecao.value = music.direcao || '';
     inputVideoId.value = music.video_id || '';
 
-    document.getElementById('form-title').querySelector('span').innerText = `EDITANDO #${music.id}`;
+    const titleEl = document.getElementById('form-title').querySelector('span');
+    if (titleEl) titleEl.innerText = `EDITANDO #${music.id}`;
     btnSave.innerText = "ATUALIZAR DADOS";
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    const formContainer = musicForm.parentElement;
+    if (formContainer) formContainer.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 musicForm.addEventListener('submit', async (e) => {
@@ -265,9 +272,9 @@ musicForm.addEventListener('submit', async (e) => {
     let operationId = id;
 
     if (id) {
-        const { error: err } = await supabase.from('musicas_backup').update(formData).eq('video_id', formData.video_id);
+        const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
         error = err;
-        if(!error) showMessage(`REGISTROS COM VÍDEO ID ${formData.video_id} ATUALIZADOS!`);
+        if(!error) showMessage(`REGISTRO #${id} ATUALIZADO!`);
     } else {
         const { data: inserted, error: err } = await supabase.from('musicas_backup').insert([formData]).select();
         error = err;
@@ -327,7 +334,8 @@ window.deleteMusic = async (id) => {
 function resetForm() {
     musicForm.reset();
     inputId.value = '';
-    document.getElementById('form-title').querySelector('span').innerText = 'NOVO REGISTRO';
+    const titleEl = document.getElementById('form-title').querySelector('span');
+    if (titleEl) titleEl.innerText = 'NOVO REGISTRO';
     btnSave.innerText = "GRAVAR DADOS";
 }
 
@@ -344,134 +352,8 @@ function showMessage(msg, isError = false) {
     setTimeout(() => statusMsg.classList.add('hidden'), 3000);
 }
 
-// --- NORMALIZATION LOGIC ---
-function calculateRecordScore(row) {
-    let score = 0;
-    if (row.artista && row.artista !== 'Desconhecido') score += row.artista.length;
-    if (row.musica) score += row.musica.length;
-    if (row.album) score += 10;
-    if (row.ano) score += 5;
-    if (row.direcao) score += 10;
-    return score;
-}
-
-async function runNormalization() {
-    if (!confirm("Isso irá padronizar os metadados de todos os vídeos duplicados no banco de dados. Deseja continuar?")) return;
-
-    btnNormalize.disabled = true;
-    btnNormalize.innerText = "PROCESSANDO...";
-    showMessage("🔍 INICIANDO NORMALIZAÇÃO DE METADADOS...");
-
-    try {
-        const TARGET_TABLE = 'musicas_backup';
-        const BATCH_SIZE_NORM = 1000;
-        let allRecords = [];
-        let fromIdx = 0;
-        let hasMoreRecords = true;
-
-        while (hasMoreRecords) {
-            showMessage(`📡 Lendo registros (${fromIdx} a ${fromIdx + BATCH_SIZE_NORM})...`);
-            const { data, error } = await supabase
-                .from(TARGET_TABLE)
-                .select('*')
-                .range(fromIdx, fromIdx + BATCH_SIZE_NORM - 1);
-
-            if (error) throw error;
-            allRecords = [...allRecords, ...data];
-            if (data.length < BATCH_SIZE_NORM) hasMoreRecords = false;
-            else fromIdx += BATCH_SIZE_NORM;
-        }
-
-        showMessage(`📦 Agrupando ${allRecords.length} registros...`);
-        
-        const groups = allRecords.reduce((acc, row) => {
-            if (!row.video_id) return acc;
-            if (!acc[row.video_id]) acc[row.video_id] = [];
-            acc[row.video_id].push(row);
-            return acc;
-        }, {});
-
-        const videoIds = Object.keys(groups);
-        let updatedCount = 0;
-        let skippedCount = 0;
-
-        for (let i = 0; i < videoIds.length; i++) {
-            const videoId = videoIds[i];
-            const rows = groups[videoId];
-            
-            if (i % 20 === 0) {
-                showMessage(`⚡ Processando vídeos: ${i}/${videoIds.length}...`);
-            }
-
-            if (rows.length <= 1) {
-                skippedCount++;
-                continue;
-            }
-
-            let master = rows[0];
-            let maxScore = -1;
-
-            for (const row of rows) {
-                const currentScore = calculateRecordScore(row);
-                if (currentScore > maxScore) {
-                    maxScore = currentScore;
-                    master = row;
-                }
-            }
-
-            if (maxScore <= 0 || (!master.artista && !master.musica)) {
-                skippedCount++;
-                continue;
-            }
-
-            const needsUpdate = rows.some(row => 
-                row.id !== master.id && (
-                    row.artista !== master.artista || 
-                    row.musica !== master.musica || 
-                    row.album !== master.album || 
-                    row.ano !== master.ano ||
-                    row.direcao !== master.direcao
-                )
-            );
-
-            if (needsUpdate) {
-                const updatePayload = {
-                    artista: master.artista,
-                    musica: master.musica,
-                    album: master.album,
-                    ano: master.ano,
-                    direcao: master.direcao
-                };
-
-                const { error: updateError } = await supabase
-                    .from(TARGET_TABLE)
-                    .update(updatePayload)
-                    .eq('video_id', videoId);
-
-                if (updateError) {
-                    console.error(`Erro no Video ID ${videoId}:`, updateError.message);
-                } else {
-                    updatedCount++;
-                }
-            } else {
-                skippedCount++;
-            }
-        }
-
-        showMessage(`🏁 CONCLUÍDO! Propagados: ${updatedCount} | Mantidos: ${skippedCount}`, false);
-        fetchMusics();
-
-    } catch (err) {
-        console.error(err);
-        showMessage(`❌ ERRO NA NORMALIZAÇÃO: ${err.message}`, true);
-    } finally {
-        btnNormalize.disabled = false;
-        btnNormalize.innerText = "NORMALIZAR DB";
-    }
-}
-
 // Event Listeners para Filtros: Reseta a página para 0 ao mudar filtros
-searchInput.addEventListener('input', (e) => {
+searchInput?.addEventListener('input', (e) => {
     currentPage = 0; 
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
@@ -479,27 +361,30 @@ searchInput.addEventListener('input', (e) => {
     }, 500);
 });
 
-filterGroupList.addEventListener('change', () => { 
+filterGroupList?.addEventListener('change', () => { 
     currentPage = 0; 
     fetchMusics(); 
 });
 
-filterPlaylistList.addEventListener('change', () => { 
+filterPlaylistList?.addEventListener('change', () => { 
     currentPage = 0; 
     fetchMusics(); 
 });
 
-btnLogout.addEventListener('click', async () => {
+btnLogout?.addEventListener('click', async () => {
     await supabase.auth.signOut();
     window.location.href = 'login.html';
 });
 
-btnClear.addEventListener('click', (e) => {
+btnClear?.addEventListener('click', (e) => {
     e.preventDefault();
     resetForm();
     window.history.replaceState({}, document.title, window.location.pathname);
 });
 
-btnNormalize.addEventListener('click', runNormalization);
+btnNormalize?.addEventListener('click', () => {
+    // Mantendo a lógica de normalização se existir no futuro, por enquanto apenas feedback
+    showMessage("FUNÇÃO DE NORMALIZAÇÃO EM MANUTENÇÃO", true);
+});
 
 checkAuth();
