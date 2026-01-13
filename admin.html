@@ -94,7 +94,7 @@
             </div>
 
             <!-- TABELA (Direita) -->
-            <div class="xl:col-span-3 flex flex-col h-full min-h-[800px]">
+            <div class="xl:col-span-3 flex flex-col h-[85vh] relative">
                 
                 <!-- Filtros e Busca -->
                 <div class="flex flex-col md:flex-row gap-4 mb-4 items-end md:items-center bg-[#0a0a0a] p-3 border border-amber-900/30">
@@ -125,25 +125,8 @@
                     </div>
                 </div>
 
-                <!-- CONTROLES DE PAGINAÇÃO (ACIMA DA TABELA) -->
-                <div class="flex flex-row justify-between items-center gap-4 mb-4 bg-[#0a0a0a] p-3 border border-amber-900/30 shadow-inner">
-                    <div class="flex gap-2">
-                        <button id="btn-prev-page" class="service-mode-btn px-5 py-2 text-lg disabled:opacity-20 disabled:grayscale">
-                            ◀ ANTERIOR
-                        </button>
-                        <button id="btn-next-page" class="service-mode-btn px-5 py-2 text-lg disabled:opacity-20 disabled:grayscale">
-                            PRÓXIMO ▶
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-4 font-mono">
-                        <span id="page-info" class="text-xl font-bold bg-amber-900/20 px-4 py-1 border border-amber-900/30">
-                            PÁGINA: 01
-                        </span>
-                    </div>
-                </div>
-                
                 <!-- Tabela Container -->
-                <div class="overflow-auto custom-scrollbar border border-amber-900/30 bg-[#0a0a0a] flex-1 max-h-[700px]">
+                <div class="overflow-auto custom-scrollbar border border-amber-900/30 bg-[#0a0a0a] flex-1">
                     <table class="w-full text-left border-collapse service-mode-table">
                         <thead class="sticky top-0 bg-[#111] z-10 shadow-md">
                             <tr>
@@ -160,6 +143,23 @@
                             <tr><td colspan="6" class="text-center p-8 animate-pulse">CARREGANDO DADOS...</td></tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- CONTROLES DE PAGINAÇÃO (FIXOS NA BASE DA TABELA) -->
+                <div class="sticky bottom-0 z-20 flex flex-row justify-between items-center gap-4 bg-[#0a0a0a] p-3 border-x border-b border-amber-900/30 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+                    <div class="flex gap-2">
+                        <button id="btn-prev-page" class="service-mode-btn px-5 py-2 text-lg disabled:opacity-20 disabled:grayscale transition-all">
+                            ◀ ANTERIOR
+                        </button>
+                        <button id="btn-next-page" class="service-mode-btn px-5 py-2 text-lg disabled:opacity-20 disabled:grayscale transition-all">
+                            PRÓXIMO ▶
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-4 font-mono">
+                        <span id="page-info" class="text-xl font-bold bg-amber-900/20 px-4 py-1 border border-amber-900/30">
+                            PÁGINA: 01
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
