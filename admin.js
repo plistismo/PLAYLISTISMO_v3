@@ -1,5 +1,6 @@
 
 
+
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -75,7 +76,8 @@ async function handleUrlContext() {
         setTimeout(async () => {
             let target = currentData.find(m => m.id == editId);
             if (!target) {
-                const { data } = await supabase.from('musicas').select('*').eq('id', editId).single();
+                // CHANGED: Reverted to musicas_backup
+                const { data } = await supabase.from('musicas_backup').select('*').eq('id', editId).single();
                 target = data;
             }
             if(target) editMusicData(target);
@@ -126,8 +128,9 @@ async function fetchMusics() {
     const selectedGroup = filterGroupList.value;
     const selectedPlaylist = filterPlaylistList.value;
 
+    // CHANGED: Reverted to musicas_backup
     let query = supabase
-        .from('musicas')
+        .from('musicas_backup')
         .select('*', { count: 'exact' }) // IMPORTANTE: Solicita a contagem total
         .order('id', { ascending: false });
 
@@ -271,12 +274,13 @@ musicForm.addEventListener('submit', async (e) => {
     let error = null;
     let operationId = id;
 
+    // CHANGED: Reverted to musicas_backup
     if (id) {
-        const { error: err } = await supabase.from('musicas').update(formData).eq('id', id);
+        const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
         error = err;
         if(!error) showMessage(`REGISTRO #${id} ATUALIZADO!`);
     } else {
-        const { data: inserted, error: err } = await supabase.from('musicas').insert([formData]).select();
+        const { data: inserted, error: err } = await supabase.from('musicas_backup').insert([formData]).select();
         error = err;
         if(!error && inserted) {
             operationId = inserted[0].id;
@@ -325,7 +329,8 @@ musicForm.addEventListener('submit', async (e) => {
 
 window.deleteMusic = async (id) => {
     if(!confirm(`ATENÇÃO: Deletar registro #${id}? Esta ação é irreversível.`)) return;
-    const { error } = await supabase.from('musicas').delete().eq('id', id);
+    // CHANGED: Reverted to musicas_backup
+    const { error } = await supabase.from('musicas_backup').delete().eq('id', id);
     if (error) {
         showMessage(`ERRO AO DELETAR: ${error.message}`, true);
     } else {

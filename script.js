@@ -257,7 +257,8 @@ async function loadChannelContent(playlistName, targetId = null) {
     updatePlaylistOSD(playlistName);
     triggerBump(playlistName);
 
-    const { data } = await supabase.from('musicas').select('*').eq('playlist', playlistName).order('id', { ascending: false });
+    // CHANGED: Reverted to musicas_backup
+    const { data } = await supabase.from('musicas_backup').select('*').eq('playlist', playlistName).order('id', { ascending: false });
     if (!data?.length) return;
 
     state.currentChannelList = targetId ? data : fisherYatesShuffle([...data]);
@@ -569,7 +570,10 @@ async function fetchAdminMusics() {
     const term = els.adminSearchDb.value.trim();
     const group = els.adminFilterGroup.value;
     const playlist = els.adminFilterPlaylist.value;
-    let query = supabase.from('musicas').select('id, artista, musica, direcao, ano, album, video_id, playlist').order('id', { ascending: false }).limit(50);
+    
+    // CHANGED: Reverted to musicas_backup
+    let query = supabase.from('musicas_backup').select('id, artista, musica, direcao, ano, album, video_id, playlist').order('id', { ascending: false }).limit(50);
+    
     if (group) query = query.eq('playlist_group', group);
     if (playlist) query = query.eq('playlist', playlist);
     if (term) query = query.or(`artista.ilike.%${term}%,musica.ilike.%${term}%`);
@@ -584,10 +588,6 @@ function renderAdminTable() {
         const row = document.createElement('tr');
         const isUpdated = item.id == state.lastUpdatedId;
         row.className = `hover:bg-amber-900/10 transition-colors border-b border-amber-900/10 ${isUpdated ? 'row-updated' : ''}`;
-        
-        // Coluna 1: Info (Artist, Music, Album)
-        // Coluna 2: Detalhes (Ano, Diretor)
-        // Coluna 3: Ação
         
         row.innerHTML = `
             <td class="p-2 align-top font-jost">
@@ -737,14 +737,17 @@ function setupEventListeners() {
         els.adminBtnSave.innerText = "PROCESSANDO...";
         let error;
         let opId = id;
+        
+        // CHANGED: Reverted to musicas_backup
         if (id) {
-            const { error: err } = await supabase.from('musicas').update(formData).eq('id', id);
+            const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
             error = err;
         } else {
-            const { data, error: err } = await supabase.from('musicas').insert([formData]).select();
+            const { data, error: err } = await supabase.from('musicas_backup').insert([formData]).select();
             error = err;
             if(data) opId = data[0].id;
         }
+        
         if (error) {
             showAdminMsg(`ERRO: ${error.message}`, true);
         } else {
