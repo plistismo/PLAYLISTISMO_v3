@@ -124,6 +124,23 @@
                          <span id="total-count" class="text-2xl font-bold tracking-tighter">0</span>
                     </div>
                 </div>
+
+                <!-- CONTROLES DE PAGINAÇÃO (ACIMA DA TABELA) -->
+                <div class="flex flex-row justify-between items-center gap-4 mb-4 bg-[#0a0a0a] p-3 border border-amber-900/30 shadow-inner">
+                    <div class="flex gap-2">
+                        <button id="btn-prev-page" class="service-mode-btn px-5 py-2 text-lg disabled:opacity-20 disabled:grayscale">
+                            ◀ ANTERIOR
+                        </button>
+                        <button id="btn-next-page" class="service-mode-btn px-5 py-2 text-lg disabled:opacity-20 disabled:grayscale">
+                            PRÓXIMO ▶
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-4 font-mono">
+                        <span id="page-info" class="text-xl font-bold bg-amber-900/20 px-4 py-1 border border-amber-900/30">
+                            PÁGINA: 01
+                        </span>
+                    </div>
+                </div>
                 
                 <!-- Tabela Container -->
                 <div class="overflow-auto custom-scrollbar border border-amber-900/30 bg-[#0a0a0a] flex-1 max-h-[700px]">
@@ -143,23 +160,6 @@
                             <tr><td colspan="6" class="text-center p-8 animate-pulse">CARREGANDO DADOS...</td></tr>
                         </tbody>
                     </table>
-                </div>
-
-                <!-- CONTROLES DE PAGINAÇÃO -->
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4 mt-4 bg-[#0a0a0a] p-4 border border-amber-900/40 shadow-inner">
-                    <div class="flex gap-2">
-                        <button id="btn-prev-page" class="service-mode-btn px-6 py-2 text-lg disabled:opacity-30 disabled:border-gray-800 disabled:text-gray-800 disabled:cursor-not-allowed">
-                            ◀ ANTERIOR
-                        </button>
-                        <button id="btn-next-page" class="service-mode-btn px-6 py-2 text-lg disabled:opacity-30 disabled:border-gray-800 disabled:text-gray-800 disabled:cursor-not-allowed">
-                            PRÓXIMO ▶
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span id="page-info" class="text-xl font-bold bg-amber-900/20 px-4 py-1 border border-amber-900/30">
-                            PÁGINA 1
-                        </span>
-                    </div>
                 </div>
             </div>
         </div>

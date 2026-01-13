@@ -111,7 +111,7 @@ async function loadDatabaseFilterOptions() {
 
 // LÓGICA PRINCIPAL DE BUSCA COM PAGINAÇÃO
 async function fetchMusics() {
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-amber-500 animate-pulse">REQUISITANDO PÁGINA ' + (currentPage + 1) + '...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-12 text-amber-500 animate-pulse uppercase tracking-[0.2em]">Sincronizando Página ' + (currentPage + 1) + '...</td></tr>';
     
     const searchTerm = searchInput.value.trim();
     const selectedGroup = filterGroupList.value;
@@ -158,8 +158,10 @@ async function fetchMusics() {
 function updatePaginationUI() {
     const totalPages = Math.ceil(totalRecords / PAGE_SIZE) || 1;
     
-    // Atualiza label de informação
-    pageInfoLabel.innerText = `PÁGINA ${currentPage + 1} DE ${totalPages}`;
+    // Atualiza label de informação formatada
+    const formattedPage = String(currentPage + 1).padStart(2, '0');
+    const formattedTotal = String(totalPages).padStart(2, '0');
+    pageInfoLabel.innerText = `PÁGINA: ${formattedPage} / ${formattedTotal}`;
     totalCountLabel.innerText = totalRecords;
 
     // Gerencia estados dos botões
@@ -188,7 +190,7 @@ function renderTable(data) {
     tableBody.innerHTML = '';
 
     if (data.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 opacity-50 uppercase tracking-widest">Nenhum registro encontrado nesta página.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-12 opacity-50 uppercase tracking-[0.2em]">Nenhum sinal detectado nesta frequência.</td></tr>';
         return;
     }
 
