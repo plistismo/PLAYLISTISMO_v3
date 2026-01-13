@@ -1,6 +1,3 @@
-
-
-
 import { createClient } from '@supabase/supabase-js';
 
 // --- CONFIGURAÇÃO SUPABASE ---
@@ -276,9 +273,11 @@ musicForm.addEventListener('submit', async (e) => {
 
     // CHANGED: Reverted to musicas_backup
     if (id) {
-        const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
+        // Feature: Replicate changes across ALL entries with the same video_id
+        // Targeting video_id instead of row id to update metadata in all playlists
+        const { error: err } = await supabase.from('musicas_backup').update(formData).eq('video_id', formData.video_id);
         error = err;
-        if(!error) showMessage(`REGISTRO #${id} ATUALIZADO!`);
+        if(!error) showMessage(`REGISTROS COM VÍDEO ID ${formData.video_id} ATUALIZADOS!`);
     } else {
         const { data: inserted, error: err } = await supabase.from('musicas_backup').insert([formData]).select();
         error = err;
