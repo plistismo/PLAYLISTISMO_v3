@@ -1,5 +1,3 @@
-
-
 import { createClient } from '@supabase/supabase-js';
 
 const SB_URL = 'https://rxvinjguehzfaqmmpvxu.supabase.co';
@@ -257,7 +255,6 @@ async function loadChannelContent(playlistName, targetId = null) {
     updatePlaylistOSD(playlistName);
     triggerBump(playlistName);
 
-    // CHANGED: Reverted to musicas_backup
     const { data } = await supabase.from('musicas_backup').select('*').eq('playlist', playlistName).order('id', { ascending: false });
     if (!data?.length) return;
 
@@ -547,7 +544,6 @@ function toggleAdmin(open = null, mode = 'SERVICE') {
         }
         fetchAdminMusics();
     } else {
-        // Ao fechar, reinicia vídeo editado
         if (player && typeof player.seekTo === 'function') {
             player.seekTo(0);
             player.playVideo();
@@ -571,8 +567,8 @@ async function fetchAdminMusics() {
     const group = els.adminFilterGroup.value;
     const playlist = els.adminFilterPlaylist.value;
     
-    // CHANGED: Reverted to musicas_backup
-    let query = supabase.from('musicas_backup').select('id, artista, musica, direcao, ano, album, video_id, playlist').order('id', { ascending: false }).limit(50);
+    // Aumentado o limite de 50 para 10000 para permitir visualizar todos os vídeos no painel lateral
+    let query = supabase.from('musicas_backup').select('id, artista, musica, direcao, ano, album, video_id, playlist').order('id', { ascending: false }).limit(10000);
     
     if (group) query = query.eq('playlist_group', group);
     if (playlist) query = query.eq('playlist', playlist);
@@ -650,7 +646,6 @@ function setupEventListeners() {
     if(els.headerEditBtn) els.headerEditBtn.onclick = (e) => { e.stopPropagation(); toggleAdmin(true, 'EDIT'); };
     if(els.adminFormClear) els.adminFormClear.onclick = (e) => { e.preventDefault(); resetAdminForm(); };
 
-    // Clique na página (viewport) fecha qualquer painel aberto
     if(els.appViewport) {
         els.appViewport.onclick = () => {
             if (state.isSearchOpen) toggleGuide();
@@ -663,7 +658,6 @@ function setupEventListeners() {
     if(els.btnNextGrp) els.btnNextGrp.onclick = (e) => { e.stopPropagation(); changeGroup(1); };
     if(els.btnPrevGrp) els.btnPrevGrp.onclick = (e) => { e.stopPropagation(); changeGroup(-1); };
     
-    // Botão de Preview Admin
     if(els.adminBtnPreview) {
         els.adminBtnPreview.onclick = (e) => {
             e.preventDefault();
@@ -673,7 +667,6 @@ function setupEventListeners() {
                 return;
             }
 
-            // Criamos um dado temporário de preview baseado nos inputs
             const previewData = {
                 artista: els.adminInputArtista.value.trim(),
                 musica: els.adminInputMusica.value.trim(),
@@ -685,12 +678,10 @@ function setupEventListeners() {
 
             state.currentVideoData = previewData;
             
-            // Força ligar a TV se estiver desligada
             if (!state.isOn) {
                 togglePower();
             }
             
-            // Pequeno delay para garantir que o player processe a ligação se necessário
             setTimeout(() => {
                 if (state.playerReady && player) {
                     player.loadVideoById(vidId);
@@ -738,7 +729,6 @@ function setupEventListeners() {
         let error;
         let opId = id;
         
-        // CHANGED: Reverted to musicas_backup
         if (id) {
             const { error: err } = await supabase.from('musicas_backup').update(formData).eq('id', id);
             error = err;
@@ -754,12 +744,10 @@ function setupEventListeners() {
             state.lastUpdatedId = opId;
             showAdminMsg(`REGISTRO #${opId} SALVO!`);
             
-            // Se editou o vídeo ATUAL da TV (ou o vídeo ID bate), atualiza créditos e REINICIA na TV
             if (state.currentVideoData && (state.currentVideoData.id == opId || state.currentVideoData.video_id == formData.video_id)) {
                 state.currentVideoData = { ...state.currentVideoData, ...formData };
                 updateCreditsInfo(state.currentVideoData);
                 
-                // Reinicia o vídeo na TV se o player estiver pronto
                 if (state.isOn && state.playerReady && player) {
                     player.loadVideoById(formData.video_id);
                 }
