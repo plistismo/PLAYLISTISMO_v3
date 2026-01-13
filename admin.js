@@ -16,6 +16,11 @@ const btnLogout = document.getElementById('btn-logout');
 const btnClear = document.getElementById('btn-clear');
 const btnSave = document.getElementById('btn-save');
 
+// Pagination Controls
+const btnPrevPage = document.getElementById('btn-prev-page');
+const btnNextPage = document.getElementById('btn-next-page');
+const pageInfo = document.getElementById('page-info');
+
 // Filters
 const searchInput = document.getElementById('search-db');
 const filterGroupList = document.getElementById('filter-group-list');
@@ -30,9 +35,15 @@ const inputAlbum = document.getElementById('input-album');
 const inputDirecao = document.getElementById('input-direcao');
 const inputVideoId = document.getElementById('input-video-id');
 
+// State Vars
 let currentData = []; 
 let debounceTimeout = null;
 let lastUpdatedId = null; // Para sinalizar o registro editado na tabela
+
+// Pagination State
+let currentPage = 0;
+const PAGE_SIZE = 50;
+let totalRecords = 0;
 
 // --- AUTH CHECK & INIT ---
 async function checkAuth() {
@@ -117,7 +128,7 @@ async function fetchMusics() {
 
     let query = supabase
         .from('musicas')
-        .select('*')
+        .select('*', { count: 'exact' }) // IMPORTANTE: Solicita a contagem total
         .order('id', { ascending: false });
 
     if (selectedGroup) {
@@ -130,12 +141,16 @@ async function fetchMusics() {
 
     if (searchTerm) {
         const term = `%${searchTerm}%`;
+        // Nota: Busca textual complexa pode ser lenta em tabelas grandes, mas a paginação ajuda
         query = query.or(`artista.ilike.${term},musica.ilike.${term},direcao.ilike.${term},id.eq.${Number(searchTerm) || 0}`);
     }
 
-    query = query.limit(5000);
+    // Paginação Real
+    const from = currentPage * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    query = query.range(from, to);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
         showMessage(`ERRO DE LEITURA: ${error.message}`, true);
@@ -144,11 +159,41 @@ async function fetchMusics() {
     }
 
     currentData = data;
+    totalRecords = count || 0;
+    
     renderTable(currentData);
+    updatePaginationUI();
 }
 
+function updatePaginationUI() {
+    const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
+    
+    pageInfo.innerText = `PÁGINA ${currentPage + 1} DE ${totalPages || 1}`;
+    
+    // Total Count Global Display
+    totalCount.innerText = totalRecords;
+
+    // Button States
+    btnPrevPage.disabled = currentPage === 0;
+    btnNextPage.disabled = (currentPage + 1) * PAGE_SIZE >= totalRecords;
+}
+
+// Handlers de Paginação
+btnPrevPage.addEventListener('click', () => {
+    if (currentPage > 0) {
+        currentPage--;
+        fetchMusics();
+    }
+});
+
+btnNextPage.addEventListener('click', () => {
+    if ((currentPage + 1) * PAGE_SIZE < totalRecords) {
+        currentPage++;
+        fetchMusics();
+    }
+});
+
 function renderTable(data) {
-    totalCount.innerText = data.length + (data.length === 5000 ? "+" : ""); 
     tableBody.innerHTML = '';
 
     if (data.length === 0) {
@@ -309,15 +354,17 @@ function showMessage(msg, isError = false) {
     setTimeout(() => statusMsg.classList.add('hidden'), 3000);
 }
 
+// Event Listeners para Filtros: Reseta a página para 0 ao mudar filtros
 searchInput.addEventListener('input', (e) => {
+    currentPage = 0; // Reset page
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
         fetchMusics();
     }, 500);
 });
 
-filterGroupList.addEventListener('change', fetchMusics);
-filterPlaylistList.addEventListener('change', fetchMusics);
+filterGroupList.addEventListener('change', () => { currentPage = 0; fetchMusics(); });
+filterPlaylistList.addEventListener('change', () => { currentPage = 0; fetchMusics(); });
 
 btnLogout.addEventListener('click', async () => {
     await supabase.auth.signOut();

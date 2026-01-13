@@ -124,7 +124,8 @@
                     </div>
                 </div>
                 
-                <div class="overflow-auto custom-scrollbar border border-amber-900/30 bg-[#0a0a0a] flex-1 max-h-[750px]">
+                <!-- Tabela Container -->
+                <div class="overflow-auto custom-scrollbar border border-amber-900/30 bg-[#0a0a0a] flex-1 max-h-[700px]">
                     <table class="w-full text-left border-collapse service-mode-table">
                         <thead class="sticky top-0 bg-[#111] z-10 shadow-md">
                             <tr>
@@ -141,6 +142,13 @@
                             <tr><td colspan="6" class="text-center p-8 animate-pulse">CARREGANDO DADOS...</td></tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- PAGINAÇÃO -->
+                <div class="flex justify-between items-center mt-2 bg-[#0a0a0a] p-3 border border-amber-900/30">
+                    <button id="btn-prev-page" class="service-mode-btn px-4 py-2 text-sm disabled:opacity-30 disabled:cursor-not-allowed">◀ ANTERIOR</button>
+                    <span id="page-info" class="text-lg font-bold tracking-widest opacity-80">PÁGINA 1</span>
+                    <button id="btn-next-page" class="service-mode-btn px-4 py-2 text-sm disabled:opacity-30 disabled:cursor-not-allowed">PRÓXIMO ▶</button>
                 </div>
             </div>
         </div>
