@@ -8,17 +8,17 @@ const supabase = createClient(SB_URL, SB_KEY);
 // DOM Elements
 const musicForm = document.getElementById('music-form');
 const tableBody = document.getElementById('table-body');
-const totalCount = document.getElementById('total-count');
+const totalCountLabel = document.getElementById('total-count');
 const statusMsg = document.getElementById('status-msg');
 const btnLogout = document.getElementById('btn-logout');
 const btnClear = document.getElementById('btn-clear');
 const btnSave = document.getElementById('btn-save');
 const btnNormalize = document.getElementById('btn-normalize');
 
-// Pagination Controls
+// Pagination UI Elements
 const btnPrevPage = document.getElementById('btn-prev-page');
 const btnNextPage = document.getElementById('btn-next-page');
-const pageInfo = document.getElementById('page-info');
+const pageInfoLabel = document.getElementById('page-info');
 
 // Filters
 const searchInput = document.getElementById('search-db');
@@ -37,7 +37,7 @@ const inputVideoId = document.getElementById('input-video-id');
 // State Vars
 let currentData = []; 
 let debounceTimeout = null;
-let lastUpdatedId = null; // Para sinalizar o registro editado na tabela
+let lastUpdatedId = null; 
 
 // Pagination State
 let currentPage = 0;
@@ -51,7 +51,7 @@ async function checkAuth() {
         window.location.href = 'login.html';
     } else {
         await loadDatabaseFilterOptions();
-        await handleUrlContext(); // Gerencia parâmetros da URL (playlist e edit_id)
+        await handleUrlContext(); 
         await fetchMusics(); 
     }
 }
@@ -61,24 +61,14 @@ async function handleUrlContext() {
     const playlist = urlParams.get('playlist');
     const editId = urlParams.get('edit_id');
 
-    // Se houver uma playlist na URL, pré-seleciona ela no filtro
     if (playlist) {
-        // Aguarda um pouco para o carregamento das opções do select terminar se necessário
         filterPlaylistList.value = playlist;
     }
 
-    // O edit_id será processado em fetchMusics -> renderTable -> editMusicById se necessário, 
-    // ou explicitamente aqui se quisermos carregar o formulário.
     if (editId) {
-        // Tentaremos carregar os dados específicos após o fetch principal
         setTimeout(async () => {
-            let target = currentData.find(m => m.id == editId);
-            if (!target) {
-                // CHANGED: Reverted to musicas_backup
-                const { data } = await supabase.from('musicas_backup').select('*').eq('id', editId).single();
-                target = data;
-            }
-            if(target) editMusicData(target);
+            const { data } = await supabase.from('musicas_backup').select('*').eq('id', editId).single();
+            if(data) editMusicData(data);
         }, 500);
     }
 }
@@ -119,17 +109,17 @@ async function loadDatabaseFilterOptions() {
     });
 }
 
+// LÓGICA PRINCIPAL DE BUSCA COM PAGINAÇÃO
 async function fetchMusics() {
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-amber-500 animate-pulse">BUSCANDO DADOS NO SERVIDOR...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-amber-500 animate-pulse">REQUISITANDO PÁGINA ' + (currentPage + 1) + '...</td></tr>';
     
     const searchTerm = searchInput.value.trim();
     const selectedGroup = filterGroupList.value;
     const selectedPlaylist = filterPlaylistList.value;
 
-    // CHANGED: Reverted to musicas_backup
     let query = supabase
         .from('musicas_backup')
-        .select('*', { count: 'exact' }) // IMPORTANTE: Solicita a contagem total
+        .select('*', { count: 'exact' }) // Solicita o total para gerenciar botões de navegação
         .order('id', { ascending: false });
 
     if (selectedGroup) {
@@ -142,11 +132,10 @@ async function fetchMusics() {
 
     if (searchTerm) {
         const term = `%${searchTerm}%`;
-        // Nota: Busca textual complexa pode ser lenta em tabelas grandes, mas a paginação ajuda
         query = query.or(`artista.ilike.${term},musica.ilike.${term},direcao.ilike.${term},id.eq.${Number(searchTerm) || 0}`);
     }
 
-    // Paginação Real
+    // APLICAÇÃO DO RANGE DE PAGINAÇÃO
     const from = currentPage * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
     query = query.range(from, to);
@@ -159,7 +148,7 @@ async function fetchMusics() {
         return;
     }
 
-    currentData = data;
+    currentData = data || [];
     totalRecords = count || 0;
     
     renderTable(currentData);
@@ -167,23 +156,23 @@ async function fetchMusics() {
 }
 
 function updatePaginationUI() {
-    const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
+    const totalPages = Math.ceil(totalRecords / PAGE_SIZE) || 1;
     
-    pageInfo.innerText = `PÁGINA ${currentPage + 1} DE ${totalPages || 1}`;
-    
-    // Total Count Global Display
-    totalCount.innerText = totalRecords;
+    // Atualiza label de informação
+    pageInfoLabel.innerText = `PÁGINA ${currentPage + 1} DE ${totalPages}`;
+    totalCountLabel.innerText = totalRecords;
 
-    // Button States
+    // Gerencia estados dos botões
     btnPrevPage.disabled = currentPage === 0;
     btnNextPage.disabled = (currentPage + 1) * PAGE_SIZE >= totalRecords;
 }
 
-// Handlers de Paginação
+// Handlers de Navegação
 btnPrevPage.addEventListener('click', () => {
     if (currentPage > 0) {
         currentPage--;
         fetchMusics();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
 
@@ -191,6 +180,7 @@ btnNextPage.addEventListener('click', () => {
     if ((currentPage + 1) * PAGE_SIZE < totalRecords) {
         currentPage++;
         fetchMusics();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
 
@@ -198,7 +188,7 @@ function renderTable(data) {
     tableBody.innerHTML = '';
 
     if (data.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4 opacity-50">NENHUM REGISTRO ENCONTRADO COM ESTES FILTROS.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 opacity-50 uppercase tracking-widest">Nenhum registro encontrado nesta página.</td></tr>';
         return;
     }
 
@@ -209,7 +199,7 @@ function renderTable(data) {
         row.innerHTML = `
             <td class="font-mono text-sm opacity-70 align-top border-r border-amber-900/30 px-2 text-center py-2">${item.id}</td>
             <td class="align-top border-r border-amber-900/30 px-2 py-2">
-                <div class="font-bold text-lg leading-none text-[#00ff00]">${item.artista}</div>
+                <div class="font-bold text-lg leading-none text-[#00ff00] uppercase">${item.artista}</div>
                 <div class="text-sm opacity-90">${item.musica || '---'}</div>
             </td>
             <td class="text-sm opacity-80 align-top border-r border-amber-900/30 px-2 py-2">
@@ -272,10 +262,7 @@ musicForm.addEventListener('submit', async (e) => {
     let error = null;
     let operationId = id;
 
-    // CHANGED: Reverted to musicas_backup
     if (id) {
-        // Feature: Replicate changes across ALL entries with the same video_id
-        // Targeting video_id instead of row id to update metadata in all playlists
         const { error: err } = await supabase.from('musicas_backup').update(formData).eq('video_id', formData.video_id);
         error = err;
         if(!error) showMessage(`REGISTROS COM VÍDEO ID ${formData.video_id} ATUALIZADOS!`);
@@ -293,7 +280,6 @@ musicForm.addEventListener('submit', async (e) => {
         btnSave.disabled = false;
         btnSave.innerText = "GRAVAR DADOS";
     } else {
-        // Se editou o vídeo ATUAL da TV (ou o vídeo ID bate), atualiza créditos e REINICIA na TV
         if (fromTv) {
             let playlist = null;
             let video_id = formData.video_id;
@@ -315,11 +301,9 @@ musicForm.addEventListener('submit', async (e) => {
                 window.location.href = 'index.html';
             }, 1200);
         } else {
-            // Se for Service Mode, permanece no Admin e sinaliza na lista
             lastUpdatedId = operationId;
             btnSave.disabled = false;
             resetForm();
-            // Limpa parâmetros da URL para evitar comportamentos estranhos no próximo save
             window.history.replaceState({}, document.title, window.location.pathname);
             await fetchMusics();
             showMessage(`REGISTRO #${operationId} PROCESSADO COM SUCESSO!`);
@@ -329,7 +313,6 @@ musicForm.addEventListener('submit', async (e) => {
 
 window.deleteMusic = async (id) => {
     if(!confirm(`ATENÇÃO: Deletar registro #${id}? Esta ação é irreversível.`)) return;
-    // CHANGED: Reverted to musicas_backup
     const { error } = await supabase.from('musicas_backup').delete().eq('id', id);
     if (error) {
         showMessage(`ERRO AO DELETAR: ${error.message}`, true);
@@ -360,7 +343,6 @@ function showMessage(msg, isError = false) {
 }
 
 // --- NORMALIZATION LOGIC ---
-
 function calculateRecordScore(row) {
     let score = 0;
     if (row.artista && row.artista !== 'Desconhecido') score += row.artista.length;
@@ -380,28 +362,26 @@ async function runNormalization() {
 
     try {
         const TARGET_TABLE = 'musicas_backup';
-        const BATCH_SIZE = 1000;
+        const BATCH_SIZE_NORM = 1000;
         let allRecords = [];
-        let from = 0;
-        let hasMore = true;
+        let fromIdx = 0;
+        let hasMoreRecords = true;
 
-        // 1. BUSCA EXAUSTIVA (PAGINADA)
-        while (hasMore) {
-            showMessage(`📡 Lendo registros (${from} a ${from + BATCH_SIZE})...`);
+        while (hasMoreRecords) {
+            showMessage(`📡 Lendo registros (${fromIdx} a ${fromIdx + BATCH_SIZE_NORM})...`);
             const { data, error } = await supabase
                 .from(TARGET_TABLE)
                 .select('*')
-                .range(from, from + BATCH_SIZE - 1);
+                .range(fromIdx, fromIdx + BATCH_SIZE_NORM - 1);
 
             if (error) throw error;
             allRecords = [...allRecords, ...data];
-            if (data.length < BATCH_SIZE) hasMore = false;
-            else from += BATCH_SIZE;
+            if (data.length < BATCH_SIZE_NORM) hasMoreRecords = false;
+            else fromIdx += BATCH_SIZE_NORM;
         }
 
         showMessage(`📦 Agrupando ${allRecords.length} registros...`);
         
-        // 2. AGRUPAMENTO POR VIDEO_ID
         const groups = allRecords.reduce((acc, row) => {
             if (!row.video_id) return acc;
             if (!acc[row.video_id]) acc[row.video_id] = [];
@@ -413,7 +393,6 @@ async function runNormalization() {
         let updatedCount = 0;
         let skippedCount = 0;
 
-        // 3. PROCESSAMENTO DOS GRUPOS
         for (let i = 0; i < videoIds.length; i++) {
             const videoId = videoIds[i];
             const rows = groups[videoId];
@@ -427,7 +406,6 @@ async function runNormalization() {
                 continue;
             }
 
-            // Encontrar Mestre
             let master = rows[0];
             let maxScore = -1;
 
@@ -492,15 +470,22 @@ async function runNormalization() {
 
 // Event Listeners para Filtros: Reseta a página para 0 ao mudar filtros
 searchInput.addEventListener('input', (e) => {
-    currentPage = 0; // Reset page
+    currentPage = 0; 
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
         fetchMusics();
     }, 500);
 });
 
-filterGroupList.addEventListener('change', () => { currentPage = 0; fetchMusics(); });
-filterPlaylistList.addEventListener('change', () => { currentPage = 0; fetchMusics(); });
+filterGroupList.addEventListener('change', () => { 
+    currentPage = 0; 
+    fetchMusics(); 
+});
+
+filterPlaylistList.addEventListener('change', () => { 
+    currentPage = 0; 
+    fetchMusics(); 
+});
 
 btnLogout.addEventListener('click', async () => {
     await supabase.auth.signOut();

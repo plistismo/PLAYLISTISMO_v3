@@ -120,8 +120,8 @@
                     </div>
                     
                     <div class="text-right pl-4 border-l border-amber-900/30 flex flex-col justify-center h-full">
-                         <span class="text-xs opacity-50">REGISTROS</span>
-                         <span id="total-count" class="text-2xl font-bold">0</span>
+                         <span class="text-xs opacity-50">TOTAL REGISTROS</span>
+                         <span id="total-count" class="text-2xl font-bold tracking-tighter">0</span>
                     </div>
                 </div>
                 
@@ -145,11 +145,21 @@
                     </table>
                 </div>
 
-                <!-- PAGINAÇÃO -->
-                <div class="flex justify-between items-center mt-2 bg-[#0a0a0a] p-3 border border-amber-900/30">
-                    <button id="btn-prev-page" class="service-mode-btn px-4 py-2 text-sm disabled:opacity-30 disabled:cursor-not-allowed">◀ ANTERIOR</button>
-                    <span id="page-info" class="text-lg font-bold tracking-widest opacity-80">PÁGINA 1</span>
-                    <button id="btn-next-page" class="service-mode-btn px-4 py-2 text-sm disabled:opacity-30 disabled:cursor-not-allowed">PRÓXIMO ▶</button>
+                <!-- CONTROLES DE PAGINAÇÃO -->
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4 mt-4 bg-[#0a0a0a] p-4 border border-amber-900/40 shadow-inner">
+                    <div class="flex gap-2">
+                        <button id="btn-prev-page" class="service-mode-btn px-6 py-2 text-lg disabled:opacity-30 disabled:border-gray-800 disabled:text-gray-800 disabled:cursor-not-allowed">
+                            ◀ ANTERIOR
+                        </button>
+                        <button id="btn-next-page" class="service-mode-btn px-6 py-2 text-lg disabled:opacity-30 disabled:border-gray-800 disabled:text-gray-800 disabled:cursor-not-allowed">
+                            PRÓXIMO ▶
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span id="page-info" class="text-xl font-bold bg-amber-900/20 px-4 py-1 border border-amber-900/30">
+                            PÁGINA 1
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
