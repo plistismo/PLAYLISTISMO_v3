@@ -15,11 +15,6 @@ const btnClear = document.getElementById('btn-clear');
 const btnSave = document.getElementById('btn-save');
 const btnNormalize = document.getElementById('btn-normalize');
 
-// Pagination UI Elements (Garantindo que os IDs batem com o admin.html)
-const btnPrevPage = document.getElementById('btn-prev-page');
-const btnNextPage = document.getElementById('btn-next-page');
-const pageInfoLabel = document.getElementById('page-info');
-
 // Filters
 const searchInput = document.getElementById('search-db');
 const filterGroupList = document.getElementById('filter-group-list');
@@ -38,11 +33,6 @@ const inputVideoId = document.getElementById('input-video-id');
 let currentData = []; 
 let debounceTimeout = null;
 let lastUpdatedId = null; 
-
-// Pagination State
-let currentPage = 0;
-const PAGE_SIZE = 50;
-let totalRecords = 0;
 
 // --- AUTH CHECK & INIT ---
 async function checkAuth() {
@@ -105,14 +95,16 @@ async function loadDatabaseFilterOptions() {
     });
 }
 
-// LÓGICA PRINCIPAL DE BUSCA COM PAGINAÇÃO
+// LÓGICA PRINCIPAL DE BUSCA SEM PAGINAÇÃO (CARGA TOTAL)
 async function fetchMusics() {
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-12 text-amber-500 animate-pulse uppercase tracking-[0.2em] text-xl">Requisitando Página ' + (currentPage + 1) + '...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-12 text-amber-500 animate-pulse uppercase tracking-[0.2em] text-xl">Sincronizando Banco de Dados...</td></tr>';
     
     const searchTerm = searchInput.value.trim();
     const selectedGroup = filterGroupList.value;
     const selectedPlaylist = filterPlaylistList.value;
 
+    // Supabase retornará até 1000 registros por padrão. 
+    // Para playlists maiores que isso, o sistema requer carga paginada ou recursiva.
     let query = supabase
         .from('musicas_backup')
         .select('*', { count: 'exact' }) 
@@ -131,11 +123,6 @@ async function fetchMusics() {
         query = query.or(`artista.ilike.${term},musica.ilike.${term},direcao.ilike.${term},id.eq.${Number(searchTerm) || 0}`);
     }
 
-    // APLICAÇÃO DO RANGE DE PAGINAÇÃO
-    const from = currentPage * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-    query = query.range(from, to);
-
     const { data, error, count } = await query;
 
     if (error) {
@@ -145,50 +132,10 @@ async function fetchMusics() {
     }
 
     currentData = data || [];
-    totalRecords = count || 0;
+    if (totalCountLabel) totalCountLabel.innerText = count || 0;
     
     renderTable(currentData);
-    updatePaginationUI();
 }
-
-function updatePaginationUI() {
-    const totalPages = Math.ceil(totalRecords / PAGE_SIZE) || 1;
-    
-    // Atualiza label de informação formatada
-    const formattedPage = String(currentPage + 1).padStart(2, '0');
-    const formattedTotal = String(totalPages).padStart(2, '0');
-    
-    if (pageInfoLabel) {
-        pageInfoLabel.innerText = `PAG: ${formattedPage} / ${formattedTotal}`;
-    }
-    
-    if (totalCountLabel) {
-        totalCountLabel.innerText = totalRecords;
-    }
-
-    // Gerencia estados dos botões
-    if (btnPrevPage) btnPrevPage.disabled = currentPage === 0;
-    if (btnNextPage) btnNextPage.disabled = (currentPage + 1) * PAGE_SIZE >= totalRecords;
-}
-
-// Handlers de Navegação
-btnPrevPage?.addEventListener('click', () => {
-    if (currentPage > 0) {
-        currentPage--;
-        fetchMusics();
-        const tableArea = document.querySelector('.overflow-y-auto');
-        if (tableArea) tableArea.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-});
-
-btnNextPage?.addEventListener('click', () => {
-    if ((currentPage + 1) * PAGE_SIZE < totalRecords) {
-        currentPage++;
-        fetchMusics();
-        const tableArea = document.querySelector('.overflow-y-auto');
-        if (tableArea) tableArea.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-});
 
 function renderTable(data) {
     tableBody.innerHTML = '';
@@ -352,24 +299,16 @@ function showMessage(msg, isError = false) {
     setTimeout(() => statusMsg.classList.add('hidden'), 3000);
 }
 
-// Event Listeners para Filtros: Reseta a página para 0 ao mudar filtros
+// Event Listeners para Filtros
 searchInput?.addEventListener('input', (e) => {
-    currentPage = 0; 
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
         fetchMusics();
     }, 500);
 });
 
-filterGroupList?.addEventListener('change', () => { 
-    currentPage = 0; 
-    fetchMusics(); 
-});
-
-filterPlaylistList?.addEventListener('change', () => { 
-    currentPage = 0; 
-    fetchMusics(); 
-});
+filterGroupList?.addEventListener('change', fetchMusics);
+filterPlaylistList?.addEventListener('change', fetchMusics);
 
 btnLogout?.addEventListener('click', async () => {
     await supabase.auth.signOut();
@@ -383,7 +322,6 @@ btnClear?.addEventListener('click', (e) => {
 });
 
 btnNormalize?.addEventListener('click', () => {
-    // Mantendo a lógica de normalização se existir no futuro, por enquanto apenas feedback
     showMessage("FUNÇÃO DE NORMALIZAÇÃO EM MANUTENÇÃO", true);
 });
 
