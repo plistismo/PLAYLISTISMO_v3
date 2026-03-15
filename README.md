@@ -1,96 +1,100 @@
-# 📺 Playlistismo | Retro Edition
+# 📺 Playlistismo | v19 Retro Edition
 
-> Uma experiência visual nostálgica que transforma playlists do YouTube em uma TV de Tubo interativa dos anos 90, enriquecida com metadados e curiosidades.
+<div align="center">
+  <img src="https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react" alt="React 19" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind-4-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Supabase-DB-3ECF8E?style=for-the-badge&logo=supabase" alt="Supabase" />
+</div>
 
-## 🕹️ Sobre o Projeto
+<br />
 
-O **Play-Listismo** é uma aplicação web que simula uma televisão CRT Sony Trinitron. O projeto consome a API do YouTube para reproduzir vídeos como se fossem canais de TV, aplica filtros visuais (scanlines, ruído, distorção VHS) e exibe créditos estilo MTV e curiosidades sobre as músicas em tempo real.
-
-## ✨ Funcionalidades
-
-*   **TV Retrô Interativa**: Interface 3D feita puramente em CSS (Sony Trinitron) com botões funcionais (Power, Canal, Volume/Busca).
-*   **Guia de Canais (Teletexto)**: Menu de navegação estilo teletexto dos anos 80/90, organizado por categorias (Uploads, Zones, Genres, Eras).
-*   **Sincronização de Banco de Dados**: Script em Node.js (`sync.js`) que varre o canal do YouTube e sincroniza os IDs dos vídeos com um banco de dados PostgreSQL (Supabase) para enriquecimento de dados.
-*   **Créditos Estilo MTV**: Overlay automático que exibe Artista, Música, Álbum, Ano e Diretor no início e fim de cada clipe.
-*   **Data Module (Last.FM)**: Painel lateral que busca automaticamente curiosidades e bios da música atual na API da Last.FM.
-*   **Efeitos Visuais**:
-    *   Efeito de desligar/ligar CRT.
-    *   Chiado (Static Noise) ao trocar de canal.
-    *   Filtros VHS e Scanlines sobre o vídeo.
-    *   Zoom no player para esconder a interface nativa do YouTube.
-
-## 🛠️ Tecnologias Utilizadas
-
-*   **Frontend**: HTML5, Vanilla JavaScript (ES6+), CSS3.
-*   **Estilização**: Tailwind CSS + CSS Customizado (Animações, 3D Transforms).
-*   **Backend / BaaS**: Supabase (PostgreSQL).
-*   **APIs Externas**:
-    *   YouTube Data API v3.
-    *   Last.FM API.
-    *   Google Gemini (preparado para uso futuro).
-
-## 🚀 Como Rodar o Projeto
-
-### Pré-requisitos
-*   Node.js instalado (para o script de sincronização).
-*   Uma conta no Google Cloud (para YouTube API Key).
-*   Uma conta no Supabase.
-*   Uma conta na Last.FM (para API Key).
-
-### 1. Configuração do Banco de Dados (Supabase)
-
-No painel do Supabase, vá em **SQL Editor** e rode o seguinte script para criar a tabela:
-
-```sql
-create table public.musicas (
-  id bigserial not null,
-  artista text not null,
-  musica text null,
-  album text null,
-  ano integer null,
-  direcao text null,
-  date_creation timestamp with time zone null default now(),
-  video_id text null, -- Será preenchido pelo sync.js
-  constraint musicas_pkey primary key (id)
-);
-```
-
-### 2. Sincronização de Dados
-
-Para vincular os vídeos do seu canal com os dados da tabela `musicas`:
-
-1.  Abra o arquivo `sync.js`.
-2.  Configure suas chaves (`API_KEY`, `CHANNEL_ID`, `SB_URL`, `SB_KEY`).
-3.  No terminal, instale a dependência e rode o script:
-
-```bash
-npm install @supabase/supabase-js
-node sync.js
-```
-
-### 3. Rodando a Aplicação (Front-end)
-
-Como o projeto utiliza Módulos ES6 (`import/export`), você precisa de um servidor local. Se estiver usando VS Code com a extensão "Live Server", basta clicar em "Go Live".
-
-Ou via terminal com Python:
-```bash
-python3 -m http.server
-```
-Acesse `http://localhost:8000`.
-
-## 🎮 Controles da TV
-
-*   **Botão Power**: Liga/Desliga a TV.
-*   **Botão Lupa**: Abre o Guia de Canais (Teletexto) para buscar e selecionar playlists.
-*   **Botões CH +/-**: Navega entre as músicas da playlist atual.
-
-## 📂 Estrutura de Arquivos
-
-*   `index.html`: Estrutura principal da TV e overlays.
-*   `style.css`: Estilização pesada da TV, efeitos CRT e animações.
-*   `script.js`: Lógica principal (Player YouTube, Controle de UI, Integração Supabase).
-*   `lastFmAPI.js`: Módulo de conexão com a Last.FM.
-*   `sync.js`: Script de backend para manutenção do banco de dados.
+> **Playlistismo** is a premium, immersive web experience that transforms YouTube playlists into a nostalgic 1990s TV journey. Experience music videos through a simulated Sony Trinitron CRT, complete with authentic interface quirks, scanlines, and a retro Teletext guide.
 
 ---
-*Desenvolvido com 📺 e 📼 por Play-Listismo.*
+
+## ✨ Key Features
+
+- **📼 Authentic CRT Experience**: Realistic power-on/off transitions, layered scanlines, static noise, and VHS tracking effects.
+- **📟 P100 Teletext Guide**: A specialized channel navigator organized by categories: *UPLOADS, GENRES, ZONES, ERAS*.
+- **🎬 Professional OSD & Credits**: Automated On-Screen Displays for playlist identification and scrolling TV-style credits for track metadata.
+- **⚙️ Service Mode (Admin)**: A powerful, secure dashboard for content curators to manage the music database in real-time.
+- **🏎️ Thematic Idents**: Dynamic visual "bumps" that adapt to the music genre (Speed/Chrome, Street/Urban, Noise/Raw, Cyber/Data).
+- **📡 Cloud Sync**: Automated YouTube synchronization powered by Supabase Edge Functions.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| **Core** | [React 19](https://react.dev/) + [Vite 8](https://vitejs.dev/) |
+| **Language** | [TypeScript](https://www.typescriptlang.org/) |
+| **Routing** | [React Router 7](https://reactrouter.com/) |
+| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) + Custom CRT Shaders |
+| **Backend** | [Supabase](https://supabase.com/) (PostgreSQL & Auth) |
+| **Serverless** | Supabase Edge Functions (Deno) |
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- Node.js 18+
+- A Supabase project with the appropriate schema.
+
+### 2. Installation
+```bash
+# Clone the repository
+git clone https://github.com/yourserver/playlistismo.git
+
+# Enter the directory
+cd playlistismo
+
+# Install dependencies
+npm install
+```
+
+### 3. Environment Configuration
+Create a `.env` file in the root directory:
+```env
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+
+### 4. Running the Grid
+```bash
+npm run dev
+```
+
+---
+
+## 🏗️ Project Architecture
+
+```bash
+/src
+  ├── /components    # Reusable UI (AdminPanel, etc.)
+  ├── /lib           # Core utilities (Supabase client)
+  ├── /pages         # Main views (Home, Tv, Login, Admin)
+  └── /styles        # Global CRT and Teletext CSS
+/supabase
+  └── /functions     # Edge functions for content syncing
+```
+
+---
+
+## 🕹️ User Controls
+
+- **[PWR]**: Toggle TV state.
+- **[GUIDE]**: Open/Close the channel navigator.
+- **[GRP +/-]**: Switch between thematic channel groups.
+- **[CH +/- ]**: Navigate through playlists within a group.
+- **[SERVICE MODE]**: (Authenticated Admins) Live metadata editing directly from the UI.
+
+---
+
+<div align="center">
+  <p><i>Desenvolvido com 📺 e 📼 por Play-Listismo.</i></p>
+  <p>Powered by <b>@addri0n4</b> & <b>@sandrobreaker</b></p>
+</div>
