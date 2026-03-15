@@ -99,7 +99,11 @@ export default function Home({ session }: { session: Session | null }) {
         playerVars: { controls: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, enablejsapi: 1, showinfo: 0, disablekb: 1, fs: 0 },
         events: {
           'onReady': () => { isPlayerReady.current = true; setIsReady(true); if (isOn) playCurrentVideo(); },
-          'onStateChange': onPlayerStateChange
+          'onStateChange': onPlayerStateChange,
+          'onError': () => {
+             console.log("ERRO NO VÍDEO - PULANDO PARA O PRÓXIMO...");
+             handleVideoEnd();
+          }
         }
       });
     };
@@ -110,6 +114,7 @@ export default function Home({ session }: { session: Session | null }) {
       setStatus("");
       startCreditsMonitor();
     } else if (event.data === window.YT.PlayerState.ENDED) {
+      console.log("VÍDEO ENCERRADO - SORTEANDO PRÓXIMO (NON-STOP MODE)...");
       handleVideoEnd();
     } else if (event.data === window.YT.PlayerState.BUFFERING) {
       setStatus("TUNING...");
@@ -207,7 +212,7 @@ export default function Home({ session }: { session: Session | null }) {
     if (!data?.length) return;
 
     const list = targetId ? data : fisherYatesShuffle([...data]);
-    let idx = targetId ? list.findIndex(v => v.video_id === targetId) : 0;
+    let idx = targetId ? list.findIndex(v => v.video_id === targetId) : Math.floor(Math.random() * list.length);
     if (idx === -1) idx = 0;
 
     setCurrentChannelList(list);
@@ -228,8 +233,19 @@ export default function Home({ session }: { session: Session | null }) {
 
   const handleVideoEnd = () => {
     if (isBumping || currentChannelList.length === 0) return;
+    
+    // Lógica para sorteio aleatório (Non-Stop/Random)
+    let nextIndex;
+    if (currentChannelList.length > 1) {
+      // Garante que o próximo vídeo não seja o mesmo que acabou de passar
+      do {
+        nextIndex = Math.floor(Math.random() * currentChannelList.length);
+      } while (nextIndex === currentIndex);
+    } else {
+      nextIndex = 0;
+    }
+
     triggerBump(currentChannelName);
-    const nextIndex = (currentIndex + 1) % currentChannelList.length;
     setCurrentIndex(nextIndex);
     setCurrentVideoData(currentChannelList[nextIndex]);
   };
