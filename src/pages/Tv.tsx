@@ -121,11 +121,11 @@ export default function Tv({ session }: { session: Session | null }) {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-900/10 blur-[100px] rounded-full"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-7xl flex flex-col md:flex-row items-center justify-center gap-16 pt-10">
+      <div className="relative z-10 w-full flex flex-col items-center justify-center pt-10 md:pt-4">
         
         {/* TV UNIT */}
-        <div className="relative w-full max-w-4xl transition-transform duration-500 perspective-[1500px] group">
-          <div className="relative bg-[#1a1a1a] texture-plastic rounded-[24px] p-8 pb-12 shadow-[0_30px_60px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.15)] border-t border-[#333] tv-3d-tilt transform-style-3d">
+        <div className="relative w-full tv-responsive-container transition-transform duration-500 perspective-[1500px] group mb-16 md:mb-0">
+          <div className="relative bg-[#1a1a1a] texture-plastic rounded-[24px] p-6 md:p-8 pb-10 md:pb-12 shadow-[0_30px_60px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.15)] border-t border-[#333] tv-3d-tilt transform-style-3d">
             <div className="absolute inset-0 bg-[#111] translate-z-back rounded-[20px] z-[-1] shadow-2xl"></div>
             
             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-3/4 h-6 flex justify-center space-x-1 opacity-30 rotate-x-20">

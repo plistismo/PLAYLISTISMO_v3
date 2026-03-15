@@ -227,9 +227,11 @@ export default function Home({ session }: { session: Session | null }) {
   };
 
   const handleVideoEnd = () => {
-    if (isBumping) return;
+    if (isBumping || currentChannelList.length === 0) return;
     triggerBump(currentChannelName);
-    setCurrentIndex(prev => (prev + 1) % currentChannelList.length);
+    const nextIndex = (currentIndex + 1) % currentChannelList.length;
+    setCurrentIndex(nextIndex);
+    setCurrentVideoData(currentChannelList[nextIndex]);
   };
 
   const changeGroup = (direction: number) => {
@@ -257,7 +259,7 @@ export default function Home({ session }: { session: Session | null }) {
   const playlistParts = currentChannelName.split(':');
 
   return (
-    <div className={`bg-[#050505] min-h-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500 ${isSearchOpen ? 'guide-active' : ''}`}>
+    <div className={`bg-[#050505] min-h-screen overflow-x-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500 ${isSearchOpen ? 'guide-active overflow-hidden' : ''}`}>
       
       <div id="admin-panel-header" className="fixed top-4 right-4 z-[9990] flex gap-2">
         {!session && (
@@ -272,7 +274,7 @@ export default function Home({ session }: { session: Session | null }) {
       </div>
 
       {/* Guide overlay */}
-      <div className={`fixed inset-y-0 left-0 z-[100] w-full md:w-[450px] teletext-bg flex flex-col shadow-[20px_0_60px_rgba(0,0,0,0.9)] border-r-4 border-white/10 transform ${isSearchOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-500 ease-in-out font-vt323 h-full`}>
+      <div className={`fixed inset-y-0 left-0 z-[100] w-full md:w-[400px] lg:w-[450px] teletext-bg flex flex-col shadow-[20px_0_60px_rgba(0,0,0,0.9)] border-r-4 border-white/10 transform ${isSearchOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-500 ease-in-out font-vt323 h-full`}>
         <div className="bg-black p-4 flex justify-between items-center border-b-2 border-white/20 shrink-0">
             <div className="flex flex-col leading-none">
                 <span className="text-3xl font-bold text-white tracking-widest drop-shadow-[2px_2px_0_#000] font-jost"><span className="text-[#ffff00]">P</span><span className="text-[#00ff00]">100</span> GUIDE</span>
@@ -349,7 +351,7 @@ export default function Home({ session }: { session: Session | null }) {
       </div>
 
       {/* Admin Sidebar overlay */}
-      <div className={`fixed inset-y-0 right-0 z-[200] w-full md:w-[50vw] transform ${isAdminSidebarOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-500 ease-in-out h-full shadow-[-20px_0_60px_rgba(0,0,0,0.9)]`}>
+      <div className={`fixed inset-y-0 right-0 z-[200] w-full md:w-[500px] lg:w-[45vw] transform ${isAdminSidebarOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-500 ease-in-out h-full shadow-[-20px_0_60px_rgba(0,0,0,0.9)]`}>
         <AdminPanel 
           session={session} 
           editId={adminEditId} 
@@ -359,10 +361,10 @@ export default function Home({ session }: { session: Session | null }) {
       </div>
 
       {/* Main Viewport */}
-      <main className={`relative z-10 w-full flex flex-col items-center justify-center transition-all duration-500 p-4 ${isSearchOpen ? 'translate-x-[200px] scale-90' : isAdminSidebarOpen ? 'md:-translate-x-[20vw] scale-75' : ''}`}>
-        <div className="text-white/30 font-vt323 text-xl md:text-2xl tracking-[0.5em] uppercase mb-6">playlistismo v19</div>
+      <main className={`relative z-10 w-full flex flex-col items-center justify-center transition-all duration-500 p-4 pt-16 md:pt-4 ${isSearchOpen ? 'md:translate-x-[200px] scale-[0.85] md:scale-95' : isAdminSidebarOpen ? 'md:-translate-x-[200px] lg:-translate-x-[15vw] scale-[0.85] md:scale-95' : ''}`}>
+        <div className="text-white/20 font-vt323 text-lg md:text-xl tracking-[0.5em] uppercase mb-4 md:mb-6">playlistismo v19</div>
 
-        <div className="relative w-full max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto flex flex-col transition-all duration-500 ease-out cursor-pointer" onClick={() => setIsSearchOpen(false)}>
+        <div className="relative w-full tv-responsive-container flex flex-col transition-all duration-500 ease-out cursor-pointer" onClick={() => setIsSearchOpen(false)}>
             <div className="relative w-full transition-all duration-500 md:perspective-[1500px] group">
                 <div className="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
                     

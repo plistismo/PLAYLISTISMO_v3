@@ -17,6 +17,13 @@ body.guide-active #app-viewport { transform: translateX(200px) scale(0.9); }
 body.admin-active #tv-admin-panel { transform: translateX(0); }
 body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 
+/* Missing Background for Guide */
+.teletext-bg {
+    background: #0000aa; /* Classic Teletext/Osd Blue */
+    background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 2px, 3px 100%;
+}
+
 /* --- ACCORDION UI --- */
 .guide-cat-header.active {
     background-color: #0000ff;
@@ -153,7 +160,7 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
     85% { transform: scale(1); opacity: 1; filter: blur(0px); }
     100% { transform: scale(0.6); opacity: 0; filter: blur(10px); }
 }
-.bump-active { display: flex !important; background: rgba(0,0,0,0.5); backdrop-blur: 10px; }
+.bump-active { display: flex !important; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
 .bump-ident { 
     animation: bump-enter 1.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; 
     position: relative; 
@@ -165,7 +172,7 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
     justify-content: center;
 }
 
-.bump-chrome { font-family: 'Jost', sans-serif; font-weight: 900; color: #fff; font-style: italic; background: linear-gradient(180deg, #fff 40%, #888 50%, #fff 60%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px white); text-transform: uppercase; }
+.bump-chrome { font-family: 'Jost', sans-serif; font-weight: 900; color: #fff; font-style: italic; background: linear-gradient(180deg, #fff 40%, #888 50%, #fff 60%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px white); text-transform: uppercase; }
 .bump-urban { font-family: 'Permanent Marker', cursive; color: #ffff00; text-shadow: 4px 4px 0px #ff00ff, -4px -4px 0px #00ffff; }
 .bump-cyber { font-family: 'Orbitron', sans-serif; color: #00ff00; text-shadow: 0 0 15px #00ff00; letter-spacing: 0.1em; }
 .bump-noise { font-family: 'Monoton', cursive; color: #fff; filter: invert(1); mix-blend-mode: difference; }
@@ -292,4 +299,17 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 .row-updated {
     animation: row-highlight-flash 3s ease-out forwards;
     border-left: 4px solid #fbbf24;
+}
+
+/* Responsive TV scaling */
+.tv-responsive-container {
+    max-width: min(95vw, 130vh);
+    width: 100%;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .tv-responsive-container {
+        max-width: 98vw;
+    }
 }
