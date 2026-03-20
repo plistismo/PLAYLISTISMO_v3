@@ -303,17 +303,7 @@ export default function Home({ session }: { session: Session | null }) {
   return (
     <div className={`bg-[#050505] min-h-screen overflow-x-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500 ${isSearchOpen ? 'guide-active overflow-hidden' : ''}`}>
 
-      <div id="admin-panel-header" className="fixed top-4 right-4 z-[9990] flex gap-2">
-        {!session && (
-          <button onClick={() => navigate('/login')} className="bg-zinc-900/20 text-zinc-500 border border-zinc-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-zinc-600 hover:text-white transition-colors uppercase shadow-[0_0_10px_rgba(255,255,255,0.1)] backdrop-blur-sm flex items-center gap-2 opacity-50 hover:opacity-100">🔑 LOGIN</button>
-        )}
-        {isAdmin && (
-          <>
-            <button onClick={() => { setAdminEditId(null); setIsAdminSidebarOpen(true); }} className="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">⚙ SERVICE MODE</button>
-            <button onClick={() => { setAdminEditId(currentVideoData?.id); setIsAdminSidebarOpen(true); }} className="bg-amber-900/20 text-amber-500 border border-amber-600/50 px-3 py-1 font-vt323 text-lg tracking-widest hover:bg-amber-600 hover:text-black transition-colors uppercase shadow-[0_0_10px_rgba(217,119,6,0.2)] backdrop-blur-sm flex items-center gap-2">✎ EDIT VIDEO</button>
-          </>
-        )}
-      </div>
+      {/* Admin Panel Header moved down to follow TV */}
 
       <div className={`fixed inset-y-0 left-0 z-[100] w-full md:w-[400px] lg:w-[450px] teletext-bg flex flex-col shadow-[20px_0_60px_rgba(0,0,0,0.9)] border-r-4 border-white/10 transform ${isSearchOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-500 ease-in-out font-vt323 h-full`}>
         <div className="bg-black p-4 flex justify-between items-center border-b-2 border-white/20 shrink-0">
@@ -387,19 +377,62 @@ export default function Home({ session }: { session: Session | null }) {
         </div>
       </div>
 
-      <div className={`fixed inset-y-0 right-0 z-[200] w-full md:w-[500px] lg:w-[45vw] transform ${isAdminSidebarOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-500 ease-in-out h-full shadow-[-20px_0_60px_rgba(0,0,0,0.9)]`}>
-        <AdminPanel
-          session={session}
-          editId={adminEditId}
-          onClose={() => setIsAdminSidebarOpen(false)}
-          onSave={() => fetchGuideData()}
-        />
-      </div>
+      {/* Admin Panel is now integrated into the main tripartite layout */}
 
-      <main className={`relative z-10 w-full flex flex-col items-center justify-center transition-all duration-500 p-4 pt-16 md:pt-4 ${isSearchOpen ? 'md:translate-x-[200px] scale-[0.85] md:scale-95' : isAdminSidebarOpen ? 'md:-translate-x-[200px] lg:-translate-x-[15vw] scale-[0.85] md:scale-95' : ''}`}>
-        <div className="text-white/20 font-vt323 text-lg md:text-xl tracking-[0.5em] uppercase mb-4 md:mb-6">playlistismo v19</div>
+      <main className={`relative z-10 w-full min-h-screen flex flex-col md:grid transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'md:grid-cols-[1fr_auto_1fr]' : 'md:grid-cols-[0px_1fr_0px] overflow-hidden'}`}>
+        
+        {/* LEFT PANEL: FORM INTEGRATION */}
+        <aside className={`hidden md:flex justify-end overflow-hidden transition-all duration-500 ease-in-out border-r border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-full' : '-translate-x-full opacity-0 w-0'}`}>
+          <div className="w-[450px] h-full">
+            {isAdminSidebarOpen && (
+              <AdminPanel
+                session={session}
+                editId={adminEditId}
+                displayMode="form"
+                onClose={() => setIsAdminSidebarOpen(false)}
+                onSave={() => fetchGuideData()}
+              />
+            )}
+          </div>
+        </aside>
 
-        <div className="relative w-full tv-responsive-container flex flex-col transition-all duration-500 ease-out cursor-pointer" onClick={() => setIsSearchOpen(false)}>
+        {/* MIDDLE PANEL: TV & CONTROLS */}
+        <section className={`flex flex-col items-center justify-center p-4 transition-all duration-500 w-full max-w-[1200px] mx-auto ${isSearchOpen ? 'md:translate-x-[200px] scale-[0.85] md:scale-95' : ''}`}>
+          
+          {/* Centralized Admin Buttons */}
+          <div id="admin-panel-controls" className="mb-8 flex flex-wrap gap-4 items-center justify-center w-full max-w-[800px]">
+            {!session && (
+              <button onClick={() => navigate('/login')} className="bg-zinc-900/20 text-zinc-500 border border-zinc-600/50 px-4 py-2 font-vt323 text-xl tracking-widest hover:bg-zinc-600 hover:text-white transition-all uppercase shadow-[0_0_15px_rgba(255,255,255,0.05)] backdrop-blur-sm flex items-center gap-2 opacity-50 hover:opacity-100">🔑 LOGIN</button>
+            )}
+            {isAdmin && (
+              <>
+                <button 
+                  onClick={() => { 
+                    const newState = !isAdminSidebarOpen || adminEditId !== null;
+                    setAdminEditId(null); 
+                    setIsAdminSidebarOpen(newState); 
+                  }} 
+                  className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm ${!adminEditId && isAdminSidebarOpen ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]' : 'bg-amber-900/40 text-amber-500 border-amber-600/50 hover:bg-amber-600 hover:text-black hover:border-amber-400'}`}
+                >
+                  ⚙ SERVICE MODE
+                </button>
+                <button 
+                  onClick={() => { 
+                    const newState = !isAdminSidebarOpen || adminEditId === null;
+                    setAdminEditId(currentVideoData?.id); 
+                    setIsAdminSidebarOpen(newState); 
+                  }} 
+                  className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm ${adminEditId && isAdminSidebarOpen ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]' : 'bg-amber-900/40 text-amber-500 border-amber-600/50 hover:bg-amber-600 hover:text-black hover:border-amber-400'}`}
+                >
+                  ✎ EDIT VIDEO
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="text-white/20 font-vt323 text-lg md:text-xl tracking-[0.5em] uppercase mb-4 md:mb-6">playlistismo v19</div>
+
+          <div className="relative w-full max-w-[1000px] tv-responsive-container flex flex-col transition-all duration-500 ease-out cursor-pointer" onClick={() => setIsSearchOpen(false)}>
           <div className="relative w-full transition-all duration-500 md:perspective-[1500px] group">
             <div className="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
 
@@ -511,9 +544,26 @@ export default function Home({ session }: { session: Session | null }) {
           </div>
         </div>
 
-        <div className="mt-8 text-center opacity-20 hover:opacity-100 transition-opacity duration-500 pointer-events-none select-none">
-          <span className="font-vt323 text-sm md:text-base text-white tracking-widest uppercase">powered by @addri0n4 e @sandrobreaker</span>
-        </div>
+          <div className="mt-8 text-center opacity-20 hover:opacity-100 transition-opacity duration-500 pointer-events-none select-none">
+            <span className="font-vt323 text-sm md:text-base text-white tracking-widest uppercase">powered by @addri0n4 e @sandrobreaker</span>
+          </div>
+        </section>
+
+        {/* RIGHT PANEL: TABLE INTEGRATION */}
+        <aside className={`hidden md:flex justify-start overflow-hidden transition-all duration-500 ease-in-out border-l border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-full' : 'translate-x-full opacity-0 w-0'}`}>
+          <div className="w-[550px] h-full">
+            {isAdminSidebarOpen && (
+              <AdminPanel
+                session={session}
+                editId={adminEditId}
+                displayMode="table"
+                onClose={() => setIsAdminSidebarOpen(false)}
+                onSave={() => fetchGuideData()}
+              />
+            )}
+          </div>
+        </aside>
+
       </main>
     </div>
   );
