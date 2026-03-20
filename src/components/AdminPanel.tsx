@@ -175,7 +175,7 @@ export default function AdminPanel({ session, editId, onClose, onSave, displayMo
   };
 
   return (
-    <div className="flex flex-col h-full text-amber-500 font-vt323 bg-black border-l-2 border-amber-800/50 shadow-[-20px_0_50px_rgba(0,0,0,0.9)] overflow-hidden">
+    <div id="tv-admin-panel" className="flex flex-col h-full text-amber-500 font-vt323 bg-black border-l-2 border-amber-800/50 shadow-[-20px_0_50px_rgba(0,0,0,0.9)] overflow-hidden">
       {displayMode === 'full' && (
         <div className="p-6 border-b border-amber-800/50 flex justify-between items-center shrink-0">
           <div>
@@ -235,33 +235,33 @@ export default function AdminPanel({ session, editId, onClose, onSave, displayMo
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="group">
                   <label className="block text-xs text-amber-700 uppercase mb-1 font-bold group-focus-within:text-amber-500 transition-colors">ARTISTA *</label>
-                  <input type="text" value={formData.artista} onChange={e => setFormData({...formData, artista: e.target.value})} required className="w-full p-2 bg-black border border-amber-900/50 text-amber-500 outline-none focus:border-amber-500 text-lg" placeholder="Ex: Oasis" />
+                  <input type="text" value={formData.artista} onChange={e => setFormData({...formData, artista: e.target.value})} required className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" placeholder="Ex: Oasis" />
                 </div>
                 
                 <div className="group">
                   <label className="block text-xs text-amber-700 uppercase mb-1 font-bold group-focus-within:text-amber-500 transition-colors">MÚSICA</label>
-                  <input type="text" value={formData.musica} onChange={e => setFormData({...formData, musica: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 text-amber-500 outline-none focus:border-amber-500 text-lg" placeholder="Ex: Wonderwall" />
+                  <input type="text" value={formData.musica} onChange={e => setFormData({...formData, musica: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" placeholder="Ex: Wonderwall" />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="group">
+                <div className="flex gap-2">
+                  <div className="group w-[100px] shrink-0">
                     <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">ANO</label>
-                    <input type="number" value={formData.ano} onChange={e => setFormData({...formData, ano: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 text-amber-500 outline-none focus:border-amber-500 text-lg" placeholder="1995" />
+                    <input type="number" value={formData.ano} onChange={e => setFormData({...formData, ano: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg input-year" placeholder="1995" />
                   </div>
-                  <div className="group">
+                  <div className="group flex-1">
                     <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">ÁLBUM</label>
-                    <input type="text" value={formData.album} onChange={e => setFormData({...formData, album: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 text-amber-500 outline-none focus:border-amber-500 text-lg" placeholder="Optional" />
+                    <input type="text" value={formData.album} onChange={e => setFormData({...formData, album: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" placeholder="Optional" />
                   </div>
                 </div>
 
                 <div className="group">
                   <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">DIREÇÃO</label>
-                  <input type="text" value={formData.direcao} onChange={e => setFormData({...formData, direcao: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 text-amber-500 outline-none focus:border-amber-500 text-lg" placeholder="Music Video Director" />
+                  <input type="text" value={formData.direcao} onChange={e => setFormData({...formData, direcao: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" placeholder="Music Video Director" />
                 </div>
 
                 <div className="group">
                   <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">YOUTUBE VIDEO ID</label>
-                  <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 text-amber-500 outline-none focus:border-amber-500 text-lg font-mono" placeholder="6hzrDeceEKc" />
+                  <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg font-mono" placeholder="6hzrDeceEKc" />
                 </div>
 
                 <button type="submit" disabled={isSaving} className="w-full py-4 bg-amber-900/20 border border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-black font-bold text-2xl transition-all shadow-[0_0_15px_rgba(217,119,6,0.1)] active:translate-y-1">
@@ -297,7 +297,7 @@ export default function AdminPanel({ session, editId, onClose, onSave, displayMo
                             listRef={listRef}
                             style={{ height: height || 0, width: width || 0 }}
                             rowCount={data.length}
-                            rowHeight={90}
+                            rowHeight={100}
                             rowProps={{}}
                             className="custom-scrollbar"
                             onScroll={(e: any) => setScrollOffset(e.currentTarget.scrollTop)}
@@ -305,16 +305,16 @@ export default function AdminPanel({ session, editId, onClose, onSave, displayMo
                               const item = data[index];
                               if (!item) return null;
                               return (
-                                <div style={style} className="border-b border-amber-900/10 hover:bg-amber-900/10 transition-colors group flex items-center">
+                                <div style={style} className="border-b border-amber-900/10 hover:bg-amber-900/10 transition-colors group flex items-center font-jost">
                                   <div className="p-3 w-16 font-mono text-center text-xs opacity-50">{item.id}</div>
                                   <div className="p-3 flex-1 overflow-hidden">
-                                    <div className="font-bold text-xl leading-none text-[#00ff00] uppercase tracking-wide truncate">{item.artista}</div>
-                                    <div className="text-sm opacity-90 mt-1 truncate">{item.musica || '---'}</div>
-                                    <div className="text-[10px] opacity-60 mt-1 uppercase italic truncate">{item.album || '(No Album)'}</div>
+                                    <div className="font-bold text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words">{item.artista}</div>
+                                    <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words">{item.musica || '---'}</div>
+                                    <div className="text-[10px] text-cyan-500/80 mt-1 italic whitespace-normal break-words">{item.album || '(No Album)'}</div>
                                   </div>
                                   <div className="p-3 w-40 hidden sm:block">
-                                    <div className="text-sm font-mono text-amber-600">{item.ano || '----'}</div>
-                                    <div className="text-[10px] opacity-70 mt-1 uppercase truncate max-w-[150px]">{item.direcao ? `DIR: ${item.direcao}` : 'NO DIRECTOR'}</div>
+                                    <div className="text-sm font-mono text-orange-500">{item.ano || '----'}</div>
+                                    <div className="text-[10px] text-orange-700 mt-1 uppercase whitespace-normal break-words max-w-[150px]">{item.direcao ? `DIR: ${item.direcao}` : 'NO DIRECTOR'}</div>
                                   </div>
                                   <div className="p-3 w-24 text-center">
                                     <button onClick={() => {

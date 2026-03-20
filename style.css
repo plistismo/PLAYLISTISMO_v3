@@ -221,7 +221,7 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 
 #static-overlay.active { opacity: 0.4; animation: static-shift 0.1s steps(4) infinite; background-image: url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'1\'/%3E%3C/svg%3E"); }
 @keyframes static-shift { 0% { background-position: 0 0; } 100% { background-position: 10px 10px; } }
-.scanlines { background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 50%); background-size: 100% 3px; }
+.scanlines { background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.08) 50%); background-size: 100% 3px; }
 
 /* --- SERVICE MODE & EDIT FORM STYLES --- */
 #tv-admin-panel input,
@@ -235,6 +235,11 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
     border-radius: 4px;
     padding: 0.75rem !important;
     transition: all 0.2s ease;
+}
+
+.input-year {
+    width: 100px !important;
+    flex: none !important;
 }
 
 #tv-admin-panel input:focus,

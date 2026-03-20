@@ -430,7 +430,7 @@ export default function Home({ session }: { session: Session | null }) {
             )}
           </div>
 
-          <div className="text-white/20 font-vt323 text-lg md:text-xl tracking-[0.5em] uppercase mb-4 md:mb-6">playlistismo v19</div>
+
 
           <div className="relative w-full max-w-[1000px] tv-responsive-container flex flex-col transition-all duration-500 ease-out cursor-pointer" onClick={() => setIsSearchOpen(false)}>
           <div className="relative w-full transition-all duration-500 md:perspective-[1500px] group">
@@ -462,7 +462,7 @@ export default function Home({ session }: { session: Session | null }) {
 
                     {showStatic && <div className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-100 bg-repeat active"></div>}
 
-                    <div className="absolute inset-0 z-30 pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
+                    <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
                       <div className="absolute top-4 right-6 text-right">
                         {showPlaylistLabel && (
                           <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''}`}>
