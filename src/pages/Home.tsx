@@ -66,6 +66,10 @@ export default function Home({ session }: { session: Session | null }) {
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [adminEditId, setAdminEditId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  
+  // Histórico de Sessão (Shuffle sem Repetição)
+  const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
+  const playedHistoryRef = useRef<Record<string, string[]>>({});
 
   // REFS PARA CONTROLE DE API (NON-STOP)
   const playerRef = useRef<any>(null);
@@ -76,7 +80,8 @@ export default function Home({ session }: { session: Session | null }) {
   useEffect(() => {
     channelListRef.current = currentChannelList;
     currentIndexRef.current = currentIndex;
-  }, [currentChannelList, currentIndex]);
+    playedHistoryRef.current = playedHistory;
+  }, [currentChannelList, currentIndex, playedHistory]);
 
   useEffect(() => {
     if (session?.user?.id === ADMIN_UID) {
@@ -240,7 +245,17 @@ export default function Home({ session }: { session: Session | null }) {
 
     setCurrentChannelList(list);
     setCurrentIndex(idx);
-    setCurrentVideoData(list[idx]);
+    const video = list[idx];
+    setCurrentVideoData(video);
+
+    // Registra no histórico se for um novo canal ou vídeo
+    if (video?.video_id) {
+      setPlayedHistory(prev => {
+        const history = prev[playlistName] || [];
+        if (history.includes(video.video_id)) return prev;
+        return { ...prev, [playlistName]: [...history, video.video_id] };
+      });
+    }
   };
 
   const handlePreview = async (videoId: string) => {
@@ -286,21 +301,47 @@ export default function Home({ session }: { session: Session | null }) {
   const handleVideoEnd = () => {
     const list = channelListRef.current;
     const currIdx = currentIndexRef.current;
+    const history = playedHistoryRef.current[currentChannelName] || [];
 
     if (list.length === 0) return;
 
+    // Lógica de Shuffle sem Repetição
+    let available = list.filter(v => !history.includes(v.video_id));
+    
     let nextIndex;
-    if (list.length > 1) {
-      do {
-        nextIndex = Math.floor(Math.random() * list.length);
-      } while (nextIndex === currIdx);
+    let nextVideo;
+
+    if (available.length > 0) {
+      // Ainda há vídeos não tocados no ciclo
+      const randIdx = Math.floor(Math.random() * available.length);
+      nextVideo = available[randIdx];
+      nextIndex = list.findIndex(v => v.video_id === nextVideo.video_id);
+      console.log("SHUFFLE: Selecionando vídeo não tocado:", nextVideo.musica);
     } else {
-      nextIndex = 0;
+      // Ciclo completo! Resetamos o histórico do canal
+      console.log("SHUFFLE: Ciclo completo. Resetando histórico para:", currentChannelName);
+      
+      // Filtra para não repetir o mesmo vídeo imediatamente se houver mais de um
+      const others = list.length > 1 ? list.filter((_, i) => i !== currIdx) : list;
+      nextIndex = list.indexOf(others[Math.floor(Math.random() * others.length)]);
+      nextVideo = list[nextIndex];
+
+      // Limpa histórico e começa novo ciclo com o novo vídeo
+      setPlayedHistory(prev => ({ ...prev, [currentChannelName]: [nextVideo.video_id] }));
+      setCurrentIndex(nextIndex);
+      setCurrentVideoData(nextVideo);
+      triggerBump(currentChannelName);
+      return;
     }
 
-    console.log("SORTEANDO PRÓXIMO:", nextIndex);
+    // Atualiza estado e histórico
+    setPlayedHistory(prev => ({
+      ...prev,
+      [currentChannelName]: [...(prev[currentChannelName] || []), nextVideo.video_id]
+    }));
+    
     setCurrentIndex(nextIndex);
-    setCurrentVideoData(list[nextIndex]);
+    setCurrentVideoData(nextVideo);
     triggerBump(currentChannelName);
   };
 
