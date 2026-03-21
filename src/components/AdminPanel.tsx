@@ -1,8 +1,7 @@
 import { useState, useEffect, FormEvent, useRef } from 'react';
 import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
-import { List } from 'react-window';
-import { AutoSizer } from 'react-virtualized-auto-sizer';
+import { Virtuoso } from 'react-virtuoso';
 
 type MusicEntry = {
   id: number;
@@ -325,53 +324,46 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
                     ) : data.length === 0 ? (
                       <div className="flex items-center justify-center h-full opacity-40 text-xl uppercase tracking-widest text-amber-700">No signals detected.</div>
                     ) : (
-                      <AutoSizer
-                        renderProp={({ height, width }) => (
-                          <List
-                            listRef={listRef}
-                            style={{ height: height || 0, width: width || 0 }}
-                            rowCount={data.length}
-                            rowHeight={115}
-                            rowProps={{}}
-                            className="custom-scrollbar"
-                            onScroll={(e: any) => setScrollOffset(e.currentTarget.scrollTop)}
-                            rowComponent={({ index, style }) => {
-                              const item = data[index];
-                              if (!item) return null;
-                              const isActive = editId === String(item.id);
-                              const isPlaying = playingId === String(item.id);
-                              return (
-                                <div style={style} className={`border-b border-amber-900/10 transition-colors group flex items-center font-jost ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : 'hover:bg-amber-900/30'}`}>
-                                  <div className="p-3 w-16 font-mono text-center text-xs opacity-50">{item.id}</div>
-                                  <div className="p-3 flex-1 overflow-hidden">
-                                    <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost">{item.artista}</div>
-                                    <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost">{item.musica || '---'}</div>
-                                    <div className="text-[10px] text-cyan-500/80 mt-1 italic whitespace-normal break-words font-jost">{item.album || '(No Album)'}</div>
-                                  </div>
-                                  <div className="p-3 w-40 hidden sm:block">
-                                    <div className="text-sm font-jost text-orange-500 font-bold">{item.ano || '----'}</div>
-                                    <div className="text-[10px] text-orange-700 mt-1 font-jost whitespace-normal break-words max-w-[150px]">{item.direcao ? `DIR: ${item.direcao}` : 'NO DIRECTOR'}</div>
-                                  </div>
-                                  <div className="p-3 w-24 text-center">
-                                    <button onClick={() => {
-                                      setFormData({
-                                        id: String(item.id),
-                                        artista: item.artista || '',
-                                        musica: item.musica || '',
-                                        ano: item.ano || '',
-                                        album: item.album || '',
-                                        direcao: item.direcao || '',
-                                        video_id: item.video_id || ''
-                                      });
-                                      setIsEditing(true);
-                                      if (onEdit) onEdit(String(item.id));
-                                    }} className="text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/50 px-3 py-1 font-bold transition-all uppercase text-xs">EDIT</button>
-                                  </div>
-                                </div>
-                              );
-                            }}
-                          />
-                        )}
+                      <Virtuoso
+                        data={data}
+                        style={{ height: '100%', width: '100%' }}
+                        className="custom-scrollbar"
+                        initialTopMostItemIndex={0}
+                        onScroll={(e: any) => setScrollOffset(e.currentTarget.scrollTop)}
+                        itemContent={(index, item) => {
+                          if (!item) return null;
+                          const isActive = editId === String(item.id);
+                          const isPlaying = playingId === String(item.id);
+                          return (
+                            <div className={`border-b border-amber-900/10 transition-colors group flex items-center font-jost py-2 ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : 'hover:bg-amber-900/30'}`}>
+                              <div className="p-3 w-16 font-mono text-center text-xs opacity-50 flex-shrink-0">{item.id}</div>
+                              <div className="p-3 flex-1 min-w-0">
+                                <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost">{item.artista}</div>
+                                <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost">{item.musica || '---'}</div>
+                                <div className="text-[10px] text-cyan-500/80 mt-1 italic whitespace-normal break-words font-jost">{item.album || '(No Album)'}</div>
+                              </div>
+                              <div className="p-3 w-40 hidden sm:block flex-shrink-0">
+                                <div className="text-sm font-jost text-orange-500 font-bold">{item.ano || '----'}</div>
+                                <div className="text-[10px] text-orange-700 mt-1 font-jost whitespace-normal break-words max-w-[150px]">{item.direcao ? `DIR: ${item.direcao}` : 'NO DIRECTOR'}</div>
+                              </div>
+                              <div className="p-3 w-24 text-center flex-shrink-0">
+                                <button onClick={() => {
+                                  setFormData({
+                                    id: String(item.id),
+                                    artista: item.artista || '',
+                                    musica: item.musica || '',
+                                    ano: item.ano || '',
+                                    album: item.album || '',
+                                    direcao: item.direcao || '',
+                                    video_id: item.video_id || ''
+                                  });
+                                  setIsEditing(true);
+                                  if (onEdit) onEdit(String(item.id));
+                                }} className="text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/50 px-3 py-1 font-bold transition-all uppercase text-xs">EDIT</button>
+                              </div>
+                            </div>
+                          );
+                        }}
                       />
                     )}
                   </div>
