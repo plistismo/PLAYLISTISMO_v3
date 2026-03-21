@@ -557,6 +557,7 @@ export default function Home({ session }: { session: Session | null }) {
                 session={session}
                 editId={adminEditId}
                 displayMode="table"
+                onEdit={(id) => setAdminEditId(id)}
                 onClose={() => setIsAdminSidebarOpen(false)}
                 onSave={() => fetchGuideData()}
               />

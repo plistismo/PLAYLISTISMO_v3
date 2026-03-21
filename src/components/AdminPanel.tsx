@@ -21,12 +21,13 @@ export type AdminDisplayMode = 'form' | 'table' | 'full';
 interface AdminPanelProps {
   session: Session | null;
   editId?: string | null;
+  onEdit?: (id: string) => void;
   onClose?: () => void;
   onSave?: () => void;
   displayMode?: AdminDisplayMode;
 }
 
-export default function AdminPanel({ session, editId, onClose, onSave, displayMode = 'full' }: AdminPanelProps) {
+export default function AdminPanel({ session, editId, onEdit, onClose, onSave, displayMode = 'full' }: AdminPanelProps) {
   const [data, setData] = useState<MusicEntry[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [playlists, setPlaylists] = useState<string[]>([]);
@@ -297,24 +298,25 @@ export default function AdminPanel({ session, editId, onClose, onSave, displayMo
                             listRef={listRef}
                             style={{ height: height || 0, width: width || 0 }}
                             rowCount={data.length}
-                            rowHeight={100}
+                            rowHeight={115}
                             rowProps={{}}
                             className="custom-scrollbar"
                             onScroll={(e: any) => setScrollOffset(e.currentTarget.scrollTop)}
                             rowComponent={({ index, style }) => {
                               const item = data[index];
                               if (!item) return null;
+                              const isActive = editId === String(item.id);
                               return (
-                                <div style={style} className="border-b border-amber-900/10 hover:bg-amber-900/10 transition-colors group flex items-center font-jost">
+                                <div style={style} className={`border-b border-amber-900/10 transition-colors group flex items-center font-jost ${isActive ? 'bg-amber-600/20' : 'hover:bg-amber-900/30'}`}>
                                   <div className="p-3 w-16 font-mono text-center text-xs opacity-50">{item.id}</div>
                                   <div className="p-3 flex-1 overflow-hidden">
-                                    <div className="font-bold text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words">{item.artista}</div>
-                                    <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words">{item.musica || '---'}</div>
-                                    <div className="text-[10px] text-cyan-500/80 mt-1 italic whitespace-normal break-words">{item.album || '(No Album)'}</div>
+                                    <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost">{item.artista}</div>
+                                    <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost">{item.musica || '---'}</div>
+                                    <div className="text-[10px] text-cyan-500/80 mt-1 italic whitespace-normal break-words font-jost">{item.album || '(No Album)'}</div>
                                   </div>
                                   <div className="p-3 w-40 hidden sm:block">
-                                    <div className="text-sm font-mono text-orange-500">{item.ano || '----'}</div>
-                                    <div className="text-[10px] text-orange-700 mt-1 uppercase whitespace-normal break-words max-w-[150px]">{item.direcao ? `DIR: ${item.direcao}` : 'NO DIRECTOR'}</div>
+                                    <div className="text-sm font-jost text-orange-500 font-bold">{item.ano || '----'}</div>
+                                    <div className="text-[10px] text-orange-700 mt-1 font-jost whitespace-normal break-words max-w-[150px]">{item.direcao ? `DIR: ${item.direcao}` : 'NO DIRECTOR'}</div>
                                   </div>
                                   <div className="p-3 w-24 text-center">
                                     <button onClick={() => {
@@ -328,6 +330,7 @@ export default function AdminPanel({ session, editId, onClose, onSave, displayMo
                                         video_id: item.video_id || ''
                                       });
                                       setIsEditing(true);
+                                      if (onEdit) onEdit(String(item.id));
                                     }} className="text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/50 px-3 py-1 font-bold transition-all uppercase text-xs">EDIT</button>
                                   </div>
                                 </div>
