@@ -52,8 +52,21 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
   const [isEditing, setIsEditing] = useState(false);
   const [statusMsg, setStatusMsg] = useState({ text: '', isError: false, show: false });
   const [isSaving, setIsSaving] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [activeField, setActiveField] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<any>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveField(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     loadFilters();
@@ -181,7 +194,46 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
   const clearForm = () => {
     setFormData({ id: '', artista: '', musica: '', ano: '', album: '', direcao: '', video_id: '' });
     setIsEditing(false);
+    setActiveField(null);
+    setSuggestions([]);
   };
+
+  const fetchSuggestions = async (field: string, value: string) => {
+    if (!value || value.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('musicas_backup')
+      .select(field)
+      .ilike(field, `${value}%`)
+      .limit(100);
+
+    if (!error && data) {
+      const fieldName = field as keyof MusicEntry;
+      const uniqueValues = [...new Set(data.map(item => item[fieldName] as string).filter(Boolean))]
+        .sort()
+        .slice(0, 10);
+      setSuggestions(uniqueValues);
+    }
+  };
+
+  useEffect(() => {
+    if (!activeField) return;
+    
+    const value = formData[activeField as keyof typeof formData];
+    if (!value || value.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetchSuggestions(activeField, value);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [formData.artista, formData.album, formData.direcao, activeField]);
 
   return (
     <div id="tv-admin-panel" className="flex flex-col h-full text-amber-500 font-vt323 bg-black border-l-2 border-amber-800/50 shadow-[-20px_0_50px_rgba(0,0,0,0.9)] overflow-hidden">
@@ -253,9 +305,37 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
               </h3>
               
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="group">
+                <div className="group relative">
                   <label className="block text-xs text-amber-700 uppercase mb-1 font-bold group-focus-within:text-amber-500 transition-colors">ARTISTA *</label>
-                  <input type="text" value={formData.artista} onChange={e => setFormData({...formData, artista: e.target.value})} required className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" placeholder="Ex: Oasis" />
+                  <input 
+                    type="text" 
+                    value={formData.artista} 
+                    onChange={e => {
+                      setFormData({...formData, artista: e.target.value});
+                      setActiveField('artista');
+                    }}
+                    onFocus={() => setActiveField('artista')}
+                    required 
+                    className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" 
+                    placeholder="Ex: Oasis" 
+                  />
+                  {activeField === 'artista' && suggestions.length > 0 && (
+                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
+                      {suggestions.map((val, i) => (
+                        <div 
+                          key={i} 
+                          onClick={() => {
+                            setFormData({...formData, artista: val});
+                            setActiveField(null);
+                            setSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
+                        >
+                          {val}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="group">
@@ -268,15 +348,69 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
                     <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">ANO</label>
                     <input type="number" value={formData.ano} onChange={e => setFormData({...formData, ano: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg input-year" placeholder="1995" />
                   </div>
-                  <div className="group flex-1">
+                  <div className="group flex-1 relative">
                     <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">ÁLBUM</label>
-                    <input type="text" value={formData.album} onChange={e => setFormData({...formData, album: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" placeholder="Optional" />
+                    <input 
+                      type="text" 
+                      value={formData.album} 
+                      onChange={e => {
+                        setFormData({...formData, album: e.target.value});
+                        setActiveField('album');
+                      }}
+                      onFocus={() => setActiveField('album')}
+                      className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" 
+                      placeholder="Optional" 
+                    />
+                    {activeField === 'album' && suggestions.length > 0 && (
+                      <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
+                        {suggestions.map((val, i) => (
+                          <div 
+                            key={i} 
+                            onClick={() => {
+                              setFormData({...formData, album: val});
+                              setActiveField(null);
+                              setSuggestions([]);
+                            }}
+                            className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
+                          >
+                            {val}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="group">
+                <div className="group relative">
                   <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">DIREÇÃO</label>
-                  <input type="text" value={formData.direcao} onChange={e => setFormData({...formData, direcao: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" placeholder="Music Video Director" />
+                  <input 
+                    type="text" 
+                    value={formData.direcao} 
+                    onChange={e => {
+                      setFormData({...formData, direcao: e.target.value});
+                      setActiveField('direcao');
+                    }}
+                    onFocus={() => setActiveField('direcao')}
+                    className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" 
+                    placeholder="Music Video Director" 
+                  />
+                  {activeField === 'direcao' && suggestions.length > 0 && (
+                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
+                      {suggestions.map((val, i) => (
+                        <div 
+                          key={i} 
+                          onClick={() => {
+                            setFormData({...formData, direcao: val});
+                            setActiveField(null);
+                            setSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
+                        >
+                          {val}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="group">
@@ -340,11 +474,11 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
                               <div className="p-3 flex-1 min-w-0">
                                 <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost">{item.artista}</div>
                                 <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost">{item.musica || '---'}</div>
-                                <div className="text-[10px] text-cyan-500/80 mt-1 italic whitespace-normal break-words font-jost">{item.album || '(No Album)'}</div>
+                                <div className="text-xs text-cyan-400 mt-1 italic whitespace-normal break-words font-jost line-clamp-1">{item.album || '(No Album)'}</div>
                               </div>
                               <div className="p-3 w-40 hidden sm:block flex-shrink-0">
                                 <div className="text-sm font-jost text-orange-500 font-bold">{item.ano || '----'}</div>
-                                <div className="text-[10px] text-orange-700 mt-1 font-jost whitespace-normal break-words max-w-[150px]">{item.direcao ? `DIR: ${item.direcao}` : 'NO DIRECTOR'}</div>
+                                <div className="text-xs text-orange-400 mt-1 font-jost whitespace-normal break-words max-w-[150px] line-clamp-1">{item.direcao || 'NO DIRECTOR'}</div>
                               </div>
                               <div className="p-3 w-24 text-center flex-shrink-0">
                                 <button onClick={() => {
