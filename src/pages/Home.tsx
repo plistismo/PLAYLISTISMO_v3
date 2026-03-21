@@ -131,8 +131,14 @@ export default function Home({ session }: { session: Session | null }) {
       setStatus("");
       startCreditsMonitor();
     } else if (event.data === YT_STATE.ENDED) {
-      console.log("NON-STOP: VÍDEO ENCERRADO");
-      handleVideoEnd();
+      if (adminEditId) {
+        console.log("LOOPING VIDEO (EDIT MODE)");
+        playerRef.current?.seekTo(0);
+        playerRef.current?.playVideo();
+      } else {
+        console.log("NON-STOP: VÍDEO ENCERRADO");
+        handleVideoEnd();
+      }
     } else if (event.data === YT_STATE.BUFFERING) {
       setStatus("TUNING...");
     }
@@ -235,6 +241,28 @@ export default function Home({ session }: { session: Session | null }) {
     setCurrentChannelList(list);
     setCurrentIndex(idx);
     setCurrentVideoData(list[idx]);
+  };
+
+  const handlePreview = async (videoId: string) => {
+    if (!videoId) return;
+    setStatus("PREVIEWING...");
+    
+    // Tenta achar nos dados já carregados para ter info completa
+    const existing = currentChannelList.find(v => v.video_id === videoId);
+    if (existing) {
+      setCurrentVideoData(existing);
+    } else {
+      // Se não achar, faz um fetch rápido ou apenas carrega o ID
+      const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
+      if (data) {
+        setCurrentVideoData(data);
+      } else {
+        setCurrentVideoData({ video_id: videoId });
+      }
+    }
+    
+    if (!isOn) setIsOn(true);
+    playerRef.current?.playVideo();
   };
 
   // Efeito centralizado para carregar o vídeo sempre que o dado mudar
@@ -390,7 +418,12 @@ export default function Home({ session }: { session: Session | null }) {
                 editId={adminEditId}
                 displayMode="form"
                 onClose={() => setIsAdminSidebarOpen(false)}
-                onSave={() => fetchGuideData()}
+                onSave={() => {
+                  fetchGuideData();
+                  playerRef.current?.seekTo(0);
+                  playerRef.current?.playVideo();
+                }}
+                onPreview={handlePreview}
               />
             )}
           </div>
@@ -559,7 +592,13 @@ export default function Home({ session }: { session: Session | null }) {
                 displayMode="table"
                 onEdit={(id) => setAdminEditId(id)}
                 onClose={() => setIsAdminSidebarOpen(false)}
-                onSave={() => fetchGuideData()}
+                playingId={currentVideoData?.id}
+                initialPlaylist={currentChannelName}
+                onSave={() => {
+                  fetchGuideData();
+                  playerRef.current?.seekTo(0);
+                  playerRef.current?.playVideo();
+                }}
               />
             )}
           </div>

@@ -24,10 +24,13 @@ interface AdminPanelProps {
   onEdit?: (id: string) => void;
   onClose?: () => void;
   onSave?: () => void;
+  onPreview?: (videoId: string) => void;
   displayMode?: AdminDisplayMode;
+  playingId?: string | null;
+  initialPlaylist?: string;
 }
 
-export default function AdminPanel({ session, editId, onEdit, onClose, onSave, displayMode = 'full' }: AdminPanelProps) {
+export default function AdminPanel({ session, editId, onEdit, onClose, onSave, onPreview, displayMode = 'full', playingId, initialPlaylist }: AdminPanelProps) {
   const [data, setData] = useState<MusicEntry[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [playlists, setPlaylists] = useState<string[]>([]);
@@ -36,7 +39,7 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, d
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('');
-  const [selectedPlaylist, setSelectedPlaylist] = useState('');
+  const [selectedPlaylist, setSelectedPlaylist] = useState(initialPlaylist || '');
   
   const [formData, setFormData] = useState({
     id: '',
@@ -56,6 +59,12 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, d
   useEffect(() => {
     loadFilters();
   }, []);
+
+  useEffect(() => {
+    if (initialPlaylist) {
+      setSelectedPlaylist(initialPlaylist);
+    }
+  }, [initialPlaylist]);
 
   useEffect(() => {
     fetchMusics();
@@ -196,29 +205,40 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, d
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* Top Control Bar */}
         {displayMode !== 'form' && (
-          <div className="p-4 bg-[#0d0d0d] border-b border-amber-900/30 shrink-0">
-            <div className={`grid grid-cols-1 ${displayMode === 'full' ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-4 items-end`}>
-              <div className="flex-1">
-                <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700">Global Search</label>
-                <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="SEARCH DATABASE..." className="bg-black border border-amber-900/50 text-amber-500 outline-none p-2 w-full text-lg focus:border-amber-500 transition-colors" />
+          <div className="p-4 bg-[#0d0d0d] border-b border-amber-900/40 shrink-0 shadow-[inset_0_-2px_10px_rgba(0,0,0,0.5)]">
+            <div className={`grid grid-cols-1 ${displayMode === 'full' ? 'md:grid-cols-3' : 'md:grid-cols-[1.5fr_1fr]'} gap-4 items-end`}>
+              <div className="relative group flex-1">
+                <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700 font-bold">Global Search</label>
+                <div className="relative">
+                  <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="IDENTIFY MUSIC..." className="bg-black border border-amber-900/50 text-amber-500 outline-none p-2 pl-8 w-full text-lg focus:border-amber-500 transition-all font-vt323 placeholder:opacity-30" />
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 opacity-30">🔎</span>
+                </div>
               </div>
+              
+              <div className="group">
+                <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700 font-bold">Signal Source (Playlist)</label>
+                <div className="relative">
+                  <select value={selectedPlaylist} onChange={e => setSelectedPlaylist(e.target.value)} className="bg-black border border-amber-900/50 text-amber-500 outline-none p-2 pl-8 w-full text-lg cursor-pointer focus:border-amber-500 transition-all font-vt323 appearance-none">
+                    <option value="">ALL FREQUENCIES</option>
+                    {playlists.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 opacity-30">📼</span>
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none">▼</span>
+                </div>
+              </div>
+
               {displayMode === 'full' && (
-                <>
-                  <div>
-                    <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700">Filter Group</label>
-                    <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="bg-black border border-amber-900/50 text-amber-500 outline-none p-2 w-full text-lg cursor-pointer">
-                      <option value="">ALL GROUPS</option>
+                <div className="group">
+                  <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700 font-bold">Station Group</label>
+                  <div className="relative">
+                    <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="bg-black border border-amber-900/50 text-amber-500 outline-none p-2 pl-8 w-full text-lg cursor-pointer focus:border-amber-500 transition-all font-vt323 appearance-none">
+                      <option value="">ALL NETWORKS</option>
                       {groups.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 opacity-30">📡</span>
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none">▼</span>
                   </div>
-                  <div>
-                    <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700">Filter Playlist</label>
-                    <select value={selectedPlaylist} onChange={e => setSelectedPlaylist(e.target.value)} className="bg-black border border-amber-900/50 text-amber-500 outline-none p-2 w-full text-lg cursor-pointer">
-                      <option value="">ALL PLAYLISTS</option>
-                      {playlists.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                  </div>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -262,7 +282,20 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, d
 
                 <div className="group">
                   <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">YOUTUBE VIDEO ID</label>
-                  <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg font-mono" placeholder="6hzrDeceEKc" />
+                  <div className="flex gap-2">
+                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg font-mono text-cyan-400" placeholder="6hzrDeceEKc" />
+                    {onPreview && (
+                      <button 
+                        type="button"
+                        onClick={() => onPreview(formData.video_id)}
+                        className="bg-cyan-900/30 text-cyan-500 border border-cyan-500/50 px-4 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-2 group"
+                        title="PREVIEW VIDEO"
+                      >
+                        <span className="text-xl">▶</span>
+                        <span className="text-[10px] font-bold group-hover:block hidden">PREVIEW</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <button type="submit" disabled={isSaving} className="w-full py-4 bg-amber-900/20 border border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-black font-bold text-2xl transition-all shadow-[0_0_15px_rgba(217,119,6,0.1)] active:translate-y-1">
@@ -306,8 +339,9 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, d
                               const item = data[index];
                               if (!item) return null;
                               const isActive = editId === String(item.id);
+                              const isPlaying = playingId === String(item.id);
                               return (
-                                <div style={style} className={`border-b border-amber-900/10 transition-colors group flex items-center font-jost ${isActive ? 'bg-amber-600/20' : 'hover:bg-amber-900/30'}`}>
+                                <div style={style} className={`border-b border-amber-900/10 transition-colors group flex items-center font-jost ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : 'hover:bg-amber-900/30'}`}>
                                   <div className="p-3 w-16 font-mono text-center text-xs opacity-50">{item.id}</div>
                                   <div className="p-3 flex-1 overflow-hidden">
                                     <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost">{item.artista}</div>
