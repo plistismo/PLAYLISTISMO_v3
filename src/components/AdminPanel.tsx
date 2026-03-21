@@ -22,7 +22,7 @@ interface AdminPanelProps {
   editId?: string | null;
   onEdit?: (id: string) => void;
   onClose?: () => void;
-  onSave?: () => void;
+  onSave?: (updatedData?: any) => void;
   onPreview?: (videoId: string) => void;
   displayMode?: AdminDisplayMode;
   playingId?: string | null;
@@ -89,10 +89,13 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
   }, [editId]);
 
   useEffect(() => {
-    if (listRef.current?.element && scrollOffset > 0 && !loading) {
-      listRef.current.element.scrollTop = scrollOffset;
+    if (playingId && data.length > 0) {
+      const index = data.findIndex(item => String(item.id) === playingId);
+      if (index !== -1 && listRef.current) {
+        listRef.current.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+      }
     }
-  }, [data, loading]);
+  }, [playingId, data.length]);
 
   const loadSpecificVideo = async (id: string) => {
     const { data } = await supabase.from('musicas_backup').select('*').eq('id', id).single();
@@ -185,7 +188,7 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
     if (error) {
       showMessage(`ERRO: ${error.message}`, true);
     } else {
-      if (onSave) onSave();
+      if (onSave) onSave({ ...payload, id: Number(formData.id) });
       clearForm();
       fetchMusics();
     }
@@ -460,6 +463,7 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
                     ) : (
                       <Virtuoso
                         data={data}
+                        ref={listRef}
                         style={{ height: '100%', width: '100%' }}
                         className="custom-scrollbar"
                         initialTopMostItemIndex={0}
