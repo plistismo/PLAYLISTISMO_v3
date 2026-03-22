@@ -502,11 +502,11 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
                               <div className="p-3 flex-1 min-w-0">
                                 <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost">{item.artista}</div>
                                 <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost">{item.musica || '---'}</div>
-                                <div className="text-xs text-cyan-400 mt-1 italic whitespace-normal break-words font-jost line-clamp-1">{item.album || '(No Album)'}</div>
+                                <div className="text-xs text-cyan-400 mt-1 italic whitespace-normal break-words font-jost">{item.album || '(No Album)'}</div>
                               </div>
                               <div className="p-3 w-40 hidden sm:block flex-shrink-0">
                                 <div className="text-sm font-jost text-orange-500 font-bold">{item.ano || '----'}</div>
-                                <div className="text-xs text-orange-400 mt-1 font-jost whitespace-normal break-words max-w-[150px] line-clamp-1">{item.direcao || 'NO DIRECTOR'}</div>
+                                <div className="text-xs text-orange-400 mt-1 font-jost whitespace-normal break-words max-w-[150px]">{item.direcao || 'NO DIRECTOR'}</div>
                               </div>
                               <div className="p-3 w-24 text-center flex-shrink-0">
                                 <button onClick={() => {
