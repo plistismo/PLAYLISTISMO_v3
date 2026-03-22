@@ -57,6 +57,7 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
   const dropdownRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<any>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [lastSavedId, setLastSavedId] = useState<number | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -188,7 +189,20 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
     if (error) {
       showMessage(`ERRO: ${error.message}`, true);
     } else {
-      if (onSave) onSave({ ...payload, id: Number(formData.id) });
+      const savedId = Number(formData.id);
+      if (onSave) onSave({ ...payload, id: savedId });
+      
+      // Feedback Visual e Scroll
+      if (isEditing) {
+        setLastSavedId(savedId);
+        setTimeout(() => setLastSavedId(null), 3000);
+        
+        const index = data.findIndex(item => item.id === savedId);
+        if (index !== -1 && listRef.current) {
+          listRef.current.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+        }
+      }
+
       clearForm();
       fetchMusics();
     }
@@ -472,8 +486,9 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
                           if (!item) return null;
                           const isActive = editId === String(item.id);
                           const isPlaying = playingId === String(item.id);
+                          const isSaved = lastSavedId === item.id;
                           return (
-                            <div className={`border-b border-amber-900/10 transition-colors group flex items-center font-jost py-2 ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : 'hover:bg-amber-900/30'}`}>
+                            <div className={`border-b border-amber-900/10 transition-colors duration-500 group flex items-center font-jost py-2 ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : isSaved ? 'bg-green-500/30 animate-pulse border-y-green-500/50' : 'hover:bg-amber-900/30'}`}>
                               <div className="p-3 w-16 font-mono text-center text-xs opacity-50 flex-shrink-0">{item.id}</div>
                               <div className="p-3 flex-1 min-w-0">
                                 <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost">{item.artista}</div>

@@ -465,12 +465,19 @@ export default function Home({ session }: { session: Session | null }) {
                 onClose={() => setIsAdminSidebarOpen(false)}
                 onSave={(newData) => {
                   fetchGuideData();
-                  if (newData && String(newData.id) === String(currentVideoData?.id)) {
-                    console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE");
-                    setCurrentVideoData(newData);
-                  } else {
-                    playerRef.current?.seekTo(0);
-                    playerRef.current?.playVideo();
+                  if (newData) {
+                    const savedIdStr = String(newData.id);
+                    
+                    // Update currentVideoData if it's the one being edited
+                    if (savedIdStr === String(currentVideoData?.id)) {
+                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE");
+                      setCurrentVideoData({ ...currentVideoData, ...newData });
+                    }
+                    
+                    // Synchronize currentChannelList to avoid stale data in next/prev navigation
+                    setCurrentChannelList(prev => prev.map(item => 
+                      String(item.id) === savedIdStr ? { ...item, ...newData } : item
+                    ));
                   }
                 }}
                 onPreview={handlePreview}
@@ -646,12 +653,19 @@ export default function Home({ session }: { session: Session | null }) {
                 initialPlaylist={currentChannelName}
                 onSave={(newData) => {
                   fetchGuideData();
-                  if (newData && String(newData.id) === String(currentVideoData?.id)) {
-                    console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (TABELA)");
-                    setCurrentVideoData(newData);
-                  } else {
-                    playerRef.current?.seekTo(0);
-                    playerRef.current?.playVideo();
+                  if (newData) {
+                    const savedIdStr = String(newData.id);
+                    
+                    // Update currentVideoData if it's the one being edited
+                    if (savedIdStr === String(currentVideoData?.id)) {
+                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (TABELA)");
+                      setCurrentVideoData({ ...currentVideoData, ...newData });
+                    }
+                    
+                    // Synchronize currentChannelList to avoid stale data in next/prev navigation
+                    setCurrentChannelList(prev => prev.map(item => 
+                      String(item.id) === savedIdStr ? { ...item, ...newData } : item
+                    ));
                   }
                 }}
               />
