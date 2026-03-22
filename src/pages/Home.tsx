@@ -75,6 +75,7 @@ export default function Home({ session }: { session: Session | null }) {
   const playerRef = useRef<any>(null);
   const channelListRef = useRef<any[]>([]);
   const currentIndexRef = useRef(0);
+  const lastVideoIdRef = useRef<string | null>(null);
 
   // Sincroniza as refs com o estado do React
   useEffect(() => {
@@ -283,11 +284,14 @@ export default function Home({ session }: { session: Session | null }) {
   // Efeito centralizado para carregar o vídeo sempre que o dado mudar
   useEffect(() => {
     if (currentVideoData?.video_id && isReady && playerRef.current) {
-      console.log("CARREGANDO:", currentVideoData.video_id);
-      playerRef.current.loadVideoById({
-        videoId: currentVideoData.video_id,
-        suggestedQuality: 'hd720'
-      });
+      if (currentVideoData.video_id !== lastVideoIdRef.current) {
+        console.log("CARREGANDO NOVO VÍDEO:", currentVideoData.video_id);
+        playerRef.current.loadVideoById({
+          videoId: currentVideoData.video_id,
+          suggestedQuality: 'hd720'
+        });
+        lastVideoIdRef.current = currentVideoData.video_id;
+      }
       if (isOn) playerRef.current.playVideo();
     }
   }, [currentVideoData, isReady]);
@@ -459,10 +463,15 @@ export default function Home({ session }: { session: Session | null }) {
                 editId={adminEditId}
                 displayMode="form"
                 onClose={() => setIsAdminSidebarOpen(false)}
-                onSave={() => {
+                onSave={(newData) => {
                   fetchGuideData();
-                  playerRef.current?.seekTo(0);
-                  playerRef.current?.playVideo();
+                  if (newData && String(newData.id) === String(currentVideoData?.id)) {
+                    console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE");
+                    setCurrentVideoData(newData);
+                  } else {
+                    playerRef.current?.seekTo(0);
+                    playerRef.current?.playVideo();
+                  }
                 }}
                 onPreview={handlePreview}
               />
@@ -635,10 +644,15 @@ export default function Home({ session }: { session: Session | null }) {
                 onClose={() => setIsAdminSidebarOpen(false)}
                 playingId={currentVideoData?.id}
                 initialPlaylist={currentChannelName}
-                onSave={() => {
+                onSave={(newData) => {
                   fetchGuideData();
-                  playerRef.current?.seekTo(0);
-                  playerRef.current?.playVideo();
+                  if (newData && String(newData.id) === String(currentVideoData?.id)) {
+                    console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (TABELA)");
+                    setCurrentVideoData(newData);
+                  } else {
+                    playerRef.current?.seekTo(0);
+                    playerRef.current?.playVideo();
+                  }
                 }}
               />
             )}
