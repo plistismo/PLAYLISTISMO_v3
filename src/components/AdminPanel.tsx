@@ -190,21 +190,30 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
       showMessage(`ERRO: ${error.message}`, true);
     } else {
       const savedId = Number(formData.id);
-      if (onSave) onSave({ ...payload, id: savedId });
+      const updatedRecord = { ...payload, id: savedId };
+      if (onSave) onSave(updatedRecord);
       
-      // Feedback Visual e Scroll
+      // Instant Local Data Update
       if (isEditing) {
+        setData(prev => prev.map(item => item.id === savedId ? { ...item, ...payload } : item));
+        
+        // Feedback Visual e Scroll
         setLastSavedId(savedId);
         setTimeout(() => setLastSavedId(null), 3000);
         
+        // Use a small timeout to ensure data state update is processed if needed
+        // but even without it findIndex on current 'data' works fine.
         const index = data.findIndex(item => item.id === savedId);
         if (index !== -1 && listRef.current) {
           listRef.current.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
         }
       }
 
+      setIsEditing(false); // Reset editing mode
       clearForm();
-      fetchMusics();
+      
+      // Delay fetchMusics to keep the visual feedback if the fetch is too fast or would reset highlighting
+      setTimeout(() => fetchMusics(), 500);
     }
   };
 

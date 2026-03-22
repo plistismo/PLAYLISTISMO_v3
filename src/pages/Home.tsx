@@ -478,6 +478,9 @@ export default function Home({ session }: { session: Session | null }) {
                     setCurrentChannelList(prev => prev.map(item => 
                       String(item.id) === savedIdStr ? { ...item, ...newData } : item
                     ));
+
+                    // Clear edit state to show saved highlight
+                    setAdminEditId(null);
                   }
                 }}
                 onPreview={handlePreview}
@@ -666,6 +669,9 @@ export default function Home({ session }: { session: Session | null }) {
                     setCurrentChannelList(prev => prev.map(item => 
                       String(item.id) === savedIdStr ? { ...item, ...newData } : item
                     ));
+
+                    // Clear edit state to show saved highlight
+                    setAdminEditId(null);
                   }
                 }}
               />
