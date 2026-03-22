@@ -191,29 +191,33 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
     } else {
       const savedId = Number(formData.id);
       const updatedRecord = { ...payload, id: savedId };
+      
+      // Update parent if callback provided
       if (onSave) onSave(updatedRecord);
       
-      // Instant Local Data Update
-      if (isEditing) {
-        setData(prev => prev.map(item => item.id === savedId ? { ...item, ...payload } : item));
+      // 1. Instant Local Data Update (preserve other properties)
+      setData(prev => {
+        const newData = prev.map(item => item.id === savedId ? { ...item, ...payload } : item);
         
-        // Feedback Visual e Scroll
-        setLastSavedId(savedId);
-        setTimeout(() => setLastSavedId(null), 3000);
-        
-        // Use a small timeout to ensure data state update is processed if needed
-        // but even without it findIndex on current 'data' works fine.
-        const index = data.findIndex(item => item.id === savedId);
+        // 2. Programmatic Scroll to the updated item
+        // Do it inside state update or right after to ensure index is current
+        const index = newData.findIndex(item => item.id === savedId);
         if (index !== -1 && listRef.current) {
           listRef.current.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
         }
-      }
+        return newData;
+      });
+      
+      // Feedback Visual
+      setLastSavedId(savedId);
+      setTimeout(() => setLastSavedId(null), 3000);
 
       setIsEditing(false); // Reset editing mode
       clearForm();
       
-      // Delay fetchMusics to keep the visual feedback if the fetch is too fast or would reset highlighting
-      setTimeout(() => fetchMusics(), 500);
+      // Delay fetchMusics to keep the visual feedback, or just skip if local sync is sufficient.
+      // Keeping it but with larger delay to ensure smooth transition.
+      setTimeout(() => fetchMusics(), 2000);
     }
   };
 
@@ -471,7 +475,7 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
                 <div className="absolute inset-0 flex flex-col">
                   <div className="bg-[#111] z-10 border-b border-amber-500/50 shadow-lg shrink-0">
                     <div className="flex text-[10px] uppercase text-amber-700 font-bold tracking-[0.2em]">
-                      <div className="p-3 w-16 text-center">ID</div>
+                      <div className="p-3 w-10 text-center">ID</div>
                       <div className="p-3 flex-1">ARTISTA / MÚSICA / ÁLBUM</div>
                       <div className="p-3 w-40 hidden sm:block">DETALHES (ANO/DIR)</div>
                       <div className="p-3 w-24 text-center">AÇÃO</div>
@@ -498,7 +502,7 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
                           const isSaved = lastSavedId === item.id;
                           return (
                             <div className={`border-b border-amber-900/10 transition-colors duration-500 group flex items-center font-jost py-2 ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : isSaved ? 'bg-green-500/30 animate-pulse border-y-green-500/50' : 'hover:bg-amber-900/30'}`}>
-                              <div className="p-3 w-16 font-mono text-center text-xs opacity-50 flex-shrink-0">{item.id}</div>
+                              <div className="p-1 w-10 font-mono text-center text-[10px] opacity-40 flex-shrink-0 [writing-mode:vertical-rl] rotate-180 h-16 flex items-center justify-center border-r border-amber-900/20">{item.id}</div>
                               <div className="p-3 flex-1 min-w-0">
                                 <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost">{item.artista}</div>
                                 <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost">{item.musica || '---'}</div>
@@ -521,7 +525,9 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
                                   });
                                   setIsEditing(true);
                                   if (onEdit) onEdit(String(item.id));
-                                }} className="text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/50 px-3 py-1 font-bold transition-all uppercase text-xs">EDIT</button>
+                                }} className="text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/50 p-2 font-bold transition-all uppercase text-xs flex items-center justify-center mx-auto rounded-sm group/btn" title="EDIT RECORD">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70 group-hover/btn:opacity-100"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
                               </div>
                             </div>
                           );
