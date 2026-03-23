@@ -66,6 +66,7 @@ export default function Home({ session }: { session: Session | null }) {
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [adminEditId, setAdminEditId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [lastSavedRecord, setLastSavedRecord] = useState<any>(null);
   
   // Histórico de Sessão (Shuffle sem Repetição)
   const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
@@ -137,7 +138,7 @@ export default function Home({ session }: { session: Session | null }) {
       setStatus("");
       startCreditsMonitor();
     } else if (event.data === YT_STATE.ENDED) {
-      if (adminEditId) {
+      if (isAdminSidebarOpen && adminEditId) {
         console.log("LOOPING VIDEO (EDIT MODE)");
         playerRef.current?.seekTo(0);
         playerRef.current?.playVideo();
@@ -467,6 +468,7 @@ export default function Home({ session }: { session: Session | null }) {
                   fetchGuideData();
                   if (newData) {
                     const savedIdStr = String(newData.id);
+                    setLastSavedRecord(newData);
                     
                     // Update currentVideoData if it's the one being edited
                     if (savedIdStr === String(currentVideoData?.id)) {
@@ -474,14 +476,18 @@ export default function Home({ session }: { session: Session | null }) {
                       setCurrentVideoData({ ...currentVideoData, ...newData });
                     }
                     
-                    // Synchronize currentChannelList to avoid stale data in next/prev navigation
+                    // Synchronize currentChannelList to avoid stale data
                     setCurrentChannelList(prev => prev.map(item => 
                       String(item.id) === savedIdStr ? { ...item, ...newData } : item
                     ));
 
-                    // Clear edit state to show saved highlight
                     setAdminEditId(null);
                   }
+                }}
+                onRestartPlayer={() => {
+                  console.log("RESTARTING PLAYER ON SAVE");
+                  playerRef.current?.seekTo(0);
+                  playerRef.current?.playVideo();
                 }}
                 onPreview={handlePreview}
               />
@@ -658,6 +664,7 @@ export default function Home({ session }: { session: Session | null }) {
                   fetchGuideData();
                   if (newData) {
                     const savedIdStr = String(newData.id);
+                    setLastSavedRecord(newData);
                     
                     // Update currentVideoData if it's the one being edited
                     if (savedIdStr === String(currentVideoData?.id)) {
@@ -665,15 +672,15 @@ export default function Home({ session }: { session: Session | null }) {
                       setCurrentVideoData({ ...currentVideoData, ...newData });
                     }
                     
-                    // Synchronize currentChannelList to avoid stale data in next/prev navigation
+                    // Synchronize currentChannelList to avoid stale data
                     setCurrentChannelList(prev => prev.map(item => 
                       String(item.id) === savedIdStr ? { ...item, ...newData } : item
                     ));
 
-                    // Clear edit state to show saved highlight
                     setAdminEditId(null);
                   }
                 }}
+                lastSavedRecord={lastSavedRecord}
               />
             )}
           </div>

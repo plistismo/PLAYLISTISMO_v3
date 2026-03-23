@@ -27,9 +27,15 @@ interface AdminPanelProps {
   displayMode?: AdminDisplayMode;
   playingId?: string | null;
   initialPlaylist?: string;
+  onRestartPlayer?: () => void;
+  lastSavedRecord?: MusicEntry | null;
 }
 
-export default function AdminPanel({ session, editId, onEdit, onClose, onSave, onPreview, displayMode = 'full', playingId, initialPlaylist }: AdminPanelProps) {
+export default function AdminPanel({ 
+  session, editId, onEdit, onClose, onSave, onPreview, 
+  displayMode = 'full', playingId, initialPlaylist,
+  onRestartPlayer, lastSavedRecord 
+}: AdminPanelProps) {
   const [data, setData] = useState<MusicEntry[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [playlists, setPlaylists] = useState<string[]>([]);
@@ -97,6 +103,33 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
       }
     }
   }, [playingId, data.length]);
+  
+  // Bug Fix: Virtualized Table State Synchronization
+  // Listener for external saves (e.g., from the form panel)
+  useEffect(() => {
+    if (lastSavedRecord) {
+      const savedId = Number(lastSavedRecord.id);
+      
+      // Update local data array by replacing the modified object
+      setData(prev => {
+        const index = prev.findIndex(item => item.id === savedId);
+        if (index === -1) return prev; // Not in this list
+        
+        const newData = prev.map(item => item.id === savedId ? { ...item, ...lastSavedRecord } : item);
+        
+        // Trigger auto-scroll to the updated item
+        if (listRef.current) {
+          listRef.current.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+        }
+        
+        return newData;
+      });
+      
+      // Trigger visual highlight
+      setLastSavedId(savedId);
+      setTimeout(() => setLastSavedId(null), 3000);
+    }
+  }, [lastSavedRecord]);
 
   const loadSpecificVideo = async (id: string) => {
     const { data } = await supabase.from('musicas_backup').select('*').eq('id', id).single();
@@ -194,6 +227,9 @@ export default function AdminPanel({ session, editId, onEdit, onClose, onSave, o
       
       // Update parent if callback provided
       if (onSave) onSave(updatedRecord);
+      
+      // Notify parent to restart player immediately
+      if (onRestartPlayer) onRestartPlayer();
       
       // 1. Instant Local Data Update (preserve other properties)
       setData(prev => {
