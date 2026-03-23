@@ -39,6 +39,7 @@ export default function AdminPanel({
   const [data, setData] = useState<MusicEntry[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [playlists, setPlaylists] = useState<string[]>([]);
+  const [playlistToGroup, setPlaylistToGroup] = useState<Record<string, string>>({});
   const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(false);
   
@@ -64,6 +65,13 @@ export default function AdminPanel({
   const listRef = useRef<any>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [lastSavedId, setLastSavedId] = useState<number | null>(null);
+  
+  // Multi-Playlist State
+  const [currentPlaylists, setCurrentPlaylists] = useState<string[]>([]);
+  const [newPlaylistsToAdd, setNewPlaylistsToAdd] = useState<string[]>([]);
+  const [playlistSearch, setPlaylistSearch] = useState('');
+  const [playlistSuggestions, setPlaylistSuggestions] = useState<string[]>([]);
+  const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -132,18 +140,34 @@ export default function AdminPanel({
   }, [lastSavedRecord]);
 
   const loadSpecificVideo = async (id: string) => {
-    const { data } = await supabase.from('musicas_backup').select('*').eq('id', id).single();
-    if (data) {
+    const { data: videoData } = await supabase.from('musicas_backup').select('*').eq('id', id).single();
+    if (videoData) {
       setFormData({
-        id: String(data.id),
-        artista: data.artista || '',
-        musica: data.musica || '',
-        ano: data.ano || '',
-        album: data.album || '',
-        direcao: data.direcao || '',
-        video_id: data.video_id || ''
+        id: String(videoData.id),
+        artista: videoData.artista || '',
+        musica: videoData.musica || '',
+        ano: videoData.ano || '',
+        album: videoData.album || '',
+        direcao: videoData.direcao || '',
+        video_id: videoData.video_id || ''
       });
       setIsEditing(true);
+      setNewPlaylistsToAdd([]); // Reset tags when loading new video
+      
+      // Fetch all playlists where this video exists
+      if (videoData.video_id) {
+        const { data: related } = await supabase
+          .from('musicas_backup')
+          .select('playlist')
+          .eq('video_id', videoData.video_id);
+        
+        if (related) {
+          const uniquePlaylists = [...new Set(related.map(r => r.playlist).filter(Boolean))] as string[];
+          setCurrentPlaylists(uniquePlaylists);
+        }
+      } else {
+        setCurrentPlaylists(videoData.playlist ? [videoData.playlist] : []);
+      }
     }
   };
 
@@ -157,8 +181,13 @@ export default function AdminPanel({
     if (!error && data) {
       const g = [...new Set(data.map(i => i.group_name).filter(Boolean))].sort() as string[];
       const p = data.map(i => i.name).filter(Boolean) as string[];
+      const mapping = data.reduce((acc, curr) => {
+        if (curr.name && curr.group_name) acc[curr.name] = curr.group_name;
+        return acc;
+      }, {} as Record<string, string>);
       setGroups(g);
       setPlaylists(p);
+      setPlaylistToGroup(mapping);
     }
   };
 
@@ -210,11 +239,50 @@ export default function AdminPanel({
     if (isEditing) {
       const { error: err } = await supabase.from('musicas_backup').update(payload).eq('id', formData.id);
       error = err;
-      if (!error) showMessage(`REGISTRO #${formData.id} ATUALIZADO!`);
+      if (!error) {
+        showMessage(`REGISTRO #${formData.id} ATUALIZADO!`);
+        
+        // Batch insert for new playlists
+        if (newPlaylistsToAdd.length > 0) {
+          const inserts = newPlaylistsToAdd.map(plName => ({
+            ...payload,
+            playlist: plName,
+            playlist_group: playlistToGroup[plName] || null
+          }));
+          const { error: batchErr } = await supabase.from('musicas_backup').insert(inserts);
+          if (batchErr) {
+            console.error("Batch insert error:", batchErr);
+            showMessage(`ERRO NO LOTE: ${batchErr.message}`, true);
+          } else {
+            showMessage(`REGISTRO ATUALIZADO E ADICIONADO A ${newPlaylistsToAdd.length} CANAIS!`);
+          }
+        }
+      }
     } else {
-      const { error: err } = await supabase.from('musicas_backup').insert([payload]);
+      // For NEW records, if multiple playlists are selected, we might want to insert all of them.
+      // But the current logic is to insert one and then we could insert others.
+      // Let's stick to the current playlist + newPlaylists.
+      const initialPlaylist = selectedPlaylist; // Current filter playlist or empty
+      const { data: newRecord, error: err } = await supabase.from('musicas_backup').insert([{
+        ...payload,
+        playlist: initialPlaylist || null,
+        playlist_group: initialPlaylist ? playlistToGroup[initialPlaylist] : null
+      }]).select().single();
+      
       error = err;
-      if (!error) showMessage("NOVO REGISTRO GRAVADO!");
+      if (!error) {
+        showMessage("NOVO REGISTRO GRAVADO!");
+        
+        // Batch insert for additional playlists if selected
+        if (newPlaylistsToAdd.length > 0) {
+          const inserts = newPlaylistsToAdd.map(plName => ({
+            ...payload,
+            playlist: plName,
+            playlist_group: playlistToGroup[plName] || null
+          }));
+          await supabase.from('musicas_backup').insert(inserts);
+        }
+      }
     }
 
     setIsSaving(false);
@@ -262,6 +330,11 @@ export default function AdminPanel({
     setIsEditing(false);
     setActiveField(null);
     setSuggestions([]);
+    setCurrentPlaylists([]);
+    setNewPlaylistsToAdd([]);
+    setPlaylistSearch('');
+    setPlaylistSuggestions([]);
+    setShowPlaylistDropdown(false);
   };
 
   const fetchSuggestions = async (field: string, value: string) => {
@@ -495,6 +568,89 @@ export default function AdminPanel({
                       </button>
                     )}
                   </div>
+                </div>
+
+                {/* Multi-Playlist Management Section */}
+                <div className="space-y-4 pt-4 border-t border-amber-900/30">
+                  {/* Current Playlists (Read-Only) */}
+                  {currentPlaylists.length > 0 && (
+                    <div className="group">
+                      <label className="block text-[10px] text-amber-700/60 uppercase mb-2 font-bold tracking-widest">Canais Atuais (Database)</label>
+                      <div className="flex flex-wrap gap-2">
+                        {currentPlaylists.map(pl => (
+                          <span key={pl} className="px-3 py-1 bg-zinc-900 text-zinc-500 border border-zinc-800 text-xs font-jost rounded-full opacity-80">
+                            {pl}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add to New Playlists */}
+                  <div className="group relative">
+                    <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">Adicionar a outros canais</label>
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        value={playlistSearch} 
+                        onChange={e => {
+                          setPlaylistSearch(e.target.value);
+                          const search = e.target.value.toLowerCase();
+                          if (search.length > 0) {
+                            const filtered = playlists.filter(p => 
+                              p.toLowerCase().includes(search) && 
+                              !currentPlaylists.includes(p) && 
+                              !newPlaylistsToAdd.includes(p)
+                            ).slice(0, 10);
+                            setPlaylistSuggestions(filtered);
+                            setShowPlaylistDropdown(true);
+                          } else {
+                            setShowPlaylistDropdown(false);
+                          }
+                        }}
+                        onFocus={() => {
+                          if (playlistSearch.length > 0) setShowPlaylistDropdown(true);
+                        }}
+                        className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg font-jost" 
+                        placeholder="Buscar canal..." 
+                      />
+                      {showPlaylistDropdown && playlistSuggestions.length > 0 && (
+                        <div className="absolute left-0 right-0 bottom-full mb-1 bg-black border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
+                          {playlistSuggestions.map((pl, i) => (
+                            <div 
+                              key={i} 
+                              onClick={() => {
+                                setNewPlaylistsToAdd(prev => [...prev, pl]);
+                                setPlaylistSearch('');
+                                setShowPlaylistDropdown(false);
+                              }}
+                              className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
+                            >
+                              {pl}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* New Playlists Tags (to be added) */}
+                  {newPlaylistsToAdd.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {newPlaylistsToAdd.map(pl => (
+                        <div key={pl} className="flex items-center gap-2 px-3 py-1 bg-amber-900/30 text-amber-500 border border-amber-500/50 text-xs font-jost rounded-full group/tag animate-in fade-in zoom-in duration-300">
+                          <span>{pl}</span>
+                          <button 
+                            type="button"
+                            onClick={() => setNewPlaylistsToAdd(prev => prev.filter(p => p !== pl))}
+                            className="hover:text-white transition-colors text-lg leading-none"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <button type="submit" disabled={isSaving} className="w-full py-4 bg-amber-900/20 border border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-black font-bold text-2xl transition-all shadow-[0_0_15px_rgba(217,119,6,0.1)] active:translate-y-1">
