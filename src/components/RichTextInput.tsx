@@ -77,6 +77,13 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
     handleInput();
   };
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
+    handleInput();
+  };
+
   return (
     <div className="group relative">
       <div className="flex justify-between items-end mb-1">
@@ -109,6 +116,7 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
         ref={editorRef}
         contentEditable
         onInput={handleInput}
+        onPaste={handlePaste}
         onFocus={onFocus}
         className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg min-h-[44px] break-words rich-text-input"
         data-placeholder={placeholder}

@@ -193,7 +193,7 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 /* --- CRÉDITOS --- */
 .credits-overlay {
     position: absolute; bottom: 8%; left: 6%; color: #f8f8f8; 
-    text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 0 0 8px rgba(0,0,0,0.9);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.95);
     font-size: clamp(0.85rem, 1.8vmin, 1.25rem); font-family: 'Jost', sans-serif;
     font-weight: 700; line-height: 1.1; opacity: 0; transition: opacity 0.8s ease-in-out;
     pointer-events: none; z-index: 60; width: auto; max-width: 80%;
@@ -201,11 +201,7 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 .credits-overlay.visible { opacity: 1; }
 
 .credits-3d-shadow {
-    text-shadow: 
-        1.5px 1.5px 0 #000, -1.5px -1.5px 0 #000, 
-        1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000,
-        0 1.5px 0 #000, 0 -1.5px 0 #000,
-        1.5px 0 0 #000, -1.5px 0 0 #000 !important;
+    text-shadow: 2.5px 2.5px 0px rgba(0, 0, 0, 1) !important;
 }
 
 .credits-overlay b, .credits-overlay strong {
