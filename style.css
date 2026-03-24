@@ -148,10 +148,10 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 .osd-futuristic.bump-cyber { border-right-color: #00ff00; color: #00ff00; letter-spacing: 2px; }
 
 .osd-futuristic.bump-noise { 
-    border-right-color: #000; 
-    color: #000; 
-    background: rgba(255, 255, 255, 0.9); /* Fundo branco para legibilidade */
-    font-family: 'Jost', sans-serif; /* Fonte parecida mas legível */
+    border-right-color: #fff; 
+    color: #fff; 
+    background: rgba(0, 0, 0, 0.9); /* Reverted to black background */
+    font-family: 'Jost', sans-serif;
     font-weight: 400;
     letter-spacing: 0.5px;
 }
@@ -202,9 +202,10 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 
 .credits-3d-shadow {
     text-shadow: 
-        1px 1px 0px rgba(0,0,0,0.8),
-        2px 2px 4px rgba(0,0,0,0.5),
-        -0.5px -0.5px 0px rgba(255,255,255,0.15) !important;
+        1.5px 1.5px 0 #000, -1.5px -1.5px 0 #000, 
+        1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000,
+        0 1.5px 0 #000, 0 -1.5px 0 #000,
+        1.5px 0 0 #000, -1.5px 0 0 #000 !important;
 }
 
 .credits-overlay b, .credits-overlay strong {
@@ -266,8 +267,9 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 /* --- SERVICE MODE & EDIT FORM STYLES --- */
 #tv-admin-panel input,
 #tv-admin-panel select,
-.service-mode-input {
-    background-color: #1a1a1a !important;
+.service-mode-input,
+.rich-text-input {
+    background-color: #000 !important;
     color: #ffffff !important;
     border: 2px solid #333 !important;
     font-family: 'Jost', sans-serif !important;

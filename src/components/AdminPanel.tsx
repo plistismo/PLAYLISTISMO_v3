@@ -408,7 +408,7 @@ export default function AdminPanel({
               <div className="relative group flex-1">
                 <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700 font-bold">Global Search</label>
                 <div className="relative">
-                  <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="IDENTIFY MUSIC..." className="bg-black border border-amber-900/50 text-amber-500 outline-none p-2 pl-8 w-full text-lg focus:border-amber-500 transition-all font-vt323 placeholder:opacity-30" />
+                  <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="IDENTIFY MUSIC..." className="bg-black border border-amber-900/50 text-white outline-none p-2 pl-8 w-full text-lg focus:border-amber-500 transition-all placeholder:opacity-30" />
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 opacity-30">🔎</span>
                 </div>
               </div>
@@ -416,7 +416,7 @@ export default function AdminPanel({
               <div className="group">
                 <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700 font-bold">Signal Source (Playlist)</label>
                 <div className="relative">
-                  <select value={selectedPlaylist} onChange={e => setSelectedPlaylist(e.target.value)} className="bg-black border border-amber-900/50 text-amber-500 outline-none p-2 pl-8 w-full text-lg cursor-pointer focus:border-amber-500 transition-all font-vt323 appearance-none">
+                  <select value={selectedPlaylist} onChange={e => setSelectedPlaylist(e.target.value)} className="bg-black border border-amber-900/50 text-white outline-none p-2 pl-8 w-full text-lg cursor-pointer focus:border-amber-500 transition-all appearance-none">
                     <option value="">ALL FREQUENCIES</option>
                     {playlists.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
@@ -429,7 +429,7 @@ export default function AdminPanel({
                 <div className="group">
                   <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700 font-bold">Station Group</label>
                   <div className="relative">
-                    <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="bg-black border border-amber-900/50 text-amber-500 outline-none p-2 pl-8 w-full text-lg cursor-pointer focus:border-amber-500 transition-all font-vt323 appearance-none">
+                    <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="bg-black border border-amber-900/50 text-white outline-none p-2 pl-8 w-full text-lg cursor-pointer focus:border-amber-500 transition-all appearance-none">
                       <option value="">ALL NETWORKS</option>
                       {groups.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
@@ -552,7 +552,7 @@ export default function AdminPanel({
                 <div className="group">
                   <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">YOUTUBE VIDEO ID</label>
                   <div className="flex gap-2">
-                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg font-mono text-cyan-400" placeholder="6hzrDeceEKc" />
+                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg text-white" placeholder="6hzrDeceEKc" />
                     {onPreview && (
                       <button 
                         type="button"
