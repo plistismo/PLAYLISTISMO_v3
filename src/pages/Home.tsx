@@ -375,7 +375,7 @@ export default function Home({ session }: { session: Session | null }) {
   const playlistParts = currentChannelName.split(':');
 
   return (
-    <div className={`bg-[#050505] min-h-screen overflow-x-hidden selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500 ${isAdminSidebarOpen ? 'block' : 'flex items-center justify-center'} ${isSearchOpen ? 'guide-active overflow-hidden' : ''}`}>
+    <div className={`bg-[#050505] min-h-screen overflow-x-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500 ${isSearchOpen ? 'guide-active overflow-hidden' : ''}`}>
 
       {/* Admin Panel Header moved down to follow TV */}
 
@@ -453,7 +453,7 @@ export default function Home({ session }: { session: Session | null }) {
 
       {/* Admin Panel is now integrated into the main tripartite layout */}
 
-      <main className={`relative z-10 w-full min-h-screen flex flex-col md:grid transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'md:grid-cols-[auto_1fr_auto]' : 'md:grid-cols-[0px_1fr_0px] overflow-hidden'}`}>
+      <main className={`relative z-10 w-full min-h-screen flex flex-col md:grid transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'layout-admin-open md:grid-cols-[auto_1fr_auto]' : 'layout-admin-closed md:grid-cols-[0px_1fr_0px] overflow-hidden'}`}>
         
         {/* LEFT PANEL: FORM INTEGRATION */}
         <aside className={`hidden md:flex overflow-hidden transition-all duration-500 ease-in-out border-r border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-auto' : '-translate-x-full opacity-0 w-0'}`}>
@@ -531,7 +531,7 @@ export default function Home({ session }: { session: Session | null }) {
 
 
 
-          <div className={`relative w-full ${isAdminSidebarOpen ? 'max-w-full px-4 mx-0' : 'max-w-[1000px] mx-auto'} tv-responsive-container flex flex-col transition-all duration-500 ease-out cursor-pointer`} onClick={() => setIsSearchOpen(false)} style={{ width: isAdminSidebarOpen ? '100%' : 'auto' }}>
+          <div className={`relative w-full ${isAdminSidebarOpen ? 'max-w-full px-4 mx-0' : 'max-w-[1000px] mx-auto'} tv-responsive-container flex flex-col transition-all duration-500 ease-out cursor-pointer`} onClick={() => setIsSearchOpen(false)}>
           <div className="relative w-full transition-all duration-500 md:perspective-[1500px] group">
             <div className="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
 
