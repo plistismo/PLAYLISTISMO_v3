@@ -2,6 +2,7 @@ import { useState, useEffect, FormEvent, useRef } from 'react';
 import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { Virtuoso } from 'react-virtuoso';
+import RichTextInput from './RichTextInput.tsx';
 
 type MusicEntry = {
   id: number;
@@ -226,6 +227,14 @@ export default function AdminPanel({
     setIsSaving(true);
     
     const payload = {
+      album: formData.album ? formData.album.replace(/<[^>]*>?/gm, '').trim() : null,
+      direcao: formData.direcao ? formData.direcao.replace(/<[^>]*>?/gm, '').trim() : null,
+      video_id: formData.video_id ? formData.video_id.replace(/<[^>]*>?/gm, '').trim() : null
+    };
+
+    // Actually, the user wants to save tags. So I should NOT strip them.
+    // "Garanta que o Supabase salve as tags de formatação"
+    const richPayload = {
       artista: formData.artista.trim(),
       musica: formData.musica.trim(),
       ano: formData.ano ? String(formData.ano) : null,
@@ -237,7 +246,7 @@ export default function AdminPanel({
     let error = null;
 
     if (isEditing) {
-      const { error: err } = await supabase.from('musicas_backup').update(payload).eq('id', formData.id);
+      const { error: err } = await supabase.from('musicas_backup').update(richPayload).eq('id', formData.id);
       error = err;
       if (!error) {
         showMessage(`REGISTRO #${formData.id} ATUALIZADO!`);
@@ -245,7 +254,7 @@ export default function AdminPanel({
         // Batch insert for new playlists
         if (newPlaylistsToAdd.length > 0) {
           const inserts = newPlaylistsToAdd.map(plName => ({
-            ...payload,
+            ...richPayload,
             playlist: plName,
             playlist_group: playlistToGroup[plName] || null
           }));
@@ -276,7 +285,7 @@ export default function AdminPanel({
         // Batch insert for additional playlists if selected
         if (newPlaylistsToAdd.length > 0) {
           const inserts = newPlaylistsToAdd.map(plName => ({
-            ...payload,
+            ...richPayload,
             playlist: plName,
             playlist_group: playlistToGroup[plName] || null
           }));
@@ -291,17 +300,16 @@ export default function AdminPanel({
       showMessage(`ERRO: ${error.message}`, true);
     } else {
       const savedId = Number(formData.id);
-      const updatedRecord = { ...payload, id: savedId };
       
       // Update parent if callback provided
-      if (onSave) onSave(updatedRecord);
+      if (onSave) onSave({ ...richPayload, id: savedId });
       
       // Notify parent to restart player immediately
       if (onRestartPlayer) onRestartPlayer();
       
       // 1. Instant Local Data Update (preserve other properties)
       setData(prev => {
-        const newData = prev.map(item => item.id === savedId ? { ...item, ...payload } : item);
+        const newData = prev.map(item => item.id === savedId ? { ...item, ...richPayload } : item);
         
         // 2. Programmatic Scroll to the updated item
         // Do it inside state update or right after to ensure index is current
@@ -351,7 +359,7 @@ export default function AdminPanel({
 
     if (!error && data) {
       const fieldName = field as keyof MusicEntry;
-      const uniqueValues = [...new Set(data.map(item => item[fieldName] as string).filter(Boolean))]
+      const uniqueValues = [...new Set(data.map(item => (item[fieldName] as string || '').replace(/<[^>]*>?/gm, '')).filter(Boolean))]
         .sort()
         .slice(0, 10);
       setSuggestions(uniqueValues);
@@ -444,43 +452,40 @@ export default function AdminPanel({
               </h3>
               
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="group relative">
-                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold group-focus-within:text-amber-500 transition-colors">ARTISTA *</label>
-                  <input 
-                    type="text" 
-                    value={formData.artista} 
-                    onChange={e => {
-                      setFormData({...formData, artista: e.target.value});
-                      setActiveField('artista');
-                    }}
-                    onFocus={() => setActiveField('artista')}
-                    required 
-                    className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" 
-                    placeholder="Ex: Oasis" 
-                  />
-                  {activeField === 'artista' && suggestions.length > 0 && (
-                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
-                      {suggestions.map((val, i) => (
-                        <div 
-                          key={i} 
-                          onClick={() => {
-                            setFormData({...formData, artista: val});
-                            setActiveField(null);
-                            setSuggestions([]);
-                          }}
-                          className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
-                        >
-                          {val}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <RichTextInput
+                  label="ARTISTA *"
+                  field="artista"
+                  value={formData.artista}
+                  onChange={val => setFormData({ ...formData, artista: val })}
+                  onFocus={() => setActiveField('artista')}
+                  placeholder="Ex: Oasis"
+                />
                 
-                <div className="group">
-                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold group-focus-within:text-amber-500 transition-colors">MÚSICA</label>
-                  <input type="text" value={formData.musica} onChange={e => setFormData({...formData, musica: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" placeholder="Ex: Wonderwall" />
-                </div>
+                {activeField === 'artista' && suggestions.length > 0 && (
+                  <div ref={dropdownRef} className="absolute left-6 right-6 top-[220px] bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
+                    {suggestions.map((val, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => {
+                          setFormData({...formData, artista: val});
+                          setActiveField(null);
+                          setSuggestions([]);
+                        }}
+                        className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
+                      >
+                        {val}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <RichTextInput
+                  label="MÚSICA"
+                  field="musica"
+                  value={formData.musica}
+                  onChange={val => setFormData({ ...formData, musica: val })}
+                  placeholder="Ex: Wonderwall"
+                />
                 
                 <div className="flex gap-2">
                   <div className="group w-[100px] shrink-0">
@@ -488,17 +493,13 @@ export default function AdminPanel({
                     <input type="number" value={formData.ano} onChange={e => setFormData({...formData, ano: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg input-year" placeholder="1995" />
                   </div>
                   <div className="group flex-1 relative">
-                    <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">ÁLBUM</label>
-                    <input 
-                      type="text" 
-                      value={formData.album} 
-                      onChange={e => {
-                        setFormData({...formData, album: e.target.value});
-                        setActiveField('album');
-                      }}
+                    <RichTextInput
+                      label="ÁLBUM"
+                      field="album"
+                      value={formData.album}
+                      onChange={val => setFormData({ ...formData, album: val })}
                       onFocus={() => setActiveField('album')}
-                      className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" 
-                      placeholder="Optional" 
+                      placeholder="Optional"
                     />
                     {activeField === 'album' && suggestions.length > 0 && (
                       <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
@@ -521,17 +522,13 @@ export default function AdminPanel({
                 </div>
 
                 <div className="group relative">
-                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">DIREÇÃO</label>
-                  <input 
-                    type="text" 
-                    value={formData.direcao} 
-                    onChange={e => {
-                      setFormData({...formData, direcao: e.target.value});
-                      setActiveField('direcao');
-                    }}
+                  <RichTextInput
+                    label="DIREÇÃO"
+                    field="direcao"
+                    value={formData.direcao}
+                    onChange={val => setFormData({ ...formData, direcao: val })}
                     onFocus={() => setActiveField('direcao')}
-                    className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg" 
-                    placeholder="Music Video Director" 
+                    placeholder="Music Video Director"
                   />
                   {activeField === 'direcao' && suggestions.length > 0 && (
                     <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
@@ -696,13 +693,13 @@ export default function AdminPanel({
                             <div className={`border-b border-amber-900/10 transition-colors duration-500 group flex items-center font-jost py-2 ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : isSaved ? 'bg-green-500/30 animate-pulse border-y-green-500/50' : 'hover:bg-amber-900/30'}`}>
                               <div className="p-1 w-10 font-mono text-center text-[10px] opacity-40 flex-shrink-0 [writing-mode:vertical-rl] rotate-180 h-16 flex items-center justify-center border-r border-amber-900/20">{item.id}</div>
                               <div className="p-3 flex-1 min-w-0">
-                                <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost">{item.artista}</div>
-                                <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost">{item.musica || '---'}</div>
-                                <div className="text-xs text-cyan-400 mt-1 italic whitespace-normal break-words font-jost">{item.album || '(No Album)'}</div>
+                                <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: item.artista }} />
+                                <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: item.musica || '---' }} />
+                                <div className="text-xs text-cyan-400 mt-1 whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: item.album || '' }} />
                               </div>
                               <div className="p-3 w-40 hidden sm:block flex-shrink-0">
                                 <div className="text-sm font-jost text-orange-500 font-bold">{item.ano || '----'}</div>
-                                <div className="text-xs text-orange-400 mt-1 font-jost whitespace-normal break-words max-w-[150px]">{item.direcao || 'NO DIRECTOR'}</div>
+                                <div className="text-xs text-orange-400 mt-1 font-jost whitespace-normal break-words max-w-[150px]" dangerouslySetInnerHTML={{ __html: item.direcao || '—' }} />
                               </div>
                               <div className="p-3 w-24 text-center flex-shrink-0">
                                 <button onClick={() => {

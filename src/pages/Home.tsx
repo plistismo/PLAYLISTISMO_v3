@@ -580,12 +580,12 @@ export default function Home({ session }: { session: Session | null }) {
                       )}
                     </div>
 
-                    <div className={`credits-overlay ${showCredits ? 'visible' : ''}`}>
-                      {currentVideoData?.artista && <div className="credit-line"><span className="icon">🎤</span> <div className="credit-text-content"><span>{currentVideoData.artista}</span></div></div>}
-                      {currentVideoData?.musica && <div className="credit-line"><span className="icon">🎼</span> <div className="credit-text-content"><span>{currentVideoData.musica}</span></div></div>}
-                      {currentVideoData?.album && <div className="credit-line"><span className="icon">💽</span> <div className="credit-text-content"><span>{currentVideoData.album}</span></div></div>}
-                      {currentVideoData?.ano && <div className="credit-line"><span className="icon">📅</span> <div className="credit-text-content"><span>{currentVideoData.ano}</span></div></div>}
-                      {currentVideoData?.direcao && <div className="credit-line"><span className="icon">🎬</span> <div className="credit-text-content"><span>{currentVideoData.direcao}</span></div></div>}
+                    <div className={`credits-overlay ${showCredits ? 'visible' : ''} credits-3d-shadow`}>
+                      {currentVideoData?.artista && <div className="credit-line"><span className="icon">🎤</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.artista }} /></div></div>}
+                      {currentVideoData?.musica && <div className="credit-line"><span className="icon">🎼</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.musica }} /></div></div>}
+                      {currentVideoData?.album && <div className="credit-line"><span className="icon">💽</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.album }} /></div></div>}
+                      {currentVideoData?.ano && <div className="credit-line"><span className="icon">📅</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.ano }} /></div></div>}
+                      {currentVideoData?.direcao && <div className="credit-line"><span className="icon">🎬</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.direcao || '—' }} /></div></div>}
                     </div>
 
                     <div className="vhs-noise z-40 mix-blend-overlay pointer-events-none"></div>
