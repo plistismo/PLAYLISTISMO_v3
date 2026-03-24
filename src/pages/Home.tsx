@@ -375,7 +375,7 @@ export default function Home({ session }: { session: Session | null }) {
   const playlistParts = currentChannelName.split(':');
 
   return (
-    <div className={`bg-[#050505] min-h-screen overflow-x-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500 ${isSearchOpen ? 'guide-active overflow-hidden' : ''}`}>
+    <div className={`bg-[#050505] min-h-screen overflow-x-hidden selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500 ${isAdminSidebarOpen ? 'block' : 'flex items-center justify-center'} ${isSearchOpen ? 'guide-active overflow-hidden' : ''}`}>
 
       {/* Admin Panel Header moved down to follow TV */}
 
@@ -453,11 +453,11 @@ export default function Home({ session }: { session: Session | null }) {
 
       {/* Admin Panel is now integrated into the main tripartite layout */}
 
-      <main className={`relative z-10 w-full min-h-screen flex flex-col md:grid transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'md:grid-cols-[1fr_auto_1fr]' : 'md:grid-cols-[0px_1fr_0px] overflow-hidden'}`}>
+      <main className={`relative z-10 w-full min-h-screen flex flex-col md:grid transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'md:grid-cols-[auto_1fr_auto]' : 'md:grid-cols-[0px_1fr_0px] overflow-hidden'}`}>
         
         {/* LEFT PANEL: FORM INTEGRATION */}
-        <aside className={`hidden md:flex justify-end overflow-hidden transition-all duration-500 ease-in-out border-r border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-full' : '-translate-x-full opacity-0 w-0'}`}>
-          <div className="w-[450px] h-full">
+        <aside className={`hidden md:flex overflow-hidden transition-all duration-500 ease-in-out border-r border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-auto' : '-translate-x-full opacity-0 w-0'}`}>
+          <div className="w-[400px] h-full">
             {isAdminSidebarOpen && (
               <AdminPanel
                 session={session}
@@ -496,10 +496,10 @@ export default function Home({ session }: { session: Session | null }) {
         </aside>
 
         {/* MIDDLE PANEL: TV & CONTROLS */}
-        <section className={`flex flex-col items-center justify-center p-4 transition-all duration-500 w-full max-w-[1200px] mx-auto ${isSearchOpen ? 'md:translate-x-[200px] scale-[0.85] md:scale-95' : ''}`}>
+        <section className={`flex flex-col items-center justify-center p-4 transition-all duration-500 w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[1200px] mx-auto'} ${isSearchOpen ? 'md:translate-x-[200px] scale-[0.85] md:scale-95' : ''}`}>
           
           {/* Centralized Admin Buttons */}
-          <div id="admin-panel-controls" className="mb-8 flex flex-wrap gap-4 items-center justify-center w-full max-w-[800px]">
+          <div id="admin-panel-controls" className={`mb-8 flex flex-wrap gap-4 items-center justify-center w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[800px]'}`}>
             {!session && (
               <button onClick={() => navigate('/login')} className="bg-zinc-900/20 text-zinc-500 border border-zinc-600/50 px-4 py-2 font-vt323 text-xl tracking-widest hover:bg-zinc-600 hover:text-white transition-all uppercase shadow-[0_0_15px_rgba(255,255,255,0.05)] backdrop-blur-sm flex items-center gap-2 opacity-50 hover:opacity-100">🔑 LOGIN</button>
             )}
@@ -531,7 +531,7 @@ export default function Home({ session }: { session: Session | null }) {
 
 
 
-          <div className="relative w-full max-w-[1000px] tv-responsive-container flex flex-col transition-all duration-500 ease-out cursor-pointer" onClick={() => setIsSearchOpen(false)}>
+          <div className={`relative w-full ${isAdminSidebarOpen ? 'max-w-full px-4 mx-0' : 'max-w-[1000px] mx-auto'} tv-responsive-container flex flex-col transition-all duration-500 ease-out cursor-pointer`} onClick={() => setIsSearchOpen(false)} style={{ width: isAdminSidebarOpen ? '100%' : 'auto' }}>
           <div className="relative w-full transition-all duration-500 md:perspective-[1500px] group">
             <div className="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
 
@@ -649,7 +649,7 @@ export default function Home({ session }: { session: Session | null }) {
         </section>
 
         {/* RIGHT PANEL: TABLE INTEGRATION */}
-        <aside className={`hidden md:flex justify-start overflow-hidden transition-all duration-500 ease-in-out border-l border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-full' : 'translate-x-full opacity-0 w-0'}`}>
+        <aside className={`hidden md:flex justify-start overflow-hidden transition-all duration-500 ease-in-out border-l border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-auto' : 'translate-x-full opacity-0 w-0'}`}>
           <div className="w-[550px] h-full">
             {isAdminSidebarOpen && (
               <AdminPanel
