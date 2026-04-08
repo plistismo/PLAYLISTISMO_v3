@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/Supabase-DB-3ECF8E?style=for-the-badge&logo=supabase" alt="Supabase" />
 </div>
 
+
 <br />
 
 > **Playlistismo** is a premium, immersive web experience that transforms YouTube playlists into a nostalgic 1990s TV journey. Experience music videos through a simulated Sony Trinitron CRT, complete with authentic interface quirks, scanlines, and a retro Teletext guide.
