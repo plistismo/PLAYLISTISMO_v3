@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { Virtuoso } from 'react-virtuoso';
 import RichTextInput from './RichTextInput.tsx';
+import { sanitizeHTML, decodeHTMLEntities } from '../lib/sanitize.ts';
 
 type MusicEntry = {
   id: number;
@@ -23,7 +24,7 @@ interface AdminPanelProps {
   editId?: string | null;
   onEdit?: (id: string) => void;
   onClose?: () => void;
-  onSave?: (updatedData?: any) => void;
+  onSave?: (updatedData?: Partial<MusicEntry>) => void;
   onPreview?: (videoId: string) => void;
   displayMode?: AdminDisplayMode;
   playingId?: string | null;
@@ -57,6 +58,7 @@ export default function AdminPanel({
     direcao: '',
     video_id: ''
   });
+  const [originalVideoId, setOriginalVideoId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [statusMsg, setStatusMsg] = useState({ text: '', isError: false, show: false });
   const [isSaving, setIsSaving] = useState(false);
@@ -153,6 +155,7 @@ export default function AdminPanel({
         video_id: videoData.video_id || ''
       });
       setIsEditing(true);
+      setOriginalVideoId(videoData.video_id || null);
       setNewPlaylistsToAdd([]); // Reset tags when loading new video
       
       // Fetch all playlists where this video exists
@@ -226,13 +229,7 @@ export default function AdminPanel({
     e.preventDefault();
     setIsSaving(true);
     
-    const payload = {
-      album: formData.album ? formData.album.replace(/<[^>]*>?/gm, '').trim() : null,
-      direcao: formData.direcao ? formData.direcao.replace(/<[^>]*>?/gm, '').trim() : null,
-      video_id: formData.video_id ? formData.video_id.replace(/<[^>]*>?/gm, '').trim() : null
-    };
-
-    // Actually, the user wants to save tags. So I should NOT strip them.
+    // The user wants to save tags.
     // "Garanta que o Supabase salve as tags de formatação"
     const richPayload = {
       artista: formData.artista.trim(),
@@ -246,10 +243,16 @@ export default function AdminPanel({
     let error = null;
 
     if (isEditing) {
-      const { error: err } = await supabase.from('musicas_backup').update(richPayload).eq('id', formData.id);
+      const targetVideoId = originalVideoId || formData.video_id; 
+      
+      const { error: err, data: updatedRecords } = await supabase.from('musicas_backup')
+        .update(richPayload)
+        .eq('video_id', targetVideoId)
+        .select();
+        
       error = err;
       if (!error) {
-        showMessage(`REGISTRO #${formData.id} ATUALIZADO!`);
+        showMessage(`REGISTRO GLOBAL DO VÍDEO ATUALIZADO!`);
         
         // Batch insert for new playlists
         if (newPlaylistsToAdd.length > 0) {
@@ -266,14 +269,23 @@ export default function AdminPanel({
             showMessage(`REGISTRO ATUALIZADO E ADICIONADO A ${newPlaylistsToAdd.length} CANAIS!`);
           }
         }
+        
+        // Synchronize local data arrays instantly
+        setData(prev => prev.map(item => item.video_id === targetVideoId ? { ...item, ...richPayload } : item));
+        
+        if (updatedRecords && updatedRecords.length > 0) {
+          const savedId = Number(updatedRecords[0].id);
+          if (onSave) onSave({ ...richPayload, id: savedId, video_id: formData.video_id } as MusicEntry);
+          setLastSavedId(savedId);
+          setTimeout(() => setLastSavedId(null), 3000);
+        }
+        if (onRestartPlayer) onRestartPlayer();
       }
     } else {
-      // For NEW records, if multiple playlists are selected, we might want to insert all of them.
-      // But the current logic is to insert one and then we could insert others.
-      // Let's stick to the current playlist + newPlaylists.
+      // For NEW records
       const initialPlaylist = selectedPlaylist; // Current filter playlist or empty
       const { data: newRecord, error: err } = await supabase.from('musicas_backup').insert([{
-        ...payload,
+        ...richPayload,
         playlist: initialPlaylist || null,
         playlist_group: initialPlaylist ? playlistToGroup[initialPlaylist] : null
       }]).select().single();
@@ -291,6 +303,18 @@ export default function AdminPanel({
           }));
           await supabase.from('musicas_backup').insert(inserts);
         }
+        
+        const finalNewRecord = newRecord as MusicEntry;
+        const savedId = Number(finalNewRecord.id);
+        
+        if (onSave) onSave({ ...richPayload, id: savedId });
+        if (onRestartPlayer) onRestartPlayer();
+        
+        setData(prev => [finalNewRecord, ...prev]);
+        setLastSavedId(savedId);
+        setTimeout(() => setLastSavedId(null), 3000);
+        clearForm();
+        setTimeout(() => fetchMusics(), 2000);
       }
     }
 
@@ -298,7 +322,7 @@ export default function AdminPanel({
     
     if (error) {
       showMessage(`ERRO: ${error.message}`, true);
-    } else {
+    } else if (isEditing) {
       const savedId = Number(formData.id);
       
       // Update parent if callback provided
@@ -327,8 +351,7 @@ export default function AdminPanel({
       setIsEditing(false); // Reset editing mode
       clearForm();
       
-      // Delay fetchMusics to keep the visual feedback, or just skip if local sync is sufficient.
-      // Keeping it but with larger delay to ensure smooth transition.
+      // Delay fetchMusics to keep the visual feedback
       setTimeout(() => fetchMusics(), 2000);
     }
   };
@@ -359,7 +382,7 @@ export default function AdminPanel({
 
     if (!error && data) {
       const fieldName = field as keyof MusicEntry;
-      const uniqueValues = [...new Set(data.map(item => (item[fieldName] as string || '').replace(/<[^>]*>?/gm, '')).filter(Boolean))]
+      const uniqueValues = [...new Set(data.map(item => decodeHTMLEntities((item[fieldName] as string || '').replace(/<[^>]*>?/gm, ''))).filter(Boolean))]
         .sort()
         .slice(0, 10);
       setSuggestions(uniqueValues);
@@ -693,13 +716,13 @@ export default function AdminPanel({
                             <div className={`border-b border-amber-900/10 transition-colors duration-500 group flex items-center font-jost py-2 ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : isSaved ? 'bg-green-500/30 animate-pulse border-y-green-500/50' : 'hover:bg-amber-900/30'}`}>
                               <div className="p-1 w-10 font-mono text-center text-[10px] opacity-40 flex-shrink-0 [writing-mode:vertical-rl] rotate-180 h-16 flex items-center justify-center border-r border-amber-900/20">{item.id}</div>
                               <div className="p-3 flex-1 min-w-0">
-                                <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: item.artista }} />
-                                <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: item.musica || '---' }} />
-                                <div className="text-xs text-cyan-400 mt-1 whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: item.album || '' }} />
+                                <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.artista) }} />
+                                <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.musica || '---') }} />
+                                <div className="text-xs text-cyan-400 mt-1 whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.album || '') }} />
                               </div>
                               <div className="p-3 w-40 hidden sm:block flex-shrink-0">
                                 <div className="text-sm font-jost text-orange-500 font-bold">{item.ano || '----'}</div>
-                                <div className="text-xs text-orange-400 mt-1 font-jost whitespace-normal break-words max-w-[150px]" dangerouslySetInnerHTML={{ __html: item.direcao || '—' }} />
+                                <div className="text-xs text-orange-400 mt-1 font-jost whitespace-normal break-words max-w-[150px]" dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.direcao || '—') }} />
                               </div>
                               <div className="p-3 w-24 text-center flex-shrink-0">
                                 <button onClick={() => {

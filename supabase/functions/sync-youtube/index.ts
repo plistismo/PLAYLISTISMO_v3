@@ -59,19 +59,47 @@ Deno.serve(async (req) => {
                       .trim()
 
         // 3. Upsert into musicas_backup
-        // Note: Using video_id as the unique identifier
-        const { error: upsertError } = await supabase
+        // We cannot rely on 'video_id' unique constraint since multiple playlists can have the same video.
+        // We do a select check first for the specific (video_id, playlist) association.
+        const { data: existingRecords, error: selectErr } = await supabase
           .from('musicas_backup')
-          .upsert({
-            video_id: videoId,
-            artista: artista,
-            musica: musica,
-            playlist: pl.name,
-            // You can add more fields if needed
-          }, { onConflict: 'video_id' })
+          .select('id')
+          .eq('video_id', videoId)
+          .eq('playlist', pl.name);
 
-        if (upsertError) {
-          console.error(`Error upserting ${videoId}:`, upsertError)
+        if (selectErr) {
+          console.error(`Error checking existing record for ${videoId}:`, selectErr)
+          continue;
+        }
+
+        if (existingRecords && existingRecords.length > 0) {
+          // Update existing row (optional: depending on whether we want YouTube to overwrite metadata)
+          // We will update it for now just to maintain the expected sync behavior
+          const { error: updateError } = await supabase
+            .from('musicas_backup')
+            .update({
+              artista: artista,
+              musica: musica
+            })
+            .eq('id', existingRecords[0].id);
+
+          if (updateError) {
+            console.error(`Error updating ${videoId}:`, updateError)
+          }
+        } else {
+          // Insert new row
+          const { error: insertError } = await supabase
+            .from('musicas_backup')
+            .insert({
+              video_id: videoId,
+              artista: artista,
+              musica: musica,
+              playlist: pl.name
+            });
+
+          if (insertError) {
+            console.error(`Error inserting ${videoId}:`, insertError)
+          }
         }
       }
       

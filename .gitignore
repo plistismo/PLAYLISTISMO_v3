@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+_bundle_*
+_blueprint_*
 
 # Editor directories and files
 .vscode/*

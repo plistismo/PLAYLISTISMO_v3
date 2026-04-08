@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { sanitizeHTML } from '../lib/sanitize.ts';
 
 interface RichTextInputProps {
   value: string;
@@ -22,7 +23,7 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
 
   const handleInput = () => {
     if (editorRef.current) {
-      let content = editorRef.current.innerHTML;
+      let content = sanitizeHTML(editorRef.current.innerHTML);
       
       // Auto-formatting logic:
       // We process the HTML to wrap specific patterns in <span style="font-weight: 400">

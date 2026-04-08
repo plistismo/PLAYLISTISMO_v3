@@ -39,11 +39,22 @@
 
 ---
 
+## ⚠️ Arquitetura e Estado Real do Projeto
+
+Este README reflete o estado VERDADEIRO do bundle de produção atual, documentando lacunas e contratos estabelecidos:
+
+*   **Stack Real**: React 19, Vite, TypeScript, Tailwind CSS, Supabase para Backend e Auth.
+*   **Rotas Reais**: `/` (Home com Player), `/login`, `/admin`, e `/tv`.
+*   **Dependência de Dados**: O funcionamento depende intrinsecamente das tabelas `playlists` e `musicas_backup` presentes no Supabase.
+*   **Schema Não Versionado**: As queries e funções assuem a estrutura das tabelas acima, porém o schema SQL exato (`database.sql`) **não está versionado no repositório**. 
+*   **Segurança**: O client-side utiliza um `ADMIN_UID` fixo para mostrar botões do painel, mas a **segurança real na produção deve ser garantida por regras RLS** diretamente no painel do Supabase.
+*   **Contrato Multi-Playlist**: O sistema possui como regra de ouro que **o mesmo `video_id` do YouTube pode pertencer a múltiplas playlists**. Por esse motivo, operações no banco nunca tratam `video_id` como unicidade primária em cenários de conflito.
+
 ## 🚀 Getting Started
 
 ### 1. Prerequisites
 - Node.js 18+
-- A Supabase project with the appropriate schema.
+- Projeto Supabase com tabelas `playlists` e `musicas_backup` e variáveis de ambiente configuradas.
 
 ### 2. Installation
 ```bash

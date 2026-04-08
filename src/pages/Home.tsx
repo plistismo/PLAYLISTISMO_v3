@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import AdminPanel from '../components/AdminPanel.tsx';
+import { sanitizeHTML } from '../lib/sanitize.ts';
 
 declare global {
   interface Window {
@@ -44,15 +45,18 @@ export default function Home({ session }: { session: Session | null }) {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
 
+  type PlaylistItem = { name: string; group_name?: string; [key: string]: any };
+  type VideoData = { id?: string | number; video_id: string; artista?: string; musica?: string; album?: string; ano?: string; direcao?: string; playlist?: string; [key: string]: any };
+
   // App State
   const [isOn, setIsOn] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [channelsByCategory, setChannelsByCategory] = useState<Record<string, any[]>>({});
-  const [currentChannelList, setCurrentChannelList] = useState<any[]>([]);
+  const [channelsByCategory, setChannelsByCategory] = useState<Record<string, PlaylistItem[]>>({});
+  const [currentChannelList, setCurrentChannelList] = useState<VideoData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentChannelName, setCurrentChannelName] = useState('');
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
-  const [currentVideoData, setCurrentVideoData] = useState<any>(null);
+  const [currentVideoData, setCurrentVideoData] = useState<VideoData | null>(null);
 
   // UI State
   const [isBumping, setIsBumping] = useState(false);
@@ -66,7 +70,7 @@ export default function Home({ session }: { session: Session | null }) {
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
   const [adminEditId, setAdminEditId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [lastSavedRecord, setLastSavedRecord] = useState<any>(null);
+  const [lastSavedRecord, setLastSavedRecord] = useState<VideoData | null>(null);
   
   // Histórico de Sessão (Shuffle sem Repetição)
   const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
@@ -266,20 +270,27 @@ export default function Home({ session }: { session: Session | null }) {
     
     // Tenta achar nos dados já carregados para ter info completa
     const existing = currentChannelList.find(v => v.video_id === videoId);
-    if (existing) {
-      setCurrentVideoData(existing);
-    } else {
-      // Se não achar, faz um fetch rápido ou apenas carrega o ID
-      const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).maybeSingle();
-      if (data) {
-        setCurrentVideoData(data);
-      } else {
-        setCurrentVideoData({ video_id: videoId });
-      }
+    let nextData = existing;
+
+    if (!existing) {
+      // Se não achar, não assume unicidade. Busca a primeira ocorrência do vídeo.
+      const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).limit(1).maybeSingle();
+      nextData = data || { video_id: videoId };
     }
     
+    setCurrentVideoData({ ...nextData! }); // force fresh ref to trigger effect
+    
     if (!isOn) setIsOn(true);
-    playerRef.current?.playVideo();
+    
+    if (isReady && playerRef.current) {
+      // Force immediate reload ignoring cache check
+      playerRef.current.loadVideoById({
+        videoId: videoId,
+        suggestedQuality: 'hd720'
+      });
+      lastVideoIdRef.current = videoId;
+      playerRef.current.playVideo();
+    }
   };
 
   // Efeito centralizado para carregar o vídeo sempre que o dado mudar
@@ -397,11 +408,11 @@ export default function Home({ session }: { session: Session | null }) {
             <div className="bg-[#111] border-2 border-white/30 p-4 mb-6 shrink-0 shadow-[8px_8px_0_rgba(0,0,0,1)] font-jost relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 via-cyan-400 via-pink-400 to-orange-500"></div>
               <div className="space-y-3">
-                {currentVideoData.artista && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎤</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ARTIST</span><div className="text-[#ffff00] text-xl font-bold uppercase truncate">{currentVideoData.artista}</div></div></div>}
-                {currentVideoData.musica && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎼</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">TRACK</span><div className="text-[#00ff00] text-xl font-bold uppercase truncate">{currentVideoData.musica}</div></div></div>}
-                {currentVideoData.album && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">💽</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ALBUM</span><div className="text-[#00ffff] text-base font-bold uppercase truncate">{currentVideoData.album}</div></div></div>}
-                {currentVideoData.ano && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">📅</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">RELEASE</span><div className="text-[#ff00ff] text-base font-bold uppercase truncate">{currentVideoData.ano}</div></div></div>}
-                {currentVideoData.direcao && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎬</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">DIRECTOR</span><div className="text-[#ff8800] text-base font-bold uppercase truncate">{currentVideoData.direcao}</div></div></div>}
+                {currentVideoData.artista && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎤</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ARTIST</span><div className="text-[#ffff00] text-xl font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.artista) }} /></div></div>}
+                {currentVideoData.musica && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎼</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">TRACK</span><div className="text-[#00ff00] text-xl font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.musica) }} /></div></div>}
+                {currentVideoData.album && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">💽</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ALBUM</span><div className="text-[#00ffff] text-base font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.album) }} /></div></div>}
+                {currentVideoData.ano && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">📅</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">RELEASE</span><div className="text-[#ff00ff] text-base font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.ano) }} /></div></div>}
+                {currentVideoData.direcao && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎬</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">DIRECTOR</span><div className="text-[#ff8800] text-base font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.direcao) }} /></div></div>}
               </div>
               <div className="mt-4 text-white/40 text-[10px] uppercase tracking-tighter border-t border-white/10 pt-2 italic text-right">CHANNEL: {currentChannelName}</div>
             </div>
@@ -468,18 +479,23 @@ export default function Home({ session }: { session: Session | null }) {
                   fetchGuideData();
                   if (newData) {
                     const savedIdStr = String(newData.id);
-                    setLastSavedRecord(newData);
+                    setLastSavedRecord(newData as VideoData);
                     
                     // Update currentVideoData if it's the one being edited
-                    if (savedIdStr === String(currentVideoData?.id)) {
-                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE");
-                      setCurrentVideoData({ ...currentVideoData, ...newData });
+                    if (newData.video_id && newData.video_id === currentVideoData?.video_id) {
+                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR VIDEO_ID)");
+                      setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
+                    } else if (!newData.video_id && savedIdStr === String(currentVideoData?.id)) {
+                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR ID)");
+                      setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
                     }
                     
                     // Synchronize currentChannelList to avoid stale data
-                    setCurrentChannelList(prev => prev.map(item => 
-                      String(item.id) === savedIdStr ? { ...item, ...newData } : item
-                    ));
+                    setCurrentChannelList(prev => prev.map(item => {
+                      if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...(newData as VideoData) };
+                      if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...(newData as VideoData) };
+                      return item;
+                    }));
 
                     setAdminEditId(null);
                   }
@@ -518,7 +534,7 @@ export default function Home({ session }: { session: Session | null }) {
                 <button 
                   onClick={() => { 
                     const newState = !isAdminSidebarOpen || adminEditId === null;
-                    setAdminEditId(currentVideoData?.id); 
+                    setAdminEditId(currentVideoData?.id ? String(currentVideoData.id) : null); 
                     setIsAdminSidebarOpen(newState); 
                   }} 
                   className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm ${adminEditId && isAdminSidebarOpen ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]' : 'bg-amber-900/40 text-amber-500 border-amber-600/50 hover:bg-amber-600 hover:text-black hover:border-amber-400'}`}
@@ -581,11 +597,11 @@ export default function Home({ session }: { session: Session | null }) {
                     </div>
 
                     <div className={`credits-overlay ${showCredits ? 'visible' : ''} credits-3d-shadow`}>
-                      {currentVideoData?.artista && <div className="credit-line"><span className="icon">🎤</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.artista }} /></div></div>}
-                      {currentVideoData?.musica && <div className="credit-line"><span className="icon">🎼</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.musica }} /></div></div>}
-                      {currentVideoData?.album && <div className="credit-line"><span className="icon">💽</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.album }} /></div></div>}
-                      {currentVideoData?.ano && <div className="credit-line"><span className="icon">📅</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.ano }} /></div></div>}
-                      {currentVideoData?.direcao && <div className="credit-line"><span className="icon">🎬</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: currentVideoData.direcao || '—' }} /></div></div>}
+                      {currentVideoData?.artista && <div className="credit-line"><span className="icon">🎤</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.artista) }} /></div></div>}
+                      {currentVideoData?.musica && <div className="credit-line"><span className="icon">🎼</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.musica) }} /></div></div>}
+                      {currentVideoData?.album && <div className="credit-line"><span className="icon">💽</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.album) }} /></div></div>}
+                      {currentVideoData?.ano && <div className="credit-line"><span className="icon">📅</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.ano) }} /></div></div>}
+                      {currentVideoData?.direcao && <div className="credit-line"><span className="icon">🎬</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.direcao || '—') }} /></div></div>}
                     </div>
 
                     <div className="vhs-noise z-40 mix-blend-overlay pointer-events-none"></div>
@@ -658,29 +674,34 @@ export default function Home({ session }: { session: Session | null }) {
                 displayMode="table"
                 onEdit={(id) => setAdminEditId(id)}
                 onClose={() => setIsAdminSidebarOpen(false)}
-                playingId={currentVideoData?.id}
+                playingId={currentVideoData?.id ? String(currentVideoData.id) : null}
                 initialPlaylist={currentChannelName}
                 onSave={(newData) => {
                   fetchGuideData();
                   if (newData) {
                     const savedIdStr = String(newData.id);
-                    setLastSavedRecord(newData);
+                    setLastSavedRecord(newData as VideoData);
                     
                     // Update currentVideoData if it's the one being edited
-                    if (savedIdStr === String(currentVideoData?.id)) {
-                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (TABELA)");
-                      setCurrentVideoData({ ...currentVideoData, ...newData });
+                    if (newData.video_id && newData.video_id === currentVideoData?.video_id) {
+                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR VIDEO_ID - TABELA)");
+                      setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
+                    } else if (!newData.video_id && savedIdStr === String(currentVideoData?.id)) {
+                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR ID - TABELA)");
+                      setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
                     }
                     
                     // Synchronize currentChannelList to avoid stale data
-                    setCurrentChannelList(prev => prev.map(item => 
-                      String(item.id) === savedIdStr ? { ...item, ...newData } : item
-                    ));
+                    setCurrentChannelList(prev => prev.map(item => {
+                      if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...(newData as VideoData) };
+                      if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...(newData as VideoData) };
+                      return item;
+                    }));
 
                     setAdminEditId(null);
                   }
                 }}
-                lastSavedRecord={lastSavedRecord}
+                lastSavedRecord={lastSavedRecord as any}
               />
             )}
           </div>
