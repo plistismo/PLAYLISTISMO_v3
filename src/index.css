@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Default Dark Academia / Autor Theme */
+  --capy-bg: #000000;
+  --capy-surface: #0a0a0a;
+  --capy-accent: #8b0000; /* Deep Blood Red */
+  --capy-text: #e0e0e0;
+  --capy-text-muted: #888888;
+  --capy-glass-bg: rgba(15, 15, 15, 0.7);
+  --capy-glass-border: rgba(255, 255, 255, 0.1);
+  --capy-header: #000000;
+}
+
+.theme-musa {
+  /* Light Academia / Musa Theme */
+  --capy-bg: #f4ece1; /* Parchment */
+  --capy-surface: #e8dfd2;
+  --capy-accent: #c2a182; /* Antique Gold/Brass */
+  --capy-text: #3c2f2f; /* Deep Sepia */
+  --capy-text-muted: #7d6e6e;
+  --capy-glass-bg: rgba(244, 236, 225, 0.8);
+  --capy-glass-border: rgba(60, 47, 47, 0.15);
+  --capy-header: #ede4d8;
+}
+
+body {
+  background-color: var(--capy-bg);
+  color: var(--capy-text);
+}
+
+/* Escopo explícito para evitar overhead e dupla interpolação (Performance) */
+body, 
+header, 
+footer, 
+.bg-black,
+.bg-zinc-900,
+.bg-\[\#1c1c1e\],
+.bg-\[\#262626\] {
+  transition: background-color 0.8s ease, color 0.8s ease, border-color 0.8s ease;
+}
+
+body {
+  background-color: var(--capy-bg);
+  color: var(--capy-text);
+}

@@ -1,0 +1,8 @@
+{
+  "name": "CapBook-two",
+  "description": "A personalized private messaging app for a special couple, featuring a unique 'Capybara and Dark Academia' aesthetic.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

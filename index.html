@@ -1,0 +1,175 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>CapyBook Love</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --color-bg-deep: #000000;
+            --color-bg-mid: #0a0a0a;
+            --color-accent: #3b82f6;
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        input,
+        textarea {
+            user-select: text !important;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--color-bg-deep);
+            overscroll-behavior-y: none;
+        }
+
+        #root {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .font-serif {
+            font-family: 'Crimson Pro', serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        /* Dark Academia Vignette - Lighter to avoid obscuring content */
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes particle-burst {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.5); opacity: 0; }
+        }
+
+        @keyframes float-heart {
+            0% { transform: translateY(0) scale(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; transform: translateY(-10vh) scale(1) rotate(10deg); }
+            100% { transform: translateY(-100vh) scale(1.5) rotate(-20deg); opacity: 0; }
+        }
+
+        .animate-particle {
+            animation: particle-burst 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+
+        .animate-love-heart {
+            animation: float-heart 4s ease-in forwards;
+        }
+
+        .animate-in {
+            animation-duration: 0.3s;
+            animation-fill-mode: both;
+        }
+
+        .fade-in {
+            animation-name: fadeIn;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 50%, #111111 0%, #000000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100dvh;
+            color: #ffffff;
+        }
+
+        .app-container {
+            width: 100%;
+            height: 100dvh;
+            max-width: 500px;
+            position: relative;
+            background: #000000;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 768px) {
+            .app-container {
+                height: 94dvh;
+                max-height: 900px;
+                border-radius: 28px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
+            }
+        }
+    </style>
+    <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "emoji-picker-react": "https://esm.sh/emoji-picker-react@^4.16.1",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@capacitor/cli": "https://esm.sh/@capacitor/cli@^8.0.1",
+    "@capgo/capacitor-native-biometric": "https://esm.sh/@capgo/capacitor-native-biometric@6.0.4"
+  }
+}
+</script>
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="root"></div>
+    </div>
+    <div class="vignette"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
