@@ -136,8 +136,8 @@ Pontos não validáveis no recorte visível. Usar: **não visível no recorte en
 - Route mode: director
 - Document mode: full
 - Extração efetiva: FULL
-- Recortes prioritários: ./src/components/AdminPanel.tsx, ./vite.config.ts, ./postcss.config.js, ./index.tsx, ./supabase/functions/sync-youtube/deno.json, ./package.json, ./src/components/RichTextInput.tsx, ./src/lib/supabase.ts
-- Gerado em: 2026-04-26T08:19:38.9773270Z
+- Recortes prioritários: ./src/main.tsx, ./src/lib/sanitize.ts, ./src/components/RichTextInput.tsx, ./postcss.config.js, ./src/pages/Tv.tsx, ./supabase/functions/sync-youtube/deno.json, ./tv.css, ./vite.config.ts
+- Gerado em: 2026-04-26T08:47:30.3460730Z
 
 [INSTRUÇÃO OPERACIONAL PARA O EXECUTOR]
 
@@ -149,7 +149,7 @@ Pontos não validáveis no recorte visível. Usar: **não visível no recorte en
 - Artefato fonte analisado pelo Diretor: _bundle_diretor__PLAYLISTISMO_v3.md
 - Extração efetiva do recorte analisado: FULL
 - Executor alvo de referência: IA Generativa (GenAI)
-- Arquivos prioritários do recorte: ./src/components/AdminPanel.tsx, ./vite.config.ts, ./postcss.config.js, ./index.tsx, ./supabase/functions/sync-youtube/deno.json, ./package.json, ./src/components/RichTextInput.tsx, ./src/lib/supabase.ts
+- Arquivos prioritários do recorte: ./src/main.tsx, ./src/lib/sanitize.ts, ./src/components/RichTextInput.tsx, ./postcss.config.js, ./src/pages/Tv.tsx, ./supabase/functions/sync-youtube/deno.json, ./tv.css, ./vite.config.ts
 
 ### OBJETIVO TÉCNICO
 - Descrever a tarefa de forma objetiva, delimitada e verificável.
