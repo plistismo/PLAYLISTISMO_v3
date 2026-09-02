@@ -209,6 +209,15 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
     font-weight: 800;
 }
 
+/* Fonte alternativa: Josefin Sans — mantém sombra e espaçamentos idênticos */
+.credits-josefin {
+    font-family: 'Josefin Sans', sans-serif !important;
+    /* Preserva EXATAMENTE a mesma sombra forte 100% preta do .credits-3d-shadow */
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 3px 3px 4px rgba(0,0,0,0.9) !important;
+    /* Mantém o mesmo espaçamento de letras */
+    letter-spacing: 0.04em;
+}
+
 .credit-line { 
     margin-bottom: 0.35rem; 
     display: grid; 

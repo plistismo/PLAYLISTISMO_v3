@@ -71,6 +71,7 @@ export default function Home({ session }: { session: Session | null }) {
   const [adminEditId, setAdminEditId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [lastSavedRecord, setLastSavedRecord] = useState<VideoData | null>(null);
+  const [useJosefinFont, setUseJosefinFont] = useState(false);
   
   // Histórico de Sessão (Shuffle sem Repetição)
   const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
@@ -468,45 +469,73 @@ export default function Home({ session }: { session: Session | null }) {
         
         {/* LEFT PANEL: FORM INTEGRATION */}
         <aside className={`hidden md:flex overflow-hidden transition-all duration-500 ease-in-out border-r border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-auto' : '-translate-x-full opacity-0 w-0'}`}>
-          <div className="w-[400px] h-full">
+          <div className="w-[400px] h-full flex flex-col">
             {isAdminSidebarOpen && (
-              <AdminPanel
-                session={session}
-                editId={adminEditId}
-                displayMode="form"
-                onClose={() => setIsAdminSidebarOpen(false)}
-                onSave={(newData) => {
-                  fetchGuideData();
-                  if (newData) {
-                    const savedIdStr = String(newData.id);
-                    setLastSavedRecord(newData as VideoData);
-                    
-                    // Update currentVideoData if it's the one being edited
-                    if (newData.video_id && newData.video_id === currentVideoData?.video_id) {
-                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR VIDEO_ID)");
-                      setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
-                    } else if (!newData.video_id && savedIdStr === String(currentVideoData?.id)) {
-                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR ID)");
-                      setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
-                    }
-                    
-                    // Synchronize currentChannelList to avoid stale data
-                    setCurrentChannelList(prev => prev.map(item => {
-                      if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...(newData as VideoData) };
-                      if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...(newData as VideoData) };
-                      return item;
-                    }));
+              <>
+                {/* Toggle: Fonte dos Créditos */}
+                <div className="shrink-0 px-6 py-3 bg-black border-b border-amber-900/30 flex items-center justify-between">
+                  <label htmlFor="toggle-josefin" className="text-xs text-amber-700 uppercase font-bold tracking-widest font-vt323 cursor-pointer select-none">
+                    Créditos: Josefin Sans
+                  </label>
+                  <button
+                    id="toggle-josefin"
+                    type="button"
+                    onClick={() => setUseJosefinFont(prev => !prev)}
+                    className={`relative w-10 h-5 rounded-full border transition-all duration-300 focus:outline-none ${
+                      useJosefinFont
+                        ? 'bg-amber-500 border-amber-400'
+                        : 'bg-black border-amber-900/50'
+                    }`}
+                    aria-pressed={useJosefinFont}
+                    title="Alternar fonte dos créditos para Josefin Sans"
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${
+                        useJosefinFont ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <AdminPanel
+                    session={session}
+                    editId={adminEditId}
+                    displayMode="form"
+                    onClose={() => setIsAdminSidebarOpen(false)}
+                    onSave={(newData) => {
+                      fetchGuideData();
+                      if (newData) {
+                        const savedIdStr = String(newData.id);
+                        setLastSavedRecord(newData as VideoData);
+                        
+                        // Update currentVideoData if it's the one being edited
+                        if (newData.video_id && newData.video_id === currentVideoData?.video_id) {
+                          console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR VIDEO_ID)");
+                          setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
+                        } else if (!newData.video_id && savedIdStr === String(currentVideoData?.id)) {
+                          console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR ID)");
+                          setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
+                        }
+                        
+                        // Synchronize currentChannelList to avoid stale data
+                        setCurrentChannelList(prev => prev.map(item => {
+                          if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...(newData as VideoData) };
+                          if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...(newData as VideoData) };
+                          return item;
+                        }));
 
-                    setAdminEditId(null);
-                  }
-                }}
-                onRestartPlayer={() => {
-                  console.log("RESTARTING PLAYER ON SAVE");
-                  playerRef.current?.seekTo(0);
-                  playerRef.current?.playVideo();
-                }}
-                onPreview={handlePreview}
-              />
+                        setAdminEditId(null);
+                      }
+                    }}
+                    onRestartPlayer={() => {
+                      console.log("RESTARTING PLAYER ON SAVE");
+                      playerRef.current?.seekTo(0);
+                      playerRef.current?.playVideo();
+                    }}
+                    onPreview={handlePreview}
+                  />
+                </div>
+              </>
             )}
           </div>
         </aside>
@@ -596,7 +625,7 @@ export default function Home({ session }: { session: Session | null }) {
                       )}
                     </div>
 
-                    <div className={`credits-overlay ${showCredits ? 'visible' : ''} credits-3d-shadow`}>
+                    <div className={`credits-overlay ${showCredits ? 'visible' : ''} credits-3d-shadow${useJosefinFont ? ' credits-josefin' : ''}`}>
                       {currentVideoData?.artista && <div className="credit-line"><span className="icon">🎤</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.artista) }} /></div></div>}
                       {currentVideoData?.musica && <div className="credit-line"><span className="icon">🎼</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.musica) }} /></div></div>}
                       {currentVideoData?.album && <div className="credit-line"><span className="icon">💽</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.album) }} /></div></div>}
