@@ -87,13 +87,19 @@ export default function Home({ session }: { session: Session | null }) {
 
   // Plataforma ativa: 'youtube' | 'vimeo'
   const [activePlatform, setActivePlatform] = useState<'youtube' | 'vimeo'>('youtube');
+  const activePlatformRef = useRef<'youtube' | 'vimeo'>('youtube');
+  const isAdminSidebarOpenRef = useRef(false);
+  const adminEditIdRef = useRef<string | null>(null);
 
   // Sincroniza as refs com o estado do React
   useEffect(() => {
     channelListRef.current = currentChannelList;
     currentIndexRef.current = currentIndex;
     playedHistoryRef.current = playedHistory;
-  }, [currentChannelList, currentIndex, playedHistory]);
+    activePlatformRef.current = activePlatform;
+    isAdminSidebarOpenRef.current = isAdminSidebarOpen;
+    adminEditIdRef.current = adminEditId;
+  }, [currentChannelList, currentIndex, playedHistory, activePlatform, isAdminSidebarOpen, adminEditId]);
 
   useEffect(() => {
     if (session?.user?.id === ADMIN_UID) {
@@ -110,6 +116,7 @@ export default function Home({ session }: { session: Session | null }) {
 
   // Controle explícito de visibilidade entre os players via element.style
   const syncPlayerVisibility = (platform: 'youtube' | 'vimeo') => {
+    activePlatformRef.current = platform;
     const ytContainer = document.getElementById('yt-player');
     const vimeoContainer = document.getElementById('vimeo-parent-container');
     const vimeoPlayer = document.getElementById('vimeo-player');
@@ -165,8 +172,14 @@ export default function Home({ session }: { session: Session | null }) {
       background: false,
     });
     vimeoPlayerRef.current.on('ended', () => {
-      console.log('VIMEO NON-STOP: VÍDEO ENCERRADO');
-      handleVideoEnd();
+      if (isAdminSidebarOpenRef.current && adminEditIdRef.current) {
+        console.log('VIMEO LOOPING VIDEO (EDIT MODE)');
+        vimeoPlayerRef.current.setCurrentTime(0);
+        vimeoPlayerRef.current.play();
+      } else {
+        console.log('VIMEO NON-STOP: VÍDEO ENCERRADO');
+        handleVideoEnd();
+      }
     });
     vimeoPlayerRef.current.on('error', () => {
       console.warn('VIMEO ERROR: pulando para próximo vídeo');
@@ -175,6 +188,13 @@ export default function Home({ session }: { session: Session | null }) {
     vimeoPlayerRef.current.on('play', () => {
       setStatus('');
       startCreditsMonitor();
+    });
+    vimeoPlayerRef.current.on('timeupdate', (data: { seconds: number; duration: number }) => {
+      const cur = data.seconds;
+      const dur = data.duration;
+      if (dur <= 0) return;
+      setShowCredits((cur >= 10 && cur < 20) || (dur > 30 && cur >= (dur - 20) && cur < (dur - 10)));
+      setShowPlaylistLabel(cur >= 1.5 && cur < dur);
     });
   };
 
@@ -256,10 +276,28 @@ export default function Home({ session }: { session: Session | null }) {
 
   const startCreditsMonitor = () => {
     if (window.creditsInterval) clearInterval(window.creditsInterval);
-    window.creditsInterval = setInterval(() => {
-      if (!playerRef.current || typeof playerRef.current.getCurrentTime !== 'function') return;
-      const cur = playerRef.current.getCurrentTime();
-      const dur = playerRef.current.getDuration();
+    window.creditsInterval = setInterval(async () => {
+      let cur = 0;
+      let dur = 0;
+
+      const currentPlat = activePlatformRef.current;
+
+      if (currentPlat === 'vimeo' && vimeoPlayerRef.current) {
+        try {
+          cur = await vimeoPlayerRef.current.getCurrentTime();
+          dur = await vimeoPlayerRef.current.getDuration();
+        } catch {
+          return;
+        }
+      } else if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+        try {
+          cur = playerRef.current.getCurrentTime();
+          dur = playerRef.current.getDuration();
+        } catch {
+          return;
+        }
+      }
+
       if (dur <= 0) return;
 
       setShowCredits((cur >= 10 && cur < 20) || (dur > 30 && cur >= (dur - 20) && cur < (dur - 10)));
@@ -373,40 +411,45 @@ export default function Home({ session }: { session: Session | null }) {
   };
 
   const handlePreview = async (videoId: string) => {
-    if (!videoId) return;
+    const cleanId = String(videoId || '').trim();
+    if (!cleanId) return;
     setStatus("PREVIEWING...");
     
     // Tenta achar nos dados já carregados para ter info completa
-    const existing = currentChannelList.find(v => v.video_id === videoId);
+    const existing = currentChannelList.find(v => v.video_id === cleanId);
     let nextData = existing;
 
     if (!existing) {
-      const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).limit(1).maybeSingle();
-      nextData = data || { video_id: videoId };
+      const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', cleanId).limit(1).maybeSingle();
+      nextData = data || { video_id: cleanId };
     }
     
-    const isVimeo = /^\d+$/.test(videoId.trim());
+    const isVimeo = /^\d+$/.test(cleanId);
     const platform: 'youtube' | 'vimeo' = isVimeo ? 'vimeo' : 'youtube';
     setActivePlatform(platform);
     syncPlayerVisibility(platform);
-    setCurrentVideoData({ ...nextData!, plataforma: nextData?.plataforma || platform });
+    setCurrentVideoData({ ...nextData!, video_id: cleanId, plataforma: nextData?.plataforma || platform });
     
     if (!isOn) setIsOn(true);
     
     if (isVimeo) {
       if (vimeoPlayerRef.current) {
         playerRef.current?.pauseVideo();
-        vimeoPlayerRef.current.loadVideo(Number(videoId)).then(() => {
+        vimeoPlayerRef.current.loadVideo(Number(cleanId)).then(() => {
           syncPlayerVisibility('vimeo');
           vimeoPlayerRef.current.play();
+          startCreditsMonitor();
+        }).catch((err: any) => {
+          console.warn("Erro no preview do Vimeo:", err);
         });
-        lastVideoIdRef.current = videoId;
+        lastVideoIdRef.current = cleanId;
       }
     } else if (isReady && playerRef.current) {
       vimeoPlayerRef.current?.pause();
-      playerRef.current.loadVideoById({ videoId, suggestedQuality: 'hd720' });
-      lastVideoIdRef.current = videoId;
+      playerRef.current.loadVideoById({ videoId: cleanId, suggestedQuality: 'hd720' });
+      lastVideoIdRef.current = cleanId;
       playerRef.current.playVideo();
+      startCreditsMonitor();
     }
   };
 
@@ -653,31 +696,55 @@ export default function Home({ session }: { session: Session | null }) {
                       fetchGuideData();
                       if (newData) {
                         const savedIdStr = String(newData.id);
-                        setLastSavedRecord(newData as VideoData);
+                        const videoData = newData as VideoData;
+                        setLastSavedRecord(videoData);
                         
-                        // Update currentVideoData if it's the one being edited
-                        if (newData.video_id && newData.video_id === currentVideoData?.video_id) {
-                          console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR VIDEO_ID)");
-                          setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
-                        } else if (!newData.video_id && savedIdStr === String(currentVideoData?.id)) {
-                          console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR ID)");
-                          setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
-                        }
+                        // Atualiza créditos na tela imediatamente
+                        setCurrentVideoData(prev => ({
+                          ...prev,
+                          ...videoData
+                        }));
                         
-                        // Synchronize currentChannelList to avoid stale data
+                        // Sincroniza a lista atual de reprodução
                         setCurrentChannelList(prev => prev.map(item => {
-                          if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...(newData as VideoData) };
-                          if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...(newData as VideoData) };
+                          if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...videoData };
+                          if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...videoData };
                           return item;
                         }));
 
                         setAdminEditId(null);
                       }
                     }}
-                    onRestartPlayer={() => {
-                      console.log("RESTARTING PLAYER ON SAVE");
-                      playerRef.current?.seekTo(0);
-                      playerRef.current?.playVideo();
+                    onRestartPlayer={(savedVideoId?: string) => {
+                      console.log("RESTARTING PLAYER ON SAVE/COMMIT:", savedVideoId);
+                      const targetId = String(savedVideoId || currentVideoData?.video_id || '').trim();
+                      const isVimeo = /^\d+$/.test(targetId);
+
+                      if (isVimeo) {
+                        syncPlayerVisibility('vimeo');
+                        if (vimeoPlayerRef.current && targetId) {
+                          vimeoPlayerRef.current.loadVideo(Number(targetId)).then(() => {
+                            syncPlayerVisibility('vimeo');
+                            vimeoPlayerRef.current.play();
+                            startCreditsMonitor();
+                          }).catch((err: any) => {
+                            console.warn("Erro ao recarregar Vimeo no Commit:", err);
+                          });
+                          lastVideoIdRef.current = targetId;
+                        }
+                      } else {
+                        syncPlayerVisibility('youtube');
+                        if (playerRef.current) {
+                          if (targetId && targetId !== lastVideoIdRef.current) {
+                            playerRef.current.loadVideoById({ videoId: targetId, suggestedQuality: 'hd720' });
+                            lastVideoIdRef.current = targetId;
+                          } else {
+                            playerRef.current?.seekTo(0);
+                          }
+                          playerRef.current?.playVideo();
+                          startCreditsMonitor();
+                        }
+                      }
                     }}
                     onPreview={handlePreview}
                   />
@@ -905,21 +972,19 @@ export default function Home({ session }: { session: Session | null }) {
                   fetchGuideData();
                   if (newData) {
                     const savedIdStr = String(newData.id);
-                    setLastSavedRecord(newData as VideoData);
+                    const videoData = newData as VideoData;
+                    setLastSavedRecord(videoData);
                     
-                    // Update currentVideoData if it's the one being edited
-                    if (newData.video_id && newData.video_id === currentVideoData?.video_id) {
-                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR VIDEO_ID - TABELA)");
-                      setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
-                    } else if (!newData.video_id && savedIdStr === String(currentVideoData?.id)) {
-                      console.log("ATUALIZANDO CRÉDITOS IMEDIATAMENTE (POR ID - TABELA)");
-                      setCurrentVideoData({ ...currentVideoData, ...(newData as VideoData) });
-                    }
+                    // Atualiza créditos na tela imediatamente
+                    setCurrentVideoData(prev => ({
+                      ...prev,
+                      ...videoData
+                    }));
                     
-                    // Synchronize currentChannelList to avoid stale data
+                    // Sincroniza a lista atual de reprodução
                     setCurrentChannelList(prev => prev.map(item => {
-                      if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...(newData as VideoData) };
-                      if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...(newData as VideoData) };
+                      if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...videoData };
+                      if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...videoData };
                       return item;
                     }));
 

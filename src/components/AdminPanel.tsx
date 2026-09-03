@@ -285,7 +285,7 @@ export default function AdminPanel({
           setLastSavedId(savedId);
           setTimeout(() => setLastSavedId(null), 3000);
         }
-        if (onRestartPlayer) onRestartPlayer();
+        if (onRestartPlayer) onRestartPlayer(formData.video_id);
       }
     } else {
       // For NEW records
@@ -313,8 +313,8 @@ export default function AdminPanel({
         const finalNewRecord = newRecord as MusicEntry;
         const savedId = Number(finalNewRecord.id);
         
-        if (onSave) onSave({ ...richPayload, id: savedId });
-        if (onRestartPlayer) onRestartPlayer();
+        if (onSave) onSave({ ...richPayload, id: savedId, video_id: formData.video_id });
+        if (onRestartPlayer) onRestartPlayer(formData.video_id);
         
         setData(prev => [finalNewRecord, ...prev]);
         setLastSavedId(savedId);
@@ -332,10 +332,10 @@ export default function AdminPanel({
       const savedId = Number(formData.id);
       
       // Update parent if callback provided
-      if (onSave) onSave({ ...richPayload, id: savedId });
+      if (onSave) onSave({ ...richPayload, id: savedId, video_id: formData.video_id });
       
       // Notify parent to restart player immediately
-      if (onRestartPlayer) onRestartPlayer();
+      if (onRestartPlayer) onRestartPlayer(formData.video_id);
       
       // 1. Instant Local Data Update (preserve other properties)
       setData(prev => {
