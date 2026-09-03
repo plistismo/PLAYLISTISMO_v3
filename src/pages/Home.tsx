@@ -112,11 +112,10 @@ export default function Home({ session }: { session: Session | null }) {
   const initVimeoPlayer = () => {
     if (!window.Vimeo || vimeoPlayerRef.current) return;
     vimeoPlayerRef.current = new window.Vimeo.Player('vimeo-player', {
-      id: 76979871, // placeholder; será substituído via loadVideo
       width: '100%',
       height: '100%',
       controls: false,
-      autoplay: true,
+      autoplay: false,
       loop: false,
       muted: false,
       background: false,
