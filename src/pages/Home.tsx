@@ -108,6 +108,49 @@ export default function Home({ session }: { session: Session | null }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Controle explícito de visibilidade entre os players via element.style
+  const syncPlayerVisibility = (platform: 'youtube' | 'vimeo') => {
+    const ytContainer = document.getElementById('yt-player');
+    const vimeoContainer = document.getElementById('vimeo-parent-container');
+    const vimeoPlayer = document.getElementById('vimeo-player');
+
+    if (platform === 'vimeo') {
+      // 1. YouTube obrigatoriamente pausado e oculto
+      playerRef.current?.pauseVideo();
+      if (ytContainer) {
+        ytContainer.style.display = 'none';
+      }
+
+      // 2. Vimeo obrigatoriamente visível com 100% de largura e altura
+      if (vimeoContainer) {
+        vimeoContainer.style.display = 'block';
+        vimeoContainer.style.width = '100%';
+        vimeoContainer.style.height = '100%';
+      }
+      if (vimeoPlayer) {
+        vimeoPlayer.style.display = 'block';
+        vimeoPlayer.style.width = '100%';
+        vimeoPlayer.style.height = '100%';
+      }
+    } else {
+      // 1. Vimeo obrigatoriamente pausado e oculto
+      vimeoPlayerRef.current?.pause();
+      if (vimeoContainer) {
+        vimeoContainer.style.display = 'none';
+      }
+      if (vimeoPlayer) {
+        vimeoPlayer.style.display = 'none';
+      }
+
+      // 2. YouTube exibido normalmente com 100% de largura e altura
+      if (ytContainer) {
+        ytContainer.style.display = 'block';
+        ytContainer.style.width = '100%';
+        ytContainer.style.height = '100%';
+      }
+    }
+  };
+
   // Inicializa o player Vimeo (chamado após o script já estar carregado)
   const initVimeoPlayer = () => {
     if (!window.Vimeo || vimeoPlayerRef.current) return;
@@ -161,7 +204,15 @@ export default function Home({ session }: { session: Session | null }) {
           origin: window.location.origin
         },
         events: {
-          'onReady': () => { setIsReady(true); if (isOn) playCurrentVideo(); },
+          'onReady': () => {
+            setIsReady(true);
+            const isVimeo = currentVideoData?.plataforma === 'vimeo' || /^\d+$/.test(String(currentVideoData?.video_id || ''));
+            if (isVimeo) {
+              syncPlayerVisibility('vimeo');
+            } else if (isOn) {
+              playCurrentVideo();
+            }
+          },
           'onStateChange': onPlayerStateChange,
           'onError': () => handleVideoEnd()
         }
@@ -304,6 +355,11 @@ export default function Home({ session }: { session: Session | null }) {
     setCurrentChannelList(list);
     setCurrentIndex(idx);
     const video = list[idx];
+
+    // Verificação estrita de visibilidade antes de renderizar a faixa
+    const initialPlatform = video?.plataforma === 'vimeo' || /^\d+$/.test(String(video?.video_id || '')) ? 'vimeo' : 'youtube';
+    syncPlayerVisibility(initialPlatform);
+
     setCurrentVideoData(video);
 
     // Registra no histórico se for um novo canal ou vídeo
@@ -332,6 +388,7 @@ export default function Home({ session }: { session: Session | null }) {
     const isVimeo = /^\d+$/.test(videoId.trim());
     const platform: 'youtube' | 'vimeo' = isVimeo ? 'vimeo' : 'youtube';
     setActivePlatform(platform);
+    syncPlayerVisibility(platform);
     setCurrentVideoData({ ...nextData!, plataforma: nextData?.plataforma || platform });
     
     if (!isOn) setIsOn(true);
@@ -340,6 +397,7 @@ export default function Home({ session }: { session: Session | null }) {
       if (vimeoPlayerRef.current) {
         playerRef.current?.pauseVideo();
         vimeoPlayerRef.current.loadVideo(Number(videoId)).then(() => {
+          syncPlayerVisibility('vimeo');
           vimeoPlayerRef.current.play();
         });
         lastVideoIdRef.current = videoId;
@@ -365,12 +423,16 @@ export default function Home({ session }: { session: Session | null }) {
 
     setActivePlatform(platform);
 
+    // Controle de Visibilidade Explicito via element.style.display
+    syncPlayerVisibility(platform);
+
     if (platform === 'vimeo') {
       // --- VIMEO ---
       if (vimeoPlayerRef.current && videoId !== lastVideoIdRef.current) {
         console.log('CARREGANDO VÍDEO VIMEO:', videoId);
         playerRef.current?.pauseVideo(); // para o YouTube
         vimeoPlayerRef.current.loadVideo(Number(videoId)).then(() => {
+          syncPlayerVisibility('vimeo');
           if (isOn) vimeoPlayerRef.current.play();
         }).catch(() => {
           console.warn('VIMEO loadVideo falhou, pulando...');
