@@ -13,6 +13,7 @@ type MusicEntry = {
   ano: string;
   direcao: string;
   video_id: string;
+  plataforma?: string;
   playlist?: string;
   playlist_group?: string;
 };
@@ -231,13 +232,18 @@ export default function AdminPanel({
     
     // The user wants to save tags.
     // "Garanta que o Supabase salve as tags de formatação"
+    // Detecta plataforma automaticamente antes do insert/update
+    const rawVideoId = formData.video_id.trim();
+    const plataforma = /^\d+$/.test(rawVideoId) ? 'vimeo' : 'youtube';
+
     const richPayload = {
       artista: formData.artista.trim(),
       musica: formData.musica.trim(),
       ano: formData.ano ? String(formData.ano) : null,
       album: formData.album.trim() || null,
       direcao: formData.direcao.trim() || null,
-      video_id: formData.video_id.trim() || null
+      video_id: rawVideoId || null,
+      plataforma,
     };
 
     let error = null;
@@ -573,9 +579,9 @@ export default function AdminPanel({
                 </div>
 
                 <div className="group">
-                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">YOUTUBE VIDEO ID</label>
+                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">VIDEO ID (YouTube ou Vimeo)</label>
                   <div className="flex gap-2">
-                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg text-white" placeholder="6hzrDeceEKc" />
+                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg text-white" placeholder="6hzrDeceEKc ou 76979871" />
                     {onPreview && (
                       <button 
                         type="button"
@@ -588,6 +594,16 @@ export default function AdminPanel({
                       </button>
                     )}
                   </div>
+                  {/* Badge de detecção automática de plataforma */}
+                  {formData.video_id.trim() && (
+                    <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full border ${
+                      /^\d+$/.test(formData.video_id.trim())
+                        ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/40'
+                        : 'bg-red-900/30 text-red-400 border-red-500/40'
+                    }`}>
+                      <span>{/^\d+$/.test(formData.video_id.trim()) ? '🟦 VIMEO detectado' : '🟥 YOUTUBE detectado'}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Multi-Playlist Management Section */}

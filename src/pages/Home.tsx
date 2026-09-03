@@ -10,6 +10,7 @@ declare global {
     YT: any;
     onYouTubeIframeAPIReady: () => void;
     creditsInterval: any;
+    Vimeo: any;
   }
 }
 
@@ -79,9 +80,13 @@ export default function Home({ session }: { session: Session | null }) {
 
   // REFS PARA CONTROLE DE API (NON-STOP)
   const playerRef = useRef<any>(null);
+  const vimeoPlayerRef = useRef<any>(null);
   const channelListRef = useRef<any[]>([]);
   const currentIndexRef = useRef(0);
   const lastVideoIdRef = useRef<string | null>(null);
+
+  // Plataforma ativa: 'youtube' | 'vimeo'
+  const [activePlatform, setActivePlatform] = useState<'youtube' | 'vimeo'>('youtube');
 
   // Sincroniza as refs com o estado do React
   useEffect(() => {
@@ -102,6 +107,33 @@ export default function Home({ session }: { session: Session | null }) {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Inicializa o player Vimeo (chamado após o script já estar carregado)
+  const initVimeoPlayer = () => {
+    if (!window.Vimeo || vimeoPlayerRef.current) return;
+    vimeoPlayerRef.current = new window.Vimeo.Player('vimeo-player', {
+      id: 76979871, // placeholder; será substituído via loadVideo
+      width: '100%',
+      height: '100%',
+      controls: false,
+      autoplay: true,
+      loop: false,
+      muted: false,
+      background: false,
+    });
+    vimeoPlayerRef.current.on('ended', () => {
+      console.log('VIMEO NON-STOP: VÍDEO ENCERRADO');
+      handleVideoEnd();
+    });
+    vimeoPlayerRef.current.on('error', () => {
+      console.warn('VIMEO ERROR: pulando para próximo vídeo');
+      handleVideoEnd();
+    });
+    vimeoPlayerRef.current.on('play', () => {
+      setStatus('');
+      startCreditsMonitor();
+    });
+  };
 
   useEffect(() => {
     fetchGuideData();
@@ -135,6 +167,21 @@ export default function Home({ session }: { session: Session | null }) {
         }
       });
     };
+
+    // Inicializa Vimeo quando o script global já tiver carregado
+    // O script é carregado via index.html, então pode já estar pronto
+    if (window.Vimeo) {
+      initVimeoPlayer();
+    } else {
+      // Aguarda o script carregar (carregado via index.html)
+      const checkVimeo = setInterval(() => {
+        if (window.Vimeo) {
+          clearInterval(checkVimeo);
+          initVimeoPlayer();
+        }
+      }, 200);
+      return () => clearInterval(checkVimeo);
+    }
   }, []);
 
   const onPlayerStateChange = (event: any) => {
@@ -206,9 +253,13 @@ export default function Home({ session }: { session: Session | null }) {
       const next = !prev;
       if (next) {
         if (!currentChannelName) loadDefaultChannel();
-        else playerRef.current?.playVideo();
+        else {
+          if (activePlatform === 'vimeo') vimeoPlayerRef.current?.play();
+          else playerRef.current?.playVideo();
+        }
       } else {
         playerRef.current?.pauseVideo();
+        vimeoPlayerRef.current?.pause();
         setShowPlaylistLabel(false);
       }
       return next;
@@ -274,38 +325,72 @@ export default function Home({ session }: { session: Session | null }) {
     let nextData = existing;
 
     if (!existing) {
-      // Se não achar, não assume unicidade. Busca a primeira ocorrência do vídeo.
       const { data } = await supabase.from('musicas_backup').select('*').eq('video_id', videoId).limit(1).maybeSingle();
       nextData = data || { video_id: videoId };
     }
     
-    setCurrentVideoData({ ...nextData! }); // force fresh ref to trigger effect
+    const isVimeo = /^\d+$/.test(videoId.trim());
+    const platform: 'youtube' | 'vimeo' = isVimeo ? 'vimeo' : 'youtube';
+    setActivePlatform(platform);
+    setCurrentVideoData({ ...nextData!, plataforma: nextData?.plataforma || platform });
     
     if (!isOn) setIsOn(true);
     
-    if (isReady && playerRef.current) {
-      // Force immediate reload ignoring cache check
-      playerRef.current.loadVideoById({
-        videoId: videoId,
-        suggestedQuality: 'hd720'
-      });
+    if (isVimeo) {
+      if (vimeoPlayerRef.current) {
+        playerRef.current?.pauseVideo();
+        vimeoPlayerRef.current.loadVideo(Number(videoId)).then(() => {
+          vimeoPlayerRef.current.play();
+        });
+        lastVideoIdRef.current = videoId;
+      }
+    } else if (isReady && playerRef.current) {
+      vimeoPlayerRef.current?.pause();
+      playerRef.current.loadVideoById({ videoId, suggestedQuality: 'hd720' });
       lastVideoIdRef.current = videoId;
       playerRef.current.playVideo();
     }
   };
 
   // Efeito centralizado para carregar o vídeo sempre que o dado mudar
+  // Suporta plataformas YouTube e Vimeo
   useEffect(() => {
-    if (currentVideoData?.video_id && isReady && playerRef.current) {
-      if (currentVideoData.video_id !== lastVideoIdRef.current) {
-        console.log("CARREGANDO NOVO VÍDEO:", currentVideoData.video_id);
-        playerRef.current.loadVideoById({
-          videoId: currentVideoData.video_id,
-          suggestedQuality: 'hd720'
+    if (!currentVideoData?.video_id) return;
+
+    const videoId = String(currentVideoData.video_id);
+    const platform: 'youtube' | 'vimeo' =
+      currentVideoData.plataforma === 'vimeo' || /^\d+$/.test(videoId)
+        ? 'vimeo'
+        : 'youtube';
+
+    setActivePlatform(platform);
+
+    if (platform === 'vimeo') {
+      // --- VIMEO ---
+      if (vimeoPlayerRef.current && videoId !== lastVideoIdRef.current) {
+        console.log('CARREGANDO VÍDEO VIMEO:', videoId);
+        playerRef.current?.pauseVideo(); // para o YouTube
+        vimeoPlayerRef.current.loadVideo(Number(videoId)).then(() => {
+          if (isOn) vimeoPlayerRef.current.play();
+        }).catch(() => {
+          console.warn('VIMEO loadVideo falhou, pulando...');
+          handleVideoEnd();
         });
-        lastVideoIdRef.current = currentVideoData.video_id;
+        lastVideoIdRef.current = videoId;
+      } else if (isOn && vimeoPlayerRef.current) {
+        vimeoPlayerRef.current.play();
       }
-      if (isOn) playerRef.current.playVideo();
+    } else {
+      // --- YOUTUBE ---
+      if (isReady && playerRef.current) {
+        vimeoPlayerRef.current?.pause(); // para o Vimeo
+        if (videoId !== lastVideoIdRef.current) {
+          console.log('CARREGANDO VÍDEO YOUTUBE:', videoId);
+          playerRef.current.loadVideoById({ videoId, suggestedQuality: 'hd720' });
+          lastVideoIdRef.current = videoId;
+        }
+        if (isOn) playerRef.current.playVideo();
+      }
     }
   }, [currentVideoData, isReady]);
 
@@ -591,7 +676,26 @@ export default function Home({ session }: { session: Session | null }) {
                   {!isOn && <div className="absolute inset-0 bg-[#080808] z-20"></div>}
 
                   <div className={`relative w-full h-full rounded-[20px] md:rounded-[44px] overflow-hidden bg-black ${isOn ? 'crt-turn-on' : ''}`}>
-                    <div id="yt-player" className="w-full h-full"></div>
+                    {/* YouTube Player */}
+                    <div
+                      id="yt-player"
+                      className="w-full h-full"
+                      style={{ display: activePlatform === 'youtube' ? 'block' : 'none' }}
+                    ></div>
+
+                    {/* Vimeo Player — mesmo z-index, posição absoluta sobre a tela */}
+                    <div
+                      id="vimeo-player"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        display: activePlatform === 'vimeo' ? 'block' : 'none',
+                        zIndex: 1,
+                        background: '#000',
+                      }}
+                    ></div>
 
                     {isBumping && (
                       <div className="absolute inset-0 z-[70] flex items-center justify-center bg-transparent pointer-events-none overflow-hidden bump-active">
