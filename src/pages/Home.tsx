@@ -680,22 +680,52 @@ export default function Home({ session }: { session: Session | null }) {
                     <div
                       id="yt-player"
                       className="w-full h-full"
-                      style={{ display: activePlatform === 'youtube' ? 'block' : 'none' }}
-                    ></div>
-
-                    {/* Vimeo Player — mesmo z-index, posição absoluta sobre a tela */}
-                    <div
-                      id="vimeo-player"
                       style={{
-                        position: 'absolute',
-                        inset: 0,
+                        position: 'relative',
                         width: '100%',
                         height: '100%',
-                        display: activePlatform === 'vimeo' ? 'block' : 'none',
                         zIndex: 1,
-                        background: '#000',
+                        display: activePlatform === 'youtube' ? 'block' : 'none',
                       }}
                     ></div>
+
+                    {/* Contêiner Pai do Vimeo Player */}
+                    <div
+                      id="vimeo-parent-container"
+                      style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                        zIndex: 1,
+                        display: activePlatform === 'vimeo' ? 'block' : 'none',
+                      }}
+                    >
+                      <style>{`
+                        #vimeo-player,
+                        #vimeo-player > div,
+                        #vimeo-player iframe {
+                          width: 100% !important;
+                          height: 100% !important;
+                          position: absolute !important;
+                          top: 0 !important;
+                          left: 0 !important;
+                          border: none !important;
+                          background: #000 !important;
+                        }
+                      `}</style>
+                      <div
+                        id="vimeo-player"
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          border: 'none',
+                          background: '#000',
+                        }}
+                      ></div>
+                    </div>
 
                     {isBumping && (
                       <div className="absolute inset-0 z-[70] flex items-center justify-center bg-transparent pointer-events-none overflow-hidden bump-active">
