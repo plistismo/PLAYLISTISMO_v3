@@ -112,6 +112,7 @@ export default function Home({ session }: { session: Session | null }) {
   const initVimeoPlayer = () => {
     if (!window.Vimeo || vimeoPlayerRef.current) return;
     vimeoPlayerRef.current = new window.Vimeo.Player('vimeo-player', {
+      id: 3559516, // fallback de inicialização; substituído por loadVideo() na reprodução
       width: '100%',
       height: '100%',
       controls: false,
