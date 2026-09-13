@@ -1003,7 +1003,7 @@ export default function Home({ session }: { session: Session | null }) {
                               }}
                             />
                           )
-                        ) : showPlaylistLabel && (
+                        ) : currentChannelName ? (
                           <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''}`}>
                             {playlistParts.length > 1 ? (
                               <><div className="osd-line-1">{playlistParts[0].trim()}:</div><div className="osd-line-2">{playlistParts[1].trim()}</div></>
@@ -1011,7 +1011,7 @@ export default function Home({ session }: { session: Session | null }) {
                               <div className="osd-line-1">{currentChannelName}</div>
                             )}
                           </div>
-                        )}
+                        ) : null}
                       </div>
                       {statusMessage && (
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center">
