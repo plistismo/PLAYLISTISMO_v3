@@ -78,6 +78,7 @@ export default function Home({ session }: { session: Session | null }) {
   // MATRIX Module State
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [currentChannelWatermark, setCurrentChannelWatermark] = useState<string | null>(null);
+  const [currentChannelWatermarkSize, setCurrentChannelWatermarkSize] = useState<number>(120);
   
   // Histórico de Sessão (Shuffle sem Repetição)
   const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
@@ -323,16 +324,21 @@ export default function Home({ session }: { session: Session | null }) {
     }
   };
 
-  // MATRIX: fetch watermark URL whenever the active channel changes
+  // MATRIX: fetch watermark URL and size whenever the active channel changes
   useEffect(() => {
-    if (!currentChannelName) { setCurrentChannelWatermark(null); return; }
+    if (!currentChannelName) {
+      setCurrentChannelWatermark(null);
+      setCurrentChannelWatermarkSize(120);
+      return;
+    }
     supabase
       .from('playlists')
-      .select('marca_dagua_url')
+      .select('marca_dagua_url, marca_dagua_tamanho')
       .eq('name', currentChannelName)
       .maybeSingle()
       .then(({ data }) => {
         setCurrentChannelWatermark(data?.marca_dagua_url || null);
+        setCurrentChannelWatermarkSize(data?.marca_dagua_tamanho ? Number(data.marca_dagua_tamanho) : 120);
       });
   }, [currentChannelName]);
 
@@ -867,8 +873,11 @@ export default function Home({ session }: { session: Session | null }) {
                       fetchGuideData();
                       // Re-fetch watermark for current channel
                       if (currentChannelName) {
-                        supabase.from('playlists').select('marca_dagua_url').eq('name', currentChannelName).maybeSingle()
-                          .then(({ data }) => setCurrentChannelWatermark(data?.marca_dagua_url || null));
+                        supabase.from('playlists').select('marca_dagua_url, marca_dagua_tamanho').eq('name', currentChannelName).maybeSingle()
+                          .then(({ data }) => {
+                            setCurrentChannelWatermark(data?.marca_dagua_url || null);
+                            setCurrentChannelWatermarkSize(data?.marca_dagua_tamanho ? Number(data.marca_dagua_tamanho) : 120);
+                          });
                       }
                     }}
                   />
@@ -968,6 +977,11 @@ export default function Home({ session }: { session: Session | null }) {
                               src={currentChannelWatermark}
                               autoPlay loop muted playsInline
                               className="watermark-overlay"
+                              style={{
+                                width: `${currentChannelWatermarkSize || 120}px`,
+                                height: 'auto',
+                                maxWidth: '40vw',
+                              }}
                             />
                           ) : (
                             <img
@@ -975,6 +989,11 @@ export default function Home({ session }: { session: Session | null }) {
                               src={currentChannelWatermark}
                               alt="marca d'água"
                               className="watermark-overlay"
+                              style={{
+                                width: `${currentChannelWatermarkSize || 120}px`,
+                                height: 'auto',
+                                maxWidth: '40vw',
+                              }}
                             />
                           )
                         ) : showPlaylistLabel && (

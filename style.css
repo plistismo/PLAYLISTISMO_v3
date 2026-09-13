@@ -538,8 +538,7 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
     right: 1.25rem;
     z-index: 62;  /* above OSD (z-60) but below bump (z-70) */
     pointer-events: none;
-    max-width: 7rem;       /* ~112px — same footprint as OSD channel label */
-    max-height: 4rem;
+    height: auto;
     object-fit: contain;
     opacity: 0.88;
     /* Soft fade-in matching OSD animation */

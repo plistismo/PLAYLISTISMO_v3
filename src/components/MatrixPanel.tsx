@@ -83,6 +83,7 @@ type ChannelEntry = {
   group_name?: string;
   descricao?: string;
   marca_dagua_url?: string;
+  marca_dagua_tamanho?: number;
 };
 
 type VideoEntry = {
@@ -209,6 +210,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
   const [formDesc, setFormDesc] = useState('');
   const [watermarkFile, setWatermarkFile] = useState<File | null>(null);
   const [currentWatermarkUrl, setCurrentWatermarkUrl] = useState('');
+  const [watermarkSize, setWatermarkSize] = useState<number>(120);
   const [isSavingChannel, setIsSavingChannel] = useState(false);
   const [isNewChannel, setIsNewChannel] = useState(false);
   const [existingGroups, setExistingGroups] = useState<string[]>([]);
@@ -247,7 +249,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
   const fetchChannels = useCallback(async () => {
     const { data, error } = await supabase
       .from('playlists')
-      .select('id, name, group_name, descricao, marca_dagua_url')
+      .select('id, name, group_name, descricao, marca_dagua_url, marca_dagua_tamanho')
       .order('name', { ascending: true });
 
     if (!error && data) {
@@ -279,6 +281,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     setFormGroupCustom('');
     setFormDesc(ch.descricao || '');
     setCurrentWatermarkUrl(ch.marca_dagua_url || '');
+    setWatermarkSize(ch.marca_dagua_tamanho ? Number(ch.marca_dagua_tamanho) : 120);
     setWatermarkFile(null);
     setIsNewChannel(false);
     setVideoSearch('');
@@ -298,6 +301,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     setFormGroupCustom('');
     setFormDesc('');
     setCurrentWatermarkUrl('');
+    setWatermarkSize(120);
     setWatermarkFile(null);
     setIsNewChannel(true);
     setVideos([]);
@@ -434,6 +438,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
       group_name: finalGroup,
       descricao: formDesc || null,
       marca_dagua_url: watermarkUrl || null,
+      marca_dagua_tamanho: Number(watermarkSize) || 120,
     };
 
     if (isNewChannel) {
@@ -476,6 +481,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
           group_name: finalGroup,
           descricao: formDesc || undefined,
           marca_dagua_url: watermarkUrl || undefined,
+          marca_dagua_tamanho: Number(watermarkSize) || 120,
         };
 
         // 1. Atualiza imediatamente a lista local da sidebar esquerda sem F5
@@ -780,6 +786,33 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
                     </button>
                   </>
                 )}
+              </div>
+
+              {/* Controle de Tamanho da Marca D'água na TV */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label htmlFor="gc-tamanho-slider" className="text-[10px] text-matrix-label uppercase font-bold tracking-wider">
+                    TAMANHO DA MARCA D'ÁGUA
+                  </label>
+                  <span className="text-xs font-mono font-bold text-matrix-accent bg-matrix-accent/10 px-2 py-0.5 border border-matrix-accent/30 rounded">
+                    {watermarkSize}px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  id="gc-tamanho-slider"
+                  min="40"
+                  max="250"
+                  step="5"
+                  value={watermarkSize}
+                  onChange={e => setWatermarkSize(Number(e.target.value))}
+                  className="w-full accent-[#00ff88] cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-matrix-label/40 font-mono mt-0.5">
+                  <span>40px</span>
+                  <span>120px (padrão)</span>
+                  <span>250px</span>
+                </div>
               </div>
 
               {/* Action Buttons */}

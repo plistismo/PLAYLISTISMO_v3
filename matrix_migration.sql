@@ -6,7 +6,8 @@
 -- 1. Adiciona colunas necessárias na tabela playlists
 ALTER TABLE playlists
   ADD COLUMN IF NOT EXISTS descricao TEXT,
-  ADD COLUMN IF NOT EXISTS marca_dagua_url TEXT;
+  ADD COLUMN IF NOT EXISTS marca_dagua_url TEXT,
+  ADD COLUMN IF NOT EXISTS marca_dagua_tamanho INTEGER DEFAULT 120;
 
 -- 2. Bucket para Marca D'água
 -- Execute via Supabase Dashboard > Storage > Create Bucket
