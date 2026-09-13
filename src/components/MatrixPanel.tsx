@@ -1,8 +1,68 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { Virtuoso } from 'react-virtuoso';
 import { sanitizeHTML } from '../lib/sanitize.ts';
+
+// ─── Normalização de Texto (Ignora acentos e maiúsculas/minúsculas) ─────────
+export const normalizarTexto = (str: any): string => {
+  if (!str) return '';
+  return String(str)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+};
+
+// ─── Função de Busca de Clipes para Curadoria (Vanilla JS / Supabase) ───────
+export const buscarClipesCuradoria = async (
+  termoBusca: string,
+  todosVideosAcervo: VideoEntry[] = [],
+  supabaseClient?: any
+): Promise<VideoEntry[]> => {
+  const termoNorm = normalizarTexto(termoBusca);
+  if (!termoNorm || termoNorm.length < 2) return [];
+
+  const filtrarLista = (lista: VideoEntry[]) => {
+    return lista.filter(item => {
+      const titulo = normalizarTexto(item.musica || '');
+      const artista = normalizarTexto(item.artista || '');
+      const album = normalizarTexto(item.album || '');
+      const direcao = normalizarTexto(item.direcao || '');
+
+      return (
+        titulo.includes(termoNorm) ||
+        artista.includes(termoNorm) ||
+        album.includes(termoNorm) ||
+        direcao.includes(termoNorm)
+      );
+    });
+  };
+
+  // 1. Prioriza filtragem client-side no acervo completo em memória
+  if (todosVideosAcervo && todosVideosAcervo.length > 0) {
+    const resultados = filtrarLista(todosVideosAcervo);
+    if (resultados.length > 0 || !supabaseClient) {
+      return resultados;
+    }
+  }
+
+  // 2. Busca direta no Supabase com .range(0, 999) como fallback abrangente
+  if (supabaseClient) {
+    const termoLimpo = termoBusca.trim();
+    const { data, error } = await supabaseClient
+      .from('musicas_backup')
+      .select('id, artista, musica, album, ano, direcao, video_id, playlist, plataforma')
+      .or(`musica.ilike.%${termoLimpo}%,artista.ilike.%${termoLimpo}%,album.ilike.%${termoLimpo}%`)
+      .range(0, 999);
+
+    if (!error && data) {
+      return filtrarLista(data as VideoEntry[]);
+    }
+  }
+
+  return [];
+};
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -148,7 +208,9 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
   const videoListRef = useRef<any>(null);
   const [videoStatusMsg, setVideoStatusMsg] = useState({ text: '', isError: false });
 
-  // ── Available videos for "Add" ──
+  // ── Available videos for "Add" (Acervo real de clipes) ──
+  const [todosVideosAcervo, setTodosVideosAcervo] = useState<VideoEntry[]>([]);
+  const [isAcervoLoading, setIsAcervoLoading] = useState(false);
   const [addSearch, setAddSearch] = useState('');
   const [addResults, setAddResults] = useState<VideoEntry[]>([]);
   const [showAddDropdown, setShowAddDropdown] = useState(false);
@@ -224,6 +286,25 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     setVideos([]);
   };
 
+  // ─── Carregar acervo geral (range 0 a 999) para curadoria abrangente ───
+  const carregarAcervo = useCallback(async () => {
+    setIsAcervoLoading(true);
+    const { data, error } = await supabase
+      .from('musicas_backup')
+      .select('id, artista, musica, album, ano, direcao, video_id, playlist, plataforma')
+      .order('id', { ascending: false })
+      .range(0, 999);
+
+    if (!error && data) {
+      setTodosVideosAcervo(data as VideoEntry[]);
+    }
+    setIsAcervoLoading(false);
+  }, []);
+
+  useEffect(() => {
+    carregarAcervo();
+  }, [carregarAcervo]);
+
   // ─── Fetch videos for selected channel ───────────────────────────────────
 
   useEffect(() => {
@@ -233,26 +314,34 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
 
   const fetchChannelVideos = async (playlistName: string) => {
     setVideosLoading(true);
-    let query = supabase
+    const { data, error } = await supabase
       .from('musicas_backup')
       .select('id, artista, musica, album, ano, direcao, video_id, playlist, plataforma')
       .eq('playlist', playlistName)
-      .order('id', { ascending: false });
+      .order('id', { ascending: false })
+      .range(0, 2999);
 
-    if (videoSearch.trim()) {
-      const t = `%${videoSearch.trim()}%`;
-      query = query.or(`artista.ilike.${t},musica.ilike.${t}`);
-    }
-
-    const { data, error } = await query.limit(3000);
     if (!error && data) setVideos(data as VideoEntry[]);
     setVideosLoading(false);
   };
 
-  // Re-fetch when search changes
-  useEffect(() => {
-    if (selectedChannel) fetchChannelVideos(selectedChannel.name);
-  }, [videoSearch]);
+  // Filtragem da lista do canal atual com normalização de acentos e case
+  const displayedVideos = useMemo(() => {
+    if (!videoSearch.trim()) return videos;
+    const termoNorm = normalizarTexto(videoSearch);
+    return videos.filter(v => {
+      const titulo = normalizarTexto(v.musica || '');
+      const artista = normalizarTexto(v.artista || '');
+      const album = normalizarTexto(v.album || '');
+      const direcao = normalizarTexto(v.direcao || '');
+      return (
+        titulo.includes(termoNorm) ||
+        artista.includes(termoNorm) ||
+        album.includes(termoNorm) ||
+        direcao.includes(termoNorm)
+      );
+    });
+  }, [videos, videoSearch]);
 
   // ─── Upload watermark to Supabase Storage ────────────────────────────────
 
@@ -363,10 +452,11 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     } else {
       showVideoMsg(`"${video.musica || video.artista}" removido do canal.`);
       setVideos(prev => prev.filter(v => v.id !== video.id));
+      setTodosVideosAcervo(prev => prev.map(v => v.id === video.id ? { ...v, playlist: undefined } : v));
     }
   };
 
-  // ─── Add video search ─────────────────────────────────────────────────────
+  // ─── Add video search (Curadoria Abrangente) ───────────────────────────────
 
   useEffect(() => {
     if (!addSearch.trim() || addSearch.length < 2) {
@@ -374,19 +464,15 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
       setShowAddDropdown(false);
       return;
     }
-    const t = `%${addSearch.trim()}%`;
+
     const timer = setTimeout(async () => {
-      const { data } = await supabase
-        .from('musicas_backup')
-        .select('id, artista, musica, video_id, playlist')
-        .or(`artista.ilike.${t},musica.ilike.${t}`)
-        .is('playlist', null) // only unassigned
-        .limit(20);
-      setAddResults(data as VideoEntry[] || []);
+      const resultados = await buscarClipesCuradoria(addSearch, todosVideosAcervo, supabase);
+      setAddResults(resultados.slice(0, 50));
       setShowAddDropdown(true);
-    }, 300);
+    }, 200);
+
     return () => clearTimeout(timer);
-  }, [addSearch]);
+  }, [addSearch, todosVideosAcervo]);
 
   const handleAddVideo = async (video: VideoEntry) => {
     if (!selectedChannel) return;
@@ -402,7 +488,9 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
       setAddSearch('');
       setShowAddDropdown(false);
       setAddResults([]);
-      setVideos(prev => [{ ...video, playlist: selectedChannel.name }, ...prev]);
+      const updated = { ...video, playlist: selectedChannel.name };
+      setVideos(prev => [updated, ...prev]);
+      setTodosVideosAcervo(prev => prev.map(v => v.id === video.id ? updated : v));
     }
   };
 
@@ -631,7 +719,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
             </p>
           </div>
           <span className="text-[10px] font-bold text-matrix-cyan/40 uppercase border border-matrix-border-cyan/30 px-2 py-1">
-            {videos.length} VÍDEOS
+            {videoSearch ? `${displayedVideos.length} / ${videos.length}` : `${videos.length}`} VÍDEOS
           </span>
         </div>
 
@@ -645,7 +733,12 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
         {/* Add Video Bar */}
         {selectedChannel && (
           <div className="shrink-0 px-4 py-3 border-b border-matrix-border-cyan/20 relative">
-            <label className="block text-[10px] text-matrix-cyan/50 uppercase mb-1 font-bold tracking-wider">INCLUIR VÍDEO</label>
+            <label className="text-[10px] text-matrix-cyan/50 uppercase mb-1 font-bold tracking-wider flex justify-between items-center">
+              <span>INCLUIR VÍDEO (CURADORIA DO ACERVO)</span>
+              {isAcervoLoading && (
+                <span className="text-[9px] text-matrix-cyan/40 font-normal lowercase animate-pulse">carregando acervo...</span>
+              )}
+            </label>
             <div className="relative">
               <input
                 ref={addSearchRef}
@@ -654,24 +747,45 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
                 onChange={e => setAddSearch(e.target.value)}
                 onFocus={() => addSearch.length >= 2 && setShowAddDropdown(true)}
                 className="matrix-input-cyan w-full pr-8"
-                placeholder="Buscar vídeo sem canal para incluir..."
+                placeholder="Buscar música, artista, álbum no acervo..."
               />
               {addSearch && (
                 <button type="button" onClick={() => { setAddSearch(''); setShowAddDropdown(false); }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-matrix-cyan/40 hover:text-matrix-cyan text-lg">×</button>
               )}
-              {showAddDropdown && addResults.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-1 bg-[#010d12] border border-matrix-border-cyan/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-56 overflow-y-auto matrix-scrollbar-cyan">
-                  {addResults.map(v => (
-                    <div
-                      key={v.id}
-                      onClick={() => handleAddVideo(v)}
-                      className="p-3 hover:bg-matrix-cyan/10 cursor-pointer border-b border-matrix-border-cyan/10 last:border-0 transition-colors"
-                    >
-                      <div className="text-sm text-white font-bold truncate">{v.artista}</div>
-                      <div className="text-xs text-matrix-cyan/70 truncate">{v.musica}</div>
+              {showAddDropdown && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-[#010d12] border border-matrix-border-cyan/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-60 overflow-y-auto matrix-scrollbar-cyan">
+                  {addResults.length > 0 ? (
+                    addResults.map(v => (
+                      <div
+                        key={v.id}
+                        onClick={() => handleAddVideo(v)}
+                        className="p-3 hover:bg-matrix-cyan/10 cursor-pointer border-b border-matrix-border-cyan/10 last:border-0 transition-colors flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm text-white font-bold truncate">{v.artista || 'Artista desconhecido'}</div>
+                          <div className="text-xs text-matrix-cyan/70 truncate">
+                            {v.musica || 'Sem título'}
+                            {v.album ? ` • ${v.album}` : ''}
+                            {v.ano ? ` (${v.ano})` : ''}
+                          </div>
+                        </div>
+                        {v.playlist ? (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded border border-matrix-border-cyan/30 text-matrix-cyan/60 uppercase font-mono shrink-0">
+                            {v.playlist}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-matrix-cyan/20 text-matrix-cyan uppercase font-mono shrink-0">
+                            + ADD
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-3 text-xs text-matrix-cyan/40 text-center uppercase tracking-wider">
+                      Nenhum clipe encontrado no acervo
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
@@ -713,14 +827,14 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
             <div className="flex items-center justify-center h-full text-matrix-cyan animate-pulse text-xl tracking-widest uppercase">
               Carregando sinais...
             </div>
-          ) : videos.length === 0 ? (
+          ) : displayedVideos.length === 0 ? (
             <div className="flex items-center justify-center h-full opacity-30 text-sm text-matrix-cyan uppercase tracking-widest">
-              Nenhum vídeo neste canal.
+              {videoSearch ? 'Nenhum vídeo corresponde ao filtro.' : 'Nenhum vídeo neste canal.'}
             </div>
           ) : (
             <Virtuoso
               ref={videoListRef}
-              data={videos}
+              data={displayedVideos}
               style={{ height: '100%' }}
               className="matrix-scrollbar-cyan"
               itemContent={(_, video) => {
@@ -783,7 +897,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
         {selectedChannel && (
           <div className="shrink-0 px-4 py-2 bg-[#010a0e] border-t border-matrix-border-cyan/20 flex justify-between text-[10px] uppercase font-bold text-matrix-cyan/30 tracking-widest">
             <span>Canal: {selectedChannel.name}</span>
-            <span>{videos.length} registros</span>
+            <span>{videoSearch ? `${displayedVideos.length} de ${videos.length}` : `${videos.length}`} registros</span>
           </div>
         )}
       </section>
