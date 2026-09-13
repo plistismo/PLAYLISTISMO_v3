@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import AdminPanel from '../components/AdminPanel.tsx';
+import MatrixPanel from '../components/MatrixPanel.tsx';
 import { sanitizeHTML } from '../lib/sanitize.ts';
 
 declare global {
@@ -73,6 +74,10 @@ export default function Home({ session }: { session: Session | null }) {
   const [isReady, setIsReady] = useState(false);
   const [lastSavedRecord, setLastSavedRecord] = useState<VideoData | null>(null);
   const [useJosefinFont, setUseJosefinFont] = useState(false);
+
+  // MATRIX Module State
+  const [isMatrixOpen, setIsMatrixOpen] = useState(false);
+  const [currentChannelWatermark, setCurrentChannelWatermark] = useState<string | null>(null);
   
   // Histórico de Sessão (Shuffle sem Repetição)
   const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
@@ -317,6 +322,19 @@ export default function Home({ session }: { session: Session | null }) {
       setChannelsByCategory(grouped);
     }
   };
+
+  // MATRIX: fetch watermark URL whenever the active channel changes
+  useEffect(() => {
+    if (!currentChannelName) { setCurrentChannelWatermark(null); return; }
+    supabase
+      .from('playlists')
+      .select('marca_dagua_url')
+      .eq('name', currentChannelName)
+      .maybeSingle()
+      .then(({ data }) => {
+        setCurrentChannelWatermark(data?.marca_dagua_url || null);
+      });
+  }, [currentChannelName]);
 
   const setStatus = (msg: string) => {
     setStatusMessage(msg);
@@ -769,6 +787,7 @@ export default function Home({ session }: { session: Session | null }) {
                     const newState = !isAdminSidebarOpen || adminEditId !== null;
                     setAdminEditId(null); 
                     setIsAdminSidebarOpen(newState); 
+                    if (isMatrixOpen) setIsMatrixOpen(false);
                   }} 
                   className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm ${!adminEditId && isAdminSidebarOpen ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]' : 'bg-amber-900/40 text-amber-500 border-amber-600/50 hover:bg-amber-600 hover:text-black hover:border-amber-400'}`}
                 >
@@ -779,14 +798,84 @@ export default function Home({ session }: { session: Session | null }) {
                     const newState = !isAdminSidebarOpen || adminEditId === null;
                     setAdminEditId(currentVideoData?.id ? String(currentVideoData.id) : null); 
                     setIsAdminSidebarOpen(newState); 
+                    if (isMatrixOpen) setIsMatrixOpen(false);
                   }} 
                   className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm ${adminEditId && isAdminSidebarOpen ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]' : 'bg-amber-900/40 text-amber-500 border-amber-600/50 hover:bg-amber-600 hover:text-black hover:border-amber-400'}`}
                 >
                   ✎ EDIT VIDEO
                 </button>
+
+                {/* ── MATRIX Button ── */}
+                <button
+                  id="btn-matrix"
+                  onClick={() => {
+                    setIsMatrixOpen(prev => !prev);
+                    // Close Service Mode sidebars when opening MATRIX
+                    if (!isMatrixOpen) {
+                      setIsAdminSidebarOpen(false);
+                      setAdminEditId(null);
+                    }
+                  }}
+                  className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 shadow-lg rounded-sm ${
+                    isMatrixOpen ? 'btn-matrix-active' : 'btn-matrix-idle'
+                  }`}
+                >
+                  ⬡ MATRIX
+                </button>
               </>
             )}
           </div>
+
+          {/* ── MATRIX Full-Screen Overlay Panel ── */}
+          {isAdmin && (
+            <div
+              className={`fixed inset-0 z-[200] flex flex-col transition-all duration-400 ease-in-out ${
+                isMatrixOpen
+                  ? 'opacity-100 pointer-events-auto translate-y-0'
+                  : 'opacity-0 pointer-events-none translate-y-4'
+              }`}
+              style={{ background: 'rgba(1, 8, 4, 0.97)', backdropFilter: 'blur(12px)' }}
+            >
+              {/* MATRIX Panel Header Bar */}
+              <div className="shrink-0 flex items-center justify-between px-6 py-3 border-b border-[rgba(0,255,136,0.15)] bg-black/60">
+                <div className="flex items-center gap-3">
+                  <span className="font-vt323 text-3xl tracking-widest" style={{ color: 'var(--matrix-accent)' }}>⬡ MATRIX</span>
+                  <span className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: 'rgba(0,255,136,0.35)' }}>Channel Management System // Admin Only</span>
+                </div>
+                <button
+                  onClick={() => setIsMatrixOpen(false)}
+                  className="w-10 h-10 flex items-center justify-center border text-2xl font-bold transition-all"
+                  style={{ borderColor: 'rgba(0,255,136,0.3)', color: 'rgba(0,255,136,0.6)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--matrix-accent)'; (e.currentTarget as HTMLButtonElement).style.color = '#000'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(0,255,136,0.6)'; }}
+                >
+                  ×
+                </button>
+              </div>
+              {/* MATRIX Panel Content */}
+              <div className="flex-1 overflow-hidden">
+                {isMatrixOpen && (
+                  <MatrixPanel
+                    session={session}
+                    currentChannelName={currentChannelName}
+                    onEditVideo={(id) => {
+                      setIsMatrixOpen(false);
+                      setAdminEditId(id);
+                      setIsAdminSidebarOpen(true);
+                    }}
+                    onChannelUpdated={() => {
+                      fetchGuideData();
+                      // Re-fetch watermark for current channel
+                      if (currentChannelName) {
+                        supabase.from('playlists').select('marca_dagua_url').eq('name', currentChannelName).maybeSingle()
+                          .then(({ data }) => setCurrentChannelWatermark(data?.marca_dagua_url || null));
+                      }
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
 
 
 
@@ -871,7 +960,24 @@ export default function Home({ session }: { session: Session | null }) {
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
                       <div className="absolute top-4 right-6 text-right">
-                        {showPlaylistLabel && (
+                        {/* Watermark replaces channel OSD label when available */}
+                        {currentChannelWatermark ? (
+                          currentChannelWatermark.toLowerCase().endsWith('.mp4') || currentChannelWatermark.toLowerCase().endsWith('.webm') ? (
+                            <video
+                              key={currentChannelWatermark}
+                              src={currentChannelWatermark}
+                              autoPlay loop muted playsInline
+                              className="watermark-overlay"
+                            />
+                          ) : (
+                            <img
+                              key={currentChannelWatermark}
+                              src={currentChannelWatermark}
+                              alt="marca d'água"
+                              className="watermark-overlay"
+                            />
+                          )
+                        ) : showPlaylistLabel && (
                           <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''}`}>
                             {playlistParts.length > 1 ? (
                               <><div className="osd-line-1">{playlistParts[0].trim()}:</div><div className="osd-line-2">{playlistParts[1].trim()}</div></>

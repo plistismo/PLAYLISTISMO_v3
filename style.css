@@ -365,3 +365,193 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
         max-width: 98vw;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   --- MATRIX PANEL ---
+   Dual-sidebar channel management system.
+   Left accent: #00ff88 (matrix green)  /  Right accent: #00d4ff (matrix cyan)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    --matrix-accent:      #00ff88;
+    --matrix-accent-dim:  rgba(0, 255, 136, 0.15);
+    --matrix-cyan:        #00d4ff;
+    --matrix-cyan-dim:    rgba(0, 212, 255, 0.12);
+    --matrix-bg-left:     #010d06;
+    --matrix-bg-right:    #010a0e;
+    --matrix-border:      rgba(0, 255, 136, 0.25);
+    --matrix-border-cyan: rgba(0, 212, 255, 0.25);
+    --matrix-label:       rgba(0, 255, 136, 0.65);
+}
+
+/* ── Utility color tokens (used as Tailwind arbitrary values) ── */
+.text-matrix-accent  { color: var(--matrix-accent); }
+.text-matrix-cyan    { color: var(--matrix-cyan); }
+.text-matrix-label   { color: var(--matrix-label); }
+.border-matrix-border     { border-color: var(--matrix-border); }
+.border-matrix-border-cyan { border-color: var(--matrix-border-cyan); }
+.bg-matrix-accent    { background-color: var(--matrix-accent); }
+.bg-matrix-cyan      { background-color: var(--matrix-cyan); }
+.bg-matrix-accent\/10 { background-color: rgba(0, 255, 136, 0.10); }
+.bg-matrix-cyan\/10  { background-color: rgba(0, 212, 255, 0.10); }
+.bg-matrix-cyan\/5   { background-color: rgba(0, 212, 255, 0.05); }
+.drop-shadow-matrix  { filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.45)); }
+
+/* ── MATRIX activation button ── */
+.btn-matrix-active {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--matrix-accent);
+    border: 1px solid rgba(0, 255, 136, 0.55);
+    box-shadow: 0 0 18px rgba(0, 255, 136, 0.25), inset 0 0 10px rgba(0, 255, 136, 0.05);
+    transform: scale(1.04);
+}
+.btn-matrix-idle {
+    background: rgba(0, 255, 136, 0.06);
+    color: rgba(0, 255, 136, 0.65);
+    border: 1px solid rgba(0, 255, 136, 0.25);
+}
+.btn-matrix-idle:hover {
+    background: rgba(0, 255, 136, 0.18);
+    color: var(--matrix-accent);
+    border-color: rgba(0, 255, 136, 0.55);
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.2);
+}
+
+/* ── Inputs ── */
+.matrix-input {
+    background-color: #000 !important;
+    color: #e0ffe8 !important;
+    border: 1px solid rgba(0, 255, 136, 0.25) !important;
+    font-family: 'Jost', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 0.75rem !important;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    border-radius: 2px;
+}
+.matrix-input:focus {
+    border-color: var(--matrix-accent) !important;
+    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.15);
+    background-color: #030d06 !important;
+}
+.matrix-input::placeholder { color: rgba(0, 255, 136, 0.2) !important; font-weight: 400; }
+
+.matrix-input-cyan {
+    background-color: #000 !important;
+    color: #e0f8ff !important;
+    border: 1px solid rgba(0, 212, 255, 0.25) !important;
+    font-family: 'Jost', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 0.75rem !important;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    border-radius: 2px;
+}
+.matrix-input-cyan:focus {
+    border-color: var(--matrix-cyan) !important;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.12);
+    background-color: #010a0e !important;
+}
+.matrix-input-cyan::placeholder { color: rgba(0, 212, 255, 0.2) !important; font-weight: 400; }
+
+/* ── Description Editor ── */
+.matrix-desc-editor:empty:before {
+    content: attr(data-placeholder);
+    color: rgba(0, 255, 136, 0.2);
+    pointer-events: none;
+    font-family: 'Jost', sans-serif;
+}
+.matrix-desc-editor:focus {
+    border-color: var(--matrix-accent) !important;
+    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.12);
+}
+
+/* ── Primary Button ── */
+.matrix-btn-primary {
+    background: rgba(0, 255, 136, 0.10);
+    color: var(--matrix-accent);
+    border: 1px solid rgba(0, 255, 136, 0.45);
+    font-family: 'Jost', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0.6rem 1rem;
+}
+.matrix-btn-primary:hover:not(:disabled) {
+    background: var(--matrix-accent);
+    color: #000;
+    box-shadow: 0 0 14px rgba(0, 255, 136, 0.35);
+}
+.matrix-btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.matrix-btn-primary:active:not(:disabled) { transform: translateY(1px); }
+
+/* ── Action buttons (curation list) ── */
+.matrix-action-btn {
+    width: 100%;
+    padding: 3px 6px;
+    border: 1px solid;
+    font-family: 'Jost', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 1px;
+    text-align: center;
+}
+.matrix-action-btn--edit {
+    color: var(--matrix-cyan);
+    border-color: rgba(0, 212, 255, 0.35);
+    background: transparent;
+}
+.matrix-action-btn--edit:hover {
+    background: var(--matrix-cyan);
+    color: #000;
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+}
+.matrix-action-btn--remove {
+    color: rgba(255, 80, 80, 0.75);
+    border-color: rgba(255, 80, 80, 0.25);
+    background: transparent;
+}
+.matrix-action-btn--remove:hover {
+    background: rgba(255, 60, 60, 0.15);
+    border-color: rgba(255, 80, 80, 0.55);
+    color: #ff6060;
+}
+
+/* ── Scrollbars ── */
+.matrix-scrollbar::-webkit-scrollbar      { width: 4px; }
+.matrix-scrollbar::-webkit-scrollbar-track  { background: rgba(0,0,0,0.3); }
+.matrix-scrollbar::-webkit-scrollbar-thumb  { background: var(--matrix-accent); border-radius: 4px; }
+
+.matrix-scrollbar-cyan::-webkit-scrollbar      { width: 4px; }
+.matrix-scrollbar-cyan::-webkit-scrollbar-track  { background: rgba(0,0,0,0.3); }
+.matrix-scrollbar-cyan::-webkit-scrollbar-thumb  { background: var(--matrix-cyan); border-radius: 4px; }
+
+/* ── Watermark Overlay (on TV screen) ── */
+.watermark-overlay {
+    position: absolute;
+    top: 1rem;
+    right: 1.25rem;
+    z-index: 62;  /* above OSD (z-60) but below bump (z-70) */
+    pointer-events: none;
+    max-width: 7rem;       /* ~112px — same footprint as OSD channel label */
+    max-height: 4rem;
+    object-fit: contain;
+    opacity: 0.88;
+    /* Soft fade-in matching OSD animation */
+    animation: watermark-fadein 0.9s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+@keyframes watermark-fadein {
+    from { opacity: 0; transform: translateX(12px) scale(0.92); }
+    to   { opacity: 0.88; transform: translateX(0) scale(1); }
+}
+
+/* ── Layout override when MATRIX is open ── */
+.layout-matrix-open {
+    grid-template-columns: 0px 1fr 0px !important; /* MATRIX takes full viewport, no admin sidebars */
+}
+
