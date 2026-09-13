@@ -364,19 +364,47 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
   // ─── Upload watermark to Supabase Storage ────────────────────────────────
 
   const uploadWatermark = async (file: File): Promise<string | null> => {
-    const ext = file.name.split('.').pop();
-    const fileName = `watermark_${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from('marca-dagua')
-      .upload(fileName, file, { upsert: true, contentType: file.type });
+    try {
+      // 1. Sanitiza o nome do arquivo para evitar caracteres especiais e espaços
+      const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${Date.now()}_${cleanName}`;
 
-    if (error) {
-      showChannelMsg(`UPLOAD ERRO: ${error.message}`, true);
+      let bucketName = 'marca_dagua_url';
+
+      // 2. Upload passando File/Blob diretamente e capturando { data, error }
+      let { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, file, { upsert: true, contentType: file.type });
+
+      // Fallback caso o bucket tenha sido criado como 'marca-dagua'
+      if (error && (error.message?.includes('Bucket not found') || (error as any).statusCode === '404' || (error as any).status === 404)) {
+        console.warn(`Bucket '${bucketName}' não encontrado. Tentando fallback para 'marca-dagua'...`);
+        bucketName = 'marca-dagua';
+        const retry = await supabase.storage
+          .from(bucketName)
+          .upload(fileName, file, { upsert: true, contentType: file.type });
+        data = retry.data;
+        error = retry.error;
+      }
+
+      // 3. Tratamento de erro detalhado com log no console e feedback visual na UI
+      if (error) {
+        console.error('Supabase upload error details:', error);
+        showChannelMsg(`ERRO NO UPLOAD: ${error.message || JSON.stringify(error)}`, true);
+        return null;
+      }
+
+      // 4. Obtenção da URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
+
+      return publicUrl || null;
+    } catch (err: any) {
+      console.error('Supabase upload error details:', err);
+      showChannelMsg(`ERRO NO UPLOAD: ${err.message || err}`, true);
       return null;
     }
-
-    const { data: urlData } = supabase.storage.from('marca-dagua').getPublicUrl(fileName);
-    return urlData?.publicUrl || null;
   };
 
   // ─── Save channel ─────────────────────────────────────────────────────────
