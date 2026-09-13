@@ -989,6 +989,10 @@ export default function Home({ session }: { session: Session | null }) {
                               style={{
                                 transform: `scale(${currentChannelWatermarkScale || 1.0})`,
                                 transformOrigin: 'top right',
+                                maxWidth: '100%',
+                                objectFit: 'contain',
+                                zIndex: 65,
+                                pointerEvents: 'none',
                               }}
                             />
                           ) : (
@@ -1000,6 +1004,10 @@ export default function Home({ session }: { session: Session | null }) {
                               style={{
                                 transform: `scale(${currentChannelWatermarkScale || 1.0})`,
                                 transformOrigin: 'top right',
+                                maxWidth: '100%',
+                                objectFit: 'contain',
+                                zIndex: 65,
+                                pointerEvents: 'none',
                               }}
                             />
                           )
