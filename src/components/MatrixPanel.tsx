@@ -249,10 +249,16 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
   const fetchChannels = useCallback(async () => {
     const { data, error } = await supabase
       .from('playlists')
-      .select('id, name, group_name, descricao, marca_dagua_url, marca_dagua_tamanho')
+      .select('*')
       .order('name', { ascending: true });
 
-    if (!error && data) {
+    if (error) {
+      console.error('Supabase fetch playlists error:', error);
+      showChannelMsg(`ERRO AO CARREGAR CANAIS: ${error.message}`, true);
+      return;
+    }
+
+    if (data) {
       setChannels(data as ChannelEntry[]);
       // Collect unique existing groups from DB
       const groups = [...new Set(data.map((c: any) => c.group_name).filter(Boolean))].sort() as string[];
