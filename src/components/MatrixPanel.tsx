@@ -64,6 +64,17 @@ export const buscarClipesCuradoria = async (
   return [];
 };
 
+// ─── Função de Busca/Filtro de Canais em Tempo Real (Vanilla JS) ───────────
+export const filtrarCanais = (termo: string, listaCanais: ChannelEntry[] = []): ChannelEntry[] => {
+  if (!termo || !termo.trim()) return listaCanais;
+  const termoNorm = normalizarTexto(termo);
+  return listaCanais.filter(ch => {
+    const nome = normalizarTexto(ch.name || '');
+    const grupo = normalizarTexto(ch.group_name || '');
+    return nome.includes(termoNorm) || grupo.includes(termoNorm);
+  });
+};
+
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 type ChannelEntry = {
@@ -187,6 +198,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
 
   // ── Channel list state ──
   const [channels, setChannels] = useState<ChannelEntry[]>([]);
+  const [channelSearch, setChannelSearch] = useState('');
   const [selectedChannel, setSelectedChannel] = useState<ChannelEntry | null>(null);
   const [channelStatusMsg, setChannelStatusMsg] = useState({ text: '', isError: false });
 
@@ -272,18 +284,24 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     setVideoSearch('');
   };
 
+  // Filtragem da lista de canais em tempo real (Sidebar Esquerda)
+  const displayedChannels = useMemo(() => {
+    return filtrarCanais(channelSearch, channels);
+  }, [channelSearch, channels]);
+
   // ─── New channel ──────────────────────────────────────────────────────────
 
   const startNewChannel = () => {
     setSelectedChannel(null);
     setFormTitle('');
-    setFormGroup('OTHERS');
+    setFormGroup('UPLOADS');
     setFormGroupCustom('');
     setFormDesc('');
     setCurrentWatermarkUrl('');
     setWatermarkFile(null);
     setIsNewChannel(true);
     setVideos([]);
+    setChannelSearch('');
   };
 
   // ─── Carregar acervo geral (range 0 a 999) para curadoria abrangente ───
@@ -395,24 +413,58 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
       if (error) {
         showChannelMsg(`ERRO: ${error.message}`, true);
       } else {
-        showChannelMsg('CANAL CRIADO!');
+        showChannelMsg(`CANAL "${payload.name}" CRIADO!`);
+        setChannelSearch('');
         await fetchChannels();
         if (data) selectChannel(data as ChannelEntry);
         setIsNewChannel(false);
         if (onChannelUpdated) onChannelUpdated();
       }
     } else if (selectedChannel) {
+      const canalAtualId = selectedChannel.id;
+      const oldName = selectedChannel.name;
+      const newName = formTitle.trim();
+
+      // Atualização estritamente pelo ID do canal na tabela playlists
       const { error } = await supabase
         .from('playlists')
         .update(payload)
-        .eq('id', selectedChannel.id);
+        .eq('id', canalAtualId);
 
       if (error) {
         showChannelMsg(`ERRO: ${error.message}`, true);
       } else {
-        showChannelMsg('CANAL ATUALIZADO!');
+        // Se o título/nome do canal mudou, atualiza as referências na tabela de clipes
+        if (oldName !== newName) {
+          await supabase
+            .from('musicas_backup')
+            .update({ playlist: newName, playlist_group: finalGroup })
+            .eq('playlist', oldName);
+        }
+
+        const canalAtualizado: ChannelEntry = {
+          ...selectedChannel,
+          name: newName,
+          group_name: finalGroup,
+          descricao: formDesc || undefined,
+          marca_dagua_url: watermarkUrl || undefined,
+        };
+
+        // 1. Atualiza imediatamente a lista local da sidebar esquerda sem F5
+        setChannels(prev => prev.map(ch => ch.id === canalAtualId ? canalAtualizado : ch));
+
+        // 2. Atualiza o canal selecionado ativo
+        setSelectedChannel(canalAtualizado);
+
+        // 3. Limpa o filtro de busca de canais
+        setChannelSearch('');
+
+        // 4. Feedback visual imediato
+        showChannelMsg(`CANAL "${newName}" ATUALIZADO COM SUCESSO!`);
         setCurrentWatermarkUrl(watermarkUrl);
         setWatermarkFile(null);
+
+        // 5. Sincroniza em background e notifica a aplicação
         await fetchChannels();
         if (onChannelUpdated) onChannelUpdated();
       }
@@ -513,7 +565,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
             <p className="text-[10px] text-matrix-label/50 uppercase tracking-wider">Channel Management System</p>
           </div>
           <span className="text-[10px] font-bold text-matrix-label/40 uppercase tracking-widest border border-matrix-border/30 px-2 py-1">
-            {channels.length} CANAIS
+            {channelSearch ? `${displayedChannels.length} / ${channels.length}` : `${channels.length}`} CANAIS
           </span>
         </div>
 
@@ -535,26 +587,54 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
               + Novo Canal
             </button>
           </div>
-          <div className="max-h-48 overflow-y-auto matrix-scrollbar space-y-0.5">
-            {channels.map(ch => (
+
+          {/* Buscador de Canais em tempo real */}
+          <div className="mb-2 relative">
+            <input
+              type="text"
+              value={channelSearch}
+              onChange={e => setChannelSearch(e.target.value)}
+              className="matrix-input w-full pr-8 text-xs py-1.5"
+              placeholder="Buscar canal..."
+            />
+            {channelSearch && (
               <button
-                key={ch.id}
-                onClick={() => selectChannel(ch)}
-                className={`w-full text-left px-3 py-2 text-sm transition-all border-l-2 ${
-                  selectedChannel?.id === ch.id
-                    ? 'bg-matrix-accent/10 border-matrix-accent text-matrix-accent'
-                    : 'border-transparent text-white/50 hover:border-matrix-border hover:text-white/80 hover:bg-white/5'
-                }`}
+                type="button"
+                onClick={() => setChannelSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-matrix-label/50 hover:text-matrix-accent text-sm"
+                title="Limpar busca"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate font-bold">{ch.name}</span>
-                  {ch.marca_dagua_url && <span className="text-matrix-accent text-[10px] opacity-60 shrink-0">◈ WM</span>}
-                </div>
-                {ch.group_name && (
-                  <div className="text-[10px] opacity-40 uppercase tracking-widest mt-0.5">{ch.group_name}</div>
-                )}
+                ×
               </button>
-            ))}
+            )}
+          </div>
+
+          <div className="max-h-48 overflow-y-auto matrix-scrollbar space-y-0.5">
+            {displayedChannels.length === 0 ? (
+              <div className="py-3 text-center text-xs text-matrix-label/40 uppercase tracking-wider">
+                {channelSearch ? 'Nenhum canal encontrado' : 'Nenhum canal cadastrado'}
+              </div>
+            ) : (
+              displayedChannels.map(ch => (
+                <button
+                  key={ch.id}
+                  onClick={() => selectChannel(ch)}
+                  className={`w-full text-left px-3 py-2 text-sm transition-all border-l-2 ${
+                    selectedChannel?.id === ch.id
+                      ? 'bg-matrix-accent/10 border-matrix-accent text-matrix-accent'
+                      : 'border-transparent text-white/50 hover:border-matrix-border hover:text-white/80 hover:bg-white/5'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-bold">{ch.name}</span>
+                    {ch.marca_dagua_url && <span className="text-matrix-accent text-[10px] opacity-60 shrink-0">◈ WM</span>}
+                  </div>
+                  {ch.group_name && (
+                    <div className="text-[10px] opacity-40 uppercase tracking-widest mt-0.5">{ch.group_name}</div>
+                  )}
+                </button>
+              ))
+            )}
           </div>
         </div>
 
