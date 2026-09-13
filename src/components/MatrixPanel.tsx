@@ -83,7 +83,7 @@ type ChannelEntry = {
   group_name?: string;
   descricao?: string;
   marca_dagua_url?: string;
-  marca_dagua_tamanho?: number;
+  marca_dagua_escala?: number;
 };
 
 type VideoEntry = {
@@ -210,7 +210,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
   const [formDesc, setFormDesc] = useState('');
   const [watermarkFile, setWatermarkFile] = useState<File | null>(null);
   const [currentWatermarkUrl, setCurrentWatermarkUrl] = useState('');
-  const [watermarkSize, setWatermarkSize] = useState<number>(120);
+  const [watermarkScale, setWatermarkScale] = useState<number>(1.0);
   const [isSavingChannel, setIsSavingChannel] = useState(false);
   const [isNewChannel, setIsNewChannel] = useState(false);
   const [existingGroups, setExistingGroups] = useState<string[]>([]);
@@ -278,6 +278,14 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     }
   }, [currentChannelName, channels.length]);
 
+  const parseChannelScale = (val: any): number => {
+    if (val === null || val === undefined) return 1.0;
+    const num = Number(val);
+    if (isNaN(num) || num <= 0) return 1.0;
+    if (num > 10) return Number((num / 120).toFixed(2));
+    return num;
+  };
+
   // ─── Select channel ───────────────────────────────────────────────────────
 
   const selectChannel = (ch: ChannelEntry) => {
@@ -287,7 +295,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     setFormGroupCustom('');
     setFormDesc(ch.descricao || '');
     setCurrentWatermarkUrl(ch.marca_dagua_url || '');
-    setWatermarkSize(ch.marca_dagua_tamanho ? Number(ch.marca_dagua_tamanho) : 120);
+    setWatermarkScale(parseChannelScale(ch.marca_dagua_escala));
     setWatermarkFile(null);
     setIsNewChannel(false);
     setVideoSearch('');
@@ -307,7 +315,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     setFormGroupCustom('');
     setFormDesc('');
     setCurrentWatermarkUrl('');
-    setWatermarkSize(120);
+    setWatermarkScale(1.0);
     setWatermarkFile(null);
     setIsNewChannel(true);
     setVideos([]);
@@ -444,7 +452,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
       group_name: finalGroup,
       descricao: formDesc || null,
       marca_dagua_url: watermarkUrl || null,
-      marca_dagua_tamanho: Number(watermarkSize) || 120,
+      marca_dagua_escala: Number(watermarkScale) || 1.0,
     };
 
     if (isNewChannel) {
@@ -487,7 +495,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
           group_name: finalGroup,
           descricao: formDesc || undefined,
           marca_dagua_url: watermarkUrl || undefined,
-          marca_dagua_tamanho: Number(watermarkSize) || 120,
+          marca_dagua_escala: Number(watermarkScale) || 1.0,
         };
 
         // 1. Atualiza imediatamente a lista local da sidebar esquerda sem F5
@@ -794,30 +802,30 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
                 )}
               </div>
 
-              {/* Controle de Tamanho da Marca D'água na TV */}
+              {/* Controle de Escala da Marca D'água na TV */}
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label htmlFor="gc-tamanho-slider" className="text-[10px] text-matrix-label uppercase font-bold tracking-wider">
-                    TAMANHO DA MARCA D'ÁGUA
+                    ESCALA DA MARCA D'ÁGUA
                   </label>
                   <span className="text-xs font-mono font-bold text-matrix-accent bg-matrix-accent/10 px-2 py-0.5 border border-matrix-accent/30 rounded">
-                    {watermarkSize}px
+                    {Number(watermarkScale).toFixed(1)}x
                   </span>
                 </div>
                 <input
                   type="range"
                   id="gc-tamanho-slider"
-                  min="40"
-                  max="250"
-                  step="5"
-                  value={watermarkSize}
-                  onChange={e => setWatermarkSize(Number(e.target.value))}
+                  min="0.5"
+                  max="3.0"
+                  step="0.1"
+                  value={watermarkScale}
+                  onChange={e => setWatermarkScale(parseFloat(e.target.value))}
                   className="w-full accent-[#00ff88] cursor-pointer"
                 />
                 <div className="flex justify-between text-[9px] text-matrix-label/40 font-mono mt-0.5">
-                  <span>40px</span>
-                  <span>120px (padrão)</span>
-                  <span>250px</span>
+                  <span>0.5x</span>
+                  <span>1.0x (padrão)</span>
+                  <span>3.0x</span>
                 </div>
               </div>
 

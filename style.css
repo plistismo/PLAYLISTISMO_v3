@@ -538,9 +538,11 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
     right: 1.25rem;
     z-index: 62;  /* above OSD (z-60) but below bump (z-70) */
     pointer-events: none;
+    width: 120px;
     height: auto;
     object-fit: contain;
     opacity: 0.88;
+    transform-origin: top right;
     /* Soft fade-in matching OSD animation */
     animation: watermark-fadein 0.9s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }

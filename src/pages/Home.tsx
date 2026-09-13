@@ -78,7 +78,7 @@ export default function Home({ session }: { session: Session | null }) {
   // MATRIX Module State
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [currentChannelWatermark, setCurrentChannelWatermark] = useState<string | null>(null);
-  const [currentChannelWatermarkSize, setCurrentChannelWatermarkSize] = useState<number>(120);
+  const [currentChannelWatermarkScale, setCurrentChannelWatermarkScale] = useState<number>(1.0);
   
   // Histórico de Sessão (Shuffle sem Repetição)
   const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
@@ -324,21 +324,30 @@ export default function Home({ session }: { session: Session | null }) {
     }
   };
 
-  // MATRIX: fetch watermark URL and size whenever the active channel changes
+  // Helper para interpretar marca_dagua_escala (se legado > 10, converte 120px = 1.0)
+  const parseScale = (raw: any): number => {
+    if (raw === null || raw === undefined) return 1.0;
+    const num = Number(raw);
+    if (isNaN(num) || num <= 0) return 1.0;
+    if (num > 10) return Number((num / 120).toFixed(2));
+    return num;
+  };
+
+  // MATRIX: fetch watermark URL and scale whenever the active channel changes
   useEffect(() => {
     if (!currentChannelName) {
       setCurrentChannelWatermark(null);
-      setCurrentChannelWatermarkSize(120);
+      setCurrentChannelWatermarkScale(1.0);
       return;
     }
     supabase
       .from('playlists')
-      .select('marca_dagua_url, marca_dagua_tamanho')
+      .select('marca_dagua_url, marca_dagua_escala')
       .eq('name', currentChannelName)
       .maybeSingle()
       .then(({ data }) => {
         setCurrentChannelWatermark(data?.marca_dagua_url || null);
-        setCurrentChannelWatermarkSize(data?.marca_dagua_tamanho ? Number(data.marca_dagua_tamanho) : 120);
+        setCurrentChannelWatermarkScale(parseScale(data?.marca_dagua_escala));
       });
   }, [currentChannelName]);
 
@@ -873,10 +882,10 @@ export default function Home({ session }: { session: Session | null }) {
                       fetchGuideData();
                       // Re-fetch watermark for current channel
                       if (currentChannelName) {
-                        supabase.from('playlists').select('marca_dagua_url, marca_dagua_tamanho').eq('name', currentChannelName).maybeSingle()
+                        supabase.from('playlists').select('marca_dagua_url, marca_dagua_escala').eq('name', currentChannelName).maybeSingle()
                           .then(({ data }) => {
                             setCurrentChannelWatermark(data?.marca_dagua_url || null);
-                            setCurrentChannelWatermarkSize(data?.marca_dagua_tamanho ? Number(data.marca_dagua_tamanho) : 120);
+                            setCurrentChannelWatermarkScale(parseScale(data?.marca_dagua_escala));
                           });
                       }
                     }}
@@ -978,9 +987,8 @@ export default function Home({ session }: { session: Session | null }) {
                               autoPlay loop muted playsInline
                               className="watermark-overlay"
                               style={{
-                                width: `${currentChannelWatermarkSize || 120}px`,
-                                height: 'auto',
-                                maxWidth: '40vw',
+                                transform: `scale(${currentChannelWatermarkScale || 1.0})`,
+                                transformOrigin: 'top right',
                               }}
                             />
                           ) : (
@@ -990,9 +998,8 @@ export default function Home({ session }: { session: Session | null }) {
                               alt="marca d'água"
                               className="watermark-overlay"
                               style={{
-                                width: `${currentChannelWatermarkSize || 120}px`,
-                                height: 'auto',
-                                maxWidth: '40vw',
+                                transform: `scale(${currentChannelWatermarkScale || 1.0})`,
+                                transformOrigin: 'top right',
                               }}
                             />
                           )
