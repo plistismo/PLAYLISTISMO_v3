@@ -88,27 +88,6 @@ export default function Home({ session }: { session: Session | null }) {
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [currentVideoData, setCurrentVideoData] = useState<VideoData | null>(null);
 
-  // Grupos únicos extraídos dinamicamente do estado global de playlists
-  const uniqueGroups = useMemo(() => extractUniqueGroups(playlists), [playlists]);
-
-  useEffect(() => {
-    if (uniqueGroups.length > 0 && !uniqueGroups.includes(activeGuideGroup)) {
-      setActiveGuideGroup(uniqueGroups[0]);
-    }
-  }, [uniqueGroups, activeGuideGroup]);
-
-  const filteredPlaylists = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return channelsByCategory[activeGuideGroup] || [];
-    }
-    const term = searchTerm.toUpperCase();
-    const inActive = (channelsByCategory[activeGuideGroup] || []).filter(pl =>
-      pl.name.toUpperCase().includes(term)
-    );
-    if (inActive.length > 0) return inActive;
-    return (playlists || []).filter(pl => pl.name.toUpperCase().includes(term));
-  }, [searchTerm, channelsByCategory, activeGuideGroup, playlists]);
-
   // UI State
   const [isBumping, setIsBumping] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
@@ -146,6 +125,27 @@ export default function Home({ session }: { session: Session | null }) {
   const isAdminSidebarOpenRef = useRef(false);
   const adminEditIdRef = useRef<string | null>(null);
 
+  // Grupos únicos extraídos dinamicamente do estado global de playlists
+  const uniqueGroups = useMemo(() => extractUniqueGroups(playlists), [playlists]);
+
+  useEffect(() => {
+    if (uniqueGroups.length > 0 && !uniqueGroups.includes(activeGuideGroup)) {
+      setActiveGuideGroup(uniqueGroups[0]);
+    }
+  }, [uniqueGroups, activeGuideGroup]);
+
+  const filteredPlaylists = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return channelsByCategory[activeGuideGroup] || [];
+    }
+    const term = searchTerm.toUpperCase();
+    const inActive = (channelsByCategory[activeGuideGroup] || []).filter(pl =>
+      pl.name.toUpperCase().includes(term)
+    );
+    if (inActive.length > 0) return inActive;
+    return (playlists || []).filter(pl => pl.name.toUpperCase().includes(term));
+  }, [searchTerm, channelsByCategory, activeGuideGroup, playlists]);
+
   // Sincroniza as refs com o estado do React
   useEffect(() => {
     channelListRef.current = currentChannelList;
@@ -170,7 +170,7 @@ export default function Home({ session }: { session: Session | null }) {
   }, []);
 
   // Controle explícito de visibilidade entre os players via element.style
-  const syncPlayerVisibility = (platform: 'youtube' | 'vimeo') => {
+  function syncPlayerVisibility(platform: 'youtube' | 'vimeo') {
     activePlatformRef.current = platform;
     const ytContainer = document.getElementById('yt-player');
     const vimeoContainer = document.getElementById('vimeo-parent-container');
@@ -214,7 +214,7 @@ export default function Home({ session }: { session: Session | null }) {
   };
 
   // Inicializa o player Vimeo (chamado após o script já estar carregado)
-  const initVimeoPlayer = () => {
+  function initVimeoPlayer() {
     if (!window.Vimeo || vimeoPlayerRef.current) return;
     vimeoPlayerRef.current = new window.Vimeo.Player('vimeo-player', {
       id: 3559516, // fallback de inicialização; substituído por loadVideo() na reprodução
@@ -310,7 +310,7 @@ export default function Home({ session }: { session: Session | null }) {
     }
   }, []);
 
-  const onPlayerStateChange = (event: any) => {
+  function onPlayerStateChange(event: any) {
     const YT_STATE = window.YT.PlayerState;
     if (event.data === YT_STATE.PLAYING) {
       setStatus("");
@@ -329,7 +329,7 @@ export default function Home({ session }: { session: Session | null }) {
     }
   };
 
-  const startCreditsMonitor = () => {
+  function startCreditsMonitor() {
     if (window.creditsInterval) clearInterval(window.creditsInterval);
     window.creditsInterval = setInterval(async () => {
       let cur = 0;
@@ -360,7 +360,7 @@ export default function Home({ session }: { session: Session | null }) {
     }, 1000);
   };
 
-  const fetchGuideData = async () => {
+  async function fetchGuideData() {
     const { data } = await supabase.from('playlists').select('*').order('name');
     if (data) {
       setPlaylists(data);
@@ -401,12 +401,12 @@ export default function Home({ session }: { session: Session | null }) {
       });
   }, [currentChannelName]);
 
-  const setStatus = (msg: string) => {
+  function setStatus(msg: string) {
     setStatusMessage(msg);
     if (msg) setTimeout(() => setStatusMessage(''), 3000);
-  };
+  }
 
-  const checkResumeState = () => {
+  function checkResumeState() {
     const saved = localStorage.getItem('tv_resume_state');
     if (saved) {
       try {
@@ -420,7 +420,7 @@ export default function Home({ session }: { session: Session | null }) {
     }
   };
 
-  const togglePower = () => {
+  function togglePower() {
     setIsOn(prev => {
       const next = !prev;
       if (next) {
@@ -583,13 +583,13 @@ export default function Home({ session }: { session: Session | null }) {
     }
   }, [currentVideoData, isReady]);
 
-  const playCurrentVideo = () => {
+  function playCurrentVideo() {
     if (currentChannelList[currentIndex] && isReady) {
       setCurrentVideoData(currentChannelList[currentIndex]);
     }
-  };
+  }
 
-  const handleVideoEnd = () => {
+  function handleVideoEnd() {
     const list = channelListRef.current;
     const currIdx = currentIndexRef.current;
     const history = playedHistoryRef.current[currentChannelName] || [];
