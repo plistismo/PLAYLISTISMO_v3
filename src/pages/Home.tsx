@@ -78,6 +78,8 @@ export default function Home({ session }: { session: Session | null }) {
   // App State
   const [isOn, setIsOn] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [activeGuideGroup, setActiveGuideGroup] = useState<string>('UPLOADS');
   const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
   const [channelsByCategory, setChannelsByCategory] = useState<Record<string, PlaylistItem[]>>({});
   const [currentChannelList, setCurrentChannelList] = useState<VideoData[]>([]);
@@ -88,6 +90,24 @@ export default function Home({ session }: { session: Session | null }) {
 
   // Grupos únicos extraídos dinamicamente do estado global de playlists
   const uniqueGroups = useMemo(() => extractUniqueGroups(playlists), [playlists]);
+
+  useEffect(() => {
+    if (uniqueGroups.length > 0 && !uniqueGroups.includes(activeGuideGroup)) {
+      setActiveGuideGroup(uniqueGroups[0]);
+    }
+  }, [uniqueGroups, activeGuideGroup]);
+
+  const filteredPlaylists = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return channelsByCategory[activeGuideGroup] || [];
+    }
+    const term = searchTerm.toUpperCase();
+    const inActive = (channelsByCategory[activeGuideGroup] || []).filter(pl =>
+      pl.name.toUpperCase().includes(term)
+    );
+    if (inActive.length > 0) return inActive;
+    return (playlists || []).filter(pl => pl.name.toUpperCase().includes(term));
+  }, [searchTerm, channelsByCategory, activeGuideGroup, playlists]);
 
   // UI State
   const [isBumping, setIsBumping] = useState(false);
@@ -444,6 +464,7 @@ export default function Home({ session }: { session: Session | null }) {
     if (cat) {
       setCurrentGroupIndex(uniqueGroups.indexOf(cat));
       setExpandedGroup(cat);
+      setActiveGuideGroup(cat);
     }
 
     const { data } = await supabase.from('musicas_backup').select('*').eq('playlist', playlistName).order('id', { ascending: false });
@@ -622,6 +643,7 @@ export default function Home({ session }: { session: Session | null }) {
     const groupName = uniqueGroups[nextGroupIdx];
     setStatus(`GROUP: ${groupName}`);
     setExpandedGroup(groupName);
+    setActiveGuideGroup(groupName);
     const channelPlaylists = channelsByCategory[groupName];
     if (channelPlaylists?.length) loadChannelContent(channelPlaylists[0].name);
   };
@@ -640,81 +662,7 @@ export default function Home({ session }: { session: Session | null }) {
   const playlistParts = currentChannelName.split(':');
 
   return (
-    <div className={`bg-[#050505] min-h-screen overflow-x-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500 ${isSearchOpen ? 'guide-active overflow-hidden' : ''}`}>
-
-      {/* Admin Panel Header moved down to follow TV */}
-
-      <div className={`fixed inset-y-0 left-0 z-[100] w-full md:w-[400px] lg:w-[450px] teletext-bg flex flex-col shadow-[20px_0_60px_rgba(0,0,0,0.9)] border-r-4 border-white/10 transform ${isSearchOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-500 ease-in-out font-vt323 h-full`}>
-        <div className="bg-black p-4 flex justify-between items-center border-b-2 border-white/20 shrink-0">
-          <div className="flex flex-col leading-none">
-            <span className="text-3xl font-bold text-white tracking-widest drop-shadow-[2px_2px_0_#000] font-jost"><span className="text-[#ffff00]">P</span><span className="text-[#00ff00]">100</span> GUIDE</span>
-            <span className="text-xs text-gray-400 tracking-[0.2em] uppercase font-jost">playlistismo v19</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-white text-xl animate-pulse font-jost"><span>{time || '00:00'}</span></div>
-            <button onClick={() => setIsSearchOpen(false)} className="bg-red-600 hover:bg-red-500 text-white w-10 h-10 flex items-center justify-center border-2 border-white shadow-[4px_4px_0_#000] transition-colors active:translate-y-1 active:shadow-none">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-        </div>
-        <div className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
-          {currentVideoData && (
-            <div className="bg-[#111] border-2 border-white/30 p-4 mb-6 shrink-0 shadow-[8px_8px_0_rgba(0,0,0,1)] font-jost relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 via-cyan-400 via-pink-400 to-orange-500"></div>
-              <div className="space-y-3">
-                {currentVideoData.artista && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎤</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ARTIST</span><div className="text-[#ffff00] text-xl font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.artista) }} /></div></div>}
-                {currentVideoData.musica && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎼</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">TRACK</span><div className="text-[#00ff00] text-xl font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.musica) }} /></div></div>}
-                {currentVideoData.album && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">💽</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">ALBUM</span><div className="text-[#00ffff] text-base font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.album) }} /></div></div>}
-                {currentVideoData.ano && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">📅</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">RELEASE</span><div className="text-[#ff00ff] text-base font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.ano) }} /></div></div>}
-                {currentVideoData.direcao && <div className="flex gap-3 items-center group"><span className="text-2xl drop-shadow-[2px_2px_0_#000] shrink-0">🎬</span><div className="flex flex-col overflow-hidden w-full"><span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest leading-none mb-1">DIRECTOR</span><div className="text-[#ff8800] text-base font-bold uppercase truncate" dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.direcao) }} /></div></div>}
-              </div>
-              <div className="mt-4 text-white/40 text-[10px] uppercase tracking-tighter border-t border-white/10 pt-2 italic text-right">CHANNEL: {currentChannelName}</div>
-            </div>
-          )}
-          <div className="relative bg-black border-2 border-[#ffff00] p-2 mb-4 flex items-center shrink-0">
-            <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-transparent text-white text-2xl uppercase outline-none font-vt323 placeholder-white/30" placeholder="BUSCAR..." />
-          </div>
-          <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar pr-1 pb-10 accordion-container">
-            {uniqueGroups.map(cat => {
-              const groupPlaylists = (channelsByCategory[cat] || []).filter(pl => pl.name.toUpperCase().includes(searchTerm.toUpperCase()));
-              if (groupPlaylists.length === 0 && searchTerm) return null;
-              const isExpanded = searchTerm ? true : expandedGroup === cat;
-              return (
-                <div key={cat} className="guide-group mb-2 overflow-hidden rounded-[8px] border border-white/10 bg-[#0a0a0a] shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
-                  <button
-                    onClick={() => setExpandedGroup(expandedGroup === cat ? null : cat)}
-                    className={`w-full flex justify-between items-center p-3 text-white font-bold uppercase text-lg transition-colors focus:outline-none ${isExpanded ? 'bg-[#0000aa] border-b border-white/20' : 'hover:bg-[#1a1a1a]'}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl drop-shadow-[2px_2px_0_#000]">{getGroupIcon(cat)}</span>
-                      <span className="tracking-widest">{cat}</span>
-                    </div>
-                    <span className="text-sm border border-white/30 rounded px-2 opacity-80">{isExpanded ? '▲' : '▼'}</span>
-                  </button>
-                  {isExpanded && (
-                    <div className="guide-cat-content flex flex-col bg-black/40 pb-1">
-                      {groupPlaylists.map(pl => {
-                        const isPlaying = pl.name === currentChannelName;
-                        return (
-                          <button
-                            key={pl.name}
-                            onClick={() => { loadChannelContent(pl.name); setIsSearchOpen(false); }}
-                            className={`w-full text-left p-3 px-6 uppercase text-sm font-vt323 transition-all border-b border-white/5 flex items-center justify-between group
-                                ${isPlaying ? 'bg-[#ffff00] text-[#0000aa] font-black pl-8' : 'text-gray-300 hover:bg-[#111] hover:text-white hover:pl-8'}`}
-                          >
-                            <div className="flex-1 truncate tracking-widest">{pl.name}</div>
-                            {isPlaying && <span className="text-xs animate-pulse ml-2 flex items-center gap-1"><div className="w-2 h-2 bg-[#0000aa] rounded-full"></div> PLAYING</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+    <div className="bg-[#050505] min-h-screen overflow-x-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
 
       {/* Admin Panel is now integrated into the main tripartite layout */}
 
@@ -818,7 +766,7 @@ export default function Home({ session }: { session: Session | null }) {
         </aside>
 
         {/* MIDDLE PANEL: TV & CONTROLS */}
-        <section className={`flex flex-col items-center justify-center p-4 transition-all duration-500 w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[1200px] mx-auto'} ${isSearchOpen ? 'md:translate-x-[200px] scale-[0.85] md:scale-95' : ''}`}>
+        <section className={`flex flex-col items-center justify-center p-4 transition-all duration-500 w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[1200px] mx-auto'}`}>
           
           {/* Centralized Admin Buttons */}
           <div id="admin-panel-controls" className={`mb-8 flex flex-wrap gap-4 items-center justify-center w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[800px]'}`}>
@@ -927,9 +875,124 @@ export default function Home({ session }: { session: Session | null }) {
 
 
 
-          <div className={`relative w-full ${isAdminSidebarOpen ? 'max-w-full px-4 mx-0' : 'max-w-[1000px] mx-auto'} tv-responsive-container flex flex-col transition-all duration-500 ease-out cursor-pointer`} onClick={() => setIsSearchOpen(false)}>
-          <div className="relative w-full transition-all duration-500 md:perspective-[1500px] group">
-            <div className="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
+          <div className={`relative w-full ${isAdminSidebarOpen ? 'max-w-full px-4 mx-0' : 'max-w-[1000px] mx-auto'} tv-responsive-container flex flex-col transition-all duration-500 ease-out`}>
+            
+            {/* ── GAVETA SUPERIOR (INFO / PLAYING NOW) ── */}
+            <div
+              id="tv-drawer-info"
+              className={`w-full overflow-hidden transition-all duration-500 ease-in-out font-jost ${
+                isInfoOpen
+                  ? 'max-h-[500px] opacity-100 mb-4 translate-y-0'
+                  : 'max-h-0 opacity-0 mb-0 -translate-y-6 pointer-events-none'
+              }`}
+            >
+              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-3 md:p-5 shadow-[0_16px_36px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-jost">
+                
+                {/* Header Visor do Hardware */}
+                <div className="flex items-center justify-between border-b border-[#2b3038] pb-2.5 mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse"></span>
+                    <span className="text-[11px] md:text-xs font-black uppercase tracking-[0.25em] text-zinc-300 font-jost">
+                      TELEMETRY VISOR // PLAYING NOW
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] md:text-xs text-amber-400 font-mono font-bold uppercase tracking-wider font-jost bg-black/60 px-2 py-0.5 rounded border border-amber-500/30">
+                      CH: {currentChannelName || 'OFFLINE'}
+                    </span>
+                    <button
+                      onClick={() => setIsInfoOpen(false)}
+                      className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-black/50 hover:bg-red-900/60 border border-white/10 transition-colors font-jost"
+                      title="Fechar Painel Info"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {/* Hardware Display Rebaixado (shadow-inner) */}
+                <div className="bg-neutral-900 border-2 border-black rounded-xl p-3 md:p-4 shadow-[inset_0_4px_18px_rgba(0,0,0,0.95)] relative font-jost">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 via-cyan-400 via-pink-400 to-orange-500 opacity-70"></div>
+                  
+                  {currentVideoData ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {/* ARTIST */}
+                      {currentVideoData.artista && (
+                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center">
+                          <span className="text-[9px] text-amber-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
+                            <span>🎤</span> ARTIST
+                          </span>
+                          <div
+                            className="text-[#ffff00] text-base md:text-lg font-bold uppercase truncate tracking-wide drop-shadow-[0_0_8px_rgba(255,255,0,0.25)] font-jost"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.artista) }}
+                          />
+                        </div>
+                      )}
+
+                      {/* TRACK */}
+                      {currentVideoData.musica && (
+                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center">
+                          <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
+                            <span>🎼</span> TRACK
+                          </span>
+                          <div
+                            className="text-[#00ff00] text-base md:text-lg font-bold uppercase truncate tracking-wide drop-shadow-[0_0_8px_rgba(0,255,0,0.25)] font-jost"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.musica) }}
+                          />
+                        </div>
+                      )}
+
+                      {/* ALBUM */}
+                      {currentVideoData.album && (
+                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center">
+                          <span className="text-[9px] text-cyan-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
+                            <span>💽</span> ALBUM
+                          </span>
+                          <div
+                            className="text-[#00ffff] text-sm md:text-base font-semibold uppercase truncate tracking-wide font-jost"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.album) }}
+                          />
+                        </div>
+                      )}
+
+                      {/* RELEASE */}
+                      {currentVideoData.ano && (
+                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center">
+                          <span className="text-[9px] text-fuchsia-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
+                            <span>📅</span> RELEASE
+                          </span>
+                          <div
+                            className="text-[#ff00ff] text-sm md:text-base font-semibold uppercase truncate tracking-wide font-jost"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.ano) }}
+                          />
+                        </div>
+                      )}
+
+                      {/* DIRECTOR */}
+                      {currentVideoData.direcao && (
+                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center sm:col-span-2 lg:col-span-2">
+                          <span className="text-[9px] text-orange-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
+                            <span>🎬</span> DIRECTOR
+                          </span>
+                          <div
+                            className="text-[#ff8800] text-sm md:text-base font-semibold uppercase truncate tracking-wide font-jost"
+                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.direcao) }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="py-6 text-center text-zinc-500 uppercase tracking-widest text-xs font-bold font-jost">
+                      [ NENHUM SINAL DE VÍDEO ATIVO // REPRODUÇÃO EM ESPERA ]
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* CHASSI DA TV */}
+            <div className="relative w-full transition-all duration-500 md:perspective-[1500px] group">
+              <div className="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
 
               <div className="flex flex-row bg-[#111] rounded-[16px] md:rounded-[36px] p-2 md:p-5 shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222]">
                 <div className="hidden md:flex flex-col justify-center w-10 mr-3 space-y-0.5 opacity-50 shrink-0">
@@ -1077,25 +1140,48 @@ export default function Home({ session }: { session: Session | null }) {
                     <span className="font-serif italic font-bold text-[#bbb] text-[8px] md:text-sm drop-shadow-[1px_1px_0_rgba(0,0,0,1)] tracking-tight uppercase vertical-text">playlist<span className="text-[#888]">ismo</span></span>
                   </div>
 
-                  <div className="flex flex-col items-center gap-4 md:gap-6">
+                  <div className="flex flex-col items-center gap-3 md:gap-5">
+                    {/* INFO Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Guide</span>
-                      <button onClick={(e) => { e.stopPropagation(); setIsSearchOpen(!isSearchOpen); }} className="btn-retro-push w-10 h-8 md:w-14 md:h-12 rounded-sm flex items-center justify-center group relative">
-                        <svg className="w-4 h-4 text-gray-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
+                      <span className="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Info</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setIsInfoOpen(prev => !prev); }}
+                        className={`btn-retro-push w-10 h-8 md:w-14 md:h-12 rounded-sm flex items-center justify-center group relative transition-all ${isInfoOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`}
+                        title="Abrir/Fechar Informações (Now Playing)"
+                      >
+                        <span className={`font-serif font-black italic text-sm md:text-lg transition-colors ${isInfoOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'}`}>
+                          i
+                        </span>
                       </button>
                     </div>
 
+                    {/* GUIDE Button */}
+                    <div className="flex flex-col items-center">
+                      <span className="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Guide</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setIsSearchOpen(prev => !prev); }}
+                        className={`btn-retro-push w-10 h-8 md:w-14 md:h-12 rounded-sm flex items-center justify-center group relative transition-all ${isSearchOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`}
+                        title="Abrir/Fechar Guia P100"
+                      >
+                        <svg className={`w-4 h-4 transition-colors ${isSearchOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* GRP Button */}
                     <div className="flex flex-col items-center">
                       <span className="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Grp</span>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-1.5">
                         <button onClick={(e) => { e.stopPropagation(); changeGroup(1); }} className="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white">+</button>
                         <button onClick={(e) => { e.stopPropagation(); changeGroup(-1); }} className="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white">-</button>
                       </div>
                     </div>
 
+                    {/* CH Button */}
                     <div className="flex flex-col items-center">
                       <span className="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Ch</span>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-1.5">
                         <button onClick={(e) => { e.stopPropagation(); changeChannel(1); }} className="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center group">
                           <svg className="w-3 h-3 text-gray-400 group-hover:text-white -rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z" /></svg>
                         </button>
@@ -1119,7 +1205,130 @@ export default function Home({ session }: { session: Session | null }) {
               </div>
             </div>
           </div>
-        </div>
+
+          {/* ── GAVETA INFERIOR MECÂNICA (P100 GUIDE) ── */}
+            <div
+              id="tv-drawer-guide"
+              className={`w-full overflow-hidden transition-all duration-500 ease-in-out font-jost ${
+                isSearchOpen
+                  ? 'max-h-[650px] opacity-100 mt-4 translate-y-0'
+                  : 'max-h-0 opacity-0 mt-0 translate-y-6 pointer-events-none'
+              }`}
+            >
+              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-3 md:p-5 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-jost">
+                
+                {/* Header do Guia */}
+                <div className="flex items-center justify-between border-b border-[#2b3038] pb-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl md:text-2xl font-bold tracking-widest text-white drop-shadow-[2px_2px_0_#000] font-jost">
+                      <span className="text-[#ffff00]">P</span><span className="text-[#00ff00]">100</span> GUIDE
+                    </span>
+                    <span className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold hidden sm:inline font-jost">
+                      MECHANICAL MATRIX SELECTOR
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Search box */}
+                    <div className="relative bg-black/70 border border-[#3a3f47] rounded px-2.5 py-1 flex items-center shadow-inner">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="bg-transparent text-white text-xs uppercase outline-none placeholder-zinc-500 w-24 sm:w-36 font-jost"
+                        placeholder="BUSCAR..."
+                      />
+                      {searchTerm && (
+                        <button onClick={() => setSearchTerm('')} className="text-zinc-500 hover:text-white text-xs ml-1 font-jost">
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => setIsSearchOpen(false)}
+                      className="text-zinc-400 hover:text-white text-sm font-bold w-7 h-7 flex items-center justify-center rounded bg-black/50 hover:bg-red-900/80 border border-white/10 transition-colors font-jost"
+                      title="Fechar Guia"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tabs Horizontais (Grupos): Lead-gray, chamfered physical tabs */}
+                <div className="flex items-end gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-zinc-700 select-none font-jost">
+                  {uniqueGroups.map(cat => {
+                    const isActive = activeGuideGroup === cat;
+                    const count = (channelsByCategory[cat] || []).length;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => {
+                          setActiveGuideGroup(cat);
+                          setExpandedGroup(cat);
+                        }}
+                        className={`shrink-0 px-3.5 py-2 font-jost uppercase tracking-wider text-xs md:text-sm font-bold flex items-center gap-2 transition-all duration-150 relative ${
+                          isActive
+                            ? 'bg-gradient-to-b from-[#3d424b] to-[#1e2024] text-yellow-400 border-t-2 border-l border-r border-yellow-400/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_-2px_6px_rgba(0,0,0,0.4)] rounded-t-md translate-y-[2px] z-10'
+                            : 'bg-gradient-to-b from-[#2d3036] to-[#202226] text-zinc-300 hover:text-white hover:from-[#353940] hover:to-[#26282d] border-t border-l border-r border-white/10 shadow-[0_-2px_4px_rgba(0,0,0,0.3)] rounded-t-md'
+                        }`}
+                        style={{
+                          clipPath: 'polygon(8px 0%, calc(100% - 8px) 0%, 100% 100%, 0% 100%)'
+                        }}
+                      >
+                        <span className="text-sm shrink-0 drop-shadow-[1px_1px_0_#000]">{getGroupIcon(cat)}</span>
+                        <span>{cat}</span>
+                        <span className="text-[10px] opacity-60 font-mono">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Visor de Canais (Grid): Sunken Black Background with shadow-inner */}
+                <div className="bg-black rounded-b-xl rounded-tr-xl border-2 border-[#24272c] p-3 md:p-4 shadow-[inset_0_5px_22px_rgba(0,0,0,0.95)] max-h-[320px] overflow-y-auto custom-scrollbar font-jost">
+                  {filteredPlaylists.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                      {filteredPlaylists.map((pl, idx) => {
+                        const isPlaying = pl.name === currentChannelName;
+                        return (
+                          <button
+                            key={pl.name}
+                            onClick={() => {
+                              loadChannelContent(pl.name);
+                            }}
+                            className={`w-full text-left p-2.5 px-3 uppercase text-xs md:text-sm font-bold transition-all border rounded-lg flex items-center justify-between group relative font-jost ${
+                              isPlaying
+                                ? 'bg-[#ffff00] text-[#0000aa] font-black border-yellow-300 shadow-[0_0_12px_rgba(255,255,0,0.4)] translate-y-0.5'
+                                : 'bg-[#121417] hover:bg-[#1c1f24] text-zinc-300 hover:text-white border-[#272b33] hover:border-yellow-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_3px_6px_rgba(0,0,0,0.8)] active:translate-y-0.5'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span className={`text-[10px] font-mono shrink-0 ${isPlaying ? 'text-[#0000aa]/70 font-bold' : 'text-zinc-500'}`}>
+                                {String(idx + 1).padStart(2, '0')}
+                              </span>
+                              <span className="truncate tracking-wider font-jost">{pl.name}</span>
+                            </div>
+                            {isPlaying && (
+                              <span className="text-[9px] font-black ml-2 shrink-0 flex items-center gap-1 bg-[#0000aa] text-yellow-300 px-1.5 py-0.5 rounded shadow font-jost">
+                                <span className="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-ping"></span>
+                                ON AIR
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center text-zinc-600 uppercase tracking-widest text-xs font-bold font-jost">
+                      {searchTerm ? 'NENHUM CANAL ENCONTRADO PARA ESTA BUSCA' : 'NENHUM CANAL NESTE GRUPO'}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+
+          </div>
 
           <div className="mt-8 text-center opacity-20 hover:opacity-100 transition-opacity duration-500 pointer-events-none select-none">
             <span className="font-vt323 text-sm md:text-base text-white tracking-widest uppercase">powered by @addri0n4 e @sandrobreaker</span>
