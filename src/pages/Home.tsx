@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +24,31 @@ const GROUP_ICONS: Record<string, string> = {
   'ZONES': '🌍',
   'ERAS': '⏳',
   'OTHERS': '📁'
+};
+
+const getGroupIcon = (groupName: string): string => {
+  const normalized = (groupName || '').toUpperCase().trim();
+  return GROUP_ICONS[normalized] || '📁';
+};
+
+const extractUniqueGroups = (playlistItems: { name: string; group_name?: string }[]): string[] => {
+  if (!playlistItems || playlistItems.length === 0) {
+    return GROUPS_ORDER;
+  }
+
+  // Extração dinâmica de group_names únicos
+  const rawGroups = playlistItems
+    .map(p => (p.group_name && p.group_name.trim() ? p.group_name.trim().toUpperCase() : 'OTHERS'));
+  const uniqueSet = new Set(rawGroups);
+
+  // Mantém a ordem preferencial das categorias clássicas e adiciona os novos grupos dinâmicos em ordem alfabética
+  const known = GROUPS_ORDER.filter(g => uniqueSet.has(g));
+  const dynamic = Array.from(uniqueSet)
+    .filter(g => !GROUPS_ORDER.includes(g))
+    .sort((a, b) => a.localeCompare(b));
+
+  const result = [...known, ...dynamic];
+  return result.length > 0 ? result : GROUPS_ORDER;
 };
 
 const getThematicSetup = (name: string) => {
@@ -53,12 +78,16 @@ export default function Home({ session }: { session: Session | null }) {
   // App State
   const [isOn, setIsOn] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
   const [channelsByCategory, setChannelsByCategory] = useState<Record<string, PlaylistItem[]>>({});
   const [currentChannelList, setCurrentChannelList] = useState<VideoData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentChannelName, setCurrentChannelName] = useState('');
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [currentVideoData, setCurrentVideoData] = useState<VideoData | null>(null);
+
+  // Grupos únicos extraídos dinamicamente do estado global de playlists
+  const uniqueGroups = useMemo(() => extractUniqueGroups(playlists), [playlists]);
 
   // UI State
   const [isBumping, setIsBumping] = useState(false);
@@ -314,8 +343,9 @@ export default function Home({ session }: { session: Session | null }) {
   const fetchGuideData = async () => {
     const { data } = await supabase.from('playlists').select('*').order('name');
     if (data) {
+      setPlaylists(data);
       const grouped = data.reduce((acc: any, curr: any) => {
-        const g = curr.group_name || 'OTHERS';
+        const g = (curr.group_name && curr.group_name.trim()) ? curr.group_name.trim().toUpperCase() : 'OTHERS';
         if (!acc[g]) acc[g] = [];
         acc[g].push(curr);
         return acc;
@@ -412,7 +442,7 @@ export default function Home({ session }: { session: Session | null }) {
     triggerBump(playlistName);
     const cat = Object.keys(channelsByCategory).find(k => channelsByCategory[k].some((p: any) => p.name === playlistName));
     if (cat) {
-      setCurrentGroupIndex(GROUPS_ORDER.indexOf(cat));
+      setCurrentGroupIndex(uniqueGroups.indexOf(cat));
       setExpandedGroup(cat);
     }
 
@@ -586,24 +616,24 @@ export default function Home({ session }: { session: Session | null }) {
   };
 
   const changeGroup = (direction: number) => {
-    if (!isOn) return;
-    const nextGroupIdx = (currentGroupIndex + direction + GROUPS_ORDER.length) % GROUPS_ORDER.length;
+    if (!isOn || uniqueGroups.length === 0) return;
+    const nextGroupIdx = (currentGroupIndex + direction + uniqueGroups.length) % uniqueGroups.length;
     setCurrentGroupIndex(nextGroupIdx);
-    const groupName = GROUPS_ORDER[nextGroupIdx];
+    const groupName = uniqueGroups[nextGroupIdx];
     setStatus(`GROUP: ${groupName}`);
     setExpandedGroup(groupName);
-    const playlists = channelsByCategory[groupName];
-    if (playlists?.length) loadChannelContent(playlists[0].name);
+    const channelPlaylists = channelsByCategory[groupName];
+    if (channelPlaylists?.length) loadChannelContent(channelPlaylists[0].name);
   };
 
   const changeChannel = (direction: number) => {
-    if (!isOn || !currentChannelName) return;
-    const group = GROUPS_ORDER[currentGroupIndex];
-    const playlists = channelsByCategory[group] || [];
-    if (!playlists.length) return;
-    let idx = playlists.findIndex((pl: any) => pl.name === currentChannelName);
-    idx = (idx + direction + playlists.length) % playlists.length;
-    loadChannelContent(playlists[idx].name);
+    if (!isOn || !currentChannelName || uniqueGroups.length === 0) return;
+    const group = uniqueGroups[currentGroupIndex];
+    const channelPlaylists = channelsByCategory[group] || [];
+    if (!channelPlaylists.length) return;
+    let idx = channelPlaylists.findIndex((pl: any) => pl.name === currentChannelName);
+    idx = (idx + direction + channelPlaylists.length) % channelPlaylists.length;
+    loadChannelContent(channelPlaylists[idx].name);
   };
 
   const setupBump = getThematicSetup(currentChannelName);
@@ -645,7 +675,7 @@ export default function Home({ session }: { session: Session | null }) {
             <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-transparent text-white text-2xl uppercase outline-none font-vt323 placeholder-white/30" placeholder="BUSCAR..." />
           </div>
           <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar pr-1 pb-10 accordion-container">
-            {GROUPS_ORDER.map(cat => {
+            {uniqueGroups.map(cat => {
               const groupPlaylists = (channelsByCategory[cat] || []).filter(pl => pl.name.toUpperCase().includes(searchTerm.toUpperCase()));
               if (groupPlaylists.length === 0 && searchTerm) return null;
               const isExpanded = searchTerm ? true : expandedGroup === cat;
@@ -656,7 +686,7 @@ export default function Home({ session }: { session: Session | null }) {
                     className={`w-full flex justify-between items-center p-3 text-white font-bold uppercase text-lg transition-colors focus:outline-none ${isExpanded ? 'bg-[#0000aa] border-b border-white/20' : 'hover:bg-[#1a1a1a]'}`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-xl drop-shadow-[2px_2px_0_#000]">{GROUP_ICONS[cat] || '▶'}</span>
+                      <span className="text-xl drop-shadow-[2px_2px_0_#000]">{getGroupIcon(cat)}</span>
                       <span className="tracking-widest">{cat}</span>
                     </div>
                     <span className="text-sm border border-white/30 rounded px-2 opacity-80">{isExpanded ? '▲' : '▼'}</span>
