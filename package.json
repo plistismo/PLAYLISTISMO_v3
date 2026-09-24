@@ -8,13 +8,25 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-  "dependencies": {
-
-  },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
+  },
+  "description": "<div align=\"center\"> <img width=\"1200\" height=\"475\" alt=\"GHBanner\" src=\"https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6\" /> </div>",
+  "main": "script.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plistismo/PLAYLISTISMO_v3.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/plistismo/PLAYLISTISMO_v3/issues"
+  },
+  "homepage": "https://github.com/plistismo/PLAYLISTISMO_v3#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.86.0"
   }
 }
