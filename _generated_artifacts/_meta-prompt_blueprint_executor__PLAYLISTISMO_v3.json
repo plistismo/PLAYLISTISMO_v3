@@ -1,0 +1,159 @@
+﻿{
+  "ok": true,
+  "executionId": "c68196af-c647-4c0b-aa77-268bc0cff95d",
+  "executionMode": "local",
+  "routeMode": "executor",
+  "extractionMode": "blueprint",
+  "documentMode": "blueprint",
+  "executorTarget": "IA Generativa (GenAI)",
+  "generatedAt": "2026-04-26T08:22:08.3518260Z",
+  "durationMs": 3326,
+  "sourceArtifactPath": "",
+  "sourceArtifactHash": null,
+  "outputPath": "/Users/macbookpro/PLAYLISTISMO_v3/_generated_artifacts/_meta-prompt_blueprint_executor__PLAYLISTISMO_v3.md",
+  "outputHash": "4f6183b0669123037cce4dca165adba251c4796a39cf7128345a133e7204b8d2",
+  "resultMetaPath": "/Users/macbookpro/PLAYLISTISMO_v3/_generated_artifacts/_meta-prompt_blueprint_executor__PLAYLISTISMO_v3.json",
+  "generatedLocally": true,
+  "environment": {
+    "osVersion": "Unix 15.7.4",
+    "psVersion": "7.6.0",
+    "isWindows": false,
+    "hostname": "MacBook-Pro-de-MacBook",
+    "processArchitecture": "X64"
+  },
+  "user": {
+    "username": "macbookpro",
+    "domain": null,
+    "homeDirectory": "/Users/macbookpro"
+  },
+  "generatedFromLocalGovernance": true,
+  "resolvedWorkingPath": "/Users/macbookpro/PLAYLISTISMO_v3",
+  "effectiveOutputDirectory": "/Users/macbookpro/PLAYLISTISMO_v3/_generated_artifacts",
+  "executionFlow": {
+    "fallbackCount": 0,
+    "status": "completed",
+    "durationMs": 46,
+    "startedAt": "2026-04-26T08:22:08.2999700Z",
+    "steps": [
+      {
+        "durationMs": 1,
+        "startedAt": "2026-04-26T08:22:08.3010950Z",
+        "status": "completed",
+        "finishedAt": "2026-04-26T08:22:08.3017410Z",
+        "fallbackUsed": false,
+        "outputSummary": "25 file(s) available in current pipeline state",
+        "stepId": "discover_files"
+      },
+      {
+        "durationMs": 34,
+        "startedAt": "2026-04-26T08:22:08.3025550Z",
+        "status": "completed",
+        "finishedAt": "2026-04-26T08:22:08.3362070Z",
+        "fallbackUsed": false,
+        "outputSummary": "10 file(s) with extractable signatures",
+        "stepId": "extract_signatures"
+      },
+      {
+        "durationMs": 1,
+        "startedAt": "2026-04-26T08:22:08.3372380Z",
+        "status": "completed",
+        "finishedAt": "2026-04-26T08:22:08.3379750Z",
+        "fallbackUsed": false,
+        "outputSummary": "bundle already materialized (16812 chars)",
+        "stepId": "build_bundle"
+      },
+      {
+        "durationMs": 1,
+        "startedAt": "2026-04-26T08:22:08.3389480Z",
+        "status": "completed",
+        "finishedAt": "2026-04-26T08:22:08.3400420Z",
+        "fallbackUsed": false,
+        "outputSummary": "existing deterministic meta-prompt reused",
+        "stepId": "build_meta_prompt"
+      },
+      {
+        "durationMs": 1,
+        "startedAt": "2026-04-26T08:22:08.3408850Z",
+        "status": "completed",
+        "finishedAt": "2026-04-26T08:22:08.3416780Z",
+        "fallbackUsed": false,
+        "outputSummary": "bundle/meta prompt validated",
+        "stepId": "validate_result"
+      },
+      {
+        "durationMs": 1,
+        "startedAt": "2026-04-26T08:22:08.3424620Z",
+        "status": "completed",
+        "finishedAt": "2026-04-26T08:22:08.3432880Z",
+        "fallbackUsed": false,
+        "outputSummary": "existing artifacts preserved",
+        "stepId": "save_artifacts"
+      }
+    ],
+    "flowId": "blueprint_executor",
+    "finishedAt": "2026-04-26T08:22:08.3462470Z",
+    "sourcePath": "/Users/macbookpro/VibeToolkit/flows/blueprint_executor.flow.json"
+  },
+  "outputArtifactFile": "_meta-prompt_blueprint_executor__PLAYLISTISMO_v3.md",
+  "unselectedFileCount": 0,
+  "originalInput": "/Users/macbookpro/PLAYLISTISMO_v3",
+  "fileCount": 25,
+  "sourceArtifactFile": "_blueprint_executor__PLAYLISTISMO_v3.md",
+  "sourceMode": "local",
+  "stepAudit": [
+    {
+      "durationMs": 1,
+      "startedAt": "2026-04-26T08:22:08.3010950Z",
+      "status": "completed",
+      "finishedAt": "2026-04-26T08:22:08.3017410Z",
+      "fallbackUsed": false,
+      "outputSummary": "25 file(s) available in current pipeline state",
+      "stepId": "discover_files"
+    },
+    {
+      "durationMs": 34,
+      "startedAt": "2026-04-26T08:22:08.3025550Z",
+      "status": "completed",
+      "finishedAt": "2026-04-26T08:22:08.3362070Z",
+      "fallbackUsed": false,
+      "outputSummary": "10 file(s) with extractable signatures",
+      "stepId": "extract_signatures"
+    },
+    {
+      "durationMs": 1,
+      "startedAt": "2026-04-26T08:22:08.3372380Z",
+      "status": "completed",
+      "finishedAt": "2026-04-26T08:22:08.3379750Z",
+      "fallbackUsed": false,
+      "outputSummary": "bundle already materialized (16812 chars)",
+      "stepId": "build_bundle"
+    },
+    {
+      "durationMs": 1,
+      "startedAt": "2026-04-26T08:22:08.3389480Z",
+      "status": "completed",
+      "finishedAt": "2026-04-26T08:22:08.3400420Z",
+      "fallbackUsed": false,
+      "outputSummary": "existing deterministic meta-prompt reused",
+      "stepId": "build_meta_prompt"
+    },
+    {
+      "durationMs": 1,
+      "startedAt": "2026-04-26T08:22:08.3408850Z",
+      "status": "completed",
+      "finishedAt": "2026-04-26T08:22:08.3416780Z",
+      "fallbackUsed": false,
+      "outputSummary": "bundle/meta prompt validated",
+      "stepId": "validate_result"
+    },
+    {
+      "durationMs": 1,
+      "startedAt": "2026-04-26T08:22:08.3424620Z",
+      "status": "completed",
+      "finishedAt": "2026-04-26T08:22:08.3432880Z",
+      "fallbackUsed": false,
+      "outputSummary": "existing artifacts preserved",
+      "stepId": "save_artifacts"
+    }
+  ]
+}
