@@ -1,4 +1,21 @@
 
+// ============================================================
+//  CG THEMING SYSTEM — INSTANCIADO NO TOPO ABSOLUTO (anti-TDZ)
+//  isThemedCGEnabled: boolean — liga/desliga o sistema de temas
+//  CG_THEMES: mapa de category → { accent, bar, text } para
+//  as CSS custom props injetadas no container de créditos.
+// ============================================================
+
+const isThemedCGEnabled = true; // CGs temáticos ATIVOS — injetando --cg-accent e --cg-bar-color por categoria
+
+const CG_THEMES = {
+    UPLOADS: { accent: '#ff6b6b', bar: '#ff6b6b', text: 'rgba(255,255,255,0.97)' }, // Vermelho vibrante
+    ZONES:   { accent: '#00d4ff', bar: '#00d4ff', text: 'rgba(255,255,255,0.97)' }, // Ciano néon
+    GENRES:  { accent: '#a78bfa', bar: '#a78bfa', text: 'rgba(255,255,255,0.97)' }, // Violeta
+    ERAS:    { accent: '#fbbf24', bar: '#fbbf24', text: 'rgba(255,255,255,0.97)' }, // Âmbar
+    BRASIL:  { accent: '#4ade80', bar: '#4ade80', text: 'rgba(255,255,255,0.97)' }, // Verde tropical
+    OTHERS:  { accent: '#f472b6', bar: '#f472b6', text: 'rgba(255,255,255,0.97)' }, // Rosa
+};
 
 // --- CONFIGURAÇÃO API YOUTUBE ---
 const API_KEY = 'AIzaSyBJtfXD2LMIMq5nnAxE9fwovWUzS5RJ5wI';
@@ -14,7 +31,8 @@ const state = {
     isOn: false,
     isSearchOpen: false,
     currentPlaylistId: null,
-    playlists: []
+    playlists: [],
+    currentChannelCategory: 'OTHERS' // Rastreia a categoria para o CG temático
 };
 
 const els = {
@@ -351,7 +369,23 @@ function filterChannels(searchTerm) {
 
 async function changeChannel(playlistId, displayText) {
     state.currentPlaylistId = playlistId;
-    
+
+    // --- Detecta categoria do canal para o CG temático ---
+    const lowerDisplay = displayText.toLowerCase();
+    if (lowerDisplay.includes('upload') || lowerDisplay.includes('envios')) {
+        state.currentChannelCategory = 'UPLOADS';
+    } else if (lowerDisplay.includes('zone')) {
+        state.currentChannelCategory = 'ZONES';
+    } else if (lowerDisplay.includes('brasil') || lowerDisplay.includes('brazil') || lowerDisplay.includes('mpb')) {
+        state.currentChannelCategory = 'BRASIL';
+    } else if (/\b(19|20)\d{2}\b/.test(lowerDisplay)) {
+        state.currentChannelCategory = 'ERAS';
+    } else if (/pop|rock|jazz|blues|indie|folk|hop/.test(lowerDisplay)) {
+        state.currentChannelCategory = 'GENRES';
+    } else {
+        state.currentChannelCategory = 'OTHERS';
+    }
+
     // Close Search Menu if open
     if(state.isSearchOpen) {
         toggleSearchMode();
@@ -684,6 +718,24 @@ function updateCreditsDOM(data) {
     setText(els.credits.album, data.album);
     setText(els.credits.year, data.year);
     setText(els.credits.director, data.director);
+
+    // --- CG THEMING: Injeta ou limpa custom props no container ---
+    const cgContainer = els.credits.container;
+    if (!cgContainer) return;
+
+    if (isThemedCGEnabled) {
+        // Resolve o tema: usa a categoria do canal atual, fallback para OTHERS
+        const theme = CG_THEMES[state.currentChannelCategory] || CG_THEMES['OTHERS'];
+        cgContainer.style.setProperty('--cg-accent',     theme.accent);
+        cgContainer.style.setProperty('--cg-bar-color',  theme.bar);
+        cgContainer.style.setProperty('--cg-text-color', theme.text);
+    } else {
+        // Fallback clássico MTV: limpa tudo — CSS usará os valores padrão
+        // (branco puro + sombra preta sólida, barra branca neutra)
+        cgContainer.style.removeProperty('--cg-accent');
+        cgContainer.style.removeProperty('--cg-bar-color');
+        cgContainer.style.removeProperty('--cg-text-color');
+    }
 }
 
 function showCredits() {

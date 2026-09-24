@@ -121,59 +121,136 @@ body {
     animation: rgb-shift-text 2s infinite alternate;
 }
 
-/* --- CREDITS OVERLAY (MTV STYLE) --- */
-/* Modified to fit inside the TV Screen absolute positioning */
-.credits-overlay {
-    position: absolute; /* Changed from fixed to absolute */
-    bottom: 20px; /* Adjusted for smaller screens */
-    left: 20px;
-    color: rgba(255, 255, 255, 0.9);
-    text-shadow: 2px 2px 0px #000000;
-    font-family: 'Jost', sans-serif; /* Keep original font for credits */
-    font-size: 14px; /* Slightly smaller base */
-    line-height: 1.4;
-    opacity: 0; /* Começa invisível */
-    transition: opacity 2.5s ease-in-out; 
-    background: rgba(0,0,0,0.9); /* Darker background */
-    padding: 10px;
-    border-radius: 4px;
-    border-left: 4px solid #fff;
-    pointer-events: none; 
-    z-index: 25; /* Between OSD and Scanlines */
-    transform: perspective(500px) rotateY(2deg); /* Slight 3D tilt */
-}
+/* ============================================================
+   CREDITS OVERLAY — CHARACTER GENERATOR (CG) SYSTEM
+   ============================================================
+   
+   Architecture based on CSS Custom Properties:
+   --cg-accent     : cor de destaque do canal (tema ativo)
+   --cg-bar-color  : cor da barra lateral fina
+   --cg-text-color : cor base do texto (sempre branco no padrão)
+   
+   Quando isThemedCGEnabled = false (ou sem tema definido),
+   o JS limpa as custom properties e o bloco retorna ao
+   padrão: branco puro + sombra preta hard (padrão MTV).
+   ============================================================ */
 
-@media (min-width: 768px) {
-    .credits-overlay {
-        bottom: 30px;
-        left: 30px;
-        font-size: 16px;
-        padding: 12px;
-    }
+.credits-overlay {
+    /* --- Positioning --- */
+    position: absolute;
+    bottom: clamp(14px, 3.5vw, 30px);
+    left: clamp(14px, 3.5vw, 30px);
+    z-index: 25;
+    pointer-events: none;
+
+    /* --- Tipografia Fluida (Jost strict) --- */
+    font-family: 'Jost', sans-serif !important;
+    font-size: clamp(0.78rem, 1.45vw, 1.05rem);
+    line-height: 1.35;
+    letter-spacing: 0.03em;
+    color: var(--cg-text-color, rgba(255, 255, 255, 0.97));
+
+    /* --- Sombra Dura Padrão MTV (zero blur, 100% preta) ---
+       Quatro direções + diagonal extra garantem corte em qualquer fundo,
+       incluindo frames brancos brilhantes de clipes. */
+    text-shadow:
+         1px  1px 0 rgba(0, 0, 0, 1),
+        -1px  1px 0 rgba(0, 0, 0, 1),
+         1px -1px 0 rgba(0, 0, 0, 1),
+        -1px -1px 0 rgba(0, 0, 0, 1),
+         2px  2px 0 rgba(0, 0, 0, 1);
+
+    /* --- Layout Box --- */
+    background: rgba(0, 0, 0, 0.88);
+    padding: clamp(8px, 1.5vw, 14px) clamp(10px, 1.8vw, 16px);
+    border-radius: 3px;
+
+    /* --- Barra Lateral Temática (default: branco) --- */
+    border-left: clamp(3px, 0.5vw, 5px) solid var(--cg-bar-color, rgba(255, 255, 255, 0.9));
+
+    /* --- Estado: invisível → visível --- */
+    opacity: 0;
+    transition: opacity 2.5s ease-in-out;
+
+    /* --- Leve perspectiva cinematográfica --- */
+    transform: perspective(500px) rotateY(1.5deg);
 }
 
 .credits-overlay.visible {
     opacity: 1;
 }
 
+/* --- Linhas individuais de crédito --- */
 .credit-line {
-    margin-bottom: 2px;
+    display: flex;
+    align-items: baseline;
+    gap: clamp(0px, 0.2vw, 2px);
+    margin-bottom: clamp(1px, 0.3vw, 3px);
     white-space: nowrap;
 }
 
+/* Texto com peso forte (artista, música) */
 .credit-line span {
+    font-family: 'Jost', sans-serif !important;
     font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--cg-text-color, rgba(255, 255, 255, 0.97));
+    /* Sombra dura explícita: garante corte mesmo se herdança for sobreescrita */
+    text-shadow:
+         1px  1px 0 rgba(0, 0, 0, 1),
+        -1px  1px 0 rgba(0, 0, 0, 1),
+         1px -1px 0 rgba(0, 0, 0, 1),
+        -1px -1px 0 rgba(0, 0, 0, 1),
+         2px  2px 0 rgba(0, 0, 0, 1);
 }
 
+/* Texto com peso leve (álbum, director) */
 .credit-line span.light {
+    font-family: 'Jost', sans-serif !important;
     font-weight: 300;
-    opacity: 0.9;
+    opacity: 0.88;
+    letter-spacing: 0.025em;
+    /* Mantém sombra dura mesmo no peso leve */
+    text-shadow:
+         1px  1px 0 rgba(0, 0, 0, 1),
+        -1px  1px 0 rgba(0, 0, 0, 1),
+         1px -1px 0 rgba(0, 0, 0, 1),
+        -1px -1px 0 rgba(0, 0, 0, 1),
+         2px  2px 0 rgba(0, 0, 0, 1);
 }
 
+/* --- Ícone de linha --- */
 .icon {
-    display: inline-block;
-    width: 20px;
-    text-align: center;
-    margin-right: 5px;
-    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(18px, 2.2vw, 24px);
+    min-width: clamp(18px, 2.2vw, 24px);
+    font-size: clamp(0.7rem, 1.2vw, 0.95rem);
+    margin-right: clamp(4px, 0.6vw, 8px);
+    /* Sombra dura nos ícones também */
+    filter: drop-shadow(1px 1px 0 rgba(0,0,0,1))
+            drop-shadow(-1px -1px 0 rgba(0,0,0,1));
+    /* Cor de destaque temático opcional */
+    color: var(--cg-accent, inherit);
+}
+
+/* --- Tema: Cor de destaque aplicada na barra e no accent --- */
+/* (sem classe extra — tudo via custom props injetadas pelo JS) */
+
+/* --- RESPONSIVE FALLBACK (telas muito pequenas) --- */
+@media (max-width: 480px) {
+    .credits-overlay {
+        font-size: 0.68rem;
+        padding: 6px 8px;
+        border-left-width: 3px;
+        bottom: 10px;
+        left: 10px;
+    }
+    .icon {
+        width: 16px;
+        min-width: 16px;
+        font-size: 0.65rem;
+        margin-right: 4px;
+    }
 }
