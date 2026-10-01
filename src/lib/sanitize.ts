@@ -1,3 +1,17 @@
+// Allowed inline style declarations (normalized: no spaces, lowercase)
+const ALLOWED_STYLE_VALUES = new Set([
+  'font-weight:400',
+  'font-weight:400;',
+  'font-weight:700',
+  'font-weight:700;',
+  'font-weight:bold',
+  'font-weight:bold;',
+  'font-style:italic',
+  'font-style:italic;',
+  'font-weight:400;font-style:italic;',
+  'font-style:italic;font-weight:400;',
+]);
+
 export const sanitizeHTML = (html: string): string => {
   if (!html) return '';
   const parser = new DOMParser();
@@ -20,8 +34,8 @@ export const sanitizeHTML = (html: string): string => {
         if (!allowedAttributes.includes(attr.name)) {
           el.removeAttribute(attr.name);
         } else if (attr.name === 'style') {
-          const styleVal = attr.value.replace(/\s/g, '');
-          if (styleVal !== 'font-weight:400;' && styleVal !== 'font-weight:400') {
+          const styleVal = attr.value.replace(/\s/g, '').toLowerCase();
+          if (!ALLOWED_STYLE_VALUES.has(styleVal)) {
             el.removeAttribute('style');
           }
         }

@@ -98,6 +98,7 @@ export default function Home({ session }: { session: Session | null }) {
   const [showStatic, setShowStatic] = useState(false);
   const [expandedGroup, setExpandedGroup] = useState<string | null>('UPLOADS');
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [adminEditId, setAdminEditId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [lastSavedRecord, setLastSavedRecord] = useState<VideoData | null>(null);
@@ -152,9 +153,9 @@ export default function Home({ session }: { session: Session | null }) {
     currentIndexRef.current = currentIndex;
     playedHistoryRef.current = playedHistory;
     activePlatformRef.current = activePlatform;
-    isAdminSidebarOpenRef.current = isAdminSidebarOpen;
+    isAdminSidebarOpenRef.current = isAdminSidebarOpen || isEditDrawerOpen;
     adminEditIdRef.current = adminEditId;
-  }, [currentChannelList, currentIndex, playedHistory, activePlatform, isAdminSidebarOpen, adminEditId]);
+  }, [currentChannelList, currentIndex, playedHistory, activePlatform, isAdminSidebarOpen, isEditDrawerOpen, adminEditId]);
 
   useEffect(() => {
     if (session?.user?.id === ADMIN_UID) {
@@ -664,106 +665,11 @@ export default function Home({ session }: { session: Session | null }) {
   return (
     <div className="bg-[#050505] min-h-screen overflow-x-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
 
-      {/* Admin Panel is now integrated into the main tripartite layout */}
+      {/* Admin Panel — bipartite layout: TV column + right frequency list */}
 
-      <main className={`relative z-10 w-full min-h-screen flex flex-col md:grid transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'layout-admin-open md:grid-cols-[auto_1fr_auto]' : 'layout-admin-closed md:grid-cols-[0px_1fr_0px] overflow-hidden'}`}>
+      <main className={`relative z-10 w-full min-h-screen flex flex-col md:grid transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'layout-admin-open md:grid-cols-[1fr_auto]' : 'layout-admin-closed md:grid-cols-[1fr_0px] overflow-hidden'}`}>
         
-        {/* LEFT PANEL: FORM INTEGRATION */}
-        <aside className={`hidden md:flex overflow-hidden transition-all duration-500 ease-in-out border-r border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-auto' : '-translate-x-full opacity-0 w-0'}`}>
-          <div className="w-[400px] h-full flex flex-col">
-            {isAdminSidebarOpen && (
-              <>
-                {/* Toggle: Fonte dos Créditos */}
-                <div className="shrink-0 px-6 py-3 bg-black border-b border-amber-900/30 flex items-center justify-between">
-                  <label htmlFor="toggle-josefin" className="text-xs text-amber-700 uppercase font-bold tracking-widest font-vt323 cursor-pointer select-none">
-                    Créditos: Josefin Sans
-                  </label>
-                  <button
-                    id="toggle-josefin"
-                    type="button"
-                    onClick={() => setUseJosefinFont(prev => !prev)}
-                    className={`relative w-10 h-5 rounded-full border transition-all duration-300 focus:outline-none ${
-                      useJosefinFont
-                        ? 'bg-amber-500 border-amber-400'
-                        : 'bg-black border-amber-900/50'
-                    }`}
-                    aria-pressed={useJosefinFont}
-                    title="Alternar fonte dos créditos para Josefin Sans"
-                  >
-                    <span
-                      className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${
-                        useJosefinFont ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-hidden">
-                  <AdminPanel
-                    session={session}
-                    editId={adminEditId}
-                    displayMode="form"
-                    onClose={() => setIsAdminSidebarOpen(false)}
-                    onSave={(newData) => {
-                      fetchGuideData();
-                      if (newData) {
-                        const savedIdStr = String(newData.id);
-                        const videoData = newData as VideoData;
-                        setLastSavedRecord(videoData);
-                        
-                        // Atualiza créditos na tela imediatamente
-                        setCurrentVideoData(prev => ({
-                          ...prev,
-                          ...videoData
-                        }));
-                        
-                        // Sincroniza a lista atual de reprodução
-                        setCurrentChannelList(prev => prev.map(item => {
-                          if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...videoData };
-                          if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...videoData };
-                          return item;
-                        }));
-
-                        setAdminEditId(null);
-                      }
-                    }}
-                    onRestartPlayer={(savedVideoId?: string) => {
-                      console.log("RESTARTING PLAYER ON SAVE/COMMIT:", savedVideoId);
-                      const targetId = String(savedVideoId || currentVideoData?.video_id || '').trim();
-                      const isVimeo = /^\d+$/.test(targetId);
-
-                      if (isVimeo) {
-                        syncPlayerVisibility('vimeo');
-                        if (vimeoPlayerRef.current && targetId) {
-                          vimeoPlayerRef.current.loadVideo(Number(targetId)).then(() => {
-                            syncPlayerVisibility('vimeo');
-                            vimeoPlayerRef.current.play();
-                            startCreditsMonitor();
-                          }).catch((err: any) => {
-                            console.warn("Erro ao recarregar Vimeo no Commit:", err);
-                          });
-                          lastVideoIdRef.current = targetId;
-                        }
-                      } else {
-                        syncPlayerVisibility('youtube');
-                        if (playerRef.current) {
-                          if (targetId && targetId !== lastVideoIdRef.current) {
-                            playerRef.current.loadVideoById({ videoId: targetId, suggestedQuality: 'hd720' });
-                            lastVideoIdRef.current = targetId;
-                          } else {
-                            playerRef.current?.seekTo(0);
-                          }
-                          playerRef.current?.playVideo();
-                          startCreditsMonitor();
-                        }
-                      }
-                    }}
-                    onPreview={handlePreview}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        </aside>
+        {/* LEFT PANEL REMOVED — edit form is now the top overlay visor */}
 
         {/* MIDDLE PANEL: TV & CONTROLS */}
         <section className={`flex flex-col items-center justify-center p-4 transition-all duration-500 w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[1200px] mx-auto'}`}>
@@ -777,23 +683,25 @@ export default function Home({ session }: { session: Session | null }) {
               <>
                 <button 
                   onClick={() => { 
-                    const newState = !isAdminSidebarOpen || adminEditId !== null;
-                    setAdminEditId(null); 
+                    const newState = !isAdminSidebarOpen || isEditDrawerOpen;
+                    setAdminEditId(null);
+                    setIsEditDrawerOpen(false);
                     setIsAdminSidebarOpen(newState); 
                     if (isMatrixOpen) setIsMatrixOpen(false);
                   }} 
-                  className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm ${!adminEditId && isAdminSidebarOpen ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]' : 'bg-amber-900/40 text-amber-500 border-amber-600/50 hover:bg-amber-600 hover:text-black hover:border-amber-400'}`}
+                  className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm ${isAdminSidebarOpen && !isEditDrawerOpen ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]' : 'bg-amber-900/40 text-amber-500 border-amber-600/50 hover:bg-amber-600 hover:text-black hover:border-amber-400'}`}
                 >
                   ⚙ SERVICE MODE
                 </button>
                 <button 
                   onClick={() => { 
-                    const newState = !isAdminSidebarOpen || adminEditId === null;
-                    setAdminEditId(currentVideoData?.id ? String(currentVideoData.id) : null); 
-                    setIsAdminSidebarOpen(newState); 
+                    const nextOpen = !isEditDrawerOpen;
+                    setIsEditDrawerOpen(nextOpen);
+                    setAdminEditId(nextOpen && currentVideoData?.id ? String(currentVideoData.id) : null);
+                    if (nextOpen) setIsAdminSidebarOpen(true);
                     if (isMatrixOpen) setIsMatrixOpen(false);
                   }} 
-                  className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm ${adminEditId && isAdminSidebarOpen ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]' : 'bg-amber-900/40 text-amber-500 border-amber-600/50 hover:bg-amber-600 hover:text-black hover:border-amber-400'}`}
+                  className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm ${isEditDrawerOpen ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]' : 'bg-amber-900/40 text-amber-500 border-amber-600/50 hover:bg-amber-600 hover:text-black hover:border-amber-400'}`}
                 >
                   ✎ EDIT VIDEO
                 </button>
@@ -876,6 +784,115 @@ export default function Home({ session }: { session: Session | null }) {
 
 
           <div className={`relative w-full ${isAdminSidebarOpen ? 'max-w-full px-4 mx-0' : 'max-w-[1000px] mx-auto'} tv-responsive-container flex flex-col transition-all duration-500 ease-out`}>
+            
+            {/* ── GAVETA SUPERIOR DE EDIÇÃO (EDIT VISOR) ── */}
+            {isAdmin && (
+              <div
+                id="tv-drawer-edit"
+                className={`absolute left-0 right-0 z-[80] overflow-hidden transition-all duration-500 ease-in-out font-jost ${
+                  isEditDrawerOpen
+                    ? 'top-0 max-h-[600px] opacity-100 pointer-events-auto translate-y-0'
+                    : '-top-4 max-h-0 opacity-0 pointer-events-none -translate-y-4'
+                }`}
+                style={{ transformOrigin: 'top center' }}
+              >
+                <div className="bg-[#15171a] border-2 border-amber-900/60 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,200,0,0.08)] relative font-jost" style={{ backdropFilter: 'blur(14px)' }}>
+
+                  {/* Header do Edit Visor */}
+                  <div className="flex items-center justify-between border-b border-amber-900/40 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
+                      <span className="text-[11px] md:text-xs font-black uppercase tracking-[0.25em] text-amber-300 font-jost">
+                        EDIT VISOR // {adminEditId ? `RECORD #${adminEditId}` : 'NEW UNIT'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {/* Toggle: Fonte dos Créditos */}
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="toggle-josefin-visor" className="text-[10px] text-amber-700 uppercase font-bold tracking-widest font-vt323 cursor-pointer select-none hidden sm:inline">
+                          Josefin Sans
+                        </label>
+                        <button
+                          id="toggle-josefin-visor"
+                          type="button"
+                          onClick={() => setUseJosefinFont(prev => !prev)}
+                          className={`relative w-9 h-5 rounded-full border transition-all duration-300 focus:outline-none ${
+                            useJosefinFont ? 'bg-amber-500 border-amber-400' : 'bg-black border-amber-900/50'
+                          }`}
+                          aria-pressed={useJosefinFont}
+                          title="Alternar fonte dos créditos para Josefin Sans"
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${useJosefinFont ? 'translate-x-4' : 'translate-x-0'}`} />
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => { setIsEditDrawerOpen(false); setAdminEditId(null); }}
+                        className="text-amber-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-black/50 hover:bg-red-900/60 border border-amber-800/40 transition-colors font-jost"
+                        title="Fechar Edit Visor"
+                      >
+                        ✕ CLOSE
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Hardware Display — form container */}
+                  <div className="bg-neutral-950 rounded-b-2xl overflow-hidden" style={{ maxHeight: '520px', overflowY: 'auto' }}>
+                    <AdminPanel
+                      session={session}
+                      editId={adminEditId}
+                      displayMode="form"
+                      onClose={() => { setIsEditDrawerOpen(false); setAdminEditId(null); }}
+                      onSave={(newData) => {
+                        fetchGuideData();
+                        if (newData) {
+                          const savedIdStr = String(newData.id);
+                          const videoData = newData as VideoData;
+                          setLastSavedRecord(videoData);
+                          // Atualiza créditos na tela imediatamente
+                          setCurrentVideoData(prev => ({ ...prev, ...videoData }));
+                          // Sincroniza a lista atual de reprodução
+                          setCurrentChannelList(prev => prev.map(item => {
+                            if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...videoData };
+                            if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...videoData };
+                            return item;
+                          }));
+                          setAdminEditId(null);
+                        }
+                      }}
+                      onRestartPlayer={(savedVideoId?: string) => {
+                        console.log('RESTARTING PLAYER ON EDIT VISOR SAVE:', savedVideoId);
+                        const targetId = String(savedVideoId || currentVideoData?.video_id || '').trim();
+                        const isVimeo = /^\d+$/.test(targetId);
+                        if (isVimeo) {
+                          syncPlayerVisibility('vimeo');
+                          if (vimeoPlayerRef.current && targetId) {
+                            vimeoPlayerRef.current.loadVideo(Number(targetId)).then(() => {
+                              syncPlayerVisibility('vimeo');
+                              vimeoPlayerRef.current.play();
+                              startCreditsMonitor();
+                            }).catch((err: any) => console.warn('Vimeo reload error:', err));
+                            lastVideoIdRef.current = targetId;
+                          }
+                        } else {
+                          syncPlayerVisibility('youtube');
+                          if (playerRef.current) {
+                            if (targetId && targetId !== lastVideoIdRef.current) {
+                              playerRef.current.loadVideoById({ videoId: targetId, suggestedQuality: 'hd720' });
+                              lastVideoIdRef.current = targetId;
+                            } else {
+                              playerRef.current?.seekTo(0);
+                            }
+                            playerRef.current?.playVideo();
+                            startCreditsMonitor();
+                          }
+                        }
+                      }}
+                      onPreview={handlePreview}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* ── GAVETA SUPERIOR (INFO / PLAYING NOW) ── */}
             <div
@@ -1335,16 +1352,19 @@ export default function Home({ session }: { session: Session | null }) {
           </div>
         </section>
 
-        {/* RIGHT PANEL: TABLE INTEGRATION */}
+        {/* RIGHT PANEL: TABLE INTEGRATION (ALL FREQUENCIES) */}
         <aside className={`hidden md:flex justify-start overflow-hidden transition-all duration-500 ease-in-out border-l border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-auto' : 'translate-x-full opacity-0 w-0'}`}>
-          <div className="w-[550px] h-full">
+          <div className="w-[580px] h-full">
             {isAdminSidebarOpen && (
               <AdminPanel
                 session={session}
                 editId={adminEditId}
                 displayMode="table"
-                onEdit={(id) => setAdminEditId(id)}
-                onClose={() => setIsAdminSidebarOpen(false)}
+                onEdit={(id) => {
+                  setAdminEditId(id);
+                  setIsEditDrawerOpen(true);
+                }}
+                onClose={() => { setIsAdminSidebarOpen(false); setIsEditDrawerOpen(false); setAdminEditId(null); }}
                 playingId={currentVideoData?.id ? String(currentVideoData.id) : null}
                 initialPlaylist={currentChannelName}
                 onSave={(newData) => {
@@ -1353,20 +1373,14 @@ export default function Home({ session }: { session: Session | null }) {
                     const savedIdStr = String(newData.id);
                     const videoData = newData as VideoData;
                     setLastSavedRecord(videoData);
-                    
                     // Atualiza créditos na tela imediatamente
-                    setCurrentVideoData(prev => ({
-                      ...prev,
-                      ...videoData
-                    }));
-                    
+                    setCurrentVideoData(prev => ({ ...prev, ...videoData }));
                     // Sincroniza a lista atual de reprodução
                     setCurrentChannelList(prev => prev.map(item => {
                       if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...videoData };
                       if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...videoData };
                       return item;
                     }));
-
                     setAdminEditId(null);
                   }
                 }}
