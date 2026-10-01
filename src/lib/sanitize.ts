@@ -1,27 +1,50 @@
 export const sanitizeHTML = (html: string): string => {
   if (!html) return '';
+
+  // Decode escaped HTML tags if present (e.g. &lt;i&gt; -> <i>, &lt;b&gt; -> <b>, &lt;span -> <span)
+  let raw = html;
+  if (/&lt;\/?(b|i|em|strong|span|div|p|br)[^&gt;]*&gt;/i.test(raw)) {
+    raw = raw.replace(/&lt;(\/?[a-z0-9]+(?:\s+[^&gt;]*)?)&gt;/gi, '<$1>');
+  }
+
   const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
+  const doc = parser.parseFromString(raw, 'text/html');
   const allowedTags = ['B', 'I', 'EM', 'STRONG', 'SPAN', 'DIV', 'P', 'BR'];
-  const allowedAttributes = ['style'];
-  
+
   const sanitizeNode = (node: Node) => {
     if (node.nodeType === Node.ELEMENT_NODE) {
       const el = node as HTMLElement;
-      if (!allowedTags.includes(el.tagName)) {
+      const tagName = el.tagName.toUpperCase();
+
+      if (!allowedTags.includes(tagName)) {
         const fragment = document.createDocumentFragment();
         while (el.firstChild) fragment.appendChild(el.firstChild);
         el.parentNode?.replaceChild(fragment, el);
         return;
       }
+
       const attrs = el.attributes;
       for (let i = attrs.length - 1; i >= 0; i--) {
         const attr = attrs[i];
-        if (!allowedAttributes.includes(attr.name)) {
+        if (attr.name !== 'style') {
           el.removeAttribute(attr.name);
-        } else if (attr.name === 'style') {
-          const styleVal = attr.value.replace(/\s/g, '');
-          if (styleVal !== 'font-weight:400;' && styleVal !== 'font-weight:400') {
+        } else {
+          // Parse and sanitize typography style declarations
+          const styleRules = attr.value.split(';').map(r => r.trim()).filter(Boolean);
+          const safeRules: string[] = [];
+          for (const rule of styleRules) {
+            const [prop, val] = rule.split(':').map(s => s.trim().toLowerCase());
+            if (prop === 'font-weight' && /^(400|700|800|900|bold|normal|bolder)$/.test(val)) {
+              safeRules.push(`font-weight: ${val}`);
+            } else if (prop === 'font-style' && /^(italic|normal|oblique)$/.test(val)) {
+              safeRules.push(`font-style: ${val}`);
+            } else if (prop === 'text-decoration' && /^(underline|none)$/.test(val)) {
+              safeRules.push(`text-decoration: ${val}`);
+            }
+          }
+          if (safeRules.length > 0) {
+            el.setAttribute('style', safeRules.join('; '));
+          } else {
             el.removeAttribute('style');
           }
         }
@@ -30,7 +53,7 @@ export const sanitizeHTML = (html: string): string => {
   };
 
   const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT);
-  const nodes = [];
+  const nodes: Node[] = [];
   let currentNode;
   while ((currentNode = walker.nextNode())) {
     nodes.push(currentNode);

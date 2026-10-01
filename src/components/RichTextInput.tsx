@@ -141,8 +141,21 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
   };
 
   const execCommand = (command: string, arg?: string) => {
+    try {
+      document.execCommand('styleWithCSS', false, 'false');
+    } catch {}
     document.execCommand(command, false, arg);
     handleInput();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+      e.preventDefault();
+      execCommand('bold');
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+      e.preventDefault();
+      execCommand('italic');
+    }
   };
 
   const insertVersionSymbols = () => {
@@ -212,6 +225,7 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
         contentEditable
         onInput={handleInput}
         onPaste={handlePaste}
+        onKeyDown={handleKeyDown}
         onFocus={onFocus}
         className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg min-h-[44px] break-words rich-text-input"
         data-placeholder={placeholder}

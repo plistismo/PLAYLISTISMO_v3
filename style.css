@@ -195,7 +195,7 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
     position: absolute; bottom: 8%; left: 6%; color: #f8f8f8; 
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 3px 3px 4px rgba(0,0,0,0.9);
     font-size: clamp(0.85rem, 1.8vmin, 1.25rem); font-family: 'Jost', sans-serif;
-    font-weight: 700; line-height: 1.1; opacity: 0; transition: opacity 0.8s ease-in-out;
+    font-weight: 800; line-height: 1.1; opacity: 0; transition: opacity 0.8s ease-in-out;
     pointer-events: none; z-index: 60; width: auto; max-width: 80%;
 }
 .credits-overlay.visible { opacity: 1; }
@@ -206,7 +206,25 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
 
 .credits-overlay b, .credits-overlay strong {
     letter-spacing: 0.05em;
-    font-weight: 800;
+    font-weight: 900 !important;
+}
+
+.credits-overlay i, .credits-overlay em {
+    font-style: italic !important;
+}
+
+.credits-overlay span[style*="font-weight: 400"],
+.credits-overlay span[style*="font-weight:400"],
+.credits-overlay span[style*="400"],
+.credits-overlay span[style*="font-weight: normal"],
+.credits-overlay .font-normal {
+    font-weight: 400 !important;
+}
+
+.credits-overlay span[style*="font-style: italic"],
+.credits-overlay span[style*="font-style:italic"],
+.credits-overlay span[style*="italic"] {
+    font-style: italic !important;
 }
 
 /* Fonte alternativa: Josefin Sans — mantém sombra e espaçamentos idênticos */
@@ -216,6 +234,21 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 3px 3px 4px rgba(0,0,0,0.9) !important;
     /* Mantém o mesmo espaçamento de letras */
     letter-spacing: 0.04em;
+    font-weight: 700;
+}
+
+.credits-josefin b, .credits-josefin strong {
+    font-weight: 700 !important;
+}
+
+.credits-josefin i, .credits-josefin em {
+    font-style: italic !important;
+}
+
+.credits-josefin span[style*="font-weight: 400"],
+.credits-josefin span[style*="font-weight:400"],
+.credits-josefin span[style*="400"] {
+    font-weight: 400 !important;
 }
 
 .credit-line { 

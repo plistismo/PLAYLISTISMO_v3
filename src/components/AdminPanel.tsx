@@ -18,7 +18,7 @@ type MusicEntry = {
   playlist_group?: string;
 };
 
-export type AdminDisplayMode = 'form' | 'table' | 'full';
+export type AdminDisplayMode = 'form' | 'table' | 'full' | 'drawer';
 
 interface AdminPanelProps {
   session: Session | null;
@@ -237,11 +237,11 @@ export default function AdminPanel({
     const plataforma = /^\d+$/.test(rawVideoId) ? 'vimeo' : 'youtube';
 
     const richPayload = {
-      artista: formData.artista.trim(),
-      musica: formData.musica.trim(),
+      artista: sanitizeHTML(formData.artista).trim(),
+      musica: sanitizeHTML(formData.musica).trim(),
       ano: formData.ano ? String(formData.ano) : null,
-      album: formData.album.trim() || null,
-      direcao: formData.direcao.trim() || null,
+      album: formData.album.trim() ? sanitizeHTML(formData.album).trim() : null,
+      direcao: formData.direcao.trim() ? sanitizeHTML(formData.direcao).trim() : null,
       video_id: rawVideoId || null,
       plataforma,
     };
@@ -410,6 +410,284 @@ export default function AdminPanel({
 
     return () => clearTimeout(timer);
   }, [formData.artista, formData.album, formData.direcao, activeField]);
+
+  if (displayMode === 'drawer') {
+    return (
+      <div className="flex flex-col w-full text-amber-500 font-vt323 overflow-visible">
+        {statusMsg.show && (
+          <div className={`p-2 mb-3 text-center text-lg font-bold border rounded ${statusMsg.isError ? 'bg-red-900/80 text-white border-red-500' : 'bg-amber-900/40 text-amber-400 border-amber-500'}`}>
+            {statusMsg.text}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[65vh] overflow-y-auto custom-scrollbar p-1 pr-2">
+          {/* Top Info Bar of Drawer Form */}
+          <div className="flex items-center justify-between pb-2 border-b border-amber-900/30">
+            <span className="text-xl font-bold tracking-wider text-amber-400">
+              {isEditing ? `TRANSMISSION UNIT #${formData.id} // ACTIVE EDIT` : 'NEW UNIT REGISTRATION // ALL FREQUENCIES'}
+            </span>
+            {isEditing && (
+              <button 
+                type="button" 
+                onClick={clearForm} 
+                className="text-xs text-amber-600 hover:text-amber-400 transition-colors uppercase tracking-wider font-mono border border-amber-900/40 px-2 py-0.5 rounded bg-black/40"
+              >
+                + Reset / New Unit
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Col 1 */}
+            <div className="space-y-4">
+              <div className="relative">
+                <RichTextInput
+                  label="ARTISTA *"
+                  field="artista"
+                  value={formData.artista}
+                  onChange={val => setFormData({ ...formData, artista: val })}
+                  onFocus={() => setActiveField('artista')}
+                  placeholder="Ex: Oasis"
+                />
+                {activeField === 'artista' && suggestions.length > 0 && (
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                    {suggestions.map((val, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => {
+                          setFormData({...formData, artista: val});
+                          setActiveField(null);
+                          setSuggestions([]);
+                        }}
+                        className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-base border-b border-amber-900/20 last:border-0"
+                      >
+                        {val}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="relative">
+                <RichTextInput
+                  label="MÚSICA *"
+                  field="musica"
+                  value={formData.musica}
+                  onChange={val => setFormData({ ...formData, musica: val })}
+                  placeholder="Ex: Wonderwall"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                <div className="sm:col-span-4">
+                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">ANO</label>
+                  <input 
+                    type="number" 
+                    value={formData.ano} 
+                    onChange={e => setFormData({...formData, ano: e.target.value})} 
+                    className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg text-white font-jost rounded-sm" 
+                    placeholder="1995" 
+                  />
+                </div>
+
+                <div className="sm:col-span-8 relative">
+                  <RichTextInput
+                    label="ÁLBUM"
+                    field="album"
+                    value={formData.album}
+                    onChange={val => setFormData({ ...formData, album: val })}
+                    onFocus={() => setActiveField('album')}
+                    placeholder="(What's the Story) Morning Glory?"
+                  />
+                  {activeField === 'album' && suggestions.length > 0 && (
+                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                      {suggestions.map((val, i) => (
+                        <div 
+                          key={i} 
+                          onClick={() => {
+                            setFormData({...formData, album: val});
+                            setActiveField(null);
+                            setSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-base border-b border-amber-900/20 last:border-0"
+                        >
+                          {val}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Col 2 */}
+            <div className="space-y-4">
+              <div className="relative">
+                <RichTextInput
+                  label="DIREÇÃO"
+                  field="direcao"
+                  value={formData.direcao}
+                  onChange={val => setFormData({ ...formData, direcao: val })}
+                  onFocus={() => setActiveField('direcao')}
+                  placeholder="Diretor do Videoclipe"
+                />
+                {activeField === 'direcao' && suggestions.length > 0 && (
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                    {suggestions.map((val, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => {
+                          setFormData({...formData, direcao: val});
+                          setActiveField(null);
+                          setSuggestions([]);
+                        }}
+                        className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-base border-b border-amber-900/20 last:border-0"
+                      >
+                        {val}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="group">
+                <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">VIDEO ID (YouTube ou Vimeo)</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={formData.video_id} 
+                    onChange={e => setFormData({...formData, video_id: e.target.value})} 
+                    className="flex-1 p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg text-white font-jost rounded-sm" 
+                    placeholder="6hzrDeceEKc ou 76979871" 
+                  />
+                  {onPreview && (
+                    <button 
+                      type="button"
+                      onClick={() => onPreview(formData.video_id)}
+                      className="bg-cyan-900/30 text-cyan-400 border border-cyan-500/50 px-3 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-1.5 rounded-sm"
+                      title="PREVIEW VIDEO"
+                    >
+                      <span className="text-base">▶</span>
+                      <span className="text-xs font-bold font-vt323 tracking-wider">PREVIEW</span>
+                    </button>
+                  )}
+                </div>
+                {formData.video_id.trim() && (
+                  <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full border ${
+                    /^\d+$/.test(formData.video_id.trim())
+                      ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/40'
+                      : 'bg-red-900/30 text-red-400 border-red-500/40'
+                  }`}>
+                    <span>{/^\d+$/.test(formData.video_id.trim()) ? '🟦 VIMEO detectado' : '🟥 YOUTUBE detectado'}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Multi-Playlist section */}
+              <div className="space-y-2 pt-2 border-t border-amber-900/30">
+                {currentPlaylists.length > 0 && (
+                  <div className="group">
+                    <label className="block text-[10px] text-amber-700/70 uppercase mb-1 font-bold tracking-widest">Canais Atuais (Database)</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {currentPlaylists.map(pl => (
+                        <span key={pl} className="px-2.5 py-0.5 bg-zinc-900 text-zinc-400 border border-zinc-800 text-xs font-jost rounded-full">
+                          {pl}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="group relative">
+                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">Adicionar a outros canais</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      value={playlistSearch} 
+                      onChange={e => {
+                        setPlaylistSearch(e.target.value);
+                        const search = e.target.value.toLowerCase();
+                        if (search.length > 0) {
+                          const filtered = playlists.filter(p => 
+                            p.toLowerCase().includes(search) && 
+                            !currentPlaylists.includes(p) && 
+                            !newPlaylistsToAdd.includes(p)
+                          ).slice(0, 10);
+                          setPlaylistSuggestions(filtered);
+                          setShowPlaylistDropdown(true);
+                        } else {
+                          setShowPlaylistDropdown(false);
+                        }
+                      }}
+                      onFocus={() => {
+                        if (playlistSearch.length > 0) setShowPlaylistDropdown(true);
+                      }}
+                      className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-base font-jost rounded-sm text-white" 
+                      placeholder="Buscar canal..." 
+                    />
+                    {showPlaylistDropdown && playlistSuggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-black border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                        {playlistSuggestions.map((pl, i) => (
+                          <div 
+                            key={i} 
+                            onClick={() => {
+                              setNewPlaylistsToAdd(prev => [...prev, pl]);
+                              setPlaylistSearch('');
+                              setShowPlaylistDropdown(false);
+                            }}
+                            className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-sm border-b border-amber-900/20 last:border-0"
+                          >
+                            {pl}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {newPlaylistsToAdd.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {newPlaylistsToAdd.map(pl => (
+                      <div key={pl} className="flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-900/30 text-amber-400 border border-amber-500/50 text-xs font-jost rounded-full">
+                        <span>{pl}</span>
+                        <button 
+                          type="button" 
+                          onClick={() => setNewPlaylistsToAdd(prev => prev.filter(p => p !== pl))}
+                          className="hover:text-white transition-colors text-sm leading-none"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Button Row */}
+          <div className="flex items-center gap-3 pt-3 border-t border-amber-900/30">
+            <button 
+              type="submit" 
+              disabled={isSaving} 
+              className="flex-1 py-3 bg-amber-900/30 border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-black font-bold text-2xl tracking-widest transition-all shadow-[0_0_15px_rgba(217,119,6,0.2)] active:translate-y-0.5 rounded-sm uppercase font-vt323"
+            >
+              {isSaving ? "TRANSMITTING..." : (isEditing ? "UPDATE RECORDS" : "COMMIT TO DB")}
+            </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-3 bg-zinc-900/80 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-all text-xl font-vt323 tracking-wider rounded-sm uppercase"
+              >
+                Close Drawer
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div id="tv-admin-panel" className="flex flex-col h-full text-amber-500 font-vt323 bg-black border-l-2 border-amber-800/50 shadow-[-20px_0_50px_rgba(0,0,0,0.9)] overflow-hidden">
