@@ -30,7 +30,7 @@ interface AdminPanelProps {
   displayMode?: AdminDisplayMode;
   playingId?: string | null;
   initialPlaylist?: string;
-  onRestartPlayer?: () => void;
+  onRestartPlayer?: (videoId?: string) => void;
   lastSavedRecord?: MusicEntry | null;
 }
 

@@ -1,196 +1,140 @@
-@import "tailwindcss";
+
 
 /* Custom Fonts & Base */
 body {
     font-family: 'VT323', monospace;
-    background-color: #050505;
 }
 
-.font-pixel { font-family: 'Press Start 2P', cursive; }
-.font-vt323 { font-family: 'VT323', monospace; }
-.font-jost { font-family: 'Jost', sans-serif !important; }
-
-/* --- NAVIGATION ENGINE --- */
-body.guide-active #tv-internal-guide { transform: translateX(0); }
-body.guide-active #app-viewport { transform: translateX(200px) scale(0.9); }
-
-body.admin-active #tv-admin-panel { transform: translateX(0); }
-body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
-
-/* Missing Background for Guide */
-.teletext-bg {
-    background: #0000aa; /* Classic Teletext/Osd Blue */
-    background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-    background-size: 100% 2px, 3px 100%;
+.font-pixel {
+    font-family: 'Press Start 2P', cursive;
 }
 
-/* --- ACCORDION UI --- */
-.guide-cat-header.active {
-    background-color: #0000ff;
-    border-left: 6px solid #ffff00;
+.font-vt323 {
+    font-family: 'VT323', monospace;
 }
 
-.guide-cat-content {
-    max-height: 45vh; /* Limita a altura para permitir scroll interno se a lista for longa */
-    overflow-y: auto;
+/* Texture Classes */
+.texture-plastic {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
 }
 
-/* Scrollbar customizada para as listas de canais */
-.guide-cat-content::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar {
+/* Scrollbar Customization for Guide */
+.custom-scrollbar::-webkit-scrollbar {
     width: 6px;
 }
-.guide-cat-content::-webkit-scrollbar-track, .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.3);
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2); 
 }
-.guide-cat-content::-webkit-scrollbar-thumb, .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #fbbf24;
-    border-radius: 10px;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #ffcc00; 
+    border-radius: 2px;
 }
-
-.rotate-180 {
-    transform: rotate(180deg);
-}
-
-/* --- SMART MARQUEE (LETREIRO DIGITAL) --- */
-.marquee-container {
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    position: relative;
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #ffe600; 
 }
 
-.marquee-text {
-    display: inline-block;
-    padding-left: 0;
-    will-change: transform;
-    transition: none;
+/* CRT & 3D Effects */
+.tv-3d-tilt {
+    transform: rotateX(4deg);
 }
 
-.marquee-active {
-    animation: marquee-scroll linear infinite;
+.translate-z-back {
+    transform: translateZ(-40px) scale(0.96);
 }
 
-@keyframes marquee-scroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); } /* Rola metade pois duplicamos o texto para loop fluido */
+.rotate-x-20 {
+    transform: rotateX(20deg);
 }
 
-/* --- NOW PLAYING COLORIDO (GUIDE) --- */
-.gnp-row {
-    transition: background 0.2s ease-out;
-    padding: 2px 4px;
-    border-radius: 4px;
+/* CRT Flicker Animation */
+@keyframes flicker {
+    0% { opacity: 0.97; }
+    5% { opacity: 0.95; }
+    10% { opacity: 0.9; }
+    15% { opacity: 0.95; }
+    20% { opacity: 0.99; }
+    25% { opacity: 0.95; }
+    30% { opacity: 0.9; }
+    35% { opacity: 0.96; }
+    40% { opacity: 0.98; }
+    45% { opacity: 0.95; }
+    50% { opacity: 0.99; }
+    55% { opacity: 0.93; }
+    60% { opacity: 0.9; }
+    65% { opacity: 0.96; }
+    70% { opacity: 1; }
+    75% { opacity: 0.97; }
+    80% { opacity: 0.95; }
+    85% { opacity: 0.92; }
+    90% { opacity: 0.96; }
+    95% { opacity: 0.99; }
+    100% { opacity: 0.94; }
 }
-.gnp-row:hover {
-    background: rgba(255,255,255,0.05);
+.crt-flicker {
+    animation: flicker 0.15s infinite;
 }
 
-#guide-now-playing {
-    background: radial-gradient(circle at top left, #222, #000);
+/* Scanlines */
+.scanlines {
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.4) 50%,
+        rgba(0,0,0,0.4)
+    );
+    background-size: 100% 4px;
 }
 
-#guide-clock, #guide-now-playing, .font-jost {
-    font-family: 'Jost', sans-serif !important;
-}
-
-/* --- YOUTUBE PLAYER --- */
-#player {
+/* VHS Noise */
+.vhs-noise {
     position: absolute;
-    width: 100% !important;
-    height: 100% !important;
-    top: 0 !important;
-    left: 0 !important;
-    z-index: 10;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.12;
 }
 
-/* --- OSD DINÂMICO --- */
-.osd-futuristic {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    text-align: right;
-    padding: 0.4rem 0.8rem;
-    position: relative;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-family: 'Jost', sans-serif;
-    font-weight: 400; /* NUNCA NEGRITO */
-    line-height: 1.1;
-    border-right: 3px solid #00ff00;
-    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.6));
-    transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
-    opacity: 0;
-    transform: translateX(20px);
-    animation: osd-slide-in 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+/* Tracking Lines */
+@keyframes tracking-scan {
+    0% { transform: translateY(-10%); opacity: 0.1; }
+    50% { opacity: 0.3; }
+    100% { transform: translateY(110%); opacity: 0.1; }
+}
+.vhs-tracking {
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 10%;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3) 20%, rgba(200,200,255,0.4) 50%, rgba(255,255,255,0.3) 80%, transparent);
+    animation: tracking-scan 4s linear infinite;
+    mix-blend-mode: overlay;
+    filter: blur(1px);
 }
 
-@keyframes osd-slide-in {
-    0% { opacity: 0; transform: translateX(30px) scaleX(0.9); filter: blur(10px); }
-    100% { opacity: 0.8; transform: translateX(0) scaleX(1); filter: blur(0px); }
+/* RGB Split Text */
+@keyframes rgb-shift-text {
+    0% { text-shadow: -2px 0 rgba(255,0,0,0.7), 2px 0 rgba(0,0,255,0.7); }
+    25% { text-shadow: -3px 0 rgba(255,0,0,0.7), 3px 0 rgba(0,0,255,0.7); }
+    50% { text-shadow: -2px 0 rgba(255,0,0,0.7), 2px 0 rgba(0,0,255,0.7); }
+    75% { text-shadow: -1px 0 rgba(255,0,0,0.7), 1px 0 rgba(0,0,255,0.7); }
+    100% { text-shadow: -2px 0 rgba(255,0,0,0.7), 2px 0 rgba(0,0,255,0.7); }
+}
+.vhs-text-shadow {
+    animation: rgb-shift-text 2s infinite alternate;
 }
 
-.osd-futuristic.visible { 
-    opacity: 0.8;
-    transform: translateX(0); 
-}
+/* ============================================================
+   CREDITS OVERLAY — CHARACTER GENERATOR (CG) SYSTEM
+   ============================================================
+   
+   Architecture based on CSS Custom Properties:
+   --cg-accent     : cor de destaque do canal (tema ativo)
+   --cg-bar-color  : cor da barra lateral fina
+   --cg-text-color : cor base do texto (sempre branco no padrão)
+   
+   Quando isThemedCGEnabled = false (ou sem tema definido),
+   o JS limpa as custom properties e o bloco retorna ao
+   padrão: branco puro + sombra preta hard (padrão MTV).
+   ============================================================ */
 
-.osd-futuristic.bump-chrome { border-right-color: #fff; color: #fff; font-style: italic; }
-
-.osd-futuristic.bump-urban { 
-    border-right-color: #ffff00; 
-    color: #ffff00; 
-    font-family: 'Permanent Marker', cursive;
-    text-shadow: 2px 0 rgba(255, 0, 255, 0.8), -1px 0 rgba(255, 255, 0, 0.8);
-    font-weight: 400;
-}
-
-.osd-futuristic.bump-cyber { border-right-color: #00ff00; color: #00ff00; letter-spacing: 2px; }
-
-.osd-futuristic.bump-noise { 
-    border-right-color: #fff; 
-    color: #fff; 
-    background: rgba(0, 0, 0, 0.9); /* Reverted to black background */
-    font-family: 'Jost', sans-serif;
-    font-weight: 400;
-    letter-spacing: 0.5px;
-}
-
-.osd-line-1 { font-size: clamp(0.7rem, 2vmin, 1.1rem); }
-.osd-line-2 { font-size: clamp(0.55rem, 1.6vmin, 0.9rem); opacity: 0.8; }
-
-/* --- BUMP LAYER MTV --- */
-#bump-layer { z-index: 999; }
-@keyframes bump-enter {
-    0% { transform: scale(2.5); opacity: 0; filter: blur(15px); }
-    15% { transform: scale(1); opacity: 1; filter: blur(0px); }
-    85% { transform: scale(1); opacity: 1; filter: blur(0px); }
-    100% { transform: scale(0.6); opacity: 0; filter: blur(10px); }
-}
-.bump-active { display: flex !important; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
-.bump-ident { 
-    animation: bump-enter 1.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; 
-    position: relative; 
-    text-align: center; 
-    width: 85%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.bump-chrome { font-family: 'Jost', sans-serif; font-weight: 900; color: #fff; font-style: italic; background: linear-gradient(180deg, #fff 40%, #888 50%, #fff 60%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px white); text-transform: uppercase; }
-.bump-urban { font-family: 'Permanent Marker', cursive; color: #ffff00; text-shadow: 4px 4px 0px #ff00ff, -4px -4px 0px #00ffff; }
-.bump-cyber { font-family: 'Orbitron', sans-serif; color: #00ff00; text-shadow: 0 0 15px #00ff00; letter-spacing: 0.1em; }
-.bump-noise { font-family: 'Monoton', cursive; color: #fff; filter: invert(1); mix-blend-mode: difference; }
-
-.bump-ident .main-title {
-    font-size: clamp(1.2rem, 8vmin, 5rem);
-    line-height: 0.9;
-    word-break: break-word;
-}
-
-/* --- CRÉDITOS --- */
 .credits-overlay {
     position: absolute; bottom: 8%; left: 6%; color: #f8f8f8; 
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 3px 3px 4px rgba(0,0,0,0.9);
@@ -251,341 +195,118 @@ body.admin-active #app-viewport { transform: translateX(-200px) scale(0.9); }
     font-weight: 400 !important;
 }
 
-.credit-line { 
-    margin-bottom: 0.35rem; 
-    display: grid; 
-    grid-template-columns: 2rem 1fr;
-    align-items: center;
-    overflow-wrap: break-word; 
+.credits-overlay.visible {
+    opacity: 1;
 }
 
-.icon { 
+/* --- Linhas individuais de crédito --- */
+.credit-line {
     display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    color: #ffff00; 
-    filter: drop-shadow(1px 1px 1px #000); 
-    font-size: 1.1rem; 
+    align-items: baseline;
+    gap: clamp(0px, 0.2vw, 2px);
+    margin-bottom: clamp(1px, 0.3vw, 3px);
+    white-space: nowrap;
 }
 
+/* Container do texto rico (preserva formatação HTML salva no banco) */
 .credit-text-content {
-    display: flex;
-    align-items: center;
-    padding-left: 0.2rem;
-}
-
-.font-normal { font-weight: 400 !important; }
-
-/* --- UI TRINITRON --- */
-.texture-plastic {
-    background-color: #181818;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.07'/%3E%3C/svg%3E");
-}
-
-.btn-retro-push {
-    background: linear-gradient(to bottom, #3a3a3a 0%, #222 100%);
-    color: #999; border: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 0 #000, 0 5px 5px rgba(0,0,0,0.5);
-    transition: all 0.1s ease-out; cursor: pointer;
-}
-.btn-retro-push:active { box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 0 0 #000; transform: translateY(4px); background: #1a1a1a; }
-
-.btn-power-push {
-    background: #1a1a1a; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 5px 0 #000, 0 6px 6px rgba(0,0,0,0.6);
-    border: 1px solid #000; transition: all 0.1s;
-}
-.btn-power-push:active { box-shadow: inset 0 3px 5px rgba(0,0,0,0.8), 0 0 0 #000; transform: translateY(5px); }
-
-.tv-3d-tilt { transform: rotateX(2deg); }
-.speaker-grid div { width: 100%; height: 2px; background: #050505; margin-bottom: 2px; }
-
-#static-overlay.active { opacity: 0.4; animation: static-shift 0.1s steps(4) infinite; background-image: url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'1\'/%3E%3C/svg%3E"); }
-@keyframes static-shift { 0% { background-position: 0 0; } 100% { background-position: 10px 10px; } }
-.scanlines { background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.08) 50%); background-size: 100% 3px; }
-
-/* --- SERVICE MODE & EDIT FORM STYLES --- */
-#tv-admin-panel input,
-#tv-admin-panel select,
-.service-mode-input,
-.rich-text-input {
-    background-color: #000 !important;
-    color: #ffffff !important;
-    border: 2px solid #333 !important;
     font-family: 'Jost', sans-serif !important;
-    font-weight: 700 !important; /* FORÇANDO NEGRITO */
-    border-radius: 4px;
-    padding: 0.75rem !important;
-    transition: all 0.2s ease;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: var(--cg-text-color, rgba(255, 255, 255, 0.97));
+    text-shadow:
+         1px  1px 0 rgba(0, 0, 0, 1),
+        -1px  1px 0 rgba(0, 0, 0, 1),
+         1px -1px 0 rgba(0, 0, 0, 1),
+        -1px -1px 0 rgba(0, 0, 0, 1),
+         2px  2px 0 rgba(0, 0, 0, 1);
 }
 
-.input-year {
-    width: 100px !important;
-    flex: none !important;
-}
-
-#tv-admin-panel input:focus,
-#tv-admin-panel select:focus,
-.service-mode-input:focus {
-    border-color: #fbbf24 !important;
-    background-color: #222 !important;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
-}
-
-.service-mode-input::placeholder {
-    color: #666 !important;
-    font-weight: 400;
-}
-
-.service-mode-btn {
+/* Formatação bold explícita: reforça peso Kabel Black */
+.credit-text-content b,
+.credit-text-content strong {
     font-family: 'Jost', sans-serif !important;
-    font-weight: 700 !important;
-    text-transform: uppercase;
-    transition: all 0.2s;
-    background-color: #111;
-    border: 2px solid #fbbf24;
-    color: #fbbf24;
-    cursor: pointer;
+    font-weight: 900;
+    font-style: normal;
+}
+
+/* Formatação italic: preserva itálico sem perder a sombra */
+.credit-text-content i,
+.credit-text-content em {
+    font-family: 'Jost', sans-serif !important;
+    font-style: italic;
+    font-weight: inherit;
+    opacity: 0.9;
+}
+
+/* Span de peso leve (auto-formatter: ft., &, vs., brackets) */
+.credit-text-content span[style*="font-weight: 400"],
+.credit-text-content span[style*="font-weight:400"] {
+    font-weight: 400 !important;
+    opacity: 0.75;
+    letter-spacing: 0.02em;
+}
+
+/* LEGACY — mantido para compatibilidade com spans diretos em credit-line */
+.credit-line > span:not(.credit-text-content) {
+    font-family: 'Jost', sans-serif !important;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: var(--cg-text-color, rgba(255, 255, 255, 0.97));
+    text-shadow:
+         1px  1px 0 rgba(0, 0, 0, 1),
+        -1px  1px 0 rgba(0, 0, 0, 1),
+         1px -1px 0 rgba(0, 0, 0, 1),
+        -1px -1px 0 rgba(0, 0, 0, 1),
+         2px  2px 0 rgba(0, 0, 0, 1);
+}
+
+/* Texto com peso leve legado (álbum, director) */
+.credit-line > span.light {
+    font-family: 'Jost', sans-serif !important;
+    font-weight: 300;
+    opacity: 0.88;
+    letter-spacing: 0.025em;
+    text-shadow:
+         1px  1px 0 rgba(0, 0, 0, 1),
+        -1px  1px 0 rgba(0, 0, 0, 1),
+         1px -1px 0 rgba(0, 0, 0, 1),
+        -1px -1px 0 rgba(0, 0, 0, 1),
+         2px  2px 0 rgba(0, 0, 0, 1);
+}
+
+/* --- Ícone de linha --- */
+.icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: clamp(18px, 2.2vw, 24px);
+    min-width: clamp(18px, 2.2vw, 24px);
+    font-size: clamp(0.7rem, 1.2vw, 0.95rem);
+    margin-right: clamp(4px, 0.6vw, 8px);
+    /* Sombra dura nos ícones também */
+    filter: drop-shadow(1px 1px 0 rgba(0,0,0,1))
+            drop-shadow(-1px -1px 0 rgba(0,0,0,1));
+    /* Cor de destaque temático opcional */
+    color: var(--cg-accent, inherit);
 }
 
-.service-mode-btn:hover {
-    background-color: #fbbf24;
-    color: #000;
-}
+/* --- Tema: Cor de destaque aplicada na barra e no accent --- */
+/* (sem classe extra — tudo via custom props injetadas pelo JS) */
 
-.service-mode-table th {
-    font-family: 'Jost', sans-serif !important;
-    font-weight: 700;
-    color: #fbbf24;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 0.5rem;
-}
-
-.service-mode-table td {
-    font-family: 'Jost', sans-serif !important;
-    padding: 0.5rem;
-}
-
-.vertical-text {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
-}
-
-/* --- SINALIZAÇÃO DE ATUALIZAÇÃO NO ADMIN --- */
-@keyframes row-highlight-flash {
-    0% { background-color: rgba(251, 191, 36, 0.4); }
-    100% { background-color: transparent; }
-}
-
-.row-updated {
-    animation: row-highlight-flash 3s ease-out forwards;
-    border-left: 4px solid #fbbf24;
-}
-
-/* Responsive TV scaling */
-.tv-responsive-container {
-    max-width: min(95vw, 130vh);
-    width: 100%;
-    margin: 0 auto;
-}
-
-@media (max-width: 768px) {
-    .tv-responsive-container {
-        max-width: 98vw;
+/* --- RESPONSIVE FALLBACK (telas muito pequenas) --- */
+@media (max-width: 480px) {
+    .credits-overlay {
+        font-size: 0.68rem;
+        padding: 6px 8px;
+        border-left-width: 3px;
+        bottom: 10px;
+        left: 10px;
+    }
+    .icon {
+        width: 16px;
+        min-width: 16px;
+        font-size: 0.65rem;
+        margin-right: 4px;
     }
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   --- MATRIX PANEL ---
-   Dual-sidebar channel management system.
-   Left accent: #00ff88 (matrix green)  /  Right accent: #00d4ff (matrix cyan)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-:root {
-    --matrix-accent:      #00ff88;
-    --matrix-accent-dim:  rgba(0, 255, 136, 0.15);
-    --matrix-cyan:        #00d4ff;
-    --matrix-cyan-dim:    rgba(0, 212, 255, 0.12);
-    --matrix-bg-left:     #010d06;
-    --matrix-bg-right:    #010a0e;
-    --matrix-border:      rgba(0, 255, 136, 0.25);
-    --matrix-border-cyan: rgba(0, 212, 255, 0.25);
-    --matrix-label:       rgba(0, 255, 136, 0.65);
-}
-
-/* ── Utility color tokens (used as Tailwind arbitrary values) ── */
-.text-matrix-accent  { color: var(--matrix-accent); }
-.text-matrix-cyan    { color: var(--matrix-cyan); }
-.text-matrix-label   { color: var(--matrix-label); }
-.border-matrix-border     { border-color: var(--matrix-border); }
-.border-matrix-border-cyan { border-color: var(--matrix-border-cyan); }
-.bg-matrix-accent    { background-color: var(--matrix-accent); }
-.bg-matrix-cyan      { background-color: var(--matrix-cyan); }
-.bg-matrix-accent\/10 { background-color: rgba(0, 255, 136, 0.10); }
-.bg-matrix-cyan\/10  { background-color: rgba(0, 212, 255, 0.10); }
-.bg-matrix-cyan\/5   { background-color: rgba(0, 212, 255, 0.05); }
-.drop-shadow-matrix  { filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.45)); }
-
-/* ── MATRIX activation button ── */
-.btn-matrix-active {
-    background: rgba(0, 255, 136, 0.15);
-    color: var(--matrix-accent);
-    border: 1px solid rgba(0, 255, 136, 0.55);
-    box-shadow: 0 0 18px rgba(0, 255, 136, 0.25), inset 0 0 10px rgba(0, 255, 136, 0.05);
-    transform: scale(1.04);
-}
-.btn-matrix-idle {
-    background: rgba(0, 255, 136, 0.06);
-    color: rgba(0, 255, 136, 0.65);
-    border: 1px solid rgba(0, 255, 136, 0.25);
-}
-.btn-matrix-idle:hover {
-    background: rgba(0, 255, 136, 0.18);
-    color: var(--matrix-accent);
-    border-color: rgba(0, 255, 136, 0.55);
-    box-shadow: 0 0 12px rgba(0, 255, 136, 0.2);
-}
-
-/* ── Inputs ── */
-.matrix-input {
-    background-color: #000 !important;
-    color: #e0ffe8 !important;
-    border: 1px solid rgba(0, 255, 136, 0.25) !important;
-    font-family: 'Jost', sans-serif !important;
-    font-weight: 600 !important;
-    padding: 0.5rem 0.75rem !important;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    border-radius: 2px;
-}
-.matrix-input:focus {
-    border-color: var(--matrix-accent) !important;
-    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.15);
-    background-color: #030d06 !important;
-}
-.matrix-input::placeholder { color: rgba(0, 255, 136, 0.2) !important; font-weight: 400; }
-
-.matrix-input-cyan {
-    background-color: #000 !important;
-    color: #e0f8ff !important;
-    border: 1px solid rgba(0, 212, 255, 0.25) !important;
-    font-family: 'Jost', sans-serif !important;
-    font-weight: 600 !important;
-    padding: 0.5rem 0.75rem !important;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    border-radius: 2px;
-}
-.matrix-input-cyan:focus {
-    border-color: var(--matrix-cyan) !important;
-    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.12);
-    background-color: #010a0e !important;
-}
-.matrix-input-cyan::placeholder { color: rgba(0, 212, 255, 0.2) !important; font-weight: 400; }
-
-/* ── Description Editor ── */
-.matrix-desc-editor:empty:before {
-    content: attr(data-placeholder);
-    color: rgba(0, 255, 136, 0.2);
-    pointer-events: none;
-    font-family: 'Jost', sans-serif;
-}
-.matrix-desc-editor:focus {
-    border-color: var(--matrix-accent) !important;
-    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.12);
-}
-
-/* ── Primary Button ── */
-.matrix-btn-primary {
-    background: rgba(0, 255, 136, 0.10);
-    color: var(--matrix-accent);
-    border: 1px solid rgba(0, 255, 136, 0.45);
-    font-family: 'Jost', sans-serif;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    padding: 0.6rem 1rem;
-}
-.matrix-btn-primary:hover:not(:disabled) {
-    background: var(--matrix-accent);
-    color: #000;
-    box-shadow: 0 0 14px rgba(0, 255, 136, 0.35);
-}
-.matrix-btn-primary:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-.matrix-btn-primary:active:not(:disabled) { transform: translateY(1px); }
-
-/* ── Action buttons (curation list) ── */
-.matrix-action-btn {
-    width: 100%;
-    padding: 3px 6px;
-    border: 1px solid;
-    font-family: 'Jost', sans-serif;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    border-radius: 1px;
-    text-align: center;
-}
-.matrix-action-btn--edit {
-    color: var(--matrix-cyan);
-    border-color: rgba(0, 212, 255, 0.35);
-    background: transparent;
-}
-.matrix-action-btn--edit:hover {
-    background: var(--matrix-cyan);
-    color: #000;
-    box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
-}
-.matrix-action-btn--remove {
-    color: rgba(255, 80, 80, 0.75);
-    border-color: rgba(255, 80, 80, 0.25);
-    background: transparent;
-}
-.matrix-action-btn--remove:hover {
-    background: rgba(255, 60, 60, 0.15);
-    border-color: rgba(255, 80, 80, 0.55);
-    color: #ff6060;
-}
-
-/* ── Scrollbars ── */
-.matrix-scrollbar::-webkit-scrollbar      { width: 4px; }
-.matrix-scrollbar::-webkit-scrollbar-track  { background: rgba(0,0,0,0.3); }
-.matrix-scrollbar::-webkit-scrollbar-thumb  { background: var(--matrix-accent); border-radius: 4px; }
-
-.matrix-scrollbar-cyan::-webkit-scrollbar      { width: 4px; }
-.matrix-scrollbar-cyan::-webkit-scrollbar-track  { background: rgba(0,0,0,0.3); }
-.matrix-scrollbar-cyan::-webkit-scrollbar-thumb  { background: var(--matrix-cyan); border-radius: 4px; }
-
-/* ── Watermark Overlay (on TV screen) ── */
-.watermark-overlay {
-    position: absolute;
-    top: 1rem;
-    right: 1.25rem;
-    z-index: 62;  /* above OSD (z-60) but below bump (z-70) */
-    pointer-events: none;
-    width: 120px;
-    height: auto;
-    object-fit: contain;
-    opacity: 0.88;
-    transform-origin: top right;
-    /* Soft fade-in matching OSD animation */
-    animation: watermark-fadein 0.9s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-}
-@keyframes watermark-fadein {
-    from { opacity: 0; transform: translateX(12px) scale(0.92); }
-    to   { opacity: 0.88; transform: translateX(0) scale(1); }
-}
-
-/* ── Layout override when MATRIX is open ── */
-.layout-matrix-open {
-    grid-template-columns: 0px 1fr 0px !important; /* MATRIX takes full viewport, no admin sidebars */
-}
-
