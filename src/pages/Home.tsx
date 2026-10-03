@@ -1170,10 +1170,10 @@ export default function Home({ session }: { session: Session | null }) {
                       className={`credits-overlay ${showCredits ? 'visible' : ''} ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"} drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] select-none`}
                     >
                       {currentVideoData?.artista && (
-                        <div className="credit-line">
-                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">🎤</span>
+                        <div className="credit-line flex items-start gap-1.5">
+                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0">🎤</span>
                           <div 
-                            className={`credit-text-content font-bold tracking-[0.03em] text-[#f8f8f8] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            className={`credit-text-content flex-1 whitespace-normal break-words leading-[1.15] font-bold tracking-[0.03em] text-[#f8f8f8] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
                             style={{ fontWeight: 700 }}
                           >
                             <span dangerouslySetInnerHTML={{ __html: formatCreditsConnectors(sanitizeHTML(currentVideoData.artista), 'artista') }} />
@@ -1181,10 +1181,10 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                       {currentVideoData?.musica && (
-                        <div className="credit-line">
-                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">🎼</span>
+                        <div className="credit-line flex items-start gap-1.5">
+                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0">🎼</span>
                           <div 
-                            className={`credit-text-content font-bold tracking-[0.03em] text-[#f8f8f8] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            className={`credit-text-content flex-1 whitespace-normal break-words leading-[1.15] font-bold tracking-[0.03em] text-[#f8f8f8] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
                             style={{ fontWeight: 700 }}
                           >
                             <span dangerouslySetInnerHTML={{ __html: formatCreditsConnectors(sanitizeHTML(currentVideoData.musica), 'musica') }} />
@@ -1192,10 +1192,10 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                       {currentVideoData?.album && (
-                        <div className="credit-line">
-                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">💽</span>
+                        <div className="credit-line flex items-start gap-1.5">
+                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0">💽</span>
                           <div 
-                            className={`credit-text-content font-semibold tracking-[0.02em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            className={`credit-text-content flex-1 whitespace-normal break-words leading-[1.15] font-semibold tracking-[0.02em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
                             style={{ fontWeight: 600 }}
                           >
                             <span dangerouslySetInnerHTML={{ __html: formatCreditsConnectors(sanitizeHTML(currentVideoData.album), 'album') }} />
@@ -1203,10 +1203,10 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                       {currentVideoData?.ano && (
-                        <div className="credit-line">
-                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">📅</span>
+                        <div className="credit-line flex items-start gap-1.5">
+                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0">📅</span>
                           <div 
-                            className={`credit-text-content font-semibold tracking-[0.02em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            className={`credit-text-content flex-1 whitespace-normal break-words leading-[1.15] font-semibold tracking-[0.02em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
                             style={{ fontWeight: 600 }}
                           >
                             <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.ano) }} />
@@ -1214,10 +1214,10 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                       {currentVideoData?.direcao && (
-                        <div className="credit-line">
-                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">🎬</span>
+                        <div className="credit-line flex items-start gap-1.5">
+                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0">🎬</span>
                           <div 
-                            className={`credit-text-content font-semibold tracking-[0.02em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            className={`credit-text-content flex-1 whitespace-normal break-words leading-[1.15] font-semibold tracking-[0.02em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
                             style={{ fontWeight: 600 }}
                           >
                             <span dangerouslySetInnerHTML={{ __html: formatCreditsConnectors(sanitizeHTML(currentVideoData.direcao || '—'), 'direcao') }} />
@@ -1230,6 +1230,16 @@ export default function Home({ session }: { session: Session | null }) {
                         .credits-overlay .credit-text-content,
                         .credits-overlay .credit-line {
                           text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 0 #000 !important;
+                        }
+                        .credits-overlay .credit-line {
+                          display: flex !important;
+                          align-items: flex-start !important;
+                          white-space: normal !important;
+                        }
+                        .credits-overlay .credit-text-content {
+                          white-space: normal !important;
+                          word-break: break-word !important;
+                          overflow-wrap: break-word !important;
                         }
                         .credits-overlay .credit-text-content b,
                         .credits-overlay .credit-text-content strong {
@@ -1254,7 +1264,8 @@ export default function Home({ session }: { session: Session | null }) {
                         .credits-overlay .icon {
                           font-weight: 400 !important;
                           font-style: normal !important;
-                          line-height: 1;
+                          line-height: 1.15;
+                          flex-shrink: 0;
                         }
                       `}</style>
                     </div>
