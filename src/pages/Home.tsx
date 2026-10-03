@@ -1170,10 +1170,10 @@ export default function Home({ session }: { session: Session | null }) {
                       className={`credits-overlay ${showCredits ? 'visible' : ''} absolute bottom-6 left-6 md:bottom-8 md:left-8 z-50 space-y-1 md:space-y-1.5 ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"} drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] select-none`}
                     >
                       {currentVideoData?.artista && (
-                        <div className="credit-line flex items-start gap-2 text-xl sm:text-2xl md:text-3xl">
-                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0 text-xl sm:text-2xl md:text-3xl leading-[1.15]">🎤</span>
+                        <div className="credit-line flex items-start gap-2.5 text-base sm:text-lg md:text-xl">
+                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0 text-base sm:text-lg md:text-xl leading-[1.15]">🎤</span>
                           <div 
-                            className={`credit-text-content flex-1 whitespace-normal break-words text-xl sm:text-2xl md:text-3xl leading-[1.15] font-bold tracking-[0.03em] text-[#f8f8f8] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            className={`credit-text-content flex-1 whitespace-normal break-words text-base sm:text-lg md:text-xl leading-[1.15] font-bold tracking-[0.03em] text-[#f8f8f8] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
                             style={{ fontWeight: 700 }}
                           >
                             <span dangerouslySetInnerHTML={{ __html: formatCreditsConnectors(sanitizeHTML(currentVideoData.artista), 'artista') }} />
@@ -1181,10 +1181,10 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                       {currentVideoData?.musica && (
-                        <div className="credit-line flex items-start gap-2 text-xl sm:text-2xl md:text-3xl">
-                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0 text-xl sm:text-2xl md:text-3xl leading-[1.15]">🎼</span>
+                        <div className="credit-line flex items-start gap-2.5 text-base sm:text-lg md:text-xl">
+                          <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0 text-base sm:text-lg md:text-xl leading-[1.15]">🎼</span>
                           <div 
-                            className={`credit-text-content flex-1 whitespace-normal break-words text-xl sm:text-2xl md:text-3xl leading-[1.15] font-bold tracking-[0.03em] text-[#f8f8f8] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            className={`credit-text-content flex-1 whitespace-normal break-words text-base sm:text-lg md:text-xl leading-[1.15] font-bold tracking-[0.03em] text-[#f8f8f8] drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
                             style={{ fontWeight: 700 }}
                           >
                             <span dangerouslySetInnerHTML={{ __html: formatCreditsConnectors(sanitizeHTML(currentVideoData.musica), 'musica') }} />
@@ -1192,7 +1192,7 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                       {currentVideoData?.album && (
-                        <div className="credit-line flex items-start gap-2 text-base sm:text-lg md:text-xl">
+                        <div className="credit-line flex items-start gap-2.5 text-base sm:text-lg md:text-xl">
                           <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0 text-base sm:text-lg md:text-xl leading-[1.15]">💽</span>
                           <div 
                             className={`credit-text-content flex-1 whitespace-normal break-words text-base sm:text-lg md:text-xl leading-[1.15] font-semibold tracking-[0.02em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
@@ -1203,7 +1203,7 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                       {currentVideoData?.ano && (
-                        <div className="credit-line flex items-start gap-2 text-base sm:text-lg md:text-xl">
+                        <div className="credit-line flex items-start gap-2.5 text-base sm:text-lg md:text-xl">
                           <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0 text-base sm:text-lg md:text-xl leading-[1.15]">📅</span>
                           <div 
                             className={`credit-text-content flex-1 whitespace-normal break-words text-base sm:text-lg md:text-xl leading-[1.15] font-semibold tracking-[0.02em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
@@ -1214,7 +1214,7 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                       {currentVideoData?.direcao && (
-                        <div className="credit-line flex items-start gap-2 text-base sm:text-lg md:text-xl">
+                        <div className="credit-line flex items-start gap-2.5 text-base sm:text-lg md:text-xl">
                           <span className="icon select-none font-normal not-italic drop-shadow-[0_2px_2px_rgba(0,0,0,1)] shrink-0 text-base sm:text-lg md:text-xl leading-[1.15]">🎬</span>
                           <div 
                             className={`credit-text-content flex-1 whitespace-normal break-words text-base sm:text-lg md:text-xl leading-[1.15] font-semibold tracking-[0.02em] text-white/95 drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
@@ -1235,6 +1235,7 @@ export default function Home({ session }: { session: Session | null }) {
                           display: flex !important;
                           align-items: flex-start !important;
                           white-space: normal !important;
+                          gap: 0.6rem !important;
                         }
                         .credits-overlay .credit-text-content {
                           white-space: normal !important;
@@ -1265,7 +1266,6 @@ export default function Home({ session }: { session: Session | null }) {
                           font-size: inherit !important;
                           width: auto !important;
                           min-width: unset !important;
-                          margin-right: 0 !important;
                           font-weight: 400 !important;
                           font-style: normal !important;
                           line-height: 1.15;
