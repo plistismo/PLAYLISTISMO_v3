@@ -413,24 +413,24 @@ export default function AdminPanel({
 
   if (displayMode === 'drawer') {
     return (
-      <div className="flex flex-col w-full text-amber-500 font-vt323 overflow-visible">
+      <div className="flex flex-col w-full text-neutral-100 font-jost font-['Jost',sans-serif] overflow-visible [&_.rich-text-input]:!font-jost [&_.rich-text-input]:!text-neutral-100 [&_.rich-text-input]:!normal-case [&_.rich-text-input]:!bg-neutral-900 [&_.rich-text-input]:!border-amber-500/30 [&_.rich-text-input]:focus:!border-amber-400 [&_label]:!font-jost [&_label]:!text-amber-500/80 [&_label]:!tracking-wider">
         {statusMsg.show && (
-          <div className={`p-2 mb-3 text-center text-lg font-bold border rounded ${statusMsg.isError ? 'bg-red-900/80 text-white border-red-500' : 'bg-amber-900/40 text-amber-400 border-amber-500'}`}>
+          <div className={`p-2 mb-3 text-center text-base font-bold border rounded font-jost ${statusMsg.isError ? 'bg-red-900/80 text-white border-red-500' : 'bg-amber-900/40 text-amber-300 border-amber-500'}`}>
             {statusMsg.text}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[65vh] overflow-y-auto custom-scrollbar p-1 pr-2">
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[65vh] overflow-y-auto custom-scrollbar p-1 pr-2 font-jost">
           {/* Top Info Bar of Drawer Form */}
-          <div className="flex items-center justify-between pb-2 border-b border-amber-500/40">
-            <span className="text-xl font-bold tracking-wider text-amber-400">
-              {isEditing ? `TRANSMISSION UNIT #${formData.id} // ACTIVE EDIT` : 'NEW UNIT REGISTRATION // ALL FREQUENCIES'}
+          <div className="flex items-center justify-between pb-2 border-b border-amber-500/40 font-jost">
+            <span className="text-base md:text-lg font-bold tracking-wider text-amber-400 font-jost uppercase">
+              {isEditing ? `TRANSMISSION UNIT #${formData.id} // ACTIVE EDIT` : 'NEW UNIT CALIBRATION // ALL FREQUENCIES'}
             </span>
             {isEditing && (
               <button 
                 type="button" 
                 onClick={clearForm} 
-                className="text-xs text-amber-600 hover:text-amber-400 transition-colors uppercase tracking-wider font-mono border border-amber-900/40 px-2 py-0.5 rounded bg-black/40"
+                className="text-xs text-amber-500/80 hover:text-amber-300 transition-colors uppercase tracking-wider font-jost border border-amber-900/40 px-2 py-0.5 rounded bg-black/40"
               >
                 + Reset / New Unit
               </button>
@@ -450,7 +450,7 @@ export default function AdminPanel({
                   placeholder="Ex: Oasis"
                 />
                 {activeField === 'artista' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -459,7 +459,7 @@ export default function AdminPanel({
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
+                        className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
                       >
                         {val}
                       </div>
@@ -480,12 +480,12 @@ export default function AdminPanel({
 
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
                 <div className="sm:col-span-4">
-                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider">ANO</label>
+                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">ANO</label>
                   <input 
                     type="number" 
                     value={formData.ano} 
                     onChange={e => setFormData({...formData, ano: e.target.value})} 
-                    className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-amber-300 placeholder:text-amber-300/30 font-jost rounded-sm" 
+                    className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-neutral-100 placeholder:text-neutral-500 font-jost rounded-sm" 
                     placeholder="1995" 
                   />
                 </div>
@@ -500,7 +500,7 @@ export default function AdminPanel({
                     placeholder="(What's the Story) Morning Glory?"
                   />
                   {activeField === 'album' && suggestions.length > 0 && (
-                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                       {suggestions.map((val, i) => (
                         <div 
                           key={i} 
@@ -509,7 +509,7 @@ export default function AdminPanel({
                             setActiveField(null);
                             setSuggestions([]);
                           }}
-                          className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
+                          className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
                         >
                           {val}
                         </div>
@@ -532,7 +532,7 @@ export default function AdminPanel({
                   placeholder="Diretor do Videoclipe"
                 />
                 {activeField === 'direcao' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -541,7 +541,7 @@ export default function AdminPanel({
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
+                        className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
                       >
                         {val}
                       </div>
@@ -551,29 +551,29 @@ export default function AdminPanel({
               </div>
 
               <div className="group">
-                <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider">VIDEO ID (YouTube ou Vimeo)</label>
+                <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">VIDEO ID (YouTube ou Vimeo)</label>
                 <div className="flex gap-2">
                   <input 
                     type="text" 
                     value={formData.video_id} 
                     onChange={e => setFormData({...formData, video_id: e.target.value})} 
-                    className="flex-1 px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-amber-300 placeholder:text-amber-300/30 font-jost rounded-sm" 
+                    className="flex-1 px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-neutral-100 placeholder:text-neutral-500 font-jost rounded-sm" 
                     placeholder="6hzrDeceEKc ou 76979871" 
                   />
                   {onPreview && (
                     <button 
-                      type="button"
-                      onClick={() => onPreview(formData.video_id)}
-                      className="bg-cyan-900/30 text-cyan-400 border border-cyan-500/50 px-3 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-1.5 rounded-sm"
+                      type="button" 
+                      onClick={() => onPreview(formData.video_id)} 
+                      className="bg-cyan-900/30 text-cyan-400 border border-cyan-500/50 px-3 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-1.5 rounded-sm font-jost"
                       title="PREVIEW VIDEO"
                     >
                       <span className="text-base">▶</span>
-                      <span className="text-xs font-bold font-vt323 tracking-wider">PREVIEW</span>
+                      <span className="text-xs font-bold font-jost tracking-wider">PREVIEW</span>
                     </button>
                   )}
                 </div>
                 {formData.video_id.trim() && (
-                  <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full border ${
+                  <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full border font-jost ${
                     /^\d+$/.test(formData.video_id.trim())
                       ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/40'
                       : 'bg-red-900/30 text-red-400 border-red-500/40'
@@ -584,13 +584,13 @@ export default function AdminPanel({
               </div>
 
               {/* Multi-Playlist section */}
-              <div className="space-y-2 pt-2 border-t border-amber-900/30">
+              <div className="space-y-2 pt-2 border-t border-amber-900/30 font-jost">
                 {currentPlaylists.length > 0 && (
                   <div className="group">
-                    <label className="block text-[10px] text-amber-500/70 uppercase mb-1 font-bold tracking-widest">Canais Atuais (Database)</label>
+                    <label className="block text-[10px] text-amber-500/70 uppercase mb-1 font-bold tracking-widest font-jost">Canais Atuais (Database)</label>
                     <div className="flex flex-wrap gap-1.5">
                       {currentPlaylists.map(pl => (
-                        <span key={pl} className="px-2.5 py-0.5 bg-neutral-900 text-amber-200/80 border border-neutral-700 text-xs font-jost rounded-full">
+                        <span key={pl} className="px-2.5 py-0.5 bg-neutral-900 text-neutral-200 border border-neutral-700 text-xs font-jost rounded-full">
                           {pl}
                         </span>
                       ))}
@@ -599,7 +599,7 @@ export default function AdminPanel({
                 )}
 
                 <div className="group relative">
-                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider">Adicionar a outros canais</label>
+                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">Adicionar a outros canais</label>
                   <div className="relative">
                     <input 
                       type="text" 
@@ -622,11 +622,11 @@ export default function AdminPanel({
                       onFocus={() => {
                         if (playlistSearch.length > 0) setShowPlaylistDropdown(true);
                       }}
-                      className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-base text-amber-300 placeholder:text-amber-300/30 font-jost rounded-sm" 
+                      className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-base text-neutral-100 placeholder:text-neutral-500 font-jost rounded-sm" 
                       placeholder="Buscar canal..." 
                     />
                     {showPlaylistDropdown && playlistSuggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-neutral-950 border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-neutral-950 border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                         {playlistSuggestions.map((pl, i) => (
                           <div 
                             key={i} 
@@ -635,7 +635,7 @@ export default function AdminPanel({
                               setPlaylistSearch('');
                               setShowPlaylistDropdown(false);
                             }}
-                            className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
+                            className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
                           >
                             {pl}
                           </div>
@@ -648,7 +648,7 @@ export default function AdminPanel({
                 {newPlaylistsToAdd.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {newPlaylistsToAdd.map(pl => (
-                      <div key={pl} className="flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-900/30 text-amber-400 border border-amber-500/50 text-xs font-jost rounded-full">
+                      <div key={pl} className="flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-950/60 text-amber-300 border border-amber-500/50 text-xs font-jost rounded-full">
                         <span>{pl}</span>
                         <button 
                           type="button" 
@@ -752,13 +752,13 @@ export default function AdminPanel({
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Form Side */}
           {displayMode !== 'table' && (
-            <section className={`${displayMode === 'full' ? 'w-full lg:w-1/3' : 'w-full'} bg-[#0a0a0a] border-r border-amber-900/30 p-6 overflow-y-auto custom-scrollbar flex-shrink-0`}>
-              <h3 className="text-2xl mb-6 border-b border-amber-900/30 pb-2 flex justify-between items-center">
+            <section className={`${displayMode === 'full' ? 'w-full lg:w-1/3' : 'w-full'} bg-[#0a0a0a] border-r border-amber-900/30 p-6 overflow-y-auto custom-scrollbar flex-shrink-0 font-jost [&_.rich-text-input]:!font-jost [&_.rich-text-input]:!text-neutral-100 [&_.rich-text-input]:!normal-case [&_label]:!font-jost [&_label]:!text-amber-500/80 [&_label]:!tracking-wider`}>
+              <h3 className="text-2xl mb-6 border-b border-amber-900/30 pb-2 flex justify-between items-center font-jost">
                 <span className="font-bold">{isEditing ? `EDIT #${formData.id}` : 'NEW UNIT'}</span>
-                {isEditing && <button onClick={clearForm} className="text-xs text-amber-700 hover:text-amber-500 transition-colors uppercase underline">Cancel Edit</button>}
+                {isEditing && <button onClick={clearForm} className="text-xs text-amber-500/80 hover:text-amber-300 transition-colors uppercase font-jost">Cancel Edit</button>}
               </h3>
               
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5 font-jost">
                 <RichTextInput
                   label="ARTISTA *"
                   field="artista"
@@ -769,7 +769,7 @@ export default function AdminPanel({
                 />
                 
                 {activeField === 'artista' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-6 right-6 top-[220px] bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
+                  <div ref={dropdownRef} className="absolute left-6 right-6 top-[220px] bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -778,7 +778,7 @@ export default function AdminPanel({
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
+                        className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
                       >
                         {val}
                       </div>
@@ -796,8 +796,8 @@ export default function AdminPanel({
                 
                 <div className="flex gap-2">
                   <div className="group w-[100px] shrink-0">
-                    <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">ANO</label>
-                    <input type="number" value={formData.ano} onChange={e => setFormData({...formData, ano: e.target.value})} className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg input-year" placeholder="1995" />
+                    <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">ANO</label>
+                    <input type="number" value={formData.ano} onChange={e => setFormData({...formData, ano: e.target.value})} className="w-full p-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 text-lg text-neutral-100 font-jost input-year rounded-sm" placeholder="1995" />
                   </div>
                   <div className="group flex-1 relative">
                     <RichTextInput
@@ -809,7 +809,7 @@ export default function AdminPanel({
                       placeholder="Optional"
                     />
                     {activeField === 'album' && suggestions.length > 0 && (
-                      <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
+                      <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                         {suggestions.map((val, i) => (
                           <div 
                             key={i} 
@@ -818,7 +818,7 @@ export default function AdminPanel({
                               setActiveField(null);
                               setSuggestions([]);
                             }}
-                            className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
+                            className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
                           >
                             {val}
                           </div>
@@ -838,7 +838,7 @@ export default function AdminPanel({
                     placeholder="Music Video Director"
                   />
                   {activeField === 'direcao' && suggestions.length > 0 && (
-                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
+                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                       {suggestions.map((val, i) => (
                         <div 
                           key={i} 
@@ -847,7 +847,7 @@ export default function AdminPanel({
                             setActiveField(null);
                             setSuggestions([]);
                           }}
-                          className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
+                          className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
                         >
                           {val}
                         </div>
@@ -857,24 +857,24 @@ export default function AdminPanel({
                 </div>
 
                 <div className="group">
-                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">VIDEO ID (YouTube ou Vimeo)</label>
+                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">VIDEO ID (YouTube ou Vimeo)</label>
                   <div className="flex gap-2">
-                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg text-white" placeholder="6hzrDeceEKc ou 76979871" />
+                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 p-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 text-lg text-neutral-100 font-jost rounded-sm" placeholder="6hzrDeceEKc ou 76979871" />
                     {onPreview && (
                       <button 
-                        type="button"
-                        onClick={() => onPreview(formData.video_id)}
-                        className="bg-cyan-900/30 text-cyan-500 border border-cyan-500/50 px-4 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-2 group"
+                        type="button" 
+                        onClick={() => onPreview(formData.video_id)} 
+                        className="bg-cyan-900/30 text-cyan-400 border border-cyan-500/50 px-4 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-2 group font-jost rounded-sm"
                         title="PREVIEW VIDEO"
                       >
                         <span className="text-xl">▶</span>
-                        <span className="text-[10px] font-bold group-hover:block hidden">PREVIEW</span>
+                        <span className="text-[10px] font-bold group-hover:block hidden font-jost">PREVIEW</span>
                       </button>
                     )}
                   </div>
                   {/* Badge de detecção automática de plataforma */}
                   {formData.video_id.trim() && (
-                    <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full border ${
+                    <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full border font-jost ${
                       /^\d+$/.test(formData.video_id.trim())
                         ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/40'
                         : 'bg-red-900/30 text-red-400 border-red-500/40'
@@ -885,14 +885,14 @@ export default function AdminPanel({
                 </div>
 
                 {/* Multi-Playlist Management Section */}
-                <div className="space-y-4 pt-4 border-t border-amber-900/30">
+                <div className="space-y-4 pt-4 border-t border-amber-900/30 font-jost">
                   {/* Current Playlists (Read-Only) */}
                   {currentPlaylists.length > 0 && (
                     <div className="group">
-                      <label className="block text-[10px] text-amber-700/60 uppercase mb-2 font-bold tracking-widest">Canais Atuais (Database)</label>
+                      <label className="block text-[10px] text-amber-500/70 uppercase mb-2 font-bold tracking-widest font-jost">Canais Atuais (Database)</label>
                       <div className="flex flex-wrap gap-2">
                         {currentPlaylists.map(pl => (
-                          <span key={pl} className="px-3 py-1 bg-zinc-900 text-zinc-500 border border-zinc-800 text-xs font-jost rounded-full opacity-80">
+                          <span key={pl} className="px-3 py-1 bg-zinc-900 text-neutral-200 border border-zinc-800 text-xs font-jost rounded-full opacity-80">
                             {pl}
                           </span>
                         ))}
@@ -902,7 +902,7 @@ export default function AdminPanel({
 
                   {/* Add to New Playlists */}
                   <div className="group relative">
-                    <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">Adicionar a outros canais</label>
+                    <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">Adicionar a outros canais</label>
                     <div className="relative">
                       <input 
                         type="text" 
@@ -925,11 +925,11 @@ export default function AdminPanel({
                         onFocus={() => {
                           if (playlistSearch.length > 0) setShowPlaylistDropdown(true);
                         }}
-                        className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg font-jost" 
+                        className="w-full p-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 text-lg font-jost text-neutral-100 rounded-sm" 
                         placeholder="Buscar canal..." 
                       />
                       {showPlaylistDropdown && playlistSuggestions.length > 0 && (
-                        <div className="absolute left-0 right-0 bottom-full mb-1 bg-black border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar">
+                        <div className="absolute left-0 right-0 bottom-full mb-1 bg-neutral-950 border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                           {playlistSuggestions.map((pl, i) => (
                             <div 
                               key={i} 
@@ -938,7 +938,7 @@ export default function AdminPanel({
                                 setPlaylistSearch('');
                                 setShowPlaylistDropdown(false);
                               }}
-                              className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-lg border-b border-amber-900/20 last:border-0"
+                              className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
                             >
                               {pl}
                             </div>
@@ -952,10 +952,10 @@ export default function AdminPanel({
                   {newPlaylistsToAdd.length > 0 && (
                     <div className="flex flex-wrap gap-2 pt-2">
                       {newPlaylistsToAdd.map(pl => (
-                        <div key={pl} className="flex items-center gap-2 px-3 py-1 bg-amber-900/30 text-amber-500 border border-amber-500/50 text-xs font-jost rounded-full group/tag animate-in fade-in zoom-in duration-300">
+                        <div key={pl} className="flex items-center gap-2 px-3 py-1 bg-amber-950/60 text-amber-300 border border-amber-500/50 text-xs font-jost rounded-full group/tag animate-in fade-in zoom-in duration-300">
                           <span>{pl}</span>
                           <button 
-                            type="button"
+                            type="button" 
                             onClick={() => setNewPlaylistsToAdd(prev => prev.filter(p => p !== pl))}
                             className="hover:text-white transition-colors text-lg leading-none"
                           >

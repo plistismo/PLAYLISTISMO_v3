@@ -815,8 +815,8 @@ export default function Home({ session }: { session: Session | null }) {
                   </div>
                   <div className="flex items-center gap-3">
                     {/* Josefin Font Toggle */}
-                    <div className="flex items-center gap-2 bg-black/60 px-2.5 py-1 rounded border border-amber-900/40">
-                      <label htmlFor="toggle-josefin-drawer" className="text-[10px] md:text-xs text-amber-500 uppercase font-bold tracking-wider font-vt323 cursor-pointer select-none">
+                    <div className="flex items-center gap-2 bg-black/60 px-2.5 py-1 rounded border border-amber-900/40 font-jost">
+                      <label htmlFor="toggle-josefin-drawer" className="text-[10px] md:text-xs text-amber-500/80 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
                         Josefin Sans
                       </label>
                       <button
@@ -1165,12 +1165,64 @@ export default function Home({ session }: { session: Session | null }) {
                       )}
                     </div>
 
-                    <div className={`credits-overlay ${showCredits ? 'visible' : ''} credits-3d-shadow${useJosefinFont ? ' credits-josefin' : ''}`}>
-                      {currentVideoData?.artista && <div className="credit-line"><span className="icon">🎤</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.artista) }} /></div></div>}
-                      {currentVideoData?.musica && <div className="credit-line"><span className="icon">🎼</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.musica) }} /></div></div>}
-                      {currentVideoData?.album && <div className="credit-line"><span className="icon">💽</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.album) }} /></div></div>}
-                      {currentVideoData?.ano && <div className="credit-line"><span className="icon">📅</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.ano) }} /></div></div>}
-                      {currentVideoData?.direcao && <div className="credit-line"><span className="icon">🎬</span> <div className="credit-text-content"><span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.direcao || '—') }} /></div></div>}
+                    <div 
+                      className={`credits-overlay ${showCredits ? 'visible' : ''} ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"} drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] select-none`}
+                    >
+                      {currentVideoData?.artista && (
+                        <div className="credit-line">
+                          <span className="icon">🎤</span>
+                          <div 
+                            className={`credit-text-content font-bold tracking-wide text-white [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            style={{ fontWeight: 700 }}
+                          >
+                            <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.artista) }} />
+                          </div>
+                        </div>
+                      )}
+                      {currentVideoData?.musica && (
+                        <div className="credit-line">
+                          <span className="icon">🎼</span>
+                          <div 
+                            className={`credit-text-content font-bold tracking-wide text-white [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            style={{ fontWeight: 700 }}
+                          >
+                            <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.musica) }} />
+                          </div>
+                        </div>
+                      )}
+                      {currentVideoData?.album && (
+                        <div className="credit-line">
+                          <span className="icon">💽</span>
+                          <div 
+                            className={`credit-text-content light font-normal opacity-90 tracking-normal text-white/95 [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            style={{ fontWeight: 300 }}
+                          >
+                            <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.album) }} />
+                          </div>
+                        </div>
+                      )}
+                      {currentVideoData?.ano && (
+                        <div className="credit-line">
+                          <span className="icon">📅</span>
+                          <div 
+                            className={`credit-text-content light font-normal opacity-90 tracking-normal text-white/95 [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            style={{ fontWeight: 300 }}
+                          >
+                            <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.ano) }} />
+                          </div>
+                        </div>
+                      )}
+                      {currentVideoData?.direcao && (
+                        <div className="credit-line">
+                          <span className="icon">🎬</span>
+                          <div 
+                            className={`credit-text-content light font-normal opacity-90 tracking-normal text-white/95 [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"}`}
+                            style={{ fontWeight: 300 }}
+                          >
+                            <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.direcao || '—') }} />
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="vhs-noise z-40 mix-blend-overlay pointer-events-none"></div>
