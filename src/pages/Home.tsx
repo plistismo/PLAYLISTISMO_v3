@@ -668,10 +668,10 @@ export default function Home({ session }: { session: Session | null }) {
 
       {/* Admin Panel — bipartite layout: TV column + right frequency list */}
 
-      <main className={`relative z-10 w-full min-h-screen flex flex-col md:grid transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'layout-admin-open md:grid-cols-[1fr_520px]' : 'layout-admin-closed md:grid-cols-[1fr_0px] overflow-hidden'}`}>
+      <main className={`relative z-10 w-full min-h-screen flex flex-col md:flex-row transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'layout-admin-open' : 'layout-admin-closed overflow-hidden'}`}>
 
         {/* MAIN PANEL: TV & CONTROLS */}
-        <section className={`flex flex-col items-center justify-center p-4 transition-all duration-500 w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[1200px] mx-auto'}`}>
+        <section className="flex-1 w-full min-w-0 flex flex-col items-center justify-center p-4 transition-all duration-500">
           
           {/* Centralized Admin Buttons */}
           <div id="admin-panel-controls" className={`mb-8 flex flex-wrap gap-4 items-center justify-center w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[800px]'}`}>
@@ -788,7 +788,7 @@ export default function Home({ session }: { session: Session | null }) {
 
 
 
-          <div className="relative w-full max-w-[1000px] mx-auto tv-responsive-container flex flex-col transition-all duration-500 ease-out">
+          <div className="relative w-full min-w-0 tv-responsive-container flex flex-col transition-all duration-500 ease-out">
             
             {/* ── GAVETA SUPERIOR: SERVICE MODE / EDIT VIDEO (TOP DRAWER) ──
                 Telemetry-style module mounted above the TV top bezel. Lives in normal
