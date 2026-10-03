@@ -1115,7 +1115,7 @@ export default function Home({ session }: { session: Session | null }) {
                     {showStatic && <div className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-100 bg-repeat active"></div>}
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
-                      <div className="absolute top-4 right-6 text-right">
+                      <div className="absolute top-4 right-6 text-right font-['Jost',sans-serif]">
                         {/* Watermark replaces channel OSD label when available */}
                         {currentChannelWatermark ? (
                           currentChannelWatermark.toLowerCase().endsWith('.mp4') || currentChannelWatermark.toLowerCase().endsWith('.webm') ? (
@@ -1150,7 +1150,7 @@ export default function Home({ session }: { session: Session | null }) {
                             />
                           )
                         ) : currentChannelName ? (
-                          <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''}`}>
+                          <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''} font-['Jost',sans-serif]`}>
                             {playlistParts.length > 1 ? (
                               <><div className="osd-line-1">{playlistParts[0].trim()}:</div><div className="osd-line-2">{playlistParts[1].trim()}</div></>
                             ) : (
@@ -1280,7 +1280,7 @@ export default function Home({ session }: { session: Session | null }) {
                   </div>
                 </div>
 
-                <div className="flex flex-col w-14 sm:w-16 md:w-28 lg:w-32 ml-2 md:ml-3 p-1.5 md:p-2.5 bg-[#111] border-l border-[#222] shadow-[inset_2px_0_5px_rgba(0,0,0,0.5)] justify-between items-center gap-2 md:gap-3 shrink-0 rounded-r-lg h-full overflow-hidden">
+                <div className="flex flex-col w-14 sm:w-16 md:w-28 lg:w-32 ml-2 md:ml-3 p-1.5 md:p-2.5 bg-[#111] border-l border-[#222] shadow-[inset_2px_0_5px_rgba(0,0,0,0.5)] justify-between items-center gap-2 md:gap-3 shrink-0 rounded-r-lg h-full overflow-hidden font-['Jost',sans-serif]">
                   <div className="flex flex-col items-center select-none opacity-80 mb-1 shrink-0">
                     <span className="font-serif italic font-bold text-[#bbb] text-[8px] md:text-sm drop-shadow-[1px_1px_0_rgba(0,0,0,1)] tracking-tight uppercase vertical-text">playlist<span className="text-[#888]">ismo</span></span>
                   </div>
@@ -1354,13 +1354,13 @@ export default function Home({ session }: { session: Session | null }) {
           {/* ── GAVETA INFERIOR MECÂNICA (P100 GUIDE) ── */}
             <div
               id="tv-drawer-guide"
-              className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-jost ${
+              className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-['Jost',sans-serif] font-jost ${
                 isSearchOpen
                   ? 'max-h-[38vh] opacity-100 mt-2 md:mt-3 translate-y-0'
                   : 'max-h-0 opacity-0 mt-0 translate-y-6 pointer-events-none'
               }`}
             >
-              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-2.5 md:p-4 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-jost max-h-[38vh] flex flex-col overflow-hidden">
+              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-2.5 md:p-4 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-['Jost',sans-serif] font-jost max-h-[38vh] flex flex-col overflow-hidden">
                 
                 {/* Header do Guia */}
                 <div className="flex items-center justify-between border-b border-[#2b3038] pb-2 mb-2 shrink-0">
