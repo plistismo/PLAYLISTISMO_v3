@@ -76,66 +76,88 @@ const restoreSelection = (containerEl: HTMLElement, savedSel: { start: number; e
   selection.addRange(range);
 };
 
-// Clean auto-formatting function to apply span styling without recursive nesting
-const applyAutoFormatting = (html: string, field: string): string => {
+/**
+ * Unwraps previous connector spans so we don't nest spans or corrupt HTML on re-runs.
+ */
+export const unwrapConnectorSpans = (html: string): string => {
+  if (!html) return '';
+  let prev = '';
+  let curr = html;
+  const spanPattern = /<span\b([^>]*)>(.*?)<\/span>/gi;
+  let iterations = 0;
+  while (curr !== prev && iterations < 10) {
+    prev = curr;
+    curr = curr.replace(spanPattern, (fullMatch, attrs, inner) => {
+      const isConnector =
+        /opacity:\s*0?\.8/i.test(attrs) ||
+        /opacity-80/i.test(attrs) ||
+        /^(?:\s*(?:ft\.|feat\.|feat|ft|vs\.|vs|&|&amp;|,)\s*|「.*?」)$/i.test(inner.trim());
+      return isConnector ? inner : fullMatch;
+    });
+    iterations++;
+  }
+  return curr;
+};
+
+/**
+ * Applies live relational connector formatting:
+ * Tokens: case-insensitive ft., feat., feat, ft, vs., vs, &, &amp;, comma, and brackets 「...」
+ * Wrapped in lighter font weight (font-normal / font-weight: 400) with opacity-80.
+ */
+export const formatCreditsConnectors = (html: string, field?: string): string => {
   if (!html) return '';
 
-  // 1. Strip existing formatting spans to prevent infinite nesting loops
-  let cleaned = html;
-  const spanRegex = /<span\s+style="font-weight:\s*400;?"[^>]*>(.*?)<\/span>/gi;
-  let prevCleaned = '';
-  while (cleaned !== prevCleaned) {
-    prevCleaned = cleaned;
-    cleaned = cleaned.replace(spanRegex, '$1');
+  const cleaned = unwrapConnectorSpans(html);
+  const parts = cleaned.split(/(<[^>]+>)/g);
+
+  // Relational connectors apply to Artista, Musica (Track), and Direcao
+  const isRelationalField = !field || field === 'artista' || field === 'musica' || field === 'direcao';
+
+  const connectorRegex = isRelationalField
+    ? /(「[^」]+」|(?<![a-zA-Z0-9À-ÿ])(?:feat\.|feat\b|ft\.|ft\b|vs\.|vs\b)(?![a-zA-Z0-9À-ÿ])|&amp;|&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)|(?<!\d),(?!\d))/gi
+    : /(「[^」]+」)/gi;
+
+  for (let i = 0; i < parts.length; i += 2) {
+    if (!parts[i]) continue;
+    parts[i] = parts[i].replace(connectorRegex, (match) => {
+      return `<span class="font-normal opacity-80" style="font-weight: 400; opacity: 0.8;">${match}</span>`;
+    });
   }
 
-  let formatted = cleaned;
-
-  // 2. Wrap brackets 「...」
-  formatted = formatted.replace(/「(.*?)」/g, '<span style="font-weight: 400">「$1」</span>');
-
-  // 3. Wrap ft., &, vs., , (for Artista/Direcao)
-  if (field === 'artista' || field === 'direcao') {
-    // Match "ft." as a standalone word (case-insensitive, requiring literal dot)
-    formatted = formatted.replace(/(?<![a-zA-Z0-9])ft\.(?![a-zA-Z0-9])/gi, (match) => {
-      return `<span style="font-weight: 400">${match}</span>`;
-    });
-
-    // Match "vs." as a standalone word (case-insensitive, requiring literal dot)
-    formatted = formatted.replace(/(?<![a-zA-Z0-9])vs\.(?![a-zA-Z0-9])/gi, (match) => {
-      return `<span style="font-weight: 400">${match}</span>`;
-    });
-
-    // Match "&amp;" (html entity for &)
-    formatted = formatted.replace(/&amp;/g, '<span style="font-weight: 400">&amp;</span>');
-
-    // Match "," (comma)
-    formatted = formatted.replace(/,/g, '<span style="font-weight: 400">,</span>');
-  }
-
-  return formatted;
+  return parts.join('');
 };
 
 const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, placeholder, onFocus, field }) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const isBoldField = field === 'artista' || field === 'musica';
 
   // Synchronize internal state with external value ONLY if different
   // uses saveSelection/restoreSelection to prevent cursor jumping
   useEffect(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
-      const isFocused = document.activeElement === editorRef.current;
-      const saved = isFocused ? saveSelection(editorRef.current) : null;
-      editorRef.current.innerHTML = value || '';
-      if (isFocused && saved) {
-        restoreSelection(editorRef.current, saved);
+    if (editorRef.current) {
+      const formattedValue = formatCreditsConnectors(value || '', field);
+      if (editorRef.current.innerHTML !== formattedValue) {
+        const isFocused = document.activeElement === editorRef.current;
+        const saved = isFocused ? saveSelection(editorRef.current) : null;
+        editorRef.current.innerHTML = formattedValue;
+        if (isFocused && saved) {
+          restoreSelection(editorRef.current, saved);
+        }
       }
     }
-  }, [value]);
+  }, [value, field]);
 
   const handleInput = () => {
     if (editorRef.current) {
+      const saved = saveSelection(editorRef.current);
       const content = sanitizeHTML(editorRef.current.innerHTML);
-      const formatted = applyAutoFormatting(content, field);
+      const formatted = formatCreditsConnectors(content, field);
+      if (editorRef.current.innerHTML !== formatted) {
+        editorRef.current.innerHTML = formatted;
+        if (saved) {
+          restoreSelection(editorRef.current, saved);
+        }
+      }
       onChange(formatted);
     }
   };
@@ -186,7 +208,7 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
   return (
     <div className="group relative">
       <div className="flex justify-between items-end mb-1">
-        <label className="text-xs text-amber-700 uppercase font-bold group-focus-within:text-amber-500 transition-colors">
+        <label className="text-xs text-amber-500/80 uppercase font-bold tracking-wider font-['Jost',sans-serif] group-focus-within:text-amber-400 transition-colors">
           {label}
         </label>
         <div className="flex gap-1 bg-black border border-amber-900/30 rounded-t px-1 py-0.5 opacity-40 group-focus-within:opacity-100 transition-opacity">
@@ -227,15 +249,50 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
         onPaste={handlePaste}
         onKeyDown={handleKeyDown}
         onFocus={onFocus}
-        className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg min-h-[44px] break-words rich-text-input"
+        className={`w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-400 text-lg min-h-[44px] break-words rich-text-input font-['Jost',sans-serif] ${
+          isBoldField
+            ? 'font-bold text-[#f8f8f8] tracking-[0.03em] field-bold'
+            : 'font-semibold text-white/90 tracking-[0.02em] field-semibold'
+        }`}
+        style={{ fontWeight: isBoldField ? 700 : 600 }}
         data-placeholder={placeholder}
       />
 
       <style>{`
+        .rich-text-input {
+          font-family: 'Jost', sans-serif !important;
+        }
+        .rich-text-input.field-bold {
+          font-weight: 700 !important;
+          color: #f8f8f8 !important;
+        }
+        .rich-text-input.field-semibold {
+          font-weight: 600 !important;
+          color: rgba(255, 255, 255, 0.92) !important;
+        }
         .rich-text-input:empty:before {
           content: attr(data-placeholder);
           color: rgba(217, 119, 6, 0.3);
           pointer-events: none;
+          font-weight: 400 !important;
+        }
+        .rich-text-input span[style*="font-weight: 400"],
+        .rich-text-input span[style*="font-weight:400"],
+        .rich-text-input span[style*="400"],
+        .rich-text-input span[style*="font-weight: normal"],
+        .rich-text-input .font-normal {
+          font-weight: 400 !important;
+        }
+        .rich-text-input span[style*="opacity: 0.8"],
+        .rich-text-input span[style*="opacity:0.8"],
+        .rich-text-input .opacity-80 {
+          opacity: 0.8 !important;
+        }
+        .rich-text-input b, .rich-text-input strong {
+          font-weight: 700 !important;
+        }
+        .rich-text-input i, .rich-text-input em {
+          font-style: italic !important;
         }
       `}</style>
     </div>

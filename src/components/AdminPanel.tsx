@@ -2,7 +2,7 @@ import { useState, useEffect, FormEvent, useRef } from 'react';
 import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { Virtuoso } from 'react-virtuoso';
-import RichTextInput from './RichTextInput.tsx';
+import RichTextInput, { formatCreditsConnectors } from './RichTextInput.tsx';
 import { sanitizeHTML, decodeHTMLEntities } from '../lib/sanitize.ts';
 
 type MusicEntry = {
@@ -148,11 +148,11 @@ export default function AdminPanel({
     if (videoData) {
       setFormData({
         id: String(videoData.id),
-        artista: videoData.artista || '',
-        musica: videoData.musica || '',
+        artista: formatCreditsConnectors(videoData.artista || '', 'artista'),
+        musica: formatCreditsConnectors(videoData.musica || '', 'musica'),
         ano: videoData.ano || '',
-        album: videoData.album || '',
-        direcao: videoData.direcao || '',
+        album: formatCreditsConnectors(videoData.album || '', 'album'),
+        direcao: formatCreditsConnectors(videoData.direcao || '', 'direcao'),
         video_id: videoData.video_id || ''
       });
       setIsEditing(true);
@@ -455,7 +455,7 @@ export default function AdminPanel({
                       <div 
                         key={i} 
                         onClick={() => {
-                          setFormData({...formData, artista: val});
+                          setFormData({...formData, artista: formatCreditsConnectors(val, 'artista')});
                           setActiveField(null);
                           setSuggestions([]);
                         }}
@@ -485,7 +485,7 @@ export default function AdminPanel({
                     type="number" 
                     value={formData.ano} 
                     onChange={e => setFormData({...formData, ano: e.target.value})} 
-                    className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-neutral-100 placeholder:text-neutral-500 font-jost rounded-sm" 
+                    className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-neutral-200 placeholder:text-neutral-500 font-jost font-semibold tracking-wide rounded-sm" 
                     placeholder="1995" 
                   />
                 </div>
@@ -505,7 +505,7 @@ export default function AdminPanel({
                         <div 
                           key={i} 
                           onClick={() => {
-                            setFormData({...formData, album: val});
+                            setFormData({...formData, album: formatCreditsConnectors(val, 'album')});
                             setActiveField(null);
                             setSuggestions([]);
                           }}
@@ -537,7 +537,7 @@ export default function AdminPanel({
                       <div 
                         key={i} 
                         onClick={() => {
-                          setFormData({...formData, direcao: val});
+                          setFormData({...formData, direcao: formatCreditsConnectors(val, 'direcao')});
                           setActiveField(null);
                           setSuggestions([]);
                         }}
@@ -774,7 +774,7 @@ export default function AdminPanel({
                       <div 
                         key={i} 
                         onClick={() => {
-                          setFormData({...formData, artista: val});
+                          setFormData({...formData, artista: formatCreditsConnectors(val, 'artista')});
                           setActiveField(null);
                           setSuggestions([]);
                         }}
@@ -797,7 +797,13 @@ export default function AdminPanel({
                 <div className="flex gap-2">
                   <div className="group w-[100px] shrink-0">
                     <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">ANO</label>
-                    <input type="number" value={formData.ano} onChange={e => setFormData({...formData, ano: e.target.value})} className="w-full p-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 text-lg text-neutral-100 font-jost input-year rounded-sm" placeholder="1995" />
+                    <input 
+                      type="number" 
+                      value={formData.ano} 
+                      onChange={e => setFormData({...formData, ano: e.target.value})} 
+                      className="w-full p-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 text-lg text-neutral-200 placeholder:text-neutral-500 font-jost font-semibold tracking-wide input-year rounded-sm" 
+                      placeholder="1995" 
+                    />
                   </div>
                   <div className="group flex-1 relative">
                     <RichTextInput
@@ -814,7 +820,7 @@ export default function AdminPanel({
                           <div 
                             key={i} 
                             onClick={() => {
-                              setFormData({...formData, album: val});
+                              setFormData({...formData, album: formatCreditsConnectors(val, 'album')});
                               setActiveField(null);
                               setSuggestions([]);
                             }}
@@ -843,7 +849,7 @@ export default function AdminPanel({
                         <div 
                           key={i} 
                           onClick={() => {
-                            setFormData({...formData, direcao: val});
+                            setFormData({...formData, direcao: formatCreditsConnectors(val, 'direcao')});
                             setActiveField(null);
                             setSuggestions([]);
                           }}
@@ -1022,11 +1028,11 @@ export default function AdminPanel({
                                 <button onClick={() => {
                                   setFormData({
                                     id: String(item.id),
-                                    artista: item.artista || '',
-                                    musica: item.musica || '',
+                                    artista: formatCreditsConnectors(item.artista || '', 'artista'),
+                                    musica: formatCreditsConnectors(item.musica || '', 'musica'),
                                     ano: item.ano || '',
-                                    album: item.album || '',
-                                    direcao: item.direcao || '',
+                                    album: formatCreditsConnectors(item.album || '', 'album'),
+                                    direcao: formatCreditsConnectors(item.direcao || '', 'direcao'),
                                     video_id: item.video_id || ''
                                   });
                                   setIsEditing(true);
