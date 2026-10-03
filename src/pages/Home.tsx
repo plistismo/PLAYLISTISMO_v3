@@ -664,17 +664,17 @@ export default function Home({ session }: { session: Session | null }) {
   const playlistParts = currentChannelName.split(':');
 
   return (
-    <div className="bg-[#050505] min-h-screen overflow-x-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
+    <div className="bg-neutral-950 h-screen w-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
 
       {/* Admin Panel — bipartite layout: TV column + right frequency list */}
 
-      <main className={`relative z-10 w-full min-h-screen flex flex-col md:flex-row transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'layout-admin-open' : 'layout-admin-closed overflow-hidden'}`}>
+      <main className={`relative z-10 w-screen h-screen overflow-hidden bg-neutral-950 flex flex-col md:flex-row transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'layout-admin-open' : 'layout-admin-closed'}`}>
 
         {/* MAIN PANEL: TV & CONTROLS */}
-        <section className="flex-1 w-full min-w-0 flex flex-col items-center justify-center p-4 transition-all duration-500">
+        <section className="flex-1 flex flex-col min-w-0 min-h-0 h-full p-4 items-center justify-center transition-all duration-500 relative overflow-hidden">
           
           {/* Centralized Admin Buttons */}
-          <div id="admin-panel-controls" className={`mb-8 flex flex-wrap gap-4 items-center justify-center w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[800px]'}`}>
+          <div id="admin-panel-controls" className={`shrink-0 mb-2 md:mb-3 flex flex-wrap gap-2 md:gap-4 items-center justify-center w-full ${isAdminSidebarOpen ? 'max-w-none' : 'max-w-[800px]'}`}>
             {!session && (
               <button onClick={() => navigate('/login')} className="bg-zinc-900/20 text-zinc-500 border border-zinc-600/50 px-4 py-2 font-vt323 text-xl tracking-widest hover:bg-zinc-600 hover:text-white transition-all uppercase shadow-[0_0_15px_rgba(255,255,255,0.05)] backdrop-blur-sm flex items-center gap-2 opacity-50 hover:opacity-100">🔑 LOGIN</button>
             )}
@@ -788,7 +788,7 @@ export default function Home({ session }: { session: Session | null }) {
 
 
 
-          <div className="relative w-full min-w-0 tv-responsive-container flex flex-col transition-all duration-500 ease-out">
+          <div className="relative w-full min-w-0 min-h-0 flex-1 tv-responsive-container flex flex-col items-center justify-center transition-all duration-500 ease-out overflow-hidden">
             
             {/* ── GAVETA SUPERIOR: SERVICE MODE / EDIT VIDEO (TOP DRAWER) ──
                 Telemetry-style module mounted above the TV top bezel. Lives in normal
@@ -798,13 +798,13 @@ export default function Home({ session }: { session: Session | null }) {
             <div
               id="tv-drawer-edit"
               inert={!isEditDrawerOpen}
-              className={`w-full overflow-hidden transition-all duration-500 ease-in-out font-jost ${
+              className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-jost ${
                 isEditDrawerOpen
-                  ? 'max-h-[900px] opacity-100 mb-4 translate-y-0'
+                  ? 'max-h-[38vh] opacity-100 mb-2 md:mb-3 translate-y-0'
                   : 'max-h-0 opacity-0 mb-0 -translate-y-6 pointer-events-none'
               }`}
             >
-              <div className="bg-neutral-950/95 backdrop-blur-md border border-neutral-800 border-b-2 border-b-amber-500/40 rounded-2xl p-3 md:p-5 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(245,158,11,0.18)] relative font-jost">
+              <div className="bg-neutral-950/95 backdrop-blur-md border border-neutral-800 border-b-2 border-b-amber-500/40 rounded-2xl p-2.5 md:p-4 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(245,158,11,0.18)] relative font-jost max-h-[38vh] flex flex-col overflow-hidden">
                 
                 {/* Header Visor do Hardware */}
                 <div className="flex items-center justify-between border-b border-amber-500/40 pb-2.5 mb-3">
@@ -925,13 +925,13 @@ export default function Home({ session }: { session: Session | null }) {
             {/* ── GAVETA SUPERIOR (INFO / PLAYING NOW) ── */}
             <div
               id="tv-drawer-info"
-              className={`w-full overflow-hidden transition-all duration-500 ease-in-out font-jost ${
+              className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-jost ${
                 isInfoOpen
-                  ? 'max-h-[500px] opacity-100 mb-4 translate-y-0'
+                  ? 'max-h-[32vh] opacity-100 mb-2 md:mb-3 translate-y-0'
                   : 'max-h-0 opacity-0 mb-0 -translate-y-6 pointer-events-none'
               }`}
             >
-              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-3 md:p-5 shadow-[0_16px_36px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-jost">
+              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-2.5 md:p-4 shadow-[0_16px_36px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-jost max-h-[32vh] flex flex-col overflow-hidden">
                 
                 {/* Header Visor do Hardware */}
                 <div className="flex items-center justify-between border-b border-[#2b3038] pb-2.5 mb-3">
@@ -1036,20 +1036,20 @@ export default function Home({ session }: { session: Session | null }) {
             </div>
 
             {/* CHASSI DA TV */}
-            <div className="relative w-full transition-all duration-500 md:perspective-[1500px] group">
-              <div className="relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-3 md:p-6 pb-6 md:pb-8 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col">
+            <div className="tv-chassis-wrapper relative w-full flex-1 min-h-0 min-w-0 flex items-center justify-center transition-all duration-500 md:perspective-[1500px] group">
+              <div className="tv-chassis-frame relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-2.5 sm:p-3 md:p-5 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col justify-center max-h-full max-w-full">
 
-              <div className="flex flex-row bg-[#111] rounded-[16px] md:rounded-[36px] p-2 md:p-5 shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222]">
-                <div className="hidden md:flex flex-col justify-center w-10 mr-3 space-y-0.5 opacity-50 shrink-0">
+              <div className="flex flex-row bg-[#111] rounded-[16px] md:rounded-[36px] p-2 md:p-3.5 shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222] h-full w-full items-stretch">
+                <div className="hidden md:flex flex-col justify-center w-8 lg:w-10 mr-2 md:mr-3 space-y-0.5 opacity-50 shrink-0 h-full py-4">
                   {Array.from({ length: 40 }).map((_, i) => <div key={i} className="w-full h-px bg-black/50" />)}
                 </div>
 
-                <div className="relative flex-1 aspect-[4/3] bg-[#050505] rounded-[24px] md:rounded-[48px] overflow-hidden screen-container border-[4px] md:border-[8px] border-[#080808] z-10 box-content">
-                  <div className="absolute inset-0 crt-overlay z-40 rounded-[24px] md:rounded-[48px] pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]"></div>
+                <div className="relative flex-1 aspect-[4/3] bg-[#050505] rounded-[20px] md:rounded-[44px] overflow-hidden screen-container border-[4px] md:border-[8px] border-[#080808] z-10 box-border max-h-full">
+                  <div className="absolute inset-0 crt-overlay z-40 rounded-[20px] md:rounded-[44px] pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]"></div>
 
                   {!isOn && <div className="absolute inset-0 bg-[#080808] z-20"></div>}
 
-                  <div className={`relative w-full h-full rounded-[20px] md:rounded-[44px] overflow-hidden bg-black ${isOn ? 'crt-turn-on' : ''}`}>
+                  <div className={`relative w-full h-full rounded-[16px] md:rounded-[40px] overflow-hidden bg-black ${isOn ? 'crt-turn-on' : ''}`}>
                     {/* YouTube Player */}
                     <div
                       id="yt-player"
@@ -1276,21 +1276,21 @@ export default function Home({ session }: { session: Session | null }) {
                   </div>
                 </div>
 
-                <div className="flex flex-col w-16 md:w-32 ml-4 p-2 md:p-3 bg-[#111] border-l border-[#222] shadow-[inset_2px_0_5px_rgba(0,0,0,0.5)] justify-between items-center gap-4 shrink-0 rounded-r-lg">
-                  <div className="flex flex-col items-center select-none opacity-80 mb-2">
+                <div className="flex flex-col w-14 sm:w-16 md:w-28 lg:w-32 ml-2 md:ml-3 p-1.5 md:p-2.5 bg-[#111] border-l border-[#222] shadow-[inset_2px_0_5px_rgba(0,0,0,0.5)] justify-between items-center gap-2 md:gap-3 shrink-0 rounded-r-lg h-full overflow-hidden">
+                  <div className="flex flex-col items-center select-none opacity-80 mb-1 shrink-0">
                     <span className="font-serif italic font-bold text-[#bbb] text-[8px] md:text-sm drop-shadow-[1px_1px_0_rgba(0,0,0,1)] tracking-tight uppercase vertical-text">playlist<span className="text-[#888]">ismo</span></span>
                   </div>
 
-                  <div className="flex flex-col items-center gap-3 md:gap-5">
+                  <div className="flex flex-col items-center gap-1.5 sm:gap-2 md:gap-3 my-auto shrink-0">
                     {/* INFO Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Info</span>
+                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Info</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); setIsInfoOpen(prev => !prev); }}
-                        className={`btn-retro-push w-10 h-8 md:w-14 md:h-12 rounded-sm flex items-center justify-center group relative transition-all ${isInfoOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`}
+                        className={`btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative transition-all ${isInfoOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`}
                         title="Abrir/Fechar Informações (Now Playing)"
                       >
-                        <span className={`font-serif font-black italic text-sm md:text-lg transition-colors ${isInfoOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'}`}>
+                        <span className={`font-serif font-black italic text-sm md:text-base transition-colors ${isInfoOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'}`}>
                           i
                         </span>
                       </button>
@@ -1298,13 +1298,13 @@ export default function Home({ session }: { session: Session | null }) {
 
                     {/* GUIDE Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Guide</span>
+                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Guide</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); setIsSearchOpen(prev => !prev); }}
-                        className={`btn-retro-push w-10 h-8 md:w-14 md:h-12 rounded-sm flex items-center justify-center group relative transition-all ${isSearchOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`}
+                        className={`btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative transition-all ${isSearchOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`}
                         title="Abrir/Fechar Guia P100"
                       >
-                        <svg className={`w-4 h-4 transition-colors ${isSearchOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors ${isSearchOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
                         </svg>
                       </button>
@@ -1312,34 +1312,34 @@ export default function Home({ session }: { session: Session | null }) {
 
                     {/* GRP Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Grp</span>
-                      <div className="flex flex-col gap-1.5">
-                        <button onClick={(e) => { e.stopPropagation(); changeGroup(1); }} className="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white">+</button>
-                        <button onClick={(e) => { e.stopPropagation(); changeGroup(-1); }} className="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white">-</button>
+                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Grp</span>
+                      <div className="flex flex-col gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); changeGroup(1); }} className="btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white text-xs md:text-sm">+</button>
+                        <button onClick={(e) => { e.stopPropagation(); changeGroup(-1); }} className="btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white text-xs md:text-sm">-</button>
                       </div>
                     </div>
 
                     {/* CH Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest mb-1 uppercase">Ch</span>
-                      <div className="flex flex-col gap-1.5">
-                        <button onClick={(e) => { e.stopPropagation(); changeChannel(1); }} className="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center group">
-                          <svg className="w-3 h-3 text-gray-400 group-hover:text-white -rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z" /></svg>
+                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Ch</span>
+                      <div className="flex flex-col gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); changeChannel(1); }} className="btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center group">
+                          <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400 group-hover:text-white -rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z" /></svg>
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); changeChannel(-1); }} className="btn-retro-push w-8 h-8 md:w-12 md:h-12 rounded-sm flex justify-center items-center group">
-                          <svg className="w-3 h-3 text-gray-400 group-hover:text-white rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z" /></svg>
+                        <button onClick={(e) => { e.stopPropagation(); changeChannel(-1); }} className="btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center group">
+                          <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400 group-hover:text-white rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z" /></svg>
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-auto flex flex-col items-center gap-3 pb-2">
+                  <div className="mt-auto flex flex-col items-center gap-1.5 md:gap-2 pb-1 shrink-0">
                     <div className="flex flex-col items-center">
                       <div className={`w-1.5 h-1.5 rounded-full border border-black transition-all duration-300 ${isOn ? 'bg-red-500 shadow-[0_0_8px_#ff0000] saturate-200' : 'bg-red-900 shadow-[0_0_2px_black]'}`}></div>
-                      <span className="text-[6px] text-gray-500 mt-1 font-bold uppercase">Pwr</span>
+                      <span className="text-[6px] text-gray-500 mt-0.5 font-bold uppercase">Pwr</span>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); togglePower(); }} className="btn-power-push w-10 h-10 md:w-14 md:h-14 rounded-sm flex items-center justify-center group">
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                    <button onClick={(e) => { e.stopPropagation(); togglePower(); }} className="btn-power-push w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-sm flex items-center justify-center group">
+                      <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-400 group-hover:text-red-500 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
                     </button>
                   </div>
                 </div>
@@ -1350,16 +1350,16 @@ export default function Home({ session }: { session: Session | null }) {
           {/* ── GAVETA INFERIOR MECÂNICA (P100 GUIDE) ── */}
             <div
               id="tv-drawer-guide"
-              className={`w-full overflow-hidden transition-all duration-500 ease-in-out font-jost ${
+              className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-jost ${
                 isSearchOpen
-                  ? 'max-h-[650px] opacity-100 mt-4 translate-y-0'
+                  ? 'max-h-[38vh] opacity-100 mt-2 md:mt-3 translate-y-0'
                   : 'max-h-0 opacity-0 mt-0 translate-y-6 pointer-events-none'
               }`}
             >
-              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-3 md:p-5 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-jost">
+              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-2.5 md:p-4 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-jost max-h-[38vh] flex flex-col overflow-hidden">
                 
                 {/* Header do Guia */}
-                <div className="flex items-center justify-between border-b border-[#2b3038] pb-3 mb-3">
+                <div className="flex items-center justify-between border-b border-[#2b3038] pb-2 mb-2 shrink-0">
                   <div className="flex items-center gap-3">
                     <span className="text-xl md:text-2xl font-bold tracking-widest text-white drop-shadow-[2px_2px_0_#000] font-jost">
                       <span className="text-[#ffff00]">P</span><span className="text-[#00ff00]">100</span> GUIDE
@@ -1426,7 +1426,7 @@ export default function Home({ session }: { session: Session | null }) {
                 </div>
 
                 {/* Visor de Canais (Grid): Sunken Black Background with shadow-inner */}
-                <div className="bg-black rounded-b-xl rounded-tr-xl border-2 border-[#24272c] p-3 md:p-4 shadow-[inset_0_5px_22px_rgba(0,0,0,0.95)] max-h-[320px] overflow-y-auto custom-scrollbar font-jost">
+                <div className="bg-black rounded-b-xl rounded-tr-xl border-2 border-[#24272c] p-2.5 md:p-3 shadow-[inset_0_5px_22px_rgba(0,0,0,0.95)] flex-1 min-h-0 overflow-y-auto custom-scrollbar font-jost">
                   {filteredPlaylists.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
                       {filteredPlaylists.map((pl, idx) => {
@@ -1471,14 +1471,14 @@ export default function Home({ session }: { session: Session | null }) {
 
           </div>
 
-          <div className="mt-8 text-center opacity-20 hover:opacity-100 transition-opacity duration-500 pointer-events-none select-none">
-            <span className="font-vt323 text-sm md:text-base text-white tracking-widest uppercase">powered by @addri0n4 e @sandrobreaker</span>
+          <div className="shrink-0 mt-1 md:mt-2 text-center opacity-20 hover:opacity-100 transition-opacity duration-500 pointer-events-none select-none">
+            <span className="font-vt323 text-xs md:text-sm text-white tracking-widest uppercase">powered by @addri0n4 e @sandrobreaker</span>
           </div>
         </section>
 
         {/* RIGHT PANEL: TABLE INTEGRATION */}
-        <aside className={`hidden md:flex justify-start overflow-hidden transition-all duration-500 ease-in-out border-l border-amber-900/20 bg-black/40 backdrop-blur-md ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-[520px]' : 'translate-x-full opacity-0 w-0'}`}>
-          <div className="w-[520px] h-full">
+        <aside className={`hidden md:flex flex-col justify-start shrink-0 overflow-hidden transition-all duration-500 ease-in-out border-l border-amber-900/20 bg-black/40 backdrop-blur-md h-full ${isAdminSidebarOpen ? 'translate-x-0 opacity-100 w-[520px]' : 'translate-x-full opacity-0 w-0'}`}>
+          <div className="w-[520px] h-full overflow-hidden">
             {isAdminSidebarOpen && (
               <AdminPanel
                 session={session}
