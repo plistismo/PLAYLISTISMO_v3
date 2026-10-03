@@ -683,10 +683,9 @@ export default function Home({ session }: { session: Session | null }) {
                   onClick={() => { 
                     setIsAdminSidebarOpen(prev => {
                       const next = !prev;
-                      if (!next) {
-                        setIsEditDrawerOpen(false);
-                        setAdminEditId(null);
-                      }
+                      // Top drawer follows the SERVICE MODE toggle (expand on open / collapse on close)
+                      setIsEditDrawerOpen(next);
+                      if (!next) setAdminEditId(null);
                       return next;
                     }); 
                     if (isMatrixOpen) setIsMatrixOpen(false);
@@ -788,25 +787,30 @@ export default function Home({ session }: { session: Session | null }) {
 
 
 
-          <div className={`relative w-full ${isAdminSidebarOpen ? 'max-w-[1100px] px-2 md:px-4 mx-auto' : 'max-w-[1000px] mx-auto'} tv-responsive-container flex flex-col transition-all duration-500 ease-out`}>
+          <div className="relative w-full max-w-[1000px] mx-auto tv-responsive-container flex flex-col transition-all duration-500 ease-out">
             
-            {/* ── GAVETA SUPERIOR DE EDIÇÃO (SERVICE EDIT VISOR) ── */}
+            {/* ── GAVETA SUPERIOR: SERVICE MODE / EDIT VIDEO (TOP DRAWER) ──
+                Telemetry-style module mounted above the TV top bezel. Lives in normal
+                document flow (pushes the chassis down) — never overlays, narrows or
+                scales the CRT, so the TV keeps 100% of its column width. */}
+            {isAdmin && (
             <div
               id="tv-drawer-edit"
+              inert={!isEditDrawerOpen}
               className={`w-full overflow-hidden transition-all duration-500 ease-in-out font-jost ${
                 isEditDrawerOpen
-                  ? 'max-h-[850px] opacity-100 mb-4 translate-y-0'
+                  ? 'max-h-[900px] opacity-100 mb-4 translate-y-0'
                   : 'max-h-0 opacity-0 mb-0 -translate-y-6 pointer-events-none'
               }`}
             >
-              <div className="bg-[#15171a]/95 backdrop-blur-md border-2 border-amber-800/60 rounded-2xl p-3 md:p-5 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(245,158,11,0.25)] relative font-jost">
+              <div className="bg-neutral-950/95 backdrop-blur-md border border-neutral-800 border-b-2 border-b-amber-500/40 rounded-2xl p-3 md:p-5 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(245,158,11,0.18)] relative font-jost">
                 
                 {/* Header Visor do Hardware */}
-                <div className="flex items-center justify-between border-b border-amber-900/40 pb-2.5 mb-3">
+                <div className="flex items-center justify-between border-b border-amber-500/40 pb-2.5 mb-3">
                   <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse"></span>
-                    <span className="text-[11px] md:text-xs font-black uppercase tracking-[0.25em] text-amber-400 font-jost">
-                      SERVICE VISOR // {adminEditId ? `EDIT UNIT #${adminEditId}` : 'NEW UNIT CALIBRATION'}
+                    <span className="text-[11px] md:text-xs font-black uppercase tracking-[0.25em] text-amber-300 font-jost">
+                      SERVICE MODE // {adminEditId ? `EDIT UNIT #${adminEditId}` : 'NEW UNIT CALIBRATION'}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -846,7 +850,7 @@ export default function Home({ session }: { session: Session | null }) {
                 </div>
 
                 {/* Hardware Display Rebaixado (shadow-inner) */}
-                <div className="bg-neutral-900/90 border-2 border-black rounded-xl p-3 md:p-4 shadow-[inset_0_4px_18px_rgba(0,0,0,0.95)] relative font-jost">
+                <div className="bg-neutral-900 border-2 border-black rounded-xl p-3 md:p-4 shadow-[inset_0_4px_18px_rgba(0,0,0,0.95)] relative font-jost">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 via-yellow-400 via-amber-500 to-orange-500 opacity-80"></div>
                   
                   <AdminPanel
@@ -915,113 +919,6 @@ export default function Home({ session }: { session: Session | null }) {
               </div>
             </div>
             
-            {/* ── GAVETA SUPERIOR DE EDIÇÃO (EDIT VISOR) ── */}
-            {isAdmin && (
-              <div
-                id="tv-drawer-edit"
-                className={`absolute left-0 right-0 z-[80] overflow-hidden transition-all duration-500 ease-in-out font-jost ${
-                  isEditDrawerOpen
-                    ? 'top-0 max-h-[600px] opacity-100 pointer-events-auto translate-y-0'
-                    : '-top-4 max-h-0 opacity-0 pointer-events-none -translate-y-4'
-                }`}
-                style={{ transformOrigin: 'top center' }}
-              >
-                <div className="bg-[#15171a] border-2 border-amber-900/60 rounded-2xl shadow-[0_24px_60px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,200,0,0.08)] relative font-jost" style={{ backdropFilter: 'blur(14px)' }}>
-
-                  {/* Header do Edit Visor */}
-                  <div className="flex items-center justify-between border-b border-amber-900/40 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
-                      <span className="text-[11px] md:text-xs font-black uppercase tracking-[0.25em] text-amber-300 font-jost">
-                        EDIT VISOR // {adminEditId ? `RECORD #${adminEditId}` : 'NEW UNIT'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {/* Toggle: Fonte dos Créditos */}
-                      <div className="flex items-center gap-2">
-                        <label htmlFor="toggle-josefin-visor" className="text-[10px] text-amber-700 uppercase font-bold tracking-widest font-vt323 cursor-pointer select-none hidden sm:inline">
-                          Josefin Sans
-                        </label>
-                        <button
-                          id="toggle-josefin-visor"
-                          type="button"
-                          onClick={() => setUseJosefinFont(prev => !prev)}
-                          className={`relative w-9 h-5 rounded-full border transition-all duration-300 focus:outline-none ${
-                            useJosefinFont ? 'bg-amber-500 border-amber-400' : 'bg-black border-amber-900/50'
-                          }`}
-                          aria-pressed={useJosefinFont}
-                          title="Alternar fonte dos créditos para Josefin Sans"
-                        >
-                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${useJosefinFont ? 'translate-x-4' : 'translate-x-0'}`} />
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => { setIsEditDrawerOpen(false); setAdminEditId(null); }}
-                        className="text-amber-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-black/50 hover:bg-red-900/60 border border-amber-800/40 transition-colors font-jost"
-                        title="Fechar Edit Visor"
-                      >
-                        ✕ CLOSE
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Hardware Display — form container */}
-                  <div className="bg-neutral-950 rounded-b-2xl overflow-hidden" style={{ maxHeight: '520px', overflowY: 'auto' }}>
-                    <AdminPanel
-                      session={session}
-                      editId={adminEditId}
-                      displayMode="form"
-                      onClose={() => { setIsEditDrawerOpen(false); setAdminEditId(null); }}
-                      onSave={(newData) => {
-                        fetchGuideData();
-                        if (newData) {
-                          const savedIdStr = String(newData.id);
-                          const videoData = newData as VideoData;
-                          setLastSavedRecord(videoData);
-                          // Atualiza créditos na tela imediatamente
-                          setCurrentVideoData(prev => ({ ...prev, ...videoData }));
-                          // Sincroniza a lista atual de reprodução
-                          setCurrentChannelList(prev => prev.map(item => {
-                            if (newData.video_id && item.video_id === newData.video_id) return { ...item, ...videoData };
-                            if (!newData.video_id && String(item.id) === savedIdStr) return { ...item, ...videoData };
-                            return item;
-                          }));
-                          setAdminEditId(null);
-                        }
-                      }}
-                      onRestartPlayer={(savedVideoId?: string) => {
-                        console.log('RESTARTING PLAYER ON EDIT VISOR SAVE:', savedVideoId);
-                        const targetId = String(savedVideoId || currentVideoData?.video_id || '').trim();
-                        const isVimeo = /^\d+$/.test(targetId);
-                        if (isVimeo) {
-                          syncPlayerVisibility('vimeo');
-                          if (vimeoPlayerRef.current && targetId) {
-                            vimeoPlayerRef.current.loadVideo(Number(targetId)).then(() => {
-                              syncPlayerVisibility('vimeo');
-                              vimeoPlayerRef.current.play();
-                              startCreditsMonitor();
-                            }).catch((err: any) => console.warn('Vimeo reload error:', err));
-                            lastVideoIdRef.current = targetId;
-                          }
-                        } else {
-                          syncPlayerVisibility('youtube');
-                          if (playerRef.current) {
-                            if (targetId && targetId !== lastVideoIdRef.current) {
-                              playerRef.current.loadVideoById({ videoId: targetId, suggestedQuality: 'hd720' });
-                              lastVideoIdRef.current = targetId;
-                            } else {
-                              playerRef.current?.seekTo(0);
-                            }
-                            playerRef.current?.playVideo();
-                            startCreditsMonitor();
-                          }
-                        }
-                      }}
-                      onPreview={handlePreview}
-                    />
-                  </div>
-                </div>
-              </div>
             )}
             
             {/* ── GAVETA SUPERIOR (INFO / PLAYING NOW) ── */}

@@ -422,7 +422,7 @@ export default function AdminPanel({
 
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[65vh] overflow-y-auto custom-scrollbar p-1 pr-2">
           {/* Top Info Bar of Drawer Form */}
-          <div className="flex items-center justify-between pb-2 border-b border-amber-900/30">
+          <div className="flex items-center justify-between pb-2 border-b border-amber-500/40">
             <span className="text-xl font-bold tracking-wider text-amber-400">
               {isEditing ? `TRANSMISSION UNIT #${formData.id} // ACTIVE EDIT` : 'NEW UNIT REGISTRATION // ALL FREQUENCIES'}
             </span>
@@ -450,7 +450,7 @@ export default function AdminPanel({
                   placeholder="Ex: Oasis"
                 />
                 {activeField === 'artista' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -459,7 +459,7 @@ export default function AdminPanel({
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-base border-b border-amber-900/20 last:border-0"
+                        className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
                       >
                         {val}
                       </div>
@@ -480,12 +480,12 @@ export default function AdminPanel({
 
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
                 <div className="sm:col-span-4">
-                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">ANO</label>
+                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider">ANO</label>
                   <input 
                     type="number" 
                     value={formData.ano} 
                     onChange={e => setFormData({...formData, ano: e.target.value})} 
-                    className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg text-white font-jost rounded-sm" 
+                    className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-amber-300 placeholder:text-amber-300/30 font-jost rounded-sm" 
                     placeholder="1995" 
                   />
                 </div>
@@ -500,7 +500,7 @@ export default function AdminPanel({
                     placeholder="(What's the Story) Morning Glory?"
                   />
                   {activeField === 'album' && suggestions.length > 0 && (
-                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
                       {suggestions.map((val, i) => (
                         <div 
                           key={i} 
@@ -509,7 +509,7 @@ export default function AdminPanel({
                             setActiveField(null);
                             setSuggestions([]);
                           }}
-                          className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-base border-b border-amber-900/20 last:border-0"
+                          className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
                         >
                           {val}
                         </div>
@@ -532,7 +532,7 @@ export default function AdminPanel({
                   placeholder="Diretor do Videoclipe"
                 />
                 {activeField === 'direcao' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -541,7 +541,7 @@ export default function AdminPanel({
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-base border-b border-amber-900/20 last:border-0"
+                        className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
                       >
                         {val}
                       </div>
@@ -551,13 +551,13 @@ export default function AdminPanel({
               </div>
 
               <div className="group">
-                <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">VIDEO ID (YouTube ou Vimeo)</label>
+                <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider">VIDEO ID (YouTube ou Vimeo)</label>
                 <div className="flex gap-2">
                   <input 
                     type="text" 
                     value={formData.video_id} 
                     onChange={e => setFormData({...formData, video_id: e.target.value})} 
-                    className="flex-1 p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-lg text-white font-jost rounded-sm" 
+                    className="flex-1 px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-amber-300 placeholder:text-amber-300/30 font-jost rounded-sm" 
                     placeholder="6hzrDeceEKc ou 76979871" 
                   />
                   {onPreview && (
@@ -587,10 +587,10 @@ export default function AdminPanel({
               <div className="space-y-2 pt-2 border-t border-amber-900/30">
                 {currentPlaylists.length > 0 && (
                   <div className="group">
-                    <label className="block text-[10px] text-amber-700/70 uppercase mb-1 font-bold tracking-widest">Canais Atuais (Database)</label>
+                    <label className="block text-[10px] text-amber-500/70 uppercase mb-1 font-bold tracking-widest">Canais Atuais (Database)</label>
                     <div className="flex flex-wrap gap-1.5">
                       {currentPlaylists.map(pl => (
-                        <span key={pl} className="px-2.5 py-0.5 bg-zinc-900 text-zinc-400 border border-zinc-800 text-xs font-jost rounded-full">
+                        <span key={pl} className="px-2.5 py-0.5 bg-neutral-900 text-amber-200/80 border border-neutral-700 text-xs font-jost rounded-full">
                           {pl}
                         </span>
                       ))}
@@ -599,7 +599,7 @@ export default function AdminPanel({
                 )}
 
                 <div className="group relative">
-                  <label className="block text-xs text-amber-700 uppercase mb-1 font-bold">Adicionar a outros canais</label>
+                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider">Adicionar a outros canais</label>
                   <div className="relative">
                     <input 
                       type="text" 
@@ -622,11 +622,11 @@ export default function AdminPanel({
                       onFocus={() => {
                         if (playlistSearch.length > 0) setShowPlaylistDropdown(true);
                       }}
-                      className="w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-500 text-base font-jost rounded-sm text-white" 
+                      className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-base text-amber-300 placeholder:text-amber-300/30 font-jost rounded-sm" 
                       placeholder="Buscar canal..." 
                     />
                     {showPlaylistDropdown && playlistSuggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-black border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
+                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-neutral-950 border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm">
                         {playlistSuggestions.map((pl, i) => (
                           <div 
                             key={i} 
@@ -635,7 +635,7 @@ export default function AdminPanel({
                               setPlaylistSearch('');
                               setShowPlaylistDropdown(false);
                             }}
-                            className="p-2 hover:bg-amber-900/40 cursor-pointer text-amber-500 font-jost text-sm border-b border-amber-900/20 last:border-0"
+                            className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
                           >
                             {pl}
                           </div>
@@ -666,7 +666,7 @@ export default function AdminPanel({
           </div>
 
           {/* Action Button Row */}
-          <div className="flex items-center gap-3 pt-3 border-t border-amber-900/30">
+          <div className="flex items-center gap-3 pt-3 border-t border-amber-500/40">
             <button 
               type="submit" 
               disabled={isSaving} 
