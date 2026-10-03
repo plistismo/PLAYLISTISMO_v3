@@ -107,14 +107,15 @@ export const unwrapConnectorSpans = (html: string): string => {
 export const formatCreditsConnectors = (html: string, field?: string): string => {
   if (!html) return '';
 
-  const cleaned = unwrapConnectorSpans(html);
+  const htmlCleaned = html.replace(/&nbsp;/gi, ' ');
+  const cleaned = unwrapConnectorSpans(htmlCleaned);
   const parts = cleaned.split(/(<[^>]+>)/g);
 
   // Relational connectors apply to Artista, Musica (Track), and Direcao
   const isRelationalField = !field || field === 'artista' || field === 'musica' || field === 'direcao';
 
   const connectorRegex = isRelationalField
-    ? /(「[^」]+」|(?<![a-zA-Z0-9À-ÿ])(?:feat\.|feat\b|ft\.|ft\b|vs\.|vs\b)(?![a-zA-Z0-9À-ÿ])|&amp;|&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)|(?<!\d),(?!\d))/gi
+    ? /(「[^」]+」|(?<![a-zA-Z0-9À-ÿ])(?:feat\.|feat\b|ft\.|ft\b|vs\.|vs\b)(?![a-zA-Z0-9À-ÿ])|&amp;|&(?!(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-fA-F]+);)|(?<!\d),(?!\d))/gi
     : /(「[^」]+」)/gi;
 
   for (let i = 0; i < parts.length; i += 2) {
