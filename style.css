@@ -320,7 +320,28 @@ body {
    ============================================================ */
 
 .tv-chassis-frame {
-    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: background 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                box-shadow 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                border-color 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+                border-radius 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: background, box-shadow;
+}
+
+/* ─── GPU LAYER ISOLATION FOR CRT SCREEN & VIDEO PLAYBACK ─── */
+.screen-container {
+    isolation: isolate;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.screen-container iframe,
+.screen-container #yt-player,
+.screen-container #vimeo-parent-container {
+    isolation: isolate;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
 /* ─── Y2K BLUE: IMAC G3 TRANSLUCENT POLYCARBONATE ─── */
@@ -369,6 +390,7 @@ body {
 .chassis-specular-glare {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.35) 40%, rgba(255, 255, 255, 0) 100%);
     filter: blur(0.5px);
+    pointer-events: none;
 }
 
 /* Y2K Molded Frosted Lilac / Ice-Blue Inner Bezel Housing */
@@ -505,12 +527,14 @@ body {
 .chassis-chrome-reflection {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 40%, rgba(255, 255, 255, 0) 100%);
     filter: blur(0.5px);
+    pointer-events: none;
 }
 
 /* Chrome Ambient Neon Edge Glow */
 .chassis-future-rim {
     box-shadow: 0 0 25px rgba(0, 229, 255, 0.4), inset 0 0 15px rgba(0, 229, 255, 0.2);
     border: 1px solid rgba(0, 229, 255, 0.3);
+    pointer-events: none;
 }
 
 /* Future Inner Housing: Precision-Chamfered Gunmetal & Dark Chrome */
