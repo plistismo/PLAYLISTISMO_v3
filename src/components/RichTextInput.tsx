@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { sanitizeHTML } from '../lib/sanitize.ts';
 
 interface RichTextInputProps {
@@ -214,6 +214,35 @@ const RichTextInput: React.FC<RichTextInputProps> = ({
     handleInput();
   };
 
+  const [pasteSuccess, setPasteSuccess] = useState(false);
+
+  const handleQuickPaste = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) return;
+      const cleanText = text.trim();
+      if (!cleanText) return;
+
+      if (document.activeElement === editorRef.current) {
+        document.execCommand('insertText', false, cleanText);
+        handleInput();
+      } else {
+        const formatted = formatCreditsConnectors(cleanText, field);
+        if (editorRef.current) {
+          editorRef.current.innerHTML = formatted;
+        }
+        onChange(formatted);
+      }
+
+      setPasteSuccess(true);
+      setTimeout(() => setPasteSuccess(false), 900);
+    } catch (err) {
+      console.warn('Failed to read from clipboard:', err);
+    }
+  };
+
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const text = e.clipboardData.getData('text/plain');
@@ -228,7 +257,16 @@ const RichTextInput: React.FC<RichTextInputProps> = ({
           {icon && <span>{icon}</span>}
           <span>{label}</span>
         </label>
-        <div className={`flex gap-1 bg-black border border-amber-900/30 rounded-t px-1 ${compact ? 'py-0 opacity-30 group-focus-within:opacity-100 scale-90 origin-bottom-right' : 'py-0.5 opacity-40 group-focus-within:opacity-100'} transition-opacity`}>
+        <div className={`flex items-center gap-1 bg-black border border-amber-900/30 rounded-t px-1 ${compact ? 'py-0 opacity-60 hover:opacity-100 group-focus-within:opacity-100 scale-90 origin-bottom-right' : 'py-0.5 opacity-60 hover:opacity-100 group-focus-within:opacity-100'} transition-opacity`}>
+          <button
+            type="button"
+            onClick={handleQuickPaste}
+            className={`${compact ? 'px-1 h-4 text-[9px]' : 'px-1.5 h-5 text-[10px]'} flex items-center justify-center text-amber-400 hover:bg-amber-500 hover:text-black rounded transition-colors font-mono`}
+            title="Colar da área de transferência (Paste)"
+          >
+            {pasteSuccess ? <span className="text-emerald-400 font-bold">✓</span> : '📋'}
+          </button>
+          <div className="w-[1px] h-3 bg-amber-900/40 my-0.5" />
           <button
             type="button"
             onMouseDown={(e) => {

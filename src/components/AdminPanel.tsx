@@ -77,6 +77,84 @@ export default function AdminPanel({
   const [playlistSuggestions, setPlaylistSuggestions] = useState<string[]>([]);
   const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
 
+  // One-click channel removal
+  const handleRemoveChannel = async (channelName: string) => {
+    const targetVideoId = originalVideoId || formData.video_id;
+    try {
+      let query = supabase.from('musicas_backup').delete();
+      if (targetVideoId) {
+        query = query.eq('video_id', targetVideoId).eq('playlist', channelName);
+      } else if (formData.id) {
+        query = query.eq('id', Number(formData.id)).eq('playlist', channelName);
+      } else {
+        return;
+      }
+
+      const { error } = await query;
+      if (error) {
+        showMessage(`ERRO AO REMOVER CANAL: ${error.message}`, true);
+        return;
+      }
+
+      // Visual removal from current video's playlists
+      setCurrentPlaylists(prev => prev.filter(p => p !== channelName));
+
+      // Also sync table data if this item is in the current view
+      setData(prev => prev.filter(item => !(item.video_id === targetVideoId && item.playlist === channelName)));
+
+      showMessage(`CANAL "${channelName}" DESVINCULADO!`);
+    } catch (err: any) {
+      showMessage(`ERRO: ${err?.message || 'Falha ao desvincular canal'}`, true);
+    }
+  };
+
+  // Video ID Quick Paste
+  const [videoIdPasted, setVideoIdPasted] = useState(false);
+
+  const extractVideoId = (input: string): string => {
+    const trimmed = input.trim();
+    const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/i);
+    if (ytMatch && ytMatch[1]) return ytMatch[1];
+    const vimeoMatch = trimmed.match(/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/[^\/]+\/videos\/|video\/|)(\d+)/i);
+    if (vimeoMatch && vimeoMatch[1]) return vimeoMatch[1];
+    return trimmed;
+  };
+
+  const handlePasteVideoId = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        const extracted = extractVideoId(text);
+        setFormData(prev => ({ ...prev, video_id: extracted }));
+        setVideoIdPasted(true);
+        setTimeout(() => setVideoIdPasted(false), 900);
+      }
+    } catch (err) {
+      console.warn('Failed to read clipboard for video ID:', err);
+    }
+  };
+
+  // Click-to-copy metadata in Service Mode database list
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const getPlainText = (val: string | null | undefined): string => {
+    if (!val) return '';
+    return decodeHTMLEntities(val.replace(/<[^>]*>?/gm, '')).trim();
+  };
+
+  const handleCopyMetadata = (value: string, key: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const clean = getPlainText(value);
+    if (!clean || clean === '---' || clean === '----' || clean === '—') return;
+    
+    navigator.clipboard.writeText(clean).catch(err => console.warn('Clipboard write error:', err));
+    setCopiedKey(key);
+    setTimeout(() => {
+      setCopiedKey(prev => (prev === key ? null : prev));
+    }, 1100);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -574,9 +652,17 @@ export default function AdminPanel({
                     type="text" 
                     value={formData.video_id} 
                     onChange={e => setFormData({...formData, video_id: e.target.value})} 
-                    className="flex-1 px-2.5 py-1.5 bg-black border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-sm text-neutral-100 placeholder:text-neutral-600 font-jost rounded-sm min-h-[34px]" 
+                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-black border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-sm text-neutral-100 placeholder:text-neutral-600 font-jost rounded-sm min-h-[34px]" 
                     placeholder="6hzrDeceEKc / 76979871" 
                   />
+                  <button
+                    type="button"
+                    onClick={handlePasteVideoId}
+                    className="bg-amber-950/40 text-amber-400 border border-amber-500/40 px-2 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center rounded-sm font-jost shrink-0 min-h-[34px] text-xs"
+                    title="Colar Video ID (Paste)"
+                  >
+                    {videoIdPasted ? <span className="text-emerald-400 font-bold">✓</span> : '📋'}
+                  </button>
                   {onPreview && (
                     <button 
                       type="button" 
@@ -607,8 +693,23 @@ export default function AdminPanel({
                 <div className="flex flex-wrap items-center gap-1.5 min-h-[34px] p-1 bg-black/60 border border-amber-900/40 rounded-sm">
                   {/* Current Playlists in Database */}
                   {currentPlaylists.map(pl => (
-                    <span key={pl} className="px-2 py-0.5 bg-neutral-900 text-neutral-300 border border-neutral-700/60 text-[10px] font-jost rounded-full shrink-0">
-                      {pl}
+                    <span 
+                      key={pl} 
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-neutral-900 text-neutral-300 border border-neutral-700/60 text-[10px] font-jost rounded-full shrink-0 group/curpl"
+                    >
+                      <span>{pl}</span>
+                      <button 
+                        type="button" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleRemoveChannel(pl);
+                        }}
+                        className="text-neutral-400 hover:text-red-400 transition-colors text-xs leading-none ml-0.5 p-0.5 rounded hover:bg-neutral-800"
+                        title={`Desvincular canal "${pl}"`}
+                      >
+                        ×
+                      </button>
                     </span>
                   ))}
 
@@ -885,7 +986,15 @@ export default function AdminPanel({
                 <div className="group">
                   <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">VIDEO ID (YouTube ou Vimeo)</label>
                   <div className="flex gap-2">
-                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 p-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 text-lg text-neutral-100 font-jost rounded-sm" placeholder="6hzrDeceEKc ou 76979871" />
+                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 min-w-0 p-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 text-lg text-neutral-100 font-jost rounded-sm" placeholder="6hzrDeceEKc ou 76979871" />
+                    <button
+                      type="button"
+                      onClick={handlePasteVideoId}
+                      className="bg-amber-950/40 text-amber-400 border border-amber-500/40 px-3 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center rounded-sm font-jost shrink-0 text-sm"
+                      title="Colar Video ID (Paste)"
+                    >
+                      {videoIdPasted ? <span className="text-emerald-400 font-bold">✓</span> : '📋'}
+                    </button>
                     {onPreview && (
                       <button 
                         type="button" 
@@ -918,8 +1027,20 @@ export default function AdminPanel({
                       <label className="block text-[10px] text-amber-500/70 uppercase mb-2 font-bold tracking-widest font-jost">Canais Atuais (Database)</label>
                       <div className="flex flex-wrap gap-2">
                         {currentPlaylists.map(pl => (
-                          <span key={pl} className="px-3 py-1 bg-zinc-900 text-neutral-200 border border-zinc-800 text-xs font-jost rounded-full opacity-80">
-                            {pl}
+                          <span key={pl} className="inline-flex items-center gap-1.5 px-3 py-1 bg-zinc-900 text-neutral-200 border border-zinc-800 text-xs font-jost rounded-full opacity-80 group/pl">
+                            <span>{pl}</span>
+                            <button 
+                              type="button" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleRemoveChannel(pl);
+                              }}
+                              className="text-neutral-400 hover:text-red-400 transition-colors text-sm leading-none ml-0.5 p-0.5 rounded hover:bg-zinc-800"
+                              title={`Desvincular canal "${pl}"`}
+                            >
+                              ×
+                            </button>
                           </span>
                         ))}
                       </div>
@@ -1034,15 +1155,99 @@ export default function AdminPanel({
                           const isSaved = lastSavedId === item.id;
                           return (
                             <div className={`border-b border-amber-900/10 transition-colors duration-500 group flex items-center font-jost py-2 ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : isSaved ? 'bg-green-500/30 animate-pulse border-y-green-500/50' : 'hover:bg-amber-900/30'}`}>
-                              <div className="p-1 w-10 font-mono text-center text-[10px] opacity-40 flex-shrink-0 [writing-mode:vertical-rl] rotate-180 h-16 flex items-center justify-center border-r border-amber-900/20">{item.id}</div>
+                              <div 
+                                onClick={(e) => handleCopyMetadata(String(item.id), `${item.id}-id`, e)}
+                                className="relative p-1 w-10 font-mono text-center text-[10px] opacity-40 hover:opacity-100 cursor-pointer transition-opacity flex-shrink-0 [writing-mode:vertical-rl] rotate-180 h-16 flex items-center justify-center border-r border-amber-900/20"
+                                title="Copiar ID"
+                              >
+                                {item.id}
+                                {copiedKey === `${item.id}-id` && (
+                                  <span className="copy-balloon font-mono">Copied!</span>
+                                )}
+                              </div>
                               <div className="p-3 flex-1 min-w-0">
-                                <div className="text-xl leading-tight text-amber-500 tracking-wide whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.artista) }} />
-                                <div className="text-xl font-bold text-white mt-1 whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.musica || '---') }} />
-                                <div className="text-xs text-cyan-400 mt-1 whitespace-normal break-words font-jost" dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.album || '') }} />
+                                <div className="relative inline-block max-w-full">
+                                  <div 
+                                    onClick={(e) => handleCopyMetadata(item.artista, `${item.id}-artista`, e)}
+                                    className="text-xl leading-tight text-amber-500 hover:text-amber-300 transition-colors tracking-wide whitespace-normal break-words font-jost cursor-pointer select-none"
+                                    title="Clique para copiar Artista"
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.artista) }} 
+                                  />
+                                  {copiedKey === `${item.id}-artista` && (
+                                    <span className="copy-balloon font-mono">Copied!</span>
+                                  )}
+                                </div>
+                                <div className="relative inline-block max-w-full">
+                                  <div 
+                                    onClick={(e) => handleCopyMetadata(item.musica || '', `${item.id}-musica`, e)}
+                                    className="text-xl font-bold text-white hover:text-amber-200 transition-colors mt-0.5 whitespace-normal break-words font-jost cursor-pointer select-none"
+                                    title="Clique para copiar Música"
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.musica || '---') }} 
+                                  />
+                                  {copiedKey === `${item.id}-musica` && (
+                                    <span className="copy-balloon font-mono">Copied!</span>
+                                  )}
+                                </div>
+                                {item.album && (
+                                  <div className="relative inline-block max-w-full">
+                                    <div 
+                                      onClick={(e) => handleCopyMetadata(item.album, `${item.id}-album`, e)}
+                                      className="text-xs text-cyan-400 hover:text-cyan-200 transition-colors mt-1 whitespace-normal break-words font-jost cursor-pointer select-none"
+                                      title="Clique para copiar Álbum"
+                                      dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.album) }} 
+                                    />
+                                    {copiedKey === `${item.id}-album` && (
+                                      <span className="copy-balloon font-mono">Copied!</span>
+                                    )}
+                                  </div>
+                                )}
+                                {item.video_id && (
+                                  <div className="relative inline-flex items-center gap-1.5 mt-1.5">
+                                    <span 
+                                      onClick={(e) => handleCopyMetadata(item.video_id, `${item.id}-videoid`, e)}
+                                      className="relative inline-flex items-center gap-1 px-1.5 py-0.5 bg-neutral-900 hover:bg-neutral-800 text-[10px] font-mono text-cyan-400/90 hover:text-cyan-300 rounded border border-cyan-900/40 hover:border-cyan-500/50 cursor-pointer transition-all select-none"
+                                      title="Clique para copiar Video ID"
+                                    >
+                                      <span className="opacity-50 text-[9px]">ID:</span>
+                                      <span>{item.video_id}</span>
+                                      {copiedKey === `${item.id}-videoid` && (
+                                        <span className="copy-balloon font-mono">Copied!</span>
+                                      )}
+                                    </span>
+                                    {item.plataforma && (
+                                      <span className="text-[9px] uppercase font-mono text-neutral-500">
+                                        {item.plataforma}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               <div className="p-3 w-40 hidden sm:block flex-shrink-0">
-                                <div className="text-sm font-jost text-orange-500 font-bold">{item.ano || '----'}</div>
-                                <div className="text-xs text-orange-400 mt-1 font-jost whitespace-normal break-words max-w-[150px]" dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.direcao || '—') }} />
+                                <div className="relative inline-block">
+                                  <div 
+                                    onClick={(e) => handleCopyMetadata(item.ano || '', `${item.id}-ano`, e)}
+                                    className="text-sm font-jost text-orange-500 hover:text-orange-300 transition-colors font-bold cursor-pointer select-none"
+                                    title="Clique para copiar Ano"
+                                  >
+                                    {item.ano || '----'}
+                                  </div>
+                                  {copiedKey === `${item.id}-ano` && (
+                                    <span className="copy-balloon font-mono">Copied!</span>
+                                  )}
+                                </div>
+                                {item.direcao && (
+                                  <div className="relative inline-block max-w-[150px] mt-1">
+                                    <div 
+                                      onClick={(e) => handleCopyMetadata(item.direcao, `${item.id}-direcao`, e)}
+                                      className="text-xs text-orange-400 hover:text-orange-200 transition-colors font-jost whitespace-normal break-words cursor-pointer select-none"
+                                      title="Clique para copiar Direção"
+                                      dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.direcao) }} 
+                                    />
+                                    {copiedKey === `${item.id}-direcao` && (
+                                      <span className="copy-balloon font-mono">Copied!</span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               <div className="p-3 w-24 text-center flex-shrink-0">
                                 <button onClick={() => {
@@ -1083,6 +1288,55 @@ export default function AdminPanel({
           Sony Trinitron Service System // Debug Mode Active // All Records Mode
         </div>
       )}
+
+      <style>{`
+        @keyframes copyBalloon {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, 4px) scale(0.8);
+          }
+          20% {
+            opacity: 1;
+            transform: translate(-50%, -4px) scale(1);
+          }
+          75% {
+            opacity: 1;
+            transform: translate(-50%, -8px) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -15px) scale(0.9);
+          }
+        }
+        .copy-balloon {
+          position: absolute;
+          top: -12px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #f59e0b;
+          color: #000;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          padding: 1px 6px;
+          border-radius: 3px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+          pointer-events: none;
+          z-index: 50;
+          white-space: nowrap;
+          animation: copyBalloon 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .copy-balloon::after {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          margin-left: -3px;
+          border-width: 3px;
+          border-style: solid;
+          border-color: #f59e0b transparent transparent transparent;
+        }
+      `}</style>
     </div>
   );
 }
