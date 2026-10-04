@@ -326,22 +326,43 @@ body {
 /* ─── Y2K BLUE: IMAC G3 TRANSLUCENT POLYCARBONATE ─── */
 .tv-chassis-frame.chassis-y2k,
 .chassis-y2k {
+    position: relative;
     background: 
-        radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 60%),
+        radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 65%),
         linear-gradient(160deg, #b9e6fd 0%, #70c4f1 22%, #9adbfb 45%, #3ca2dc 70%, #1f7fae 90%, #155d82 100%) !important;
     border-top: 2.5px solid rgba(255, 255, 255, 0.95) !important;
     border-left: 2px solid rgba(255, 255, 255, 0.7) !important;
     border-right: 2px solid rgba(18, 85, 125, 0.6) !important;
     border-bottom: 3.5px solid rgba(10, 48, 75, 0.9) !important;
     box-shadow:
-        0 40px 85px rgba(8, 30, 50, 0.8),
-        0 0 45px rgba(56, 189, 248, 0.45),
-        0 0 90px rgba(14, 165, 233, 0.2),
-        inset 0 3px 6px rgba(255, 255, 255, 1),
-        inset 0 12px 22px rgba(255, 255, 255, 0.5),
-        inset 0 -12px 26px rgba(8, 42, 68, 0.75),
-        inset 4px 0 10px rgba(255, 255, 255, 0.45),
-        inset -4px 0 10px rgba(6, 35, 60, 0.55) !important;
+        0 45px 95px rgba(8, 30, 50, 0.85),
+        0 15px 35px rgba(0, 0, 0, 0.6),
+        0 0 50px rgba(56, 189, 248, 0.45),
+        0 0 100px rgba(14, 165, 233, 0.2),
+        inset 0 2px 5px rgba(255, 255, 255, 0.9),
+        inset 0 14px 28px rgba(255, 255, 255, 0.5),
+        inset 0 0 40px rgba(0, 100, 150, 0.8),
+        inset 0 -22px 45px rgba(8, 42, 68, 0.85),
+        inset 6px 0 18px rgba(255, 255, 255, 0.5),
+        inset -6px 0 18px rgba(6, 35, 60, 0.7),
+        inset 0 -3px 8px rgba(4, 25, 45, 0.9) !important;
+}
+
+/* Curved Glass Specular Highlight (Massive Convex Glare) */
+.tv-chassis-frame.chassis-y2k::before,
+.chassis-y2k::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), transparent);
+    border-radius: inherit;
+    border-bottom-left-radius: 50% 35px;
+    border-bottom-right-radius: 50% 35px;
+    pointer-events: none;
+    z-index: 15;
 }
 
 /* Curved Specular Glare across top of iMac G3 casing */
@@ -378,32 +399,55 @@ body {
 .btn-y2k-bubble {
     position: relative;
     border-radius: 9999px !important;
-    background: 
-        radial-gradient(ellipse at 50% 20%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.35) 40%, transparent 60%),
-        linear-gradient(180deg, #38bdf8 0%, #0ea5e9 40%, #0284c7 75%, #0369a1 100%) !important;
+    background: radial-gradient(ellipse at 50% 100%, #38bdf8 0%, #0ea5e9 30%, #0284c7 55%, #0369a1 78%, #082f49 100%) !important;
     border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
-    border-bottom: 2px solid rgba(8, 47, 73, 0.75) !important;
+    border-bottom: 2px solid rgba(8, 47, 73, 0.8) !important;
     box-shadow: 
-        0 3px 6px rgba(3, 105, 161, 0.5),
-        0 1px 2px rgba(0, 0, 0, 0.3),
-        inset 0 2px 3px rgba(255, 255, 255, 0.9),
-        inset 0 -3px 5px rgba(2, 44, 79, 0.7) !important;
+        0 4px 8px rgba(2, 44, 79, 0.5),
+        0 1px 3px rgba(0, 0, 0, 0.35),
+        inset 0 2px 4px rgba(255, 255, 255, 0.95),
+        inset 0 6px 12px rgba(255, 255, 255, 0.35),
+        inset 0 -4px 8px rgba(56, 189, 248, 0.65),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.5) !important;
     cursor: pointer;
-    transition: all 0.1s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: all 0.12s cubic-bezier(0.25, 1, 0.5, 1);
 }
+
+.btn-y2k-bubble::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 15%;
+    right: 15%;
+    height: 40%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.2) 65%, transparent 100%);
+    border-radius: 9999px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.btn-y2k-bubble > * {
+    position: relative;
+    z-index: 2;
+}
+
 .btn-y2k-bubble:hover {
-    filter: brightness(1.1);
+    filter: brightness(1.15);
     box-shadow: 
-        0 4px 10px rgba(56, 189, 248, 0.7),
-        inset 0 2px 4px rgba(255, 255, 255, 1),
-        inset 0 -3px 5px rgba(2, 44, 79, 0.7) !important;
+        0 6px 14px rgba(56, 189, 248, 0.65),
+        0 2px 5px rgba(0, 0, 0, 0.4),
+        inset 0 2.5px 4px rgba(255, 255, 255, 1),
+        inset 0 8px 14px rgba(255, 255, 255, 0.45),
+        inset 0 -5px 10px rgba(56, 189, 248, 0.8) !important;
 }
+
 .btn-y2k-bubble:active {
-    transform: translateY(2px) scale(0.97);
+    transform: translateY(2px) scale(0.96);
+    filter: brightness(0.95);
     box-shadow: 
-        0 1px 2px rgba(3, 105, 161, 0.6),
-        inset 0 2px 5px rgba(2, 44, 79, 0.8),
-        inset 0 -1px 2px rgba(255, 255, 255, 0.6) !important;
+        0 1px 3px rgba(2, 44, 79, 0.6),
+        inset 0 2px 6px rgba(4, 32, 54, 0.85),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Y2K Illuminated Aqua Power Dome */
