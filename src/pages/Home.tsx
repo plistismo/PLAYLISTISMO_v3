@@ -1075,10 +1075,50 @@ export default function Home({ session }: { session: Session | null }) {
                 activeSkin === 'y2k' ? 'chassis-y2k' : activeSkin === 'future' ? 'chassis-future' : ''
               }`}>
 
-              <div className="flex flex-row bg-[#111] rounded-[16px] md:rounded-[36px] p-2 md:p-3.5 shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222] h-full w-full items-stretch">
-                <div className="hidden md:flex flex-col justify-center w-8 lg:w-10 mr-2 md:mr-3 space-y-0.5 opacity-50 shrink-0 h-full py-4">
-                  {Array.from({ length: 40 }).map((_, i) => <div key={i} className="w-full h-px bg-black/50" />)}
-                </div>
+              {/* Physical Glare & Rim Overlays (Layered Skeuomorphism) */}
+              {activeSkin === 'y2k' && (
+                <div className="chassis-specular-glare pointer-events-none absolute -top-1 left-4 right-4 h-12 md:h-16 rounded-t-[32px] opacity-75 z-20"></div>
+              )}
+              {activeSkin === 'future' && (
+                <>
+                  <div className="chassis-chrome-reflection pointer-events-none absolute top-0 left-0 right-0 h-10 md:h-14 rounded-t-[32px] opacity-90 z-20"></div>
+                  <div className="chassis-future-rim pointer-events-none absolute -inset-[2px] rounded-[22px] md:rounded-[34px] z-15"></div>
+                </>
+              )}
+
+              <div className={`flex flex-row rounded-[16px] md:rounded-[36px] p-2 md:p-3.5 h-full w-full items-stretch transition-all duration-500 relative z-20 ${
+                activeSkin === 'y2k'
+                  ? 'inner-housing-y2k'
+                  : activeSkin === 'future'
+                  ? 'inner-housing-future'
+                  : 'bg-[#111] shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222]'
+              }`}>
+                {activeSkin === 'y2k' ? (
+                  <div className="hidden md:flex flex-col justify-between w-9 lg:w-11 mr-2 md:mr-3 p-1.5 shrink-0 h-full py-4 rounded-full bg-gradient-to-b from-cyan-200/40 via-cyan-400/20 to-sky-600/40 border border-white/60 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),inset_0_-2px_4px_rgba(10,50,80,0.5),0_0_12px_rgba(56,189,248,0.25)] relative overflow-hidden">
+                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-4/5 h-6 bg-gradient-to-b from-white/70 to-transparent rounded-full pointer-events-none"></div>
+                    <div className="flex flex-col justify-center items-center gap-1.5 my-auto w-full opacity-70">
+                      {Array.from({ length: 18 }).map((_, i) => (
+                        <div key={i} className="w-3/4 h-1 rounded-full bg-cyan-900/40 shadow-[inset_0_1px_1px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.4)]" />
+                      ))}
+                    </div>
+                  </div>
+                ) : activeSkin === 'future' ? (
+                  <div className="hidden md:flex flex-col justify-between w-9 lg:w-12 mr-2 md:mr-3 p-1.5 shrink-0 h-full py-3 rounded-2xl bg-gradient-to-b from-white/80 via-slate-400/50 to-slate-800/80 border border-white/70 shadow-[inset_0_2px_4px_rgba(255,255,255,1),inset_0_-3px_6px_rgba(0,0,0,0.8),0_0_15px_rgba(56,189,248,0.3)] relative overflow-hidden select-none">
+                    <div className="absolute top-0 bottom-0 left-1 w-1 bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 shadow-[0_0_6px_rgba(245,158,11,0.6)] rounded-full"></div>
+                    <div className="my-auto flex flex-col items-center justify-center -rotate-90 origin-center whitespace-nowrap text-[7px] lg:text-[8px] font-black tracking-[0.25em] text-amber-300 drop-shadow-[0_0_4px_rgba(245,158,11,0.8)] font-['Jost',sans-serif]">
+                      PLIST • 2005
+                    </div>
+                    <div className="flex flex-col justify-center items-center gap-1 opacity-60">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div key={i} className="w-2.5 h-0.5 rounded-full bg-cyan-400 shadow-[0_0_4px_#38bdf8]" />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="hidden md:flex flex-col justify-center w-8 lg:w-10 mr-2 md:mr-3 space-y-0.5 opacity-50 shrink-0 h-full py-4">
+                    {Array.from({ length: 40 }).map((_, i) => <div key={i} className="w-full h-px bg-black/50" />)}
+                  </div>
+                )}
 
                 <div className="relative flex-1 aspect-[4/3] bg-[#050505] rounded-[20px] md:rounded-[44px] overflow-hidden screen-container border-[4px] md:border-[8px] border-[#080808] z-10 box-border max-h-full">
                   <div className="absolute inset-0 crt-overlay z-40 rounded-[20px] md:rounded-[44px] pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]"></div>
@@ -1316,21 +1356,50 @@ export default function Home({ session }: { session: Session | null }) {
                   </div>
                 </div>
 
-                <div className="flex flex-col w-14 sm:w-16 md:w-28 lg:w-32 ml-2 md:ml-3 p-1.5 md:p-2.5 bg-[#111] border-l border-[#222] shadow-[inset_2px_0_5px_rgba(0,0,0,0.5)] justify-between items-center gap-2 md:gap-3 shrink-0 rounded-r-lg h-full overflow-hidden font-['Jost',sans-serif]">
-                  <div className="flex flex-col items-center select-none opacity-80 mb-1 shrink-0">
-                    <span className="font-serif italic font-bold text-[#bbb] text-[8px] md:text-sm drop-shadow-[1px_1px_0_rgba(0,0,0,1)] tracking-tight uppercase vertical-text">playlist<span className="text-[#888]">ismo</span></span>
+                {/* PAINEL DE CONTROLE LATERAL DIREITO */}
+                <div className={`flex flex-col w-14 sm:w-16 md:w-28 lg:w-32 ml-2 md:ml-3 p-1.5 md:p-2.5 justify-between items-center gap-2 md:gap-3 shrink-0 rounded-r-lg h-full overflow-hidden font-['Jost',sans-serif] transition-all duration-500 relative z-30 ${
+                  activeSkin === 'y2k'
+                    ? 'panel-y2k'
+                    : activeSkin === 'future'
+                    ? 'panel-future'
+                    : 'bg-[#111] border-l border-[#222] shadow-[inset_2px_0_5px_rgba(0,0,0,0.5)]'
+                }`}>
+                  <div className="flex flex-col items-center select-none mb-1 shrink-0">
+                    {activeSkin === 'future' ? (
+                      <span className="font-['Jost',sans-serif] font-black text-sky-300 text-[8px] md:text-xs drop-shadow-[0_0_8px_#00e5ff] tracking-widest uppercase vertical-text">PLIST</span>
+                    ) : activeSkin === 'y2k' ? (
+                      <span className="font-['Jost',sans-serif] font-black text-sky-900 text-[8px] md:text-xs drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)] tracking-tight uppercase vertical-text">playlist<span className="text-cyan-700">ismo</span></span>
+                    ) : (
+                      <span className="font-serif italic font-bold text-[#bbb] text-[8px] md:text-sm drop-shadow-[1px_1px_0_rgba(0,0,0,1)] tracking-tight uppercase vertical-text">playlist<span className="text-[#888]">ismo</span></span>
+                    )}
                   </div>
 
-                  <div className="flex flex-col items-center gap-1.5 sm:gap-2 md:gap-3 my-auto shrink-0">
+                  <div className="flex flex-col items-center gap-1.5 sm:gap-2 md:gap-2.5 my-auto shrink-0">
                     {/* INFO Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Info</span>
+                      <span className={`text-[6px] font-bold tracking-widest uppercase ${
+                        activeSkin === 'future' ? 'text-sky-300 drop-shadow-[0_0_4px_#38bdf8]' : activeSkin === 'y2k' ? 'text-sky-900 font-extrabold' : 'text-gray-500'
+                      }`}>
+                        Info
+                      </span>
                       <button
                         onClick={(e) => { e.stopPropagation(); setIsInfoOpen(prev => !prev); }}
-                        className={`btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative transition-all ${isInfoOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`}
+                        className={`${
+                          activeSkin === 'y2k'
+                            ? `btn-y2k-bubble w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isInfoOpen ? 'ring-2 ring-white/90 brightness-110' : ''}`
+                            : activeSkin === 'future'
+                            ? `btn-future-chrome w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isInfoOpen ? 'ring-2 ring-cyan-400 shadow-[0_0_15px_#00e5ff]' : ''}`
+                            : `btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative transition-all ${isInfoOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`
+                        }`}
                         title="Abrir/Fechar Informações (Now Playing)"
                       >
-                        <span className={`font-serif font-black italic text-sm md:text-base transition-colors ${isInfoOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'}`}>
+                        <span className={`font-serif font-black italic text-sm md:text-base transition-colors ${
+                          activeSkin === 'future'
+                            ? 'text-cyan-300 drop-shadow-[0_0_6px_#00e5ff]'
+                            : activeSkin === 'y2k'
+                            ? 'text-white drop-shadow-[0_1px_2px_rgba(3,105,161,0.8)]'
+                            : isInfoOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'
+                        }`}>
                           i
                         </span>
                       </button>
@@ -1338,63 +1407,135 @@ export default function Home({ session }: { session: Session | null }) {
 
                     {/* GUIDE Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Guide</span>
+                      <span className={`text-[6px] font-bold tracking-widest uppercase ${
+                        activeSkin === 'future' ? 'text-sky-300 drop-shadow-[0_0_4px_#38bdf8]' : activeSkin === 'y2k' ? 'text-sky-900 font-extrabold' : 'text-gray-500'
+                      }`}>
+                        Guide
+                      </span>
                       <button
                         onClick={(e) => { e.stopPropagation(); setIsSearchOpen(prev => !prev); }}
-                        className={`btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative transition-all ${isSearchOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`}
+                        className={`${
+                          activeSkin === 'y2k'
+                            ? `btn-y2k-bubble w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isSearchOpen ? 'ring-2 ring-white/90 brightness-110' : ''}`
+                            : activeSkin === 'future'
+                            ? `btn-future-chrome w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isSearchOpen ? 'ring-2 ring-cyan-400 shadow-[0_0_15px_#00e5ff]' : ''}`
+                            : `btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative transition-all ${isSearchOpen ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`
+                        }`}
                         title="Abrir/Fechar Guia P100"
                       >
-                        <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors ${isSearchOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+                        <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors ${
+                          activeSkin === 'future'
+                            ? 'text-cyan-300 drop-shadow-[0_0_6px_#00e5ff]'
+                            : activeSkin === 'y2k'
+                            ? 'text-white drop-shadow-[0_1px_2px_rgba(3,105,161,0.8)]'
+                            : isSearchOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'
+                        }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" />
                         </svg>
                       </button>
                     </div>
 
                     {/* SKIN Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Skin</span>
+                      <span className={`text-[6px] font-bold tracking-widest uppercase ${
+                        activeSkin === 'future' ? 'text-sky-300 drop-shadow-[0_0_4px_#38bdf8]' : activeSkin === 'y2k' ? 'text-sky-900 font-extrabold' : 'text-gray-500'
+                      }`}>
+                        Skin
+                      </span>
                       <button
                         id="btn-tv-skin"
                         onClick={(e) => { e.stopPropagation(); cycleSkin(); }}
-                        className={`btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex flex-col items-center justify-center group relative transition-all ${
+                        className={`${
                           activeSkin === 'y2k'
-                            ? 'border-cyan-400/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9),0_0_8px_rgba(34,211,238,0.5)]'
+                            ? 'btn-y2k-bubble w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex flex-col items-center justify-center ring-1 ring-cyan-200'
                             : activeSkin === 'future'
-                            ? 'border-sky-200/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9),0_0_8px_rgba(224,242,254,0.6)]'
-                            : ''
+                            ? 'btn-future-chrome w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex flex-col items-center justify-center ring-1 ring-cyan-400'
+                            : 'btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex flex-col items-center justify-center group relative transition-all'
                         }`}
-                        title={`Tema do Chassi: ${activeSkin.toUpperCase()} (Clique para alternar)`}
+                        title={`Tema do Chassi: ${activeSkin.toUpperCase()} (Clique para alternar: Classic -> Y2K -> Future)`}
                       >
                         <span className={`font-mono font-black text-[7px] sm:text-[8px] md:text-[9px] tracking-wider uppercase transition-colors ${
-                          activeSkin === 'y2k'
-                            ? 'text-cyan-300 drop-shadow-[0_0_4px_rgba(34,211,238,0.8)]'
-                            : activeSkin === 'future'
-                            ? 'text-sky-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.9)]'
+                          activeSkin === 'future'
+                            ? 'text-cyan-300 drop-shadow-[0_0_6px_#00e5ff]'
+                            : activeSkin === 'y2k'
+                            ? 'text-white drop-shadow-[0_1px_2px_rgba(3,105,161,0.8)]'
                             : 'text-gray-400 group-hover:text-white'
                         }`}>
-                          SKIN
+                          {activeSkin === 'classic' ? 'SKIN' : activeSkin.toUpperCase()}
                         </span>
                       </button>
                     </div>
 
                     {/* GRP Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Grp</span>
+                      <span className={`text-[6px] font-bold tracking-widest uppercase ${
+                        activeSkin === 'future' ? 'text-sky-300 drop-shadow-[0_0_4px_#38bdf8]' : activeSkin === 'y2k' ? 'text-sky-900 font-extrabold' : 'text-gray-500'
+                      }`}>
+                        Grp
+                      </span>
                       <div className="flex flex-col gap-1">
-                        <button onClick={(e) => { e.stopPropagation(); changeGroup(1); }} className="btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white text-xs md:text-sm">+</button>
-                        <button onClick={(e) => { e.stopPropagation(); changeGroup(-1); }} className="btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white text-xs md:text-sm">-</button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); changeGroup(1); }}
+                          className={`${
+                            activeSkin === 'y2k'
+                              ? 'btn-y2k-bubble w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 flex justify-center items-center text-white font-black text-xs md:text-sm drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]'
+                              : activeSkin === 'future'
+                              ? 'btn-future-chrome w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 flex justify-center items-center text-cyan-300 font-black text-xs md:text-sm drop-shadow-[0_0_4px_#00e5ff]'
+                              : 'btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white text-xs md:text-sm'
+                          }`}
+                        >
+                          +
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); changeGroup(-1); }}
+                          className={`${
+                            activeSkin === 'y2k'
+                              ? 'btn-y2k-bubble w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 flex justify-center items-center text-white font-black text-xs md:text-sm drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]'
+                              : activeSkin === 'future'
+                              ? 'btn-future-chrome w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 flex justify-center items-center text-cyan-300 font-black text-xs md:text-sm drop-shadow-[0_0_4px_#00e5ff]'
+                              : 'btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center text-gray-400 font-bold hover:text-white text-xs md:text-sm'
+                          }`}
+                        >
+                          -
+                        </button>
                       </div>
                     </div>
 
                     {/* CH Button */}
                     <div className="flex flex-col items-center">
-                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Ch</span>
+                      <span className={`text-[6px] font-bold tracking-widest uppercase ${
+                        activeSkin === 'future' ? 'text-sky-300 drop-shadow-[0_0_4px_#38bdf8]' : activeSkin === 'y2k' ? 'text-sky-900 font-extrabold' : 'text-gray-500'
+                      }`}>
+                        Ch
+                      </span>
                       <div className="flex flex-col gap-1">
-                        <button onClick={(e) => { e.stopPropagation(); changeChannel(1); }} className="btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center group">
-                          <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400 group-hover:text-white -rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z" /></svg>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); changeChannel(1); }}
+                          className={`${
+                            activeSkin === 'y2k'
+                              ? 'btn-y2k-bubble w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 flex justify-center items-center'
+                              : activeSkin === 'future'
+                              ? 'btn-future-chrome w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 flex justify-center items-center'
+                              : 'btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center group'
+                          }`}
+                        >
+                          <svg className={`w-2.5 h-2.5 sm:w-3 sm:h-3 -rotate-90 ${
+                            activeSkin === 'future' ? 'text-cyan-300 drop-shadow-[0_0_4px_#00e5ff]' : activeSkin === 'y2k' ? 'text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]' : 'text-gray-400 group-hover:text-white'
+                          }`} fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z" /></svg>
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); changeChannel(-1); }} className="btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center group">
-                          <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400 group-hover:text-white rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z" /></svg>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); changeChannel(-1); }}
+                          className={`${
+                            activeSkin === 'y2k'
+                              ? 'btn-y2k-bubble w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 flex justify-center items-center'
+                              : activeSkin === 'future'
+                              ? 'btn-future-chrome w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 flex justify-center items-center'
+                              : 'btn-retro-push w-7 h-6 sm:w-8 sm:h-7 md:w-10 md:h-8 rounded-sm flex justify-center items-center group'
+                          }`}
+                        >
+                          <svg className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rotate-90 ${
+                            activeSkin === 'future' ? 'text-cyan-300 drop-shadow-[0_0_4px_#00e5ff]' : activeSkin === 'y2k' ? 'text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]' : 'text-gray-400 group-hover:text-white'
+                          }`} fill="currentColor" viewBox="0 0 24 24"><path d="M13 19l9-7-9-7v14zM4 19l9-7-9-7v14z" /></svg>
                         </button>
                       </div>
                     </div>
@@ -1402,11 +1543,39 @@ export default function Home({ session }: { session: Session | null }) {
 
                   <div className="mt-auto flex flex-col items-center gap-1.5 md:gap-2 pb-1 shrink-0">
                     <div className="flex flex-col items-center">
-                      <div className={`w-1.5 h-1.5 rounded-full border border-black transition-all duration-300 ${isOn ? 'bg-red-500 shadow-[0_0_8px_#ff0000] saturate-200' : 'bg-red-900 shadow-[0_0_2px_black]'}`}></div>
-                      <span className="text-[6px] text-gray-500 mt-0.5 font-bold uppercase">Pwr</span>
+                      <div className={`w-1.5 h-1.5 rounded-full border transition-all duration-300 ${
+                        activeSkin === 'future'
+                          ? isOn ? 'bg-cyan-400 shadow-[0_0_8px_#00e5ff] border-cyan-200' : 'bg-slate-700 border-slate-900'
+                          : activeSkin === 'y2k'
+                          ? isOn ? 'bg-cyan-300 shadow-[0_0_8px_#22d3ee] border-cyan-100' : 'bg-sky-950 border-sky-900'
+                          : isOn ? 'bg-red-500 shadow-[0_0_8px_#ff0000] saturate-200 border-black' : 'bg-red-900 shadow-[0_0_2px_black] border-black'
+                      }`}></div>
+                      <span className={`text-[6px] mt-0.5 font-bold uppercase ${
+                        activeSkin === 'future' ? 'text-sky-300 drop-shadow-[0_0_4px_#38bdf8]' : activeSkin === 'y2k' ? 'text-sky-900 font-extrabold' : 'text-gray-500'
+                      }`}>
+                        Pwr
+                      </span>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); togglePower(); }} className="btn-power-push w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-sm flex items-center justify-center group">
-                      <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-400 group-hover:text-red-500 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); togglePower(); }}
+                      className={`${
+                        activeSkin === 'y2k'
+                          ? 'btn-y2k-power w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center group'
+                          : activeSkin === 'future'
+                          ? 'btn-future-power w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center group'
+                          : 'btn-power-push w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-sm flex items-center justify-center group'
+                      }`}
+                    >
+                      <svg className={`w-4 h-4 md:w-5 md:h-5 transition-colors ${
+                        activeSkin === 'future'
+                          ? isOn ? 'text-cyan-300 drop-shadow-[0_0_8px_#00e5ff]' : 'text-slate-400 group-hover:text-cyan-200'
+                          : activeSkin === 'y2k'
+                          ? isOn ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]' : 'text-cyan-200 group-hover:text-white'
+                          : isOn ? 'text-red-500 drop-shadow-[0_0_6px_#ef4444]' : 'text-gray-400 group-hover:text-red-500'
+                      }`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                      </svg>
                     </button>
                   </div>
                 </div>

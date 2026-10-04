@@ -316,47 +316,269 @@ body {
 }
 
 /* ============================================================
-   SKEUOMORPHIC CHASSIS THEME SYSTEM (URL-Driven)
+   HYPER-REALISTIC SKEUOMORPHIC CHASSIS THEME SYSTEM
    ============================================================ */
 
 .tv-chassis-frame {
     transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-/* Y2K Blue: Glossy/translucent light blue/cyan gradient, soft rounded white highlights (simulating 2000s iMac G3 plastic) */
+/* ─── Y2K BLUE: IMAC G3 TRANSLUCENT POLYCARBONATE ─── */
 .tv-chassis-frame.chassis-y2k,
 .chassis-y2k {
-    background: linear-gradient(145deg, #a8defb 0%, #68b8e5 20%, #90d4f8 44%, #429fd6 72%, #267ea9 92%, #1e6992 100%) !important;
-    border-top: 2px solid rgba(255, 255, 255, 0.9) !important;
-    border-left: 1.5px solid rgba(255, 255, 255, 0.55) !important;
-    border-right: 1.5px solid rgba(20, 80, 120, 0.55) !important;
-    border-bottom: 2.5px solid rgba(12, 55, 88, 0.85) !important;
+    background: 
+        radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 60%),
+        linear-gradient(160deg, #b9e6fd 0%, #70c4f1 22%, #9adbfb 45%, #3ca2dc 70%, #1f7fae 90%, #155d82 100%) !important;
+    border-top: 2.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-left: 2px solid rgba(255, 255, 255, 0.7) !important;
+    border-right: 2px solid rgba(18, 85, 125, 0.6) !important;
+    border-bottom: 3.5px solid rgba(10, 48, 75, 0.9) !important;
     box-shadow:
-        0 35px 75px rgba(8, 30, 50, 0.75),
-        0 0 35px rgba(56, 189, 248, 0.4),
-        inset 0 2px 4px rgba(255, 255, 255, 0.95),
-        inset 0 6px 14px rgba(255, 255, 255, 0.45),
-        inset 0 -8px 18px rgba(10, 48, 80, 0.65),
-        inset 3px 0 8px rgba(255, 255, 255, 0.35),
-        inset -3px 0 8px rgba(8, 40, 68, 0.45) !important;
+        0 40px 85px rgba(8, 30, 50, 0.8),
+        0 0 45px rgba(56, 189, 248, 0.45),
+        0 0 90px rgba(14, 165, 233, 0.2),
+        inset 0 3px 6px rgba(255, 255, 255, 1),
+        inset 0 12px 22px rgba(255, 255, 255, 0.5),
+        inset 0 -12px 26px rgba(8, 42, 68, 0.75),
+        inset 4px 0 10px rgba(255, 255, 255, 0.45),
+        inset -4px 0 10px rgba(6, 35, 60, 0.55) !important;
 }
 
-/* Future Chrome: High-contrast polished chrome (silver/dark grey/white sharp gradients), metallic glowing rim */
+/* Curved Specular Glare across top of iMac G3 casing */
+.chassis-specular-glare {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.35) 40%, rgba(255, 255, 255, 0) 100%);
+    filter: blur(0.5px);
+}
+
+/* Y2K Molded Frosted Lilac / Ice-Blue Inner Bezel Housing */
+.inner-housing-y2k {
+    background: linear-gradient(145deg, #cde5f8 0%, #a4cfed 30%, #83bbdf 65%, #639fc7 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    border-top: 2.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-bottom: 3px solid rgba(15, 60, 95, 0.75) !important;
+    box-shadow: 
+        inset 0 3px 8px rgba(255, 255, 255, 0.9),
+        inset 0 -6px 16px rgba(12, 50, 85, 0.65),
+        inset 4px 0 10px rgba(255, 255, 255, 0.5),
+        inset -4px 0 10px rgba(10, 45, 75, 0.55),
+        0 6px 18px rgba(5, 25, 45, 0.6) !important;
+}
+
+/* Y2K Control Panel Faceplate */
+.panel-y2k {
+    background: linear-gradient(180deg, rgba(224, 242, 254, 0.95) 0%, rgba(186, 230, 253, 0.9) 35%, rgba(125, 211, 252, 0.9) 75%, rgba(56, 189, 248, 0.95) 100%) !important;
+    border-left: 2px solid rgba(255, 255, 255, 0.85) !important;
+    box-shadow: 
+        inset 2px 0 6px rgba(255, 255, 255, 0.9),
+        inset -2px 0 8px rgba(12, 74, 110, 0.5),
+        0 0 18px rgba(56, 189, 248, 0.35) !important;
+}
+
+/* Y2K Translucent Aqua Jelly Bubble Buttons */
+.btn-y2k-bubble {
+    position: relative;
+    border-radius: 9999px !important;
+    background: 
+        radial-gradient(ellipse at 50% 20%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.35) 40%, transparent 60%),
+        linear-gradient(180deg, #38bdf8 0%, #0ea5e9 40%, #0284c7 75%, #0369a1 100%) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+    border-bottom: 2px solid rgba(8, 47, 73, 0.75) !important;
+    box-shadow: 
+        0 3px 6px rgba(3, 105, 161, 0.5),
+        0 1px 2px rgba(0, 0, 0, 0.3),
+        inset 0 2px 3px rgba(255, 255, 255, 0.9),
+        inset 0 -3px 5px rgba(2, 44, 79, 0.7) !important;
+    cursor: pointer;
+    transition: all 0.1s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.btn-y2k-bubble:hover {
+    filter: brightness(1.1);
+    box-shadow: 
+        0 4px 10px rgba(56, 189, 248, 0.7),
+        inset 0 2px 4px rgba(255, 255, 255, 1),
+        inset 0 -3px 5px rgba(2, 44, 79, 0.7) !important;
+}
+.btn-y2k-bubble:active {
+    transform: translateY(2px) scale(0.97);
+    box-shadow: 
+        0 1px 2px rgba(3, 105, 161, 0.6),
+        inset 0 2px 5px rgba(2, 44, 79, 0.8),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Y2K Illuminated Aqua Power Dome */
+.btn-y2k-power {
+    position: relative;
+    border-radius: 9999px !important;
+    background: 
+        radial-gradient(ellipse at 50% 25%, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.4) 40%, transparent 65%),
+        radial-gradient(circle at 50% 50%, #38bdf8 0%, #0284c7 60%, #075985 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 
+        0 0 15px rgba(56, 189, 248, 0.8),
+        0 4px 8px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 1),
+        inset 0 -3px 6px rgba(8, 47, 73, 0.8) !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.btn-y2k-power:hover {
+    box-shadow: 
+        0 0 22px rgba(56, 189, 248, 1),
+        0 5px 12px rgba(0, 0, 0, 0.5),
+        inset 0 2px 4px rgba(255, 255, 255, 1) !important;
+}
+.btn-y2k-power:active {
+    transform: translateY(2px) scale(0.96);
+    box-shadow: 
+        0 0 10px rgba(56, 189, 248, 0.6),
+        inset 0 3px 6px rgba(8, 47, 73, 0.9) !important;
+}
+
+/* ─── FUTURE CHROME: HIGH-CONTRAST LIQUID MIRROR CHROME ─── */
 .tv-chassis-frame.chassis-future,
 .chassis-future {
-    background: linear-gradient(135deg, #ffffff 0%, #c1cedd 14%, #ffffff 26%, #434f60 45%, #18202c 52%, #75869e 66%, #f3f6f9 80%, #516074 90%, #151c27 100%) !important;
-    border-top: 2px solid rgba(255, 255, 255, 1) !important;
-    border-left: 1.5px solid rgba(255, 255, 255, 0.75) !important;
-    border-right: 1.5px solid rgba(35, 45, 60, 0.8) !important;
-    border-bottom: 2.5px solid rgba(15, 23, 42, 0.98) !important;
+    background: 
+        radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 50%),
+        linear-gradient(135deg, #ffffff 0%, #cbd6e2 12%, #ffffff 22%, #3a4556 42%, #141b25 50%, #6f7f95 64%, #f8fafc 78%, #4a5669 88%, #111721 100%) !important;
+    border-top: 2.5px solid rgba(255, 255, 255, 1) !important;
+    border-left: 2px solid rgba(255, 255, 255, 0.85) !important;
+    border-right: 2px solid rgba(40, 52, 68, 0.85) !important;
+    border-bottom: 3.5px solid rgba(10, 15, 22, 1) !important;
     box-shadow:
-        0 35px 85px rgba(0, 0, 0, 0.9),
-        0 0 30px rgba(56, 189, 248, 0.45),
-        0 0 60px rgba(14, 165, 233, 0.25),
-        inset 0 2px 4px rgba(255, 255, 255, 1),
-        inset 0 6px 14px rgba(255, 255, 255, 0.65),
-        inset 0 -8px 18px rgba(0, 0, 0, 0.85),
-        inset 0 0 30px rgba(0, 0, 0, 0.4),
-        inset 3px 0 6px rgba(255, 255, 255, 0.8),
-        inset -3px 0 6px rgba(0, 0, 0, 0.7) !important;
+        0 45px 95px rgba(0, 0, 0, 0.95),
+        0 0 40px rgba(56, 189, 248, 0.5),
+        0 0 80px rgba(14, 165, 233, 0.3),
+        inset 0 3px 6px rgba(255, 255, 255, 1),
+        inset 0 10px 18px rgba(255, 255, 255, 0.75),
+        inset 0 -12px 24px rgba(0, 0, 0, 0.95),
+        inset 0 0 35px rgba(0, 0, 0, 0.5),
+        inset 4px 0 8px rgba(255, 255, 255, 0.85),
+        inset -4px 0 8px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Chrome Top Mirror Reflection Band */
+.chassis-chrome-reflection {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 40%, rgba(255, 255, 255, 0) 100%);
+    filter: blur(0.5px);
+}
+
+/* Chrome Ambient Neon Edge Glow */
+.chassis-future-rim {
+    box-shadow: 0 0 25px rgba(0, 229, 255, 0.4), inset 0 0 15px rgba(0, 229, 255, 0.2);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+/* Future Inner Housing: Precision-Chamfered Gunmetal & Dark Chrome */
+.inner-housing-future {
+    background: linear-gradient(145deg, #1e2633 0%, #2f3c4e 25%, #18202b 50%, #3f4e63 75%, #0f1520 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.65) !important;
+    border-top: 2.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-bottom: 3px solid rgba(10, 15, 24, 0.98) !important;
+    box-shadow: 
+        inset 0 4px 10px rgba(255, 255, 255, 0.45),
+        inset 0 -8px 20px rgba(0, 0, 0, 0.95),
+        inset 0 0 25px rgba(0, 229, 255, 0.18),
+        0 8px 25px rgba(0, 0, 0, 0.85),
+        0 0 30px rgba(0, 229, 255, 0.3) !important;
+}
+
+/* Future Control Panel Faceplate */
+.panel-future {
+    background: linear-gradient(180deg, #f1f5f9 0%, #94a3b8 20%, #475569 50%, #94a3b8 80%, #cbd5e1 100%) !important;
+    border-left: 2px solid rgba(255, 255, 255, 0.9) !important;
+    box-shadow: 
+        inset 2px 0 6px rgba(255, 255, 255, 1),
+        inset -2px 0 8px rgba(0, 0, 0, 0.85),
+        0 0 25px rgba(0, 229, 255, 0.35) !important;
+}
+
+/* Future Machined Chrome Disc Buttons with Neon Glow */
+.btn-future-chrome {
+    position: relative;
+    border-radius: 9999px !important;
+    background: 
+        radial-gradient(circle at 35% 30%, #ffffff 0%, #cbd5e1 30%, #64748b 65%, #1e293b 100%) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+    border-bottom: 2px solid rgba(15, 23, 42, 0.9) !important;
+    box-shadow: 
+        0 3px 8px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(0, 229, 255, 0.45),
+        inset 0 1.5px 2px rgba(255, 255, 255, 1),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.9) !important;
+    cursor: pointer;
+    transition: all 0.1s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.btn-future-chrome:hover {
+    filter: brightness(1.15);
+    box-shadow: 
+        0 4px 12px rgba(0, 229, 255, 0.7),
+        inset 0 2px 3px rgba(255, 255, 255, 1),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.9) !important;
+}
+.btn-future-chrome:active {
+    transform: translateY(2px) scale(0.96);
+    box-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.9),
+        inset 0 2px 5px rgba(0, 0, 0, 0.9),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Future Capacitive Chrome Power Toggle with Neon Halo */
+.btn-future-power {
+    position: relative;
+    border-radius: 9999px !important;
+    background: 
+        radial-gradient(circle at 40% 35%, #ffffff 0%, #94a3b8 40%, #1e293b 85%, #0f172a 100%) !important;
+    border: 2px solid #00e5ff !important;
+    box-shadow: 
+        0 0 20px #00e5ff,
+        0 0 40px rgba(0, 229, 255, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.9),
+        inset 0 0 12px #00e5ff,
+        inset 0 2px 3px rgba(255, 255, 255, 1) !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.btn-future-power:hover {
+    box-shadow: 
+        0 0 30px #00e5ff,
+        0 0 60px rgba(0, 229, 255, 0.7),
+        inset 0 0 16px #00e5ff,
+        inset 0 2px 4px rgba(255, 255, 255, 1) !important;
+}
+.btn-future-power:active {
+    transform: translateY(2px) scale(0.95);
+    box-shadow: 
+        0 0 15px #00e5ff,
+        inset 0 3px 8px rgba(0, 0, 0, 0.95) !important;
+}
+
+/* ─── CLASSIC THEME (DEFAULT MECHANICAL BUTTONS) ─── */
+.btn-retro-push {
+    background: #222222;
+    border-top: 1px solid #444444;
+    border-left: 1px solid #333333;
+    border-right: 1px solid #1a1a1a;
+    border-bottom: 2px solid #0a0a0a;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+    transition: all 0.08s ease;
+}
+.btn-retro-push:active {
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 0 #000;
+    transform: translateY(2px);
+    background: #181818;
+}
+
+.btn-power-push {
+    background: radial-gradient(circle, #333 0%, #1a1a1a 100%);
+    border: 2px solid #111;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: all 0.08s ease;
+}
+.btn-power-push:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), inset 0 2px 3px rgba(0, 0, 0, 0.7);
 }
