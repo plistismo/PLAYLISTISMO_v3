@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminPanel from '../components/AdminPanel.tsx';
 import MatrixPanel from '../components/MatrixPanel.tsx';
 import { sanitizeHTML } from '../lib/sanitize.ts';
@@ -71,7 +71,19 @@ const fisherYatesShuffle = (array: any[]) => {
 
 export default function Home({ session }: { session: Session | null }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Skeuomorphic Chassis Skin State (URL Query Param Driven)
+  const skinParam = searchParams.get('skin')?.toLowerCase();
+  const activeSkin = skinParam === 'y2k' ? 'y2k' : skinParam === 'future' ? 'future' : 'classic';
+
+  const cycleSkin = () => {
+    const nextSkin = activeSkin === 'classic' ? 'y2k' : activeSkin === 'y2k' ? 'future' : 'classic';
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('skin', nextSkin);
+    setSearchParams(newParams);
+  };
 
   type PlaylistItem = { name: string; group_name?: string; [key: string]: any };
   type VideoData = { id?: string | number; video_id: string; artista?: string; musica?: string; album?: string; ano?: string; direcao?: string; playlist?: string; [key: string]: any };
@@ -1059,7 +1071,9 @@ export default function Home({ session }: { session: Session | null }) {
 
             {/* CHASSI DA TV */}
             <div className="tv-chassis-wrapper relative w-full flex-1 min-h-0 min-w-0 flex items-center justify-center transition-all duration-500 md:perspective-[1500px] group">
-              <div className="tv-chassis-frame relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-2.5 sm:p-3 md:p-5 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col justify-center max-h-full max-w-full">
+              <div className={`tv-chassis-frame relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-2.5 sm:p-3 md:p-5 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col justify-center max-h-full max-w-full ${
+                activeSkin === 'y2k' ? 'chassis-y2k' : activeSkin === 'future' ? 'chassis-future' : ''
+              }`}>
 
               <div className="flex flex-row bg-[#111] rounded-[16px] md:rounded-[36px] p-2 md:p-3.5 shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222] h-full w-full items-stretch">
                 <div className="hidden md:flex flex-col justify-center w-8 lg:w-10 mr-2 md:mr-3 space-y-0.5 opacity-50 shrink-0 h-full py-4">
@@ -1333,6 +1347,33 @@ export default function Home({ session }: { session: Session | null }) {
                         <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors ${isSearchOpen ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
                         </svg>
+                      </button>
+                    </div>
+
+                    {/* SKIN Button */}
+                    <div className="flex flex-col items-center">
+                      <span className="text-[6px] text-gray-500 font-bold tracking-widest uppercase">Skin</span>
+                      <button
+                        id="btn-tv-skin"
+                        onClick={(e) => { e.stopPropagation(); cycleSkin(); }}
+                        className={`btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex flex-col items-center justify-center group relative transition-all ${
+                          activeSkin === 'y2k'
+                            ? 'border-cyan-400/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9),0_0_8px_rgba(34,211,238,0.5)]'
+                            : activeSkin === 'future'
+                            ? 'border-sky-200/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9),0_0_8px_rgba(224,242,254,0.6)]'
+                            : ''
+                        }`}
+                        title={`Tema do Chassi: ${activeSkin.toUpperCase()} (Clique para alternar)`}
+                      >
+                        <span className={`font-mono font-black text-[7px] sm:text-[8px] md:text-[9px] tracking-wider uppercase transition-colors ${
+                          activeSkin === 'y2k'
+                            ? 'text-cyan-300 drop-shadow-[0_0_4px_rgba(34,211,238,0.8)]'
+                            : activeSkin === 'future'
+                            ? 'text-sky-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.9)]'
+                            : 'text-gray-400 group-hover:text-white'
+                        }`}>
+                          SKIN
+                        </span>
                       </button>
                     </div>
 
