@@ -1157,7 +1157,7 @@ export default function AdminPanel({
                             <div className={`border-b border-amber-900/10 transition-colors duration-500 group flex items-center font-jost py-2 ${isActive ? 'bg-amber-600/30' : isPlaying ? 'bg-cyan-900/40' : isSaved ? 'bg-green-500/30 animate-pulse border-y-green-500/50' : 'hover:bg-amber-900/30'}`}>
                               <div 
                                 onClick={(e) => handleCopyMetadata(String(item.id), `${item.id}-id`, e)}
-                                className="relative p-1 w-10 font-mono text-center text-[10px] opacity-40 hover:opacity-100 cursor-pointer transition-opacity flex-shrink-0 [writing-mode:vertical-rl] rotate-180 h-16 flex items-center justify-center border-r border-amber-900/20"
+                                className="relative p-1 w-10 font-mono text-center text-[10px] opacity-40 hover:opacity-100 cursor-pointer transition-opacity flex-shrink-0 [writing-mode:vertical-rl] rotate-180 h-16 flex items-center justify-center border-r border-amber-900/20 select-none"
                                 title="Copiar ID"
                               >
                                 {item.id}
@@ -1166,88 +1166,58 @@ export default function AdminPanel({
                                 )}
                               </div>
                               <div className="p-3 flex-1 min-w-0">
-                                <div className="relative inline-block max-w-full">
-                                  <div 
-                                    onClick={(e) => handleCopyMetadata(item.artista, `${item.id}-artista`, e)}
-                                    className="text-xl leading-tight text-amber-500 hover:text-amber-300 transition-colors tracking-wide whitespace-normal break-words font-jost cursor-pointer select-none"
-                                    title="Clique para copiar Artista"
-                                    dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.artista) }} 
-                                  />
+                                <div 
+                                  onClick={(e) => handleCopyMetadata(item.artista, `${item.id}-artista`, e)}
+                                  className="relative text-xl leading-tight text-amber-500 hover:text-amber-300 transition-colors tracking-wide whitespace-normal break-words font-jost cursor-pointer select-none"
+                                  title="Clique para copiar Artista"
+                                >
+                                  <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.artista) }} />
                                   {copiedKey === `${item.id}-artista` && (
                                     <span className="copy-balloon font-mono">Copied!</span>
                                   )}
                                 </div>
-                                <div className="relative inline-block max-w-full">
-                                  <div 
-                                    onClick={(e) => handleCopyMetadata(item.musica || '', `${item.id}-musica`, e)}
-                                    className="text-xl font-bold text-white hover:text-amber-200 transition-colors mt-0.5 whitespace-normal break-words font-jost cursor-pointer select-none"
-                                    title="Clique para copiar Música"
-                                    dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.musica || '---') }} 
-                                  />
+                                <div 
+                                  onClick={(e) => handleCopyMetadata(item.musica || '', `${item.id}-musica`, e)}
+                                  className="relative text-xl font-bold text-white hover:text-amber-200 transition-colors mt-1 whitespace-normal break-words font-jost cursor-pointer select-none"
+                                  title="Clique para copiar Música"
+                                >
+                                  <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.musica || '---') }} />
                                   {copiedKey === `${item.id}-musica` && (
                                     <span className="copy-balloon font-mono">Copied!</span>
                                   )}
                                 </div>
-                                {item.album && (
-                                  <div className="relative inline-block max-w-full">
-                                    <div 
-                                      onClick={(e) => handleCopyMetadata(item.album, `${item.id}-album`, e)}
-                                      className="text-xs text-cyan-400 hover:text-cyan-200 transition-colors mt-1 whitespace-normal break-words font-jost cursor-pointer select-none"
-                                      title="Clique para copiar Álbum"
-                                      dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.album) }} 
-                                    />
-                                    {copiedKey === `${item.id}-album` && (
-                                      <span className="copy-balloon font-mono">Copied!</span>
-                                    )}
-                                  </div>
-                                )}
-                                {item.video_id && (
-                                  <div className="relative inline-flex items-center gap-1.5 mt-1.5">
-                                    <span 
-                                      onClick={(e) => handleCopyMetadata(item.video_id, `${item.id}-videoid`, e)}
-                                      className="relative inline-flex items-center gap-1 px-1.5 py-0.5 bg-neutral-900 hover:bg-neutral-800 text-[10px] font-mono text-cyan-400/90 hover:text-cyan-300 rounded border border-cyan-900/40 hover:border-cyan-500/50 cursor-pointer transition-all select-none"
-                                      title="Clique para copiar Video ID"
-                                    >
-                                      <span className="opacity-50 text-[9px]">ID:</span>
-                                      <span>{item.video_id}</span>
-                                      {copiedKey === `${item.id}-videoid` && (
-                                        <span className="copy-balloon font-mono">Copied!</span>
-                                      )}
-                                    </span>
-                                    {item.plataforma && (
-                                      <span className="text-[9px] uppercase font-mono text-neutral-500">
-                                        {item.plataforma}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
+                                <div 
+                                  onClick={(e) => item.album ? handleCopyMetadata(item.album, `${item.id}-album`, e) : undefined}
+                                  className={`relative text-xs text-cyan-400 mt-1 whitespace-normal break-words font-jost ${item.album ? 'hover:text-cyan-200 cursor-pointer select-none' : ''}`}
+                                  title={item.album ? "Clique para copiar Álbum" : undefined}
+                                >
+                                  <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.album || '') }} />
+                                  {copiedKey === `${item.id}-album` && (
+                                    <span className="copy-balloon font-mono">Copied!</span>
+                                  )}
+                                </div>
                               </div>
                               <div className="p-3 w-40 hidden sm:block flex-shrink-0">
-                                <div className="relative inline-block">
-                                  <div 
-                                    onClick={(e) => handleCopyMetadata(item.ano || '', `${item.id}-ano`, e)}
-                                    className="text-sm font-jost text-orange-500 hover:text-orange-300 transition-colors font-bold cursor-pointer select-none"
-                                    title="Clique para copiar Ano"
-                                  >
-                                    {item.ano || '----'}
-                                  </div>
+                                <div 
+                                  onClick={(e) => item.ano ? handleCopyMetadata(item.ano, `${item.id}-ano`, e) : undefined}
+                                  className={`relative text-sm font-jost text-orange-500 font-bold ${item.ano ? 'hover:text-orange-300 cursor-pointer select-none' : ''}`}
+                                  title={item.ano ? "Clique para copiar Ano" : undefined}
+                                >
+                                  {item.ano || '----'}
                                   {copiedKey === `${item.id}-ano` && (
                                     <span className="copy-balloon font-mono">Copied!</span>
                                   )}
                                 </div>
-                                {item.direcao && (
-                                  <div className="relative inline-block max-w-[150px] mt-1">
-                                    <div 
-                                      onClick={(e) => handleCopyMetadata(item.direcao, `${item.id}-direcao`, e)}
-                                      className="text-xs text-orange-400 hover:text-orange-200 transition-colors font-jost whitespace-normal break-words cursor-pointer select-none"
-                                      title="Clique para copiar Direção"
-                                      dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.direcao) }} 
-                                    />
-                                    {copiedKey === `${item.id}-direcao` && (
-                                      <span className="copy-balloon font-mono">Copied!</span>
-                                    )}
-                                  </div>
-                                )}
+                                <div 
+                                  onClick={(e) => item.direcao ? handleCopyMetadata(item.direcao, `${item.id}-direcao`, e) : undefined}
+                                  className={`relative text-xs text-orange-400 mt-1 font-jost whitespace-normal break-words max-w-[150px] ${item.direcao ? 'hover:text-orange-200 cursor-pointer select-none' : ''}`}
+                                  title={item.direcao ? "Clique para copiar Direção" : undefined}
+                                >
+                                  <span dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.direcao || '—') }} />
+                                  {copiedKey === `${item.id}-direcao` && (
+                                    <span className="copy-balloon font-mono">Copied!</span>
+                                  )}
+                                </div>
                               </div>
                               <div className="p-3 w-24 text-center flex-shrink-0">
                                 <button onClick={() => {
