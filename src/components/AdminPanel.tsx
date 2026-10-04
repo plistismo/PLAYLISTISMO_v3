@@ -413,33 +413,18 @@ export default function AdminPanel({
 
   if (displayMode === 'drawer') {
     return (
-      <div className="flex flex-col w-full text-neutral-100 font-jost font-['Jost',sans-serif] overflow-visible [&_.rich-text-input]:!font-jost [&_.rich-text-input]:!text-neutral-100 [&_.rich-text-input]:!normal-case [&_.rich-text-input]:!bg-neutral-900 [&_.rich-text-input]:!border-amber-500/30 [&_.rich-text-input]:focus:!border-amber-400 [&_label]:!font-jost [&_label]:!text-amber-500/80 [&_label]:!tracking-wider">
+      <div className="flex flex-col w-full h-full max-h-full text-neutral-100 font-jost font-['Jost',sans-serif] overflow-hidden [&_.rich-text-input]:!font-jost [&_.rich-text-input]:!text-neutral-100 [&_.rich-text-input]:!normal-case [&_.rich-text-input]:!bg-black [&_.rich-text-input]:!border-amber-500/30 [&_.rich-text-input]:focus:!border-amber-400 [&_label]:!font-jost [&_label]:!text-amber-500/80 [&_label]:!tracking-wider">
         {statusMsg.show && (
-          <div className={`p-2 mb-3 text-center text-base font-bold border rounded font-jost ${statusMsg.isError ? 'bg-red-900/80 text-white border-red-500' : 'bg-amber-900/40 text-amber-300 border-amber-500'}`}>
+          <div className={`p-1.5 px-3 mb-2 text-center text-xs md:text-sm font-bold border rounded font-jost shrink-0 ${statusMsg.isError ? 'bg-red-900/80 text-white border-red-500' : 'bg-amber-900/40 text-amber-300 border-amber-500'}`}>
             {statusMsg.text}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[65vh] overflow-y-auto custom-scrollbar p-1 pr-2 font-jost">
-          {/* Top Info Bar of Drawer Form */}
-          <div className="flex items-center justify-between pb-2 border-b border-amber-500/40 font-jost">
-            <span className="text-base md:text-lg font-bold tracking-wider text-amber-400 font-jost uppercase">
-              {isEditing ? `TRANSMISSION UNIT #${formData.id} // ACTIVE EDIT` : 'NEW UNIT CALIBRATION // ALL FREQUENCIES'}
-            </span>
-            {isEditing && (
-              <button 
-                type="button" 
-                onClick={clearForm} 
-                className="text-xs text-amber-500/80 hover:text-amber-300 transition-colors uppercase tracking-wider font-jost border border-amber-900/40 px-2 py-0.5 rounded bg-black/40"
-              >
-                + Reset / New Unit
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Col 1 */}
-            <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden font-jost">
+          {/* Scrollable Form Body: horizontal grids with compact inputs */}
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-2 pr-1 pb-1">
+            {/* Row 1: Artist & Track (prominent side-by-side) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="relative">
                 <RichTextInput
                   label="ARTISTA *"
@@ -448,9 +433,11 @@ export default function AdminPanel({
                   onChange={val => setFormData({ ...formData, artista: val })}
                   onFocus={() => setActiveField('artista')}
                   placeholder="Ex: Oasis"
+                  compact
+                  icon="🎤"
                 />
                 {activeField === 'artista' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm font-jost">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-36 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -459,7 +446,7 @@ export default function AdminPanel({
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
+                        className="px-2.5 py-1.5 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
                       >
                         {val}
                       </div>
@@ -475,73 +462,36 @@ export default function AdminPanel({
                   value={formData.musica}
                   onChange={val => setFormData({ ...formData, musica: val })}
                   placeholder="Ex: Wonderwall"
+                  compact
+                  icon="🎼"
                 />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
-                <div className="sm:col-span-4">
-                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">ANO</label>
-                  <input 
-                    type="number" 
-                    value={formData.ano} 
-                    onChange={e => setFormData({...formData, ano: e.target.value})} 
-                    className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-neutral-200 placeholder:text-neutral-500 font-jost font-semibold tracking-wide rounded-sm" 
-                    placeholder="1995" 
-                  />
-                </div>
-
-                <div className="sm:col-span-8 relative">
-                  <RichTextInput
-                    label="ÁLBUM"
-                    field="album"
-                    value={formData.album}
-                    onChange={val => setFormData({ ...formData, album: val })}
-                    onFocus={() => setActiveField('album')}
-                    placeholder="(What's the Story) Morning Glory?"
-                  />
-                  {activeField === 'album' && suggestions.length > 0 && (
-                    <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm font-jost">
-                      {suggestions.map((val, i) => (
-                        <div 
-                          key={i} 
-                          onClick={() => {
-                            setFormData({...formData, album: formatCreditsConnectors(val, 'album')});
-                            setActiveField(null);
-                            setSuggestions([]);
-                          }}
-                          className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
-                        >
-                          {val}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
 
-            {/* Col 2 */}
-            <div className="space-y-4">
-              <div className="relative">
+            {/* Row 2: Album, Year (Ano 4-digit), and Direção */}
+            <div className="flex flex-col sm:flex-row items-end gap-2">
+              <div className="flex-1 min-w-0 w-full sm:w-auto relative">
                 <RichTextInput
-                  label="DIREÇÃO"
-                  field="direcao"
-                  value={formData.direcao}
-                  onChange={val => setFormData({ ...formData, direcao: val })}
-                  onFocus={() => setActiveField('direcao')}
-                  placeholder="Diretor do Videoclipe"
+                  label="ÁLBUM"
+                  field="album"
+                  value={formData.album}
+                  onChange={val => setFormData({ ...formData, album: val })}
+                  onFocus={() => setActiveField('album')}
+                  placeholder="(What's the Story) Morning Glory?"
+                  compact
+                  icon="💽"
                 />
-                {activeField === 'direcao' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm font-jost">
+                {activeField === 'album' && suggestions.length > 0 && (
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-36 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
                         onClick={() => {
-                          setFormData({...formData, direcao: formatCreditsConnectors(val, 'direcao')});
+                          setFormData({...formData, album: formatCreditsConnectors(val, 'album')});
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-base border-b border-amber-900/20 last:border-0"
+                        className="px-2.5 py-1.5 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
                       >
                         {val}
                       </div>
@@ -550,57 +500,134 @@ export default function AdminPanel({
                 )}
               </div>
 
-              <div className="group">
-                <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">VIDEO ID (YouTube ou Vimeo)</label>
-                <div className="flex gap-2">
+              {/* Ano Input - Constrained to 4 digits: w-20 max-w-[5.5rem] */}
+              <div className="w-20 sm:w-24 shrink-0">
+                <label className="block text-[9px] md:text-[10px] text-amber-500/80 uppercase mb-0.5 font-bold tracking-wider font-jost flex items-center gap-1">
+                  <span>📅</span> ANO
+                </label>
+                <input 
+                  type="text" 
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={formData.ano} 
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setFormData({...formData, ano: val});
+                  }} 
+                  className="w-full px-2 py-1.5 bg-black border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-sm md:text-base text-center text-neutral-100 placeholder:text-neutral-600 font-jost font-bold tracking-wider rounded-sm min-h-[34px]" 
+                  placeholder="1995" 
+                />
+              </div>
+
+              <div className="flex-1 min-w-0 w-full sm:w-auto relative">
+                <RichTextInput
+                  label="DIREÇÃO"
+                  field="direcao"
+                  value={formData.direcao}
+                  onChange={val => setFormData({ ...formData, direcao: val })}
+                  onFocus={() => setActiveField('direcao')}
+                  placeholder="Diretor do Videoclipe"
+                  compact
+                  icon="🎬"
+                />
+                {activeField === 'direcao' && suggestions.length > 0 && (
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-36 overflow-y-auto custom-scrollbar rounded-sm font-jost">
+                    {suggestions.map((val, i) => (
+                      <div 
+                        key={i} 
+                        onClick={() => {
+                          setFormData({...formData, direcao: formatCreditsConnectors(val, 'direcao')});
+                          setActiveField(null);
+                          setSuggestions([]);
+                        }}
+                        className="px-2.5 py-1.5 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
+                      >
+                        {val}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Row 3: Video ID + Multi-Playlist / Canais */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-start">
+              {/* Video ID */}
+              <div className="sm:col-span-5">
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost flex items-center gap-1">
+                    <span>📺</span> VIDEO ID
+                  </label>
+                  {formData.video_id.trim() && (
+                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border font-jost ${
+                      /^\d+$/.test(formData.video_id.trim())
+                        ? 'bg-cyan-950/60 text-cyan-400 border-cyan-500/40'
+                        : 'bg-red-950/60 text-red-400 border-red-500/40'
+                    }`}>
+                      {/^\d+$/.test(formData.video_id.trim()) ? '🟦 Vimeo' : '🟥 YouTube'}
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-1.5">
                   <input 
                     type="text" 
                     value={formData.video_id} 
                     onChange={e => setFormData({...formData, video_id: e.target.value})} 
-                    className="flex-1 px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-lg text-neutral-100 placeholder:text-neutral-500 font-jost rounded-sm" 
-                    placeholder="6hzrDeceEKc ou 76979871" 
+                    className="flex-1 px-2.5 py-1.5 bg-black border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-sm text-neutral-100 placeholder:text-neutral-600 font-jost rounded-sm min-h-[34px]" 
+                    placeholder="6hzrDeceEKc / 76979871" 
                   />
                   {onPreview && (
                     <button 
                       type="button" 
                       onClick={() => onPreview(formData.video_id)} 
-                      className="bg-cyan-900/30 text-cyan-400 border border-cyan-500/50 px-3 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-1.5 rounded-sm font-jost"
+                      className="bg-cyan-900/30 text-cyan-400 border border-cyan-500/50 px-2.5 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-1 rounded-sm font-jost shrink-0"
                       title="PREVIEW VIDEO"
                     >
-                      <span className="text-base">▶</span>
-                      <span className="text-xs font-bold font-jost tracking-wider">PREVIEW</span>
+                      <span className="text-xs">▶</span>
+                      <span className="text-[10px] font-bold font-jost tracking-wider">PREVIEW</span>
                     </button>
                   )}
                 </div>
-                {formData.video_id.trim() && (
-                  <div className={`mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full border font-jost ${
-                    /^\d+$/.test(formData.video_id.trim())
-                      ? 'bg-cyan-900/30 text-cyan-400 border-cyan-500/40'
-                      : 'bg-red-900/30 text-red-400 border-red-500/40'
-                  }`}>
-                    <span>{/^\d+$/.test(formData.video_id.trim()) ? '🟦 VIMEO detectado' : '🟥 YOUTUBE detectado'}</span>
-                  </div>
-                )}
               </div>
 
               {/* Multi-Playlist section */}
-              <div className="space-y-2 pt-2 border-t border-amber-900/30 font-jost">
-                {currentPlaylists.length > 0 && (
-                  <div className="group">
-                    <label className="block text-[10px] text-amber-500/70 uppercase mb-1 font-bold tracking-widest font-jost">Canais Atuais (Database)</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {currentPlaylists.map(pl => (
-                        <span key={pl} className="px-2.5 py-0.5 bg-neutral-900 text-neutral-200 border border-neutral-700 text-xs font-jost rounded-full">
-                          {pl}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <div className="sm:col-span-7">
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost flex items-center gap-1">
+                    <span>📡</span> CANAIS (PLAYLISTS)
+                  </label>
+                  {currentPlaylists.length > 0 && (
+                    <span className="text-[9px] text-neutral-400 font-mono">
+                      {currentPlaylists.length} vinculado(s)
+                    </span>
+                  )}
+                </div>
 
-                <div className="group relative">
-                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">Adicionar a outros canais</label>
-                  <div className="relative">
+                <div className="flex flex-wrap items-center gap-1.5 min-h-[34px] p-1 bg-black/60 border border-amber-900/40 rounded-sm">
+                  {/* Current Playlists in Database */}
+                  {currentPlaylists.map(pl => (
+                    <span key={pl} className="px-2 py-0.5 bg-neutral-900 text-neutral-300 border border-neutral-700/60 text-[10px] font-jost rounded-full shrink-0">
+                      {pl}
+                    </span>
+                  ))}
+
+                  {/* New Playlists to Add */}
+                  {newPlaylistsToAdd.map(pl => (
+                    <span key={pl} className="flex items-center gap-1 px-2 py-0.5 bg-amber-950/60 text-amber-300 border border-amber-500/50 text-[10px] font-jost rounded-full shrink-0">
+                      <span>{pl}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setNewPlaylistsToAdd(prev => prev.filter(p => p !== pl))}
+                        className="hover:text-white transition-colors text-xs leading-none"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+
+                  {/* Quick search input to add */}
+                  <div className="relative flex-1 min-w-[110px]">
                     <input 
                       type="text" 
                       value={playlistSearch} 
@@ -612,7 +639,7 @@ export default function AdminPanel({
                             p.toLowerCase().includes(search) && 
                             !currentPlaylists.includes(p) && 
                             !newPlaylistsToAdd.includes(p)
-                          ).slice(0, 10);
+                          ).slice(0, 8);
                           setPlaylistSuggestions(filtered);
                           setShowPlaylistDropdown(true);
                         } else {
@@ -622,11 +649,11 @@ export default function AdminPanel({
                       onFocus={() => {
                         if (playlistSearch.length > 0) setShowPlaylistDropdown(true);
                       }}
-                      className="w-full px-3 py-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-base text-neutral-100 placeholder:text-neutral-500 font-jost rounded-sm" 
-                      placeholder="Buscar canal..." 
+                      className="w-full px-2 py-0.5 bg-transparent border-none outline-none text-xs text-neutral-100 placeholder:text-neutral-600 font-jost" 
+                      placeholder="+ Vincular canal..." 
                     />
                     {showPlaylistDropdown && playlistSuggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-neutral-950 border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-44 overflow-y-auto custom-scrollbar rounded-sm font-jost">
+                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-neutral-950 border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-36 overflow-y-auto custom-scrollbar rounded-sm font-jost">
                         {playlistSuggestions.map((pl, i) => (
                           <div 
                             key={i} 
@@ -635,7 +662,7 @@ export default function AdminPanel({
                               setPlaylistSearch('');
                               setShowPlaylistDropdown(false);
                             }}
-                            className="px-3 py-2 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
+                            className="px-2.5 py-1.5 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-xs border-b border-amber-900/20 last:border-0"
                           >
                             {pl}
                           </div>
@@ -644,41 +671,34 @@ export default function AdminPanel({
                     )}
                   </div>
                 </div>
-
-                {newPlaylistsToAdd.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {newPlaylistsToAdd.map(pl => (
-                      <div key={pl} className="flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-950/60 text-amber-300 border border-amber-500/50 text-xs font-jost rounded-full">
-                        <span>{pl}</span>
-                        <button 
-                          type="button" 
-                          onClick={() => setNewPlaylistsToAdd(prev => prev.filter(p => p !== pl))}
-                          className="hover:text-white transition-colors text-sm leading-none"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </div>
 
-          {/* Action Button Row */}
-          <div className="flex items-center gap-3 pt-3 border-t border-amber-500/40">
+          {/* Action Button Row - Pinned at bottom, always visible within drawer */}
+          <div className="shrink-0 flex items-center gap-2 pt-2 border-t border-amber-500/30">
             <button 
               type="submit" 
               disabled={isSaving} 
-              className="flex-1 py-3 bg-amber-900/30 border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-black font-bold text-2xl tracking-widest transition-all shadow-[0_0_15px_rgba(217,119,6,0.2)] active:translate-y-0.5 rounded-sm uppercase font-vt323"
+              className="flex-1 py-1.5 md:py-2 bg-amber-900/40 border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-black font-bold text-xl md:text-2xl tracking-widest transition-all shadow-[0_0_12px_rgba(217,119,6,0.25)] active:translate-y-0.5 rounded-sm uppercase font-vt323"
             >
               {isSaving ? "TRANSMITTING..." : (isEditing ? "UPDATE RECORDS" : "COMMIT TO DB")}
             </button>
+            {isEditing && (
+              <button 
+                type="button" 
+                onClick={clearForm} 
+                className="px-3 py-1.5 md:py-2 bg-black/60 border border-amber-900/50 text-amber-400/90 hover:text-amber-200 hover:bg-amber-950/60 font-vt323 text-lg md:text-xl tracking-wider rounded-sm uppercase transition-all shrink-0"
+                title="Limpar formulário para criar nova unidade"
+              >
+                + New Unit
+              </button>
+            )}
             {onClose && (
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-3 bg-zinc-900/80 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-all text-xl font-vt323 tracking-wider rounded-sm uppercase"
+                className="px-3 md:px-4 py-1.5 md:py-2 bg-zinc-900/80 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-all text-lg md:text-xl font-vt323 tracking-wider rounded-sm uppercase shrink-0"
               >
                 Close Drawer
               </button>

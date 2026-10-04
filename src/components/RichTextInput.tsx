@@ -8,6 +8,8 @@ interface RichTextInputProps {
   placeholder?: string;
   onFocus?: () => void;
   field: 'artista' | 'musica' | 'album' | 'direcao' | 'video_id';
+  compact?: boolean;
+  icon?: string;
 }
 
 // Helper to save current cursor selection in contentEditable
@@ -103,12 +105,12 @@ export const unwrapConnectorSpans = (html: string): string => {
  * Applies live relational connector formatting:
  * Tokens: case-insensitive ft., feat., feat, ft, vs., vs, &, &amp;, comma, and brackets 「...」
  * Wrapped in lighter font weight (font-normal / font-weight: 400) with opacity-80.
+ * Preserves trailing spaces and &nbsp; entities so active typing is never swallowed.
  */
 export const formatCreditsConnectors = (html: string, field?: string): string => {
   if (!html) return '';
 
-  const htmlCleaned = html.replace(/&nbsp;/gi, ' ');
-  const cleaned = unwrapConnectorSpans(htmlCleaned);
+  const cleaned = unwrapConnectorSpans(html);
   const parts = cleaned.split(/(<[^>]+>)/g);
 
   // Relational connectors apply to Artista, Musica (Track), and Direcao
@@ -128,7 +130,16 @@ export const formatCreditsConnectors = (html: string, field?: string): string =>
   return parts.join('');
 };
 
-const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, placeholder, onFocus, field }) => {
+const RichTextInput: React.FC<RichTextInputProps> = ({
+  value,
+  onChange,
+  label,
+  placeholder,
+  onFocus,
+  field,
+  compact = false,
+  icon,
+}) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const isBoldField = field === 'artista' || field === 'musica';
 
@@ -172,6 +183,10 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Prevent spacebar from bubbling up to any global video play/pause or scroll handlers
+    if (e.key === ' ' || e.code === 'Space') {
+      e.stopPropagation();
+    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
       e.preventDefault();
       execCommand('bold');
@@ -208,18 +223,19 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
 
   return (
     <div className="group relative">
-      <div className="flex justify-between items-end mb-1">
-        <label className="text-xs text-amber-500/80 uppercase font-bold tracking-wider font-['Jost',sans-serif] group-focus-within:text-amber-400 transition-colors">
-          {label}
+      <div className={`flex justify-between items-end ${compact ? 'mb-0.5' : 'mb-1'}`}>
+        <label className={`${compact ? 'text-[9px] md:text-[10px]' : 'text-xs'} text-amber-500/80 uppercase font-bold tracking-wider font-['Jost',sans-serif] group-focus-within:text-amber-400 transition-colors flex items-center gap-1`}>
+          {icon && <span>{icon}</span>}
+          <span>{label}</span>
         </label>
-        <div className="flex gap-1 bg-black border border-amber-900/30 rounded-t px-1 py-0.5 opacity-40 group-focus-within:opacity-100 transition-opacity">
+        <div className={`flex gap-1 bg-black border border-amber-900/30 rounded-t px-1 ${compact ? 'py-0 opacity-30 group-focus-within:opacity-100 scale-90 origin-bottom-right' : 'py-0.5 opacity-40 group-focus-within:opacity-100'} transition-opacity`}>
           <button
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
               execCommand('bold');
             }}
-            className="w-5 h-5 flex items-center justify-center text-[10px] font-bold hover:bg-amber-500 hover:text-black rounded transition-colors"
+            className={`${compact ? 'w-4 h-4 text-[9px]' : 'w-5 h-5 text-[10px]'} flex items-center justify-center font-bold hover:bg-amber-500 hover:text-black rounded transition-colors`}
             title="Bold (Ctrl+B)"
           >B</button>
           <button
@@ -228,7 +244,7 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
               e.preventDefault();
               execCommand('italic');
             }}
-            className="w-5 h-5 flex items-center justify-center text-[10px] italic hover:bg-amber-500 hover:text-black rounded transition-colors"
+            className={`${compact ? 'w-4 h-4 text-[9px]' : 'w-5 h-5 text-[10px]'} flex items-center justify-center italic hover:bg-amber-500 hover:text-black rounded transition-colors`}
             title="Italic (Ctrl+I)"
           >I</button>
           <button
@@ -237,7 +253,7 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
               e.preventDefault();
               insertVersionSymbols();
             }}
-            className="px-1 h-5 flex items-center justify-center text-[10px] hover:bg-amber-500 hover:text-black rounded transition-colors"
+            className={`${compact ? 'px-0.5 h-4 text-[9px]' : 'px-1 h-5 text-[10px]'} flex items-center justify-center hover:bg-amber-500 hover:text-black rounded transition-colors`}
             title="Insert Version Brackets"
           >「」</button>
         </div>
@@ -250,18 +266,21 @@ const RichTextInput: React.FC<RichTextInputProps> = ({ value, onChange, label, p
         onPaste={handlePaste}
         onKeyDown={handleKeyDown}
         onFocus={onFocus}
-        className={`w-full p-2 bg-black border border-amber-900/50 outline-none focus:border-amber-400 text-lg min-h-[44px] break-words rich-text-input font-['Jost',sans-serif] ${
+        className={`w-full bg-black border border-amber-900/50 outline-none focus:border-amber-400 break-words whitespace-pre-wrap rich-text-input font-['Jost',sans-serif] ${
+          compact ? 'p-1.5 px-2 text-sm md:text-base min-h-[34px] leading-tight rounded-sm' : 'p-2 text-lg min-h-[44px]'
+        } ${
           isBoldField
             ? 'font-bold text-[#f8f8f8] tracking-[0.03em] field-bold'
             : 'font-semibold text-white/90 tracking-[0.02em] field-semibold'
         }`}
-        style={{ fontWeight: isBoldField ? 700 : 600 }}
+        style={{ fontWeight: isBoldField ? 700 : 600, whiteSpace: 'pre-wrap' }}
         data-placeholder={placeholder}
       />
 
       <style>{`
         .rich-text-input {
           font-family: 'Jost', sans-serif !important;
+          white-space: pre-wrap !important;
         }
         .rich-text-input.field-bold {
           font-weight: 700 !important;

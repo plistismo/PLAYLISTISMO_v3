@@ -440,6 +440,28 @@ export default function Home({ session }: { session: Session | null }) {
     });
   };
 
+  // Global Shortcut: Spacebar for Play/Pause / Power (ignores if user is typing in INPUT, TEXTAREA, or contentEditable)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        const activeEl = document.activeElement as HTMLElement | null;
+        if (
+          activeEl &&
+          (['INPUT', 'TEXTAREA'].includes(activeEl.tagName) ||
+           activeEl.isContentEditable ||
+           (activeEl.getAttribute && activeEl.getAttribute('contenteditable') === 'true'))
+        ) {
+          return;
+        }
+        e.preventDefault();
+        togglePower();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   const loadDefaultChannel = () => {
     const allPlaylists: string[] = [];
     Object.values(channelsByCategory).forEach((list: any) => {
@@ -800,31 +822,31 @@ export default function Home({ session }: { session: Session | null }) {
               inert={!isEditDrawerOpen}
               className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-jost ${
                 isEditDrawerOpen
-                  ? 'max-h-[38vh] opacity-100 mb-2 md:mb-3 translate-y-0'
+                  ? 'max-h-[50vh] opacity-100 mb-2 md:mb-3 translate-y-0'
                   : 'max-h-0 opacity-0 mb-0 -translate-y-6 pointer-events-none'
               }`}
             >
-              <div className="bg-neutral-950/95 backdrop-blur-md border border-neutral-800 border-b-2 border-b-amber-500/40 rounded-2xl p-2.5 md:p-4 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(245,158,11,0.18)] relative font-jost max-h-[38vh] flex flex-col overflow-hidden">
+              <div className="bg-neutral-950/95 backdrop-blur-md border border-neutral-800 border-b-2 border-b-amber-500/40 rounded-2xl p-2 md:p-3 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(245,158,11,0.18)] relative font-jost max-h-[50vh] flex flex-col overflow-hidden">
                 
                 {/* Header Visor do Hardware */}
-                <div className="flex items-center justify-between border-b border-amber-500/40 pb-2.5 mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse"></span>
-                    <span className="text-[11px] md:text-xs font-black uppercase tracking-[0.25em] text-amber-300 font-jost">
+                <div className="flex items-center justify-between border-b border-amber-500/40 pb-1.5 mb-2 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse"></span>
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.25em] text-amber-300 font-jost">
                       SERVICE MODE // {adminEditId ? `EDIT UNIT #${adminEditId}` : 'NEW UNIT CALIBRATION'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     {/* Josefin Font Toggle */}
-                    <div className="flex items-center gap-2 bg-black/60 px-2.5 py-1 rounded border border-amber-900/40 font-jost">
-                      <label htmlFor="toggle-josefin-drawer" className="text-[10px] md:text-xs text-amber-500/80 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
+                    <div className="flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded border border-amber-900/40 font-jost">
+                      <label htmlFor="toggle-josefin-drawer" className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
                         Josefin Sans
                       </label>
                       <button
                         id="toggle-josefin-drawer"
                         type="button"
                         onClick={() => setUseJosefinFont(prev => !prev)}
-                        className={`relative w-8 h-4 rounded-full border transition-all duration-300 focus:outline-none ${
+                        className={`relative w-7 h-3.5 rounded-full border transition-all duration-300 focus:outline-none ${
                           useJosefinFont
                             ? 'bg-amber-500 border-amber-400'
                             : 'bg-black border-amber-900/50'
@@ -833,8 +855,8 @@ export default function Home({ session }: { session: Session | null }) {
                         title="Alternar fonte dos créditos para Josefin Sans"
                       >
                         <span
-                          className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform duration-300 ${
-                            useJosefinFont ? 'translate-x-4' : 'translate-x-0'
+                          className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-transform duration-300 ${
+                            useJosefinFont ? 'translate-x-3.5' : 'translate-x-0'
                           }`}
                         />
                       </button>
@@ -851,7 +873,7 @@ export default function Home({ session }: { session: Session | null }) {
                 </div>
 
                 {/* Hardware Display Rebaixado (shadow-inner) */}
-                <div className="bg-neutral-900 border-2 border-black rounded-xl p-3 md:p-4 shadow-[inset_0_4px_18px_rgba(0,0,0,0.95)] relative font-jost">
+                <div className="bg-neutral-900 border-2 border-black rounded-xl p-2 md:p-3 shadow-[inset_0_4px_18px_rgba(0,0,0,0.95)] relative font-jost flex-1 min-h-0 flex flex-col overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 via-yellow-400 via-amber-500 to-orange-500 opacity-80"></div>
                   
                   <AdminPanel
