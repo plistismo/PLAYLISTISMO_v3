@@ -116,6 +116,7 @@ export default function Home({ session }: { session: Session | null }) {
   const [isReady, setIsReady] = useState(false);
   const [lastSavedRecord, setLastSavedRecord] = useState<VideoData | null>(null);
   const [useJosefinFont, setUseJosefinFont] = useState(false);
+  const [autoFetchMetadata, setAutoFetchMetadata] = useState(true);
 
   // MATRIX Module State
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
@@ -849,6 +850,31 @@ export default function Home({ session }: { session: Session | null }) {
                     </span>
                   </div>
                   <div className="flex items-center gap-2.5">
+                    {/* Auto-Fetch Metadata Toggle */}
+                    <div className="flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded border border-amber-900/40 font-jost">
+                      <label htmlFor="toggle-autofetch-drawer" className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
+                        Auto-Fetch Metadata
+                      </label>
+                      <button
+                        id="toggle-autofetch-drawer"
+                        type="button"
+                        onClick={() => setAutoFetchMetadata(prev => !prev)}
+                        className={`relative w-7 h-3.5 rounded-full border transition-all duration-300 focus:outline-none ${
+                          autoFetchMetadata
+                            ? 'bg-amber-500 border-amber-400'
+                            : 'bg-black border-amber-900/50'
+                        }`}
+                        aria-pressed={autoFetchMetadata}
+                        title="Alternar busca automática de metadados ao colar Video ID"
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-transform duration-300 ${
+                            autoFetchMetadata ? 'translate-x-3.5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
                     {/* Josefin Font Toggle */}
                     <div className="flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded border border-amber-900/40 font-jost">
                       <label htmlFor="toggle-josefin-drawer" className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
@@ -892,6 +918,8 @@ export default function Home({ session }: { session: Session | null }) {
                     session={session}
                     editId={adminEditId}
                     displayMode="drawer"
+                    autoFetchMetadata={autoFetchMetadata}
+                    onAutoFetchMetadataChange={setAutoFetchMetadata}
                     onClose={() => setIsEditDrawerOpen(false)}
                     onSave={(newData) => {
                       fetchGuideData();
@@ -1720,6 +1748,8 @@ export default function Home({ session }: { session: Session | null }) {
                 session={session}
                 editId={adminEditId}
                 displayMode="table"
+                autoFetchMetadata={autoFetchMetadata}
+                onAutoFetchMetadataChange={setAutoFetchMetadata}
                 onEdit={(id) => {
                   setAdminEditId(id);
                   setIsEditDrawerOpen(true);

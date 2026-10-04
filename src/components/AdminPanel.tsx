@@ -32,13 +32,24 @@ interface AdminPanelProps {
   initialPlaylist?: string;
   onRestartPlayer?: (videoId?: string) => void;
   lastSavedRecord?: MusicEntry | null;
+  autoFetchMetadata?: boolean;
+  onAutoFetchMetadataChange?: (val: boolean) => void;
 }
 
 export default function AdminPanel({ 
   session, editId, onEdit, onClose, onSave, onPreview, 
   displayMode = 'full', playingId, initialPlaylist,
-  onRestartPlayer, lastSavedRecord 
+  onRestartPlayer, lastSavedRecord,
+  autoFetchMetadata: propAutoFetchMetadata,
+  onAutoFetchMetadataChange
 }: AdminPanelProps) {
+  const [internalAutoFetch, setInternalAutoFetch] = useState(true);
+  const autoFetchMetadata = propAutoFetchMetadata !== undefined ? propAutoFetchMetadata : internalAutoFetch;
+  const setAutoFetchMetadata = (val: boolean | ((prev: boolean) => boolean)) => {
+    const nextVal = typeof val === 'function' ? val(autoFetchMetadata) : val;
+    setInternalAutoFetch(nextVal);
+    if (onAutoFetchMetadataChange) onAutoFetchMetadataChange(nextVal);
+  };
   const [data, setData] = useState<MusicEntry[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [playlists, setPlaylists] = useState<string[]>([]);
@@ -108,26 +119,115 @@ export default function AdminPanel({
     }
   };
 
-  // Video ID Quick Paste
+  // Video ID Quick Paste & Universal Extraction
   const [videoIdPasted, setVideoIdPasted] = useState(false);
+  const [isSyncingMetadata, setIsSyncingMetadata] = useState(false);
 
   const extractVideoId = (input: string): string => {
     const trimmed = input.trim();
-    const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/i);
+    // YouTube URLs: watch?v=, youtu.be/, shorts/, embed/, v/
+    const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/i);
     if (ytMatch && ytMatch[1]) return ytMatch[1];
-    const vimeoMatch = trimmed.match(/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/[^\/]+\/videos\/|video\/|)(\d+)/i);
+    // Vimeo URLs: channels, groups, video, player.vimeo.com
+    const vimeoMatch = trimmed.match(/(?:vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/[^\/]+\/videos\/|video\/|)|player\.vimeo\.com\/video\/)(\d+)/i);
     if (vimeoMatch && vimeoMatch[1]) return vimeoMatch[1];
     return trimmed;
+  };
+
+  const triggerMetadataSync = async (cleanId: string) => {
+    if (!cleanId) return;
+    setIsSyncingMetadata(true);
+    try {
+      // 1. Query Supabase musicas_backup for existing record
+      const { data: record } = await supabase
+        .from('musicas_backup')
+        .select('*')
+        .eq('video_id', cleanId)
+        .order('id', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (record) {
+        setFormData(prev => ({
+          ...prev,
+          video_id: cleanId,
+          artista: formatCreditsConnectors(record.artista || '', 'artista'),
+          musica: formatCreditsConnectors(record.musica || '', 'musica'),
+          ano: record.ano || prev.ano || '',
+          album: record.album ? formatCreditsConnectors(record.album, 'album') : prev.album,
+          direcao: record.direcao ? formatCreditsConnectors(record.direcao, 'direcao') : prev.direcao
+        }));
+
+        // Link playlists if available
+        const { data: related } = await supabase
+          .from('musicas_backup')
+          .select('playlist')
+          .eq('video_id', cleanId);
+        if (related && related.length > 0) {
+          const uniquePlaylists = [...new Set(related.map(r => r.playlist).filter(Boolean))] as string[];
+          setCurrentPlaylists(uniquePlaylists);
+        }
+      } else {
+        // Fallback: Check YouTube oEmbed if not already in database
+        const isVimeo = /^\d+$/.test(cleanId);
+        if (!isVimeo) {
+          try {
+            const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${cleanId}&format=json`);
+            if (res.ok) {
+              const ytData = await res.json();
+              if (ytData?.title) {
+                let artist = ytData.author_name || '';
+                let track = ytData.title;
+                const splitMatch = ytData.title.match(/^(.+?)\s*[-–—]\s*(.+)$/);
+                if (splitMatch) {
+                  artist = splitMatch[1].trim();
+                  track = splitMatch[2].replace(/\s*\([^)]*(?:official|video|audio|remaster|hd|4k)[^)]*\)/gi, '').trim();
+                }
+                setFormData(prev => ({
+                  ...prev,
+                  artista: prev.artista ? prev.artista : formatCreditsConnectors(artist, 'artista'),
+                  musica: prev.musica ? prev.musica : formatCreditsConnectors(track, 'musica')
+                }));
+              }
+            }
+          } catch (oembedErr) {
+            // Silently ignore network/oembed error
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Metadata sync notice:', err);
+    } finally {
+      setIsSyncingMetadata(false);
+    }
+  };
+
+  const handleVideoIdPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    if (!text) return;
+    const cleanId = extractVideoId(text);
+    setFormData(prev => ({ ...prev, video_id: cleanId }));
+    setVideoIdPasted(true);
+    setTimeout(() => setVideoIdPasted(false), 900);
+
+    if (autoFetchMetadata) {
+      triggerMetadataSync(cleanId);
+    }
   };
 
   const handlePasteVideoId = async () => {
     try {
       const text = await navigator.clipboard.readText();
       if (text) {
-        const extracted = extractVideoId(text);
-        setFormData(prev => ({ ...prev, video_id: extracted }));
+        const cleanId = extractVideoId(text);
+        setFormData(prev => ({ ...prev, video_id: cleanId }));
         setVideoIdPasted(true);
         setTimeout(() => setVideoIdPasted(false), 900);
+
+        if (autoFetchMetadata) {
+          triggerMetadataSync(cleanId);
+        }
       }
     } catch (err) {
       console.warn('Failed to read clipboard for video ID:', err);
@@ -633,12 +733,40 @@ export default function AdminPanel({
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-start">
               {/* Video ID */}
               <div className="sm:col-span-5">
-                <div className="flex items-center justify-between mb-0.5">
-                  <label className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost flex items-center gap-1">
-                    <span>📺</span> VIDEO ID
-                  </label>
+                <div className="flex items-center justify-between mb-0.5 gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <label className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost flex items-center gap-1 shrink-0">
+                      <span>📺</span> VIDEO ID
+                    </label>
+                    {/* Auto-Fetch Metadata Toggle */}
+                    <label 
+                      className="inline-flex items-center gap-1 cursor-pointer select-none px-1.5 py-0.5 rounded bg-black/70 border border-amber-900/40 hover:border-amber-600/50 transition-colors"
+                      title="Auto-Fetch Metadata: Sincroniza metadados do Supabase automaticamente ao colar"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={autoFetchMetadata}
+                        onChange={e => setAutoFetchMetadata(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`w-4 h-2 rounded-full border transition-all duration-200 relative ${
+                        autoFetchMetadata 
+                          ? 'bg-amber-600 border-amber-400' 
+                          : 'bg-neutral-900 border-neutral-700'
+                      }`}>
+                        <div className={`w-1 h-1 rounded-full transition-all duration-200 absolute top-0.5 ${
+                          autoFetchMetadata ? 'left-2.5 bg-amber-100 shadow-[0_0_3px_#f59e0b]' : 'left-0.5 bg-neutral-400'
+                        }`} />
+                      </div>
+                      <span className={`text-[8px] md:text-[9px] font-mono tracking-tight uppercase whitespace-nowrap ${
+                        autoFetchMetadata ? 'text-amber-400 font-semibold' : 'text-neutral-500'
+                      }`}>
+                        Auto-Fetch Metadata
+                      </span>
+                    </label>
+                  </div>
                   {formData.video_id.trim() && (
-                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border font-jost ${
+                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border font-jost shrink-0 ${
                       /^\d+$/.test(formData.video_id.trim())
                         ? 'bg-cyan-950/60 text-cyan-400 border-cyan-500/40'
                         : 'bg-red-950/60 text-red-400 border-red-500/40'
@@ -652,16 +780,20 @@ export default function AdminPanel({
                     type="text" 
                     value={formData.video_id} 
                     onChange={e => setFormData({...formData, video_id: e.target.value})} 
+                    onPaste={handleVideoIdPaste}
                     className="flex-1 min-w-0 px-2.5 py-1.5 bg-black border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-sm text-neutral-100 placeholder:text-neutral-600 font-jost rounded-sm min-h-[34px]" 
                     placeholder="6hzrDeceEKc / 76979871" 
                   />
                   <button
                     type="button"
                     onClick={handlePasteVideoId}
-                    className="bg-amber-950/40 text-amber-400 border border-amber-500/40 px-2 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center rounded-sm font-jost shrink-0 min-h-[34px] text-xs"
+                    className="bg-amber-950/40 text-amber-400 border border-amber-500/40 px-2 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center rounded-sm font-jost shrink-0 min-h-[34px] text-xs relative"
                     title="Colar Video ID (Paste)"
                   >
                     {videoIdPasted ? <span className="text-emerald-400 font-bold">✓</span> : '📋'}
+                    {isSyncingMetadata && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                    )}
                   </button>
                   {onPreview && (
                     <button 
@@ -984,16 +1116,56 @@ export default function AdminPanel({
                 </div>
 
                 <div className="group">
-                  <label className="block text-xs text-amber-500/80 uppercase mb-1 font-bold tracking-wider font-jost">VIDEO ID (YouTube ou Vimeo)</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs text-amber-500/80 uppercase font-bold tracking-wider font-jost">
+                      VIDEO ID (YouTube ou Vimeo)
+                    </label>
+                    {/* Auto-Fetch Metadata Toggle */}
+                    <label 
+                      className="inline-flex items-center gap-1.5 cursor-pointer select-none px-1.5 py-0.5 rounded bg-black/60 border border-amber-900/40 hover:border-amber-600/50 transition-colors"
+                      title="Auto-Fetch Metadata: Sincroniza metadados do Supabase automaticamente ao colar"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={autoFetchMetadata}
+                        onChange={e => setAutoFetchMetadata(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`w-5 h-2.5 rounded-full border transition-all duration-200 relative ${
+                        autoFetchMetadata 
+                          ? 'bg-amber-600 border-amber-400' 
+                          : 'bg-neutral-900 border-neutral-700'
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full transition-all duration-200 absolute top-0.5 ${
+                          autoFetchMetadata ? 'left-2.5 bg-amber-100 shadow-[0_0_3px_#f59e0b]' : 'left-0.5 bg-neutral-400'
+                        }`} />
+                      </div>
+                      <span className={`text-[9px] font-mono tracking-tight uppercase ${
+                        autoFetchMetadata ? 'text-amber-400 font-semibold' : 'text-neutral-500'
+                      }`}>
+                        Auto-Fetch Metadata
+                      </span>
+                    </label>
+                  </div>
                   <div className="flex gap-2">
-                    <input type="text" value={formData.video_id} onChange={e => setFormData({...formData, video_id: e.target.value})} className="flex-1 min-w-0 p-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 text-lg text-neutral-100 font-jost rounded-sm" placeholder="6hzrDeceEKc ou 76979871" />
+                    <input 
+                      type="text" 
+                      value={formData.video_id} 
+                      onChange={e => setFormData({...formData, video_id: e.target.value})} 
+                      onPaste={handleVideoIdPaste}
+                      className="flex-1 min-w-0 p-2 bg-neutral-900 border border-amber-500/30 outline-none focus:border-amber-400 text-lg text-neutral-100 font-jost rounded-sm" 
+                      placeholder="6hzrDeceEKc ou 76979871" 
+                    />
                     <button
                       type="button"
                       onClick={handlePasteVideoId}
-                      className="bg-amber-950/40 text-amber-400 border border-amber-500/40 px-3 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center rounded-sm font-jost shrink-0 text-sm"
+                      className="bg-amber-950/40 text-amber-400 border border-amber-500/40 px-3 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center rounded-sm font-jost shrink-0 text-sm relative"
                       title="Colar Video ID (Paste)"
                     >
                       {videoIdPasted ? <span className="text-emerald-400 font-bold">✓</span> : '📋'}
+                      {isSyncingMetadata && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                      )}
                     </button>
                     {onPreview && (
                       <button 
