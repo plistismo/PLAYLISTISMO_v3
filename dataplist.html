@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataPlist — Curadoria de Clipes</title>
+  
+  <!-- html2pdf.js CDN para geração de relatórios PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    /* ==========================================================================
+       RESET & ROOT VARIABLES (MTV / DARK BROADCAST AESTHETIC)
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-color: #050507;
+      --card-bg: #111114;
+      --border-accent: #f59e0b; /* Âmbar / Amarelo MTV */
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dark: #374151;
+      --border-dim: #26262e;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.4;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      padding-bottom: 80px;
+    }
+
+    /* ==========================================================================
+       TOP CONTROL BAR (INTERACTIVE & FILTER CONTROLS)
+       ========================================================================== */
+    .control-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(14, 14, 18, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #22222a;
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 260px;
+      max-width: 460px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: #08080a;
+      border: 1px solid #2e2e38;
+      border-radius: 6px;
+      color: #fff;
+      padding: 10px 14px 10px 38px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    .sort-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sort-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .sort-btn {
+      background: #17171d;
+      border: 1px solid #2e2e3a;
+      color: #d1d5db;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sort-btn:hover {
+      background: #24242e;
+      color: #fff;
+      border-color: #4b5563;
+    }
+
+    .sort-btn.active {
+      background: var(--border-accent);
+      color: #000;
+      border-color: var(--border-accent);
+      font-weight: 800;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+    }
+
+    .status-counter {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      background: #121217;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #22222c;
+    }
+
+    /* ==========================================================================
+       MAIN REPORT CONTAINER (CAPTURED FOR PDF & SCREEN)
+       Internal padding visually simulates PDF margins (since margin: 0)
+       ========================================================================== */
+    .report-container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 32px 28px;
+      background-color: var(--bg-color);
+      min-height: 100vh;
+    }
+
+    /* ==========================================================================
+       HEADER (MTV AESTHETIC)
+       ========================================================================== */
+    .report-header {
+      border-bottom: 2px solid #22222c;
+      padding-bottom: 24px;
+      margin-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .channel-logo {
+      max-height: 80px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7));
+    }
+
+    .channel-title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+
+    .header-meta-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #18181f;
+      border: 1px solid #31313e;
+      color: var(--border-accent);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .header-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      background: #0d0d10;
+      border: 1px solid #1f1f26;
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .stat-value.highlight {
+      color: var(--border-accent);
+    }
+
+    /* ==========================================================================
+       CLIP LIST & CLIP BOX (.clip-box)
+       Strict adherence to 3-column Grid & page-break-inside avoid
+       ========================================================================== */
+    .clips-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .clip-box {
+      /* CRÍTICO PARA O PDF: Evita corte do card entre páginas */
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      -webkit-column-break-inside: avoid;
+      
+      background: var(--card-bg);
+      border-left: 4px solid var(--border-accent);
+      border-top: 1px solid #1a1a20;
+      border-right: 1px solid #1a1a20;
+      border-bottom: 1px solid #1a1a20;
+      border-radius: 4px;
+      padding: 12px 18px;
+      display: grid;
+      grid-template-columns: 60px 2fr 1fr;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+
+    .clip-box:hover {
+      background-color: #17171d;
+      border-color: #2b2b36;
+      border-left-color: var(--border-accent);
+    }
+
+    /* Coluna 1: Posição original com fonte grande e escura */
+    .clip-col-pos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pos-number {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--text-dark);
+      letter-spacing: -1px;
+      line-height: 1;
+      user-select: none;
+    }
+
+    /* Coluna 2: Informações Principais */
+    .clip-col-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .clip-header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+      letter-spacing: -0.2px;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .clip-header-title .artist-part {
+      color: #ffffff;
+    }
+
+    .clip-header-title .song-part {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    .clip-meta-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .meta-icon {
+      font-size: 11px;
+      opacity: 0.8;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Coluna 3: Informações Secundárias (separada por borda tracejada) */
+    .clip-col-sec {
+      border-left: 1px dashed var(--border-dim);
+      padding-left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .sec-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .sec-label {
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .sec-value {
+      color: #d1d5db;
+      font-weight: 600;
+    }
+
+    .tags-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .tag-pill {
+      background: #1c1c24;
+      border: 1px solid #2e2e3a;
+      color: #9ca3af;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    /* ==========================================================================
+       FLOATING DOWNLOAD PDF BUTTON (.no-print)
+       ========================================================================== */
+    .floating-download-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 1000;
+      background: var(--border-accent);
+      color: #000;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 24px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4), 0 2px 6px rgba(0, 0, 0, 0.8);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .floating-download-btn:hover {
+      background: #fbbf24;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.5), 0 4px 10px rgba(0, 0, 0, 0.9);
+    }
+
+    .floating-download-btn:active {
+      transform: translateY(0);
+    }
+
+    .floating-download-btn:disabled {
+      background: #4b5563;
+      color: #9ca3af;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* Estado Vazio */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: #0d0d11;
+      border: 1px dashed #282834;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .empty-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       MEDIA PRINT & REGRAS ESPECÍFICAS PARA PDF
+       ========================================================================== */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+
+      body {
+        background-color: #050507 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        padding-bottom: 0 !important;
+      }
+
+      .report-container {
+        padding: 12mm !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+      }
+
+      .clip-box {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        -webkit-column-break-inside: avoid;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE CONTROLE SUPERIOR (INTERATIVA / NÃO IMPRIME) -->
+  <div class="control-bar no-print">
+    <div class="search-wrapper">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        id="search-input" 
+        class="search-input" 
+        placeholder="Buscar por Artista, Música, Diretor, Ano ou Tag..." 
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="sort-group">
+      <span class="sort-label">Ordenar:</span>
+      <button type="button" class="sort-btn active" data-sort="original" id="btn-sort-original">Original</button>
+      <button type="button" class="sort-btn" data-sort="az" id="btn-sort-az">A-Z</button>
+      <button type="button" class="sort-btn" data-sort="views" id="btn-sort-views">Most Views</button>
+    </div>
+
+    <div class="status-counter" id="status-counter">
+      Carregando clipes...
+    </div>
+  </div>
+
+  <!-- CONTAINER PRINCIPAL DO RELATÓRIO (RENDERIZADO NO PDF) -->
+  <main class="report-container" id="report-container">
+    
+    <!-- CABEÇALHO DO CANAL -->
+    <header class="report-header">
+      <div class="header-top">
+        <div class="brand-section">
+          <!-- Logo do Canal (Se houver logoUrl válida) -->
+          <img id="channel-logo" class="channel-logo" style="display: none;" alt="Logo do Canal" />
+          
+          <!-- Nome do Canal (Exibido apenas se não houver logo) -->
+          <h1 id="channel-name-title" class="channel-title">Canal Playlistismo</h1>
+        </div>
+
+        <div>
+          <span class="header-meta-badge" id="channel-group-badge">GRUPO: GERAL</span>
+        </div>
+      </div>
+
+      <!-- GRID DE ESTATÍSTICAS DA PLAYLIST -->
+      <div class="header-stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Total de Clipes</span>
+          <span class="stat-value highlight" id="stat-total-clips">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Duração Total</span>
+          <span class="stat-value" id="stat-total-duration">00:00:00</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total de Visualizações</span>
+          <span class="stat-value" id="stat-total-views">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Gerado Em</span>
+          <span class="stat-value" id="stat-generated-date" style="font-size: 14px; font-weight: 600;">--/--/----</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- LISTA DE CLIPES (CSS GRID 3-COLUNAS) -->
+    <section class="clips-list" id="clips-list">
+      <!-- Inserido dinamicamente via JS -->
+    </section>
+
+    <!-- ESTADO VAZIO -->
+    <div class="empty-state" id="empty-state" style="display: none;">
+      <div class="empty-icon">📼</div>
+      <div class="empty-title">Nenhum clipe encontrado</div>
+      <div class="empty-desc">Tente ajustar os termos de busca ou redefinir a ordenação.</div>
+    </div>
+
+  </main>
+
+  <!-- BOTÃO FLUTUANTE DE DOWNLOAD DO PDF (.no-print) -->
+  <button 
+    type="button" 
+    id="btn-download-pdf" 
+    class="floating-download-btn no-print" 
+    title="Baixar relatório em PDF com formatação profissional"
+  >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+    <span>Download PDF</span>
+  </button>
+
+  <!-- JAVASCRIPT DE LÓGICA E INTERATIVIDADE -->
+  <script>
+    (function () {
+      'use strict';
+
+      // ======================================================================
+      // ESTADO GLOBAL DA APLICAÇÃO
+      // ======================================================================
+      let channelData = null;
+      let rawClips = [];
+      let currentFilterText = '';
+      let currentSortMode = 'original'; // 'original' | 'az' | 'views'
+
+      // ======================================================================
+      // DADOS DE DEMONSTRAÇÃO (CASO O LOCALSTORAGE ESTEJA VAZIO)
+      // ======================================================================
+      const DEMO_CHANNEL_DATA = {
+        channelName: "MTV Classic 90s",
+        groupName: "ERAS",
+        logoUrl: "",
+        clips: [
+          {
+            artist: "Nirvana",
+            song: "Smells Like Teen Spirit",
+            year: "1991",
+            director: "Samuel Bayer",
+            views: 1850000000,
+            duration: "04:38",
+            dateAdded: "2024-01-15T12:00:00Z",
+            tags: ["Grunge", "Rock Alternativo", "90s"]
+          },
+          {
+            artist: "Beastie Boys",
+            song: "Sabotage",
+            year: "1994",
+            director: "Spike Jonze",
+            views: 115000000,
+            duration: "03:04",
+            dateAdded: "2024-02-10T14:30:00Z",
+            tags: ["Hip-Hop", "Rock", "Clássico"]
+          },
+          {
+            artist: "Daft Punk",
+            song: "Around the World",
+            year: "1997",
+            director: "Michel Gondry",
+            views: 290000000,
+            duration: "04:02",
+            dateAdded: "2024-03-01T09:15:00Z",
+            tags: ["Eletrônica", "House", "França"]
+          },
+          {
+            artist: "Björk",
+            song: "Bachelorette",
+            year: "1997",
+            director: "Michel Gondry",
+            views: 42000000,
+            duration: "05:12",
+            dateAdded: "2024-03-22T11:00:00Z",
+            tags: ["Experimental", "Art Pop", "Trip-Hop"]
+          },
+          {
+            artist: "Radiohead",
+            song: "Karma Police",
+            year: "1997",
+            director: "Jonathan Glazer",
+            views: 260000000,
+            duration: "04:24",
+            dateAdded: "2024-04-05T18:45:00Z",
+            tags: ["Alt-Rock", "OK Computer", "90s"]
+          },
+          {
+            artist: "Fatboy Slim",
+            song: "Praise You",
+            year: "1999",
+            director: "Spike Jonze",
+            views: 89000000,
+            duration: "03:48",
+            dateAdded: "2024-05-12T16:20:00Z",
+            tags: ["Big Beat", "Dança", "MTV Award"]
+          }
+        ]
+      };
+
+      // ======================================================================
+      // HELPERS DE FORMATAÇÃO E CÁLCULO
+      // ======================================================================
+      function escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // Converte duração em diversos formatos (MM:SS, HH:MM:SS, segundos, etc.) para segundos
+      function parseDurationToSeconds(duration) {
+        if (!duration) return 0;
+        if (typeof duration === 'number') return Math.floor(duration);
+
+        const str = String(duration).trim();
+        // Caso formato ISO 8601 (ex: PT3M21S)
+        if (str.startsWith('PT')) {
+          const matchH = str.match(/(\d+)H/);
+          const matchM = str.match(/(\d+)M/);
+          const matchS = str.match(/(\d+)S/);
+          const h = matchH ? parseInt(matchH[1], 10) : 0;
+          const m = matchM ? parseInt(matchM[1], 10) : 0;
+          const s = matchS ? parseInt(matchS[1], 10) : 0;
+          return h * 3600 + m * 60 + s;
+        }
+
+        // Caso minutos:segundos ou horas:minutos:segundos
+        if (str.includes(':')) {
+          const parts = str.split(':').map(p => parseInt(p, 10) || 0);
+          if (parts.length === 2) {
+            return parts[0] * 60 + parts[1];
+          } else if (parts.length === 3) {
+            return parts[0] * 3600 + parts[1] * 60 + parts[2];
+          }
+        }
+
+        // Apenas dígitos numéricos representando segundos
+        const numeric = parseInt(str, 10);
+        return isNaN(numeric) ? 0 : numeric;
+      }
+
+      // Converte segundos totais para formato HH:MM:SS
+      function formatTotalDuration(totalSec) {
+        const hours = Math.floor(totalSec / 3600);
+        const minutes = Math.floor((totalSec % 3600) / 60);
+        const seconds = totalSec % 60;
+        return [
+          String(hours).padStart(2, '0'),
+          String(minutes).padStart(2, '0'),
+          String(seconds).padStart(2, '0')
+        ].join(':');
+      }
+
+      // Formata números de visualizações em K ou M
+      function formatViews(views) {
+        const n = Number(views) || 0;
+        if (n >= 1000000) {
+          return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+        }
+        if (n >= 1000) {
+          return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+        }
+        return n.toLocaleString('pt-BR');
+      }
+
+      // Formata data ISO para DD/MM/AAAA
+      function formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        try {
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return dateStr;
+          return d.toLocaleDateString('pt-BR');
+        } catch (_) {
+          return dateStr;
+        }
+      }
+
+      // Formata a posição original com 2 dígitos (01, 02...)
+      function formatPosition(num) {
+        return String(num).padStart(2, '0');
+      }
+
+      // ======================================================================
+      // INICIALIZAÇÃO E CARREGAMENTO DO LOCALSTORAGE
+      // ======================================================================
+      function loadData() {
+        const rawJson = localStorage.getItem('dadosDataPlist');
+        if (rawJson) {
+          try {
+            channelData = JSON.parse(rawJson);
+          } catch (e) {
+            console.error('Falha ao decodificar JSON do localStorage:', e);
+          }
+        }
+
+        // Fallback para dados de demonstração se nada for encontrado
+        if (!channelData || !channelData.clips || channelData.clips.length === 0) {
+          console.warn('Nenhum dado encontrado em localStorage ("dadosDataPlist"). Utilizando dados demonstrativos.');
+          channelData = DEMO_CHANNEL_DATA;
+        }
+
+        // Normalização dos clipes mantendo o índice original
+        rawClips = (channelData.clips || []).map((clip, index) => {
+          // Normaliza arrays de tags
+          let tags = [];
+          if (Array.isArray(clip.tags)) {
+            tags = clip.tags;
+          } else if (typeof clip.tags === 'string' && clip.tags.trim()) {
+            tags = clip.tags.split(',').map(t => t.trim()).filter(Boolean);
+          }
+
+          return {
+            originalIndex: index + 1,
+            artist: clip.artist || clip.artista || 'Desconhecido',
+            song: clip.song || clip.musica || 'Sem título',
+            year: clip.year || clip.ano || '',
+            director: clip.director || clip.direcao || '',
+            views: Number(clip.views || clip.view_count) || 0,
+            duration: clip.duration || '00:00',
+            dateAdded: clip.dateAdded || clip.date_creation || clip.published_at || '',
+            tags: tags
+          };
+        });
+
+        renderHeader();
+        renderClips();
+      }
+
+      // ======================================================================
+      // RENDERIZAÇÃO DO CABEÇALHO
+      // ======================================================================
+      function renderHeader() {
+        const logoImg = document.getElementById('channel-logo');
+        const titleEl = document.getElementById('channel-name-title');
+        const groupBadge = document.getElementById('channel-group-badge');
+        
+        const channelName = channelData.channelName || channelData.name || 'Canal Sem Nome';
+        const groupName = channelData.groupName || channelData.group || 'GERAL';
+        const logoUrl = channelData.logoUrl || channelData.marca_dagua_url;
+
+        // Regra de logotipo: Se houver logoUrl válida, exibe a imagem e oculta o título texto
+        if (logoUrl && typeof logoUrl === 'string' && logoUrl.trim().length > 0) {
+          logoImg.src = logoUrl;
+          logoImg.style.display = 'block';
+          titleEl.style.display = 'none';
+        } else {
+          logoImg.style.display = 'none';
+          titleEl.textContent = channelName;
+          titleEl.style.display = 'block';
+        }
+
+        groupBadge.textContent = 'GRUPO: ' + groupName.toUpperCase();
+
+        // Cálculo da duração total e views somadas
+        let totalSeconds = 0;
+        let totalViews = 0;
+
+        rawClips.forEach(clip => {
+          totalSeconds += parseDurationToSeconds(clip.duration);
+          totalViews += (clip.views || 0);
+        });
+
+        document.getElementById('stat-total-clips').textContent = rawClips.length;
+        document.getElementById('stat-total-duration').textContent = formatTotalDuration(totalSeconds);
+        document.getElementById('stat-total-views').textContent = formatViews(totalViews);
+        document.getElementById('stat-generated-date').textContent = new Date().toLocaleDateString('pt-BR');
+      }
+
+      // ======================================================================
+      // FILTRAGEM, ORDENAÇÃO E RENDERIZAÇÃO DOS CLIPES
+      // ======================================================================
+      function getFilteredAndSortedClips() {
+        let list = [...rawClips];
+
+        // 1. Filtro de Busca em Tempo Real
+        if (currentFilterText.trim().length > 0) {
+          const query = currentFilterText.trim().toLowerCase();
+          list = list.filter(c => {
+            const artistMatch = c.artist.toLowerCase().includes(query);
+            const songMatch = c.song.toLowerCase().includes(query);
+            const directorMatch = c.director.toLowerCase().includes(query);
+            const yearMatch = String(c.year).toLowerCase().includes(query);
+            const tagsMatch = c.tags.some(t => t.toLowerCase().includes(query));
+            return artistMatch || songMatch || directorMatch || yearMatch || tagsMatch;
+          });
+        }
+
+        // 2. Ordenação
+        if (currentSortMode === 'az') {
+          list.sort((a, b) => a.artist.localeCompare(b.artist, 'pt-BR', { sensitivity: 'base' }));
+        } else if (currentSortMode === 'views') {
+          list.sort((a, b) => b.views - a.views);
+        } else {
+          // 'original': segue a ordem original
+          list.sort((a, b) => a.originalIndex - b.originalIndex);
+        }
+
+        return list;
+      }
+
+      function renderClips() {
+        const clipsContainer = document.getElementById('clips-list');
+        const emptyState = document.getElementById('empty-state');
+        const counterEl = document.getElementById('status-counter');
+
+        const activeClips = getFilteredAndSortedClips();
+
+        counterEl.textContent = `Exibindo ${activeClips.length} de ${rawClips.length} clipes`;
+
+        if (activeClips.length === 0) {
+          clipsContainer.innerHTML = '';
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        emptyState.style.display = 'none';
+
+        const html = activeClips.map(clip => {
+          // Tags formatadas como rounded pills
+          const tagsHTML = clip.tags.length > 0
+            ? `<div class="tags-list">${clip.tags.map(t => `<span class="tag-pill">${escapeHTML(t)}</span>`).join('')}</div>`
+            : '';
+
+          const directorDisplay = clip.director ? escapeHTML(clip.director) : 'Não informado';
+          const yearDisplay = clip.year ? escapeHTML(clip.year) : 'N/A';
+
+          return `
+            <article class="clip-box">
+              <!-- Coluna 1: Posição original com fonte grande e escura -->
+              <div class="clip-col-pos">
+                <span class="pos-number">${formatPosition(clip.originalIndex)}</span>
+              </div>
+
+              <!-- Coluna 2: Informações Principais -->
+              <div class="clip-col-main">
+                <h2 class="clip-header-title">
+                  <span class="artist-part">${escapeHTML(clip.artist)}</span>
+                  <span style="opacity: 0.6; margin: 0 4px;">—</span>
+                  <span class="song-part">${escapeHTML(clip.song)}</span>
+                </h2>
+                <div class="clip-meta-line">
+                  <span class="meta-icon">📅</span>
+                  <span>Ano: ${yearDisplay}</span>
+                </div>
+                <div class="clip-meta-line">
+                  <span class="meta-icon">🎬</span>
+                  <span>Direção: ${directorDisplay}</span>
+                </div>
+              </div>
+
+              <!-- Coluna 3: Informações Secundárias com borda tracejada -->
+              <div class="clip-col-sec">
+                <div class="sec-row">
+                  <span class="sec-label">⏱ Duração:</span>
+                  <span class="sec-value">${escapeHTML(clip.duration)}</span>
+                </div>
+                <div class="sec-row">
+                  <span class="sec-label">👁 Views:</span>
+                  <span class="sec-value">${formatViews(clip.views)}</span>
+                </div>
+                <div class="sec-row">
+                  <span class="sec-label">📥 Adicionado:</span>
+                  <span class="sec-value">${formatDate(clip.dateAdded)}</span>
+                </div>
+                ${tagsHTML}
+              </div>
+            </article>
+          `;
+        }).join('');
+
+        clipsContainer.innerHTML = html;
+      }
+
+      // ======================================================================
+      // EVENTOS DE INTERATIVIDADE (BUSCA E ORDENAÇÃO)
+      // ======================================================================
+      function setupInteractivity() {
+        const searchInput = document.getElementById('search-input');
+        const sortButtons = document.querySelectorAll('.sort-btn');
+
+        // Busca em tempo real
+        searchInput.addEventListener('input', function (e) {
+          currentFilterText = e.target.value;
+          renderClips();
+        });
+
+        // Alternância de botões de ordenação
+        sortButtons.forEach(btn => {
+          btn.addEventListener('click', function () {
+            sortButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentSortMode = this.dataset.sort;
+            renderClips();
+          });
+        });
+
+        // Botão de Download do PDF
+        document.getElementById('btn-download-pdf').addEventListener('click', downloadPDF);
+      }
+
+      // ======================================================================
+      // GERAÇÃO DE PDF COM HTML2PDF.JS (SEM MARGENS / MARGIN: 0)
+      // ======================================================================
+      function downloadPDF() {
+        const btn = document.getElementById('btn-download-pdf');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `
+          <svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+          </svg>
+          <span>Gerando PDF...</span>
+        `;
+
+        // Alvo da captura: Elemento container do relatório
+        const element = document.getElementById('report-container');
+
+        // Nome do arquivo dinâmico com a data atual: DataPlist_[CurrentDate].pdf
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+        const filename = `DataPlist_${dateStr}.pdf`;
+
+        // Configuração estrita do html2pdf: margin: 0, scale 2 para alta resolução
+        const opt = {
+          margin: 0,
+          filename: filename,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#050507'
+          },
+          jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
+          },
+          pagebreak: {
+            mode: ['avoid-all', 'css', 'legacy']
+          }
+        };
+
+        if (typeof html2pdf === 'undefined') {
+          alert('Erro: Biblioteca html2pdf não foi carregada.');
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          return;
+        }
+
+        html2pdf()
+          .set(opt)
+          .from(element)
+          .save()
+          .then(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+          })
+          .catch(err => {
+            console.error('Erro ao gerar o PDF:', err);
+            alert('Erro ao gerar o PDF. Consulte o console para mais detalhes.');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+          });
+      }
+
+      // Inicialização imediata
+      document.addEventListener('DOMContentLoaded', () => {
+        loadData();
+        setupInteractivity();
+      });
+
+      // Executa de pronto se o DOM já estiver carregado
+      if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        loadData();
+        setupInteractivity();
+      }
+
+    })();
+  </script>
+</body>
+</html>

@@ -119,6 +119,106 @@ export default function AdminPanel({
     }
   };
 
+  // ─── DataPlist: Gerador de Relatório PDF para o Canal Ativo ─────────────────
+  const handleOpenDataPlist = async () => {
+    const targetPlaylist = selectedPlaylist || initialPlaylist;
+    if (!targetPlaylist) {
+      showMessage('SELECIONE UMA PLAYLIST / CANAL ANTES DE GERAR O DATAPLIST!', true);
+      return;
+    }
+
+    showMessage(`COLETANDO DADOS DO CANAL "${targetPlaylist}"...`);
+
+    try {
+      // 1. Captura metadados do canal (Logo URL, Grupo, etc.) na tabela playlists
+      const { data: channelMeta } = await supabase
+        .from('playlists')
+        .select('*')
+        .eq('name', targetPlaylist)
+        .maybeSingle();
+
+      // 2. Captura todos os clipes cadastrados nesta playlist
+      const { data: clipsRaw, error: clipsError } = await supabase
+        .from('musicas_backup')
+        .select('*')
+        .eq('playlist', targetPlaylist)
+        .order('id', { ascending: true });
+
+      if (clipsError) {
+        showMessage(`ERRO AO CARREGAR CLIPS: ${clipsError.message}`, true);
+        return;
+      }
+
+      const clipsList = clipsRaw || [];
+      if (clipsList.length === 0) {
+        showMessage(`NENHUM CLIPE ENCONTRADO NA PLAYLIST "${targetPlaylist}"`, true);
+        return;
+      }
+
+      const groupName = channelMeta?.group_name || playlistToGroup[targetPlaylist] || selectedGroup || 'GERAL';
+      const logoUrl = channelMeta?.marca_dagua_url || channelMeta?.logo_url || null;
+
+      // 3. Monta o array de clipes completo
+      const clips = clipsList.map((clip, idx) => {
+        let tags: string[] = [];
+        if (Array.isArray(clip.tags)) {
+          tags = clip.tags;
+        } else if (typeof clip.tags === 'string' && clip.tags.trim()) {
+          tags = clip.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+        } else {
+          // Tags derivadas inteligentemente caso a coluna não exista isolada
+          const derived = [clip.album, clip.playlist_group, clip.ano, clip.plataforma].filter(Boolean);
+          tags = [...new Set(derived)] as string[];
+        }
+
+        return {
+          id: clip.id,
+          position: idx + 1,
+          artist: clip.artista || 'Artista Desconhecido',
+          artista: clip.artista || 'Artista Desconhecido',
+          song: clip.musica || 'Sem Título',
+          musica: clip.musica || 'Sem Título',
+          year: clip.ano ? String(clip.ano) : '',
+          ano: clip.ano ? String(clip.ano) : '',
+          director: clip.direcao || '',
+          direcao: clip.direcao || '',
+          views: clip.view_count || clip.views || 0,
+          view_count: clip.view_count || clip.views || 0,
+          duration: clip.duration || '00:00',
+          dateAdded: clip.date_creation || clip.created_at || clip.published_at || '',
+          date_creation: clip.date_creation || clip.created_at || clip.published_at || '',
+          tags,
+          album: clip.album || '',
+          videoId: clip.video_id || ''
+        };
+      });
+
+      // 4. Objeto JSON completo do canal selecionado
+      const dataPlistPayload = {
+        channelName: targetPlaylist,
+        name: targetPlaylist,
+        groupName: groupName,
+        group: groupName,
+        logoUrl: logoUrl,
+        marca_dagua_url: logoUrl,
+        totalClips: clips.length,
+        generatedAt: new Date().toISOString(),
+        clips: clips
+      };
+
+      // 5. Salva temporariamente no localStorage
+      localStorage.setItem('dadosDataPlist', JSON.stringify(dataPlistPayload));
+
+      showMessage(`DATAPLIST PRONTO! ABRINDO RELATÓRIO...`);
+
+      // 6. Abre em nova aba
+      window.open('dataplist.html', '_blank');
+    } catch (err: any) {
+      console.error('Erro ao gerar DataPlist:', err);
+      showMessage(`ERRO AO GERAR DATAPLIST: ${err?.message || 'Falha inesperada'}`, true);
+    }
+  };
+
   // Video ID Quick Paste & Universal Extraction
   const [videoIdPasted, setVideoIdPasted] = useState(false);
   const [isSyncingMetadata, setIsSyncingMetadata] = useState(false);
@@ -950,7 +1050,17 @@ export default function AdminPanel({
             <h2 className="text-4xl font-bold tracking-widest uppercase text-amber-500 drop-shadow-[0_0_8px_rgba(217,119,6,0.3)]">Service Mode</h2>
             <p className="text-amber-700 text-sm uppercase tracking-wider">Database Manipulation Side-Unit // All Access</p>
           </div>
-          <button onClick={onClose} className="bg-amber-900/20 text-amber-500 border border-amber-800/50 w-10 h-10 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all text-2xl">×</button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleOpenDataPlist}
+              className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500 border border-amber-500/80 text-amber-300 hover:text-black font-vt323 tracking-widest text-xl transition-all flex items-center gap-2 shadow-[0_0_12px_rgba(245,158,11,0.25)] active:scale-95 cursor-pointer"
+              title="Gerar relatório em PDF (DataPlist) para o canal selecionado"
+            >
+              📄 DATAPLIST
+            </button>
+            <button onClick={onClose} className="bg-amber-900/20 text-amber-500 border border-amber-800/50 w-10 h-10 flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all text-2xl">×</button>
+          </div>
         </div>
       )}
 
@@ -974,7 +1084,19 @@ export default function AdminPanel({
               </div>
               
               <div className="group">
-                <label className="block text-[10px] opacity-50 mb-1 uppercase tracking-tighter text-amber-700 font-bold">Signal Source (Playlist)</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-[10px] opacity-50 uppercase tracking-tighter text-amber-700 font-bold">Signal Source (Playlist)</label>
+                  {(selectedPlaylist || initialPlaylist) && (
+                    <button
+                      type="button"
+                      onClick={handleOpenDataPlist}
+                      className="text-xs text-amber-400 hover:text-white uppercase tracking-wider font-vt323 hover:underline cursor-pointer flex items-center gap-1"
+                      title="Gerar relatório DataPlist para este canal"
+                    >
+                      📄 DataPlist
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
                   <select value={selectedPlaylist} onChange={e => setSelectedPlaylist(e.target.value)} className="bg-black border border-amber-900/50 text-white outline-none p-2 pl-8 w-full text-lg cursor-pointer focus:border-amber-500 transition-all appearance-none">
                     <option value="">ALL FREQUENCIES</option>

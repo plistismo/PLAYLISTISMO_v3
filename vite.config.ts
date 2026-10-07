@@ -18,7 +18,15 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          '@': path.resolve(import.meta.dirname, '.'),
+        }
+      },
+      build: {
+        rollupOptions: {
+          input: {
+            main: path.resolve(import.meta.dirname, 'index.html'),
+            dataplist: path.resolve(import.meta.dirname, 'dataplist.html'),
+          }
         }
       }
     };
