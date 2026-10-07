@@ -158,37 +158,47 @@ export default function AdminPanel({
       const groupName = channelMeta?.group_name || playlistToGroup[targetPlaylist] || selectedGroup || 'GERAL';
       const logoUrl = channelMeta?.marca_dagua_url || channelMeta?.logo_url || null;
 
-      // 3. Monta o array de clipes completo
+      // 3. Monta o array de clipes completo (limpando tags HTML pré-existentes do banco)
+      const cleanDBText = (val: any): string => {
+        if (!val && val !== 0) return '';
+        return decodeHTMLEntities(String(val).replace(/<[^>]*>?/gm, '')).trim();
+      };
+
       const clips = clipsList.map((clip, idx) => {
         let tags: string[] = [];
         if (Array.isArray(clip.tags)) {
-          tags = clip.tags;
+          tags = clip.tags.map(t => cleanDBText(t)).filter(Boolean);
         } else if (typeof clip.tags === 'string' && clip.tags.trim()) {
-          tags = clip.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+          tags = clip.tags.split(',').map((t: string) => cleanDBText(t)).filter(Boolean);
         } else {
           // Tags derivadas inteligentemente caso a coluna não exista isolada
           const derived = [clip.album, clip.playlist_group, clip.ano, clip.plataforma].filter(Boolean);
-          tags = [...new Set(derived)] as string[];
+          tags = [...new Set(derived.map(t => cleanDBText(t)))].filter(Boolean) as string[];
         }
+
+        const cleanArtist = cleanDBText(clip.artista) || 'Artista Desconhecido';
+        const cleanSong = cleanDBText(clip.musica) || 'Sem Título';
+        const cleanAlbum = cleanDBText(clip.album) || '';
+        const cleanDirector = cleanDBText(clip.direcao) || '';
 
         return {
           id: clip.id,
           position: idx + 1,
-          artist: clip.artista || 'Artista Desconhecido',
-          artista: clip.artista || 'Artista Desconhecido',
-          song: clip.musica || 'Sem Título',
-          musica: clip.musica || 'Sem Título',
+          artist: cleanArtist,
+          artista: cleanArtist,
+          song: cleanSong,
+          musica: cleanSong,
           year: clip.ano ? String(clip.ano) : '',
           ano: clip.ano ? String(clip.ano) : '',
-          director: clip.direcao || '',
-          direcao: clip.direcao || '',
+          director: cleanDirector,
+          direcao: cleanDirector,
           views: clip.view_count || clip.views || 0,
           view_count: clip.view_count || clip.views || 0,
           duration: clip.duration || '00:00',
           dateAdded: clip.date_creation || clip.created_at || clip.published_at || '',
           date_creation: clip.date_creation || clip.created_at || clip.published_at || '',
           tags,
-          album: clip.album || '',
+          album: cleanAlbum,
           videoId: clip.video_id || ''
         };
       });

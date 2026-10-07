@@ -391,6 +391,12 @@
       font-size: 13.5px;
     }
 
+    .line-director .director-connector {
+      font-weight: 400 !important;
+      opacity: 0.85;
+      color: #dfbfff;
+    }
+
     /* ==========================================================================
        FLOATING DOWNLOAD PDF BUTTON (.no-print)
        ========================================================================== */
@@ -698,8 +704,38 @@
       // ======================================================================
       // HELPERS DE FORMATAÇÃO E CÁLCULO
       // ======================================================================
+      
+      /**
+       * Remove completamente tags HTML e decodifica entidades pré-existentes do banco.
+       * Transforma códigos como <span style="...">...</span> e &amp; em texto puro 100% limpo.
+       */
+      function sanitizeAndStripHTML(str) {
+        if (!str && str !== 0) return '';
+        
+        // 1. Remove qualquer tag HTML (<span...>, </div>, etc.)
+        let clean = String(str).replace(/<\/?[^>]+(>|$)/g, '');
+
+        // 2. Decodifica entidades HTML comuns
+        clean = clean
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#039;/g, "'")
+          .replace(/&#39;/g, "'")
+          .replace(/&apos;/g, "'")
+          .replace(/&nbsp;/g, ' ');
+
+        // Segunda passada para entidades aninhadas (ex: &amp;amp; -> &)
+        if (clean.includes('&amp;') || clean.includes('&quot;')) {
+          clean = clean.replace(/&amp;/g, '&').replace(/&quot;/g, '"');
+        }
+
+        return clean.trim();
+      }
+
       function escapeHTML(str) {
-        if (!str) return '';
+        if (!str && str !== 0) return '';
         return String(str)
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
@@ -710,12 +746,13 @@
 
       /**
        * Helper para formatar o nome do artista com conectores NÃO-BOLD (font-weight: 400).
-       * Detecta: ft., feat., feat, ft, vs., vs, &, x, with, vírgulas e colchetes.
+       * Aplica sanitizeAndStripHTML antes de tudo para garantir que nenhuma tag antiga vaze.
        */
       function formatArtistName(name) {
-        if (!name) return 'Desconhecido';
-        
-        const safeName = escapeHTML(name);
+        const cleanName = sanitizeAndStripHTML(name);
+        if (!cleanName) return 'Desconhecido';
+
+        const safeName = escapeHTML(cleanName);
 
         const connectorRegex = /(「[^」]+」|(?<![a-zA-Z0-9À-ÿ])(?:feat\.|feat\b|ft\.|ft\b|vs\.|vs\b|with\b|x\b)(?![a-zA-Z0-9À-ÿ])|&amp;|&(?!(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-fA-F]+);)|(?<!\d),(?!\d))/gi;
 
@@ -725,14 +762,43 @@
       }
 
       /**
-       * Helper para exibir Álbum ou Tags com fallback elegante.
+       * Helper para formatar o nome da direção com conectores NÃO-BOLD (&, x, etc.) e sem tags antigas.
+       */
+      function formatDirectorName(director) {
+        const cleanDirector = sanitizeAndStripHTML(director);
+        if (!cleanDirector) return 'Direção não informada';
+
+        const safeDirector = escapeHTML(cleanDirector);
+
+        const connectorRegex = /(「[^」]+」|(?<![a-zA-Z0-9À-ÿ])(?:feat\.|feat\b|ft\.|ft\b|vs\.|vs\b|with\b|x\b|e\b)(?![a-zA-Z0-9À-ÿ])|&amp;|&(?!(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-fA-F]+);)|(?<!\d),(?!\d))/gi;
+
+        return safeDirector.replace(connectorRegex, function (match) {
+          return `<span class="director-connector" style="font-weight: 400;">${match}</span>`;
+        });
+      }
+
+      /**
+       * Helper para formatar o título da música sem tags antigas.
+       */
+      function formatSongTitle(song) {
+        const cleanSong = sanitizeAndStripHTML(song);
+        if (!cleanSong) return 'Sem título';
+        return escapeHTML(cleanSong);
+      }
+
+      /**
+       * Helper para exibir Álbum ou Tags com fallback elegante e sem tags antigas.
        */
       function formatAlbumOrTags(clip) {
-        if (clip.album && clip.album.trim()) {
-          return escapeHTML(clip.album.trim());
+        const cleanAlbum = sanitizeAndStripHTML(clip.album);
+        if (cleanAlbum) {
+          return escapeHTML(cleanAlbum);
         }
         if (clip.tags && clip.tags.length > 0) {
-          return clip.tags.map(t => escapeHTML(t)).join(' • ');
+          const cleanTags = clip.tags.map(t => sanitizeAndStripHTML(t)).filter(Boolean);
+          if (cleanTags.length > 0) {
+            return cleanTags.map(t => escapeHTML(t)).join(' • ');
+          }
         }
         return 'Single / Álbum não informado';
       }
@@ -822,15 +888,15 @@
 
           return {
             originalIndex: index + 1,
-            artist: clip.artist || clip.artista || 'Desconhecido',
-            song: clip.song || clip.musica || 'Sem título',
-            album: clip.album || '',
-            year: clip.year || clip.ano || '',
-            director: clip.director || clip.direcao || '',
+            artist: sanitizeAndStripHTML(clip.artist || clip.artista) || 'Desconhecido',
+            song: sanitizeAndStripHTML(clip.song || clip.musica) || 'Sem título',
+            album: sanitizeAndStripHTML(clip.album) || '',
+            year: sanitizeAndStripHTML(clip.year || clip.ano) || '',
+            director: sanitizeAndStripHTML(clip.director || clip.direcao) || '',
             views: Number(clip.views || clip.view_count) || 0,
-            duration: clip.duration || '00:00',
+            duration: sanitizeAndStripHTML(clip.duration) || '00:00',
             dateAdded: clip.dateAdded || clip.date_creation || clip.published_at || '',
-            tags: tags
+            tags: tags.map(t => sanitizeAndStripHTML(t)).filter(Boolean)
           };
         });
 
@@ -926,7 +992,6 @@
         emptyState.style.display = 'none';
 
         const html = activeClips.map(clip => {
-          const directorDisplay = clip.director ? escapeHTML(clip.director) : 'Direção não informada';
           const yearDisplay = clip.year ? escapeHTML(clip.year) : 'N/A';
           const albumOrTagsDisplay = formatAlbumOrTags(clip);
 
@@ -949,7 +1014,7 @@
                 <!-- Linha 2: Música (Branco Puro #FFFFFF, Jost, Bold, Destaque proeminente) -->
                 <div class="clip-info-line line-song">
                   <span class="info-emoji">🎶</span>
-                  <span class="info-text">${escapeHTML(clip.song)}</span>
+                  <span class="info-text">${formatSongTitle(clip.song)}</span>
                 </div>
 
                 <!-- Linha 3: Álbum / Tags (Ciano / Azul Neon, Jost, Bold) -->
@@ -964,10 +1029,10 @@
                   <span class="info-text">${yearDisplay}</span>
                 </div>
 
-                <!-- Linha 5: Direção (Roxo Neon, Jost, Bold) -->
+                <!-- Linha 5: Direção (Roxo Neon, Jost, Bold, Conectores não-bold) -->
                 <div class="clip-info-line line-director">
                   <span class="info-emoji">🎬︎</span>
-                  <span class="info-text">${directorDisplay}</span>
+                  <span class="info-text">${formatDirectorName(clip.director)}</span>
                 </div>
 
               </div>
