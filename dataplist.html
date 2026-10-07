@@ -167,12 +167,14 @@
        MAIN REPORT CONTAINER (CAPTURED FOR PDF & SCREEN)
        Internal padding visually simulates PDF margins (since margin: 0)
        ========================================================================== */
-    .report-container {
+    .report-container,
+    #report-container {
       width: 95%;
       max-width: 1800px;
       margin: 0 auto;
       padding: 32px 28px;
-      background-color: var(--bg-color);
+      background-color: #0a0a0a;
+      color: #f3f4f6;
       min-height: 100vh;
     }
 
@@ -1083,31 +1085,6 @@
           <span>Gerando PDF...</span>
         `;
 
-        const element = document.getElementById('report-container');
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0];
-        const filename = `DataPlist_${dateStr}.pdf`;
-
-        const opt = {
-          margin: 0,
-          filename: filename,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#0a0a0a'
-          },
-          jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
-          },
-          pagebreak: {
-            mode: ['avoid-all', 'css', 'legacy']
-          }
-        };
-
         if (typeof html2pdf === 'undefined') {
           alert('Erro: Biblioteca html2pdf não foi carregada.');
           btn.disabled = false;
@@ -1115,20 +1092,64 @@
           return;
         }
 
-        html2pdf()
-          .set(opt)
-          .from(element)
-          .save()
-          .then(() => {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-          })
-          .catch(err => {
-            console.error('Erro ao gerar o PDF:', err);
-            alert('Erro ao gerar o PDF.');
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+        const runGeneration = () => {
+          const element = document.getElementById('report-container');
+
+          // Força a cor de fundo explícita no elemento antes da renderização do canvas
+          element.style.backgroundColor = '#0a0a0a';
+
+          const today = new Date();
+          const dateStr = today.toISOString().split('T')[0];
+          const filename = `DataPlist_${dateStr}.pdf`;
+
+          const opt = {
+            margin: 0,
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              letterRendering: true,
+              backgroundColor: '#0a0a0a',
+              scrollY: 0,
+              scrollX: 0,
+              logging: false
+            },
+            jsPDF: {
+              unit: 'mm',
+              format: 'a4',
+              orientation: 'portrait'
+            },
+            pagebreak: {
+              mode: ['avoid-all', 'css', 'legacy']
+            }
+          };
+
+          html2pdf()
+            .set(opt)
+            .from(element)
+            .save()
+            .then(() => {
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+            })
+            .catch(err => {
+              console.error('Erro ao gerar o PDF:', err);
+              alert('Erro ao gerar o PDF.');
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+            });
+        };
+
+        // 1. Pré-carregamento das fontes do documento para evitar páginas em branco
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(runGeneration).catch(() => {
+            runGeneration();
           });
+        } else {
+          setTimeout(runGeneration, 300);
+        }
       }
 
       document.addEventListener('DOMContentLoaded', () => {
