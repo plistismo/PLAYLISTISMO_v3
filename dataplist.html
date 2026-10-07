@@ -482,6 +482,12 @@
         display: none !important;
       }
 
+      body, html, .report-container, #report-container {
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+      }
+
       body {
         background-color: #0a0a0a !important;
         -webkit-print-color-adjust: exact !important;
@@ -490,19 +496,33 @@
         padding-bottom: 0 !important;
       }
 
-      .report-container {
+      .report-container, #report-container {
         padding: 12mm !important;
         margin: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
         min-height: auto !important;
+        background-color: #0a0a0a !important;
       }
 
+      /* Compatibilidade html2canvas: flexbox ao invés de grid na renderização de impressão */
       .clip-box {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
         -webkit-column-break-inside: avoid;
         box-shadow: none !important;
+      }
+
+      /* Larguras explícitas para as colunas em flexbox */
+      .clip-col-pos {
+        flex: 0 0 60px !important;
+      }
+
+      .clip-col-details {
+        flex: 1 !important;
       }
     }
   </style>
@@ -516,6 +536,7 @@
       <input 
         type="text" 
         id="search-input" 
+        name="search-input"
         class="search-input" 
         placeholder="Buscar por Artista, Música, Diretor, Ano ou Álbum..." 
         autocomplete="off"
@@ -542,7 +563,7 @@
       <div class="header-top">
         <div class="brand-section">
           <!-- Logo do Canal (Se houver logoUrl válida) -->
-          <img id="channel-logo" class="channel-logo" style="display: none;" alt="Logo do Canal" />
+          <img id="channel-logo" class="channel-logo" style="display: none;" alt="Logo do Canal" crossorigin="anonymous" />
           
           <!-- Nome do Canal (Exibido apenas se não houver logo) -->
           <h1 id="channel-name-title" class="channel-title">Canal Playlistismo</h1>
@@ -921,6 +942,7 @@
 
         // Regra de logotipo: Se houver logoUrl válida, exibe a imagem e oculta o título texto
         if (logoUrl && typeof logoUrl === 'string' && logoUrl.trim().length > 0) {
+          logoImg.crossOrigin = 'anonymous';
           logoImg.src = logoUrl;
           logoImg.style.display = 'block';
           titleEl.style.display = 'none';
