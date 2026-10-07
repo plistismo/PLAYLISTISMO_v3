@@ -105,6 +105,7 @@ export default function Home({ session }: { session: Session | null }) {
   const [isBumping, setIsBumping] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [showCredits, setShowCredits] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [showPlaylistLabel, setShowPlaylistLabel] = useState(false);
   const [time, setTime] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -242,6 +243,7 @@ export default function Home({ session }: { session: Session | null }) {
       background: false,
     });
     vimeoPlayerRef.current.on('ended', () => {
+      setIsPlaying(false);
       if (isAdminSidebarOpenRef.current && adminEditIdRef.current) {
         console.log('VIMEO LOOPING VIDEO (EDIT MODE)');
         vimeoPlayerRef.current.setCurrentTime(0);
@@ -253,11 +255,16 @@ export default function Home({ session }: { session: Session | null }) {
     });
     vimeoPlayerRef.current.on('error', () => {
       console.warn('VIMEO ERROR: pulando para próximo vídeo');
+      setIsPlaying(false);
       handleVideoEnd();
     });
     vimeoPlayerRef.current.on('play', () => {
+      setIsPlaying(true);
       setStatus('');
       startCreditsMonitor();
+    });
+    vimeoPlayerRef.current.on('pause', () => {
+      setIsPlaying(false);
     });
     vimeoPlayerRef.current.on('timeupdate', (data: { seconds: number; duration: number }) => {
       const cur = data.seconds;
@@ -328,9 +335,13 @@ export default function Home({ session }: { session: Session | null }) {
   function onPlayerStateChange(event: any) {
     const YT_STATE = window.YT.PlayerState;
     if (event.data === YT_STATE.PLAYING) {
+      setIsPlaying(true);
       setStatus("");
       startCreditsMonitor();
+    } else if (event.data === YT_STATE.PAUSED) {
+      setIsPlaying(false);
     } else if (event.data === YT_STATE.ENDED) {
+      setIsPlaying(false);
       if (isAdminSidebarOpen && adminEditId) {
         console.log("LOOPING VIDEO (EDIT MODE)");
         playerRef.current?.seekTo(0);
@@ -443,14 +454,48 @@ export default function Home({ session }: { session: Session | null }) {
         else {
           if (activePlatform === 'vimeo') vimeoPlayerRef.current?.play();
           else playerRef.current?.playVideo();
+          setIsPlaying(true);
         }
       } else {
         playerRef.current?.pauseVideo();
         vimeoPlayerRef.current?.pause();
+        setIsPlaying(false);
         setShowPlaylistLabel(false);
       }
       return next;
     });
+  };
+
+  const togglePlayPause = () => {
+    if (!isOn) {
+      togglePower();
+      return;
+    }
+
+    if (activePlatform === 'vimeo') {
+      if (vimeoPlayerRef.current) {
+        if (isPlaying) {
+          vimeoPlayerRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          vimeoPlayerRef.current.play();
+          setIsPlaying(true);
+        }
+      }
+    } else {
+      if (playerRef.current) {
+        const state = typeof playerRef.current.getPlayerState === 'function'
+          ? playerRef.current.getPlayerState()
+          : -1;
+        if (state === window.YT?.PlayerState?.PLAYING || isPlaying) {
+          playerRef.current.pauseVideo();
+          setIsPlaying(false);
+        } else {
+          playerRef.current.playVideo();
+          setIsPlaying(true);
+        }
+      }
+    }
   };
 
   // Global Shortcut: Spacebar for Play/Pause / Power (ignores if user is typing in INPUT, TEXTAREA, or contentEditable)
@@ -1205,6 +1250,17 @@ export default function Home({ session }: { session: Session | null }) {
                       ></div>
                     </div>
 
+                    {/* Dynamic Invisible Overlay (Protective Interaction Layer) */}
+                    <div
+                      id="dynamic-player-overlay"
+                      className="absolute inset-0 cursor-pointer"
+                      style={{
+                        zIndex: 25,
+                        pointerEvents: (isAdmin && !isPlaying) ? 'none' : 'auto',
+                      }}
+                      onClick={togglePlayPause}
+                    />
+
                     {isBumping && (
                       <div className="absolute inset-0 z-[70] flex items-center justify-center bg-transparent pointer-events-none overflow-hidden bump-active">
                         <div className="relative w-full h-full flex items-center justify-center">
@@ -1271,7 +1327,7 @@ export default function Home({ session }: { session: Session | null }) {
                     </div>
 
                     <div 
-                      className={`credits-overlay ${showCredits ? 'visible' : ''} absolute bottom-6 left-6 md:bottom-8 md:left-8 z-50 space-y-1 md:space-y-1.5 ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"} drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] select-none`}
+                      className={`credits-overlay ${isOn && currentVideoData && (!isPlaying || showCredits) ? 'visible' : ''} absolute bottom-6 left-6 md:bottom-8 md:left-8 z-50 space-y-1 md:space-y-1.5 ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"} drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] select-none`}
                     >
                       {currentVideoData?.artista && (
                         <div className="credit-line flex items-start gap-2.5 text-base sm:text-lg md:text-xl">
@@ -1694,7 +1750,7 @@ export default function Home({ session }: { session: Session | null }) {
                   {filteredPlaylists.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
                       {filteredPlaylists.map((pl, idx) => {
-                        const isPlaying = pl.name === currentChannelName;
+                        const isChannelActive = pl.name === currentChannelName;
                         return (
                           <button
                             key={pl.name}
@@ -1702,18 +1758,18 @@ export default function Home({ session }: { session: Session | null }) {
                               loadChannelContent(pl.name);
                             }}
                             className={`w-full text-left p-2.5 px-3 uppercase text-xs md:text-sm font-bold transition-all border rounded-lg flex items-center justify-between group relative font-jost ${
-                              isPlaying
+                              isChannelActive
                                 ? 'bg-[#ffff00] text-[#0000aa] font-black border-yellow-300 shadow-[0_0_12px_rgba(255,255,0,0.4)] translate-y-0.5'
                                 : 'bg-[#121417] hover:bg-[#1c1f24] text-zinc-300 hover:text-white border-[#272b33] hover:border-yellow-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_3px_6px_rgba(0,0,0,0.8)] active:translate-y-0.5'
                             }`}
                           >
                             <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className={`text-[10px] font-mono shrink-0 ${isPlaying ? 'text-[#0000aa]/70 font-bold' : 'text-zinc-500'}`}>
+                              <span className={`text-[10px] font-mono shrink-0 ${isChannelActive ? 'text-[#0000aa]/70 font-bold' : 'text-zinc-500'}`}>
                                 {String(idx + 1).padStart(2, '0')}
                               </span>
                               <span className="truncate tracking-wider font-jost">{pl.name}</span>
                             </div>
-                            {isPlaying && (
+                            {isChannelActive && (
                               <span className="text-[9px] font-black ml-2 shrink-0 flex items-center gap-1 bg-[#0000aa] text-yellow-300 px-1.5 py-0.5 rounded shadow font-jost">
                                 <span className="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-ping"></span>
                                 ON AIR
