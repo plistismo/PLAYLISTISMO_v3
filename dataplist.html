@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DataPlist — Curadoria de Clipes</title>
   
+  <!-- Google Fonts: Jost e Josefin Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400;1,700&family=Jost:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" rel="stylesheet">
+
   <!-- html2pdf.js CDN para geração de relatórios PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     /* ==========================================================================
-       RESET & ROOT VARIABLES (MTV / DARK BROADCAST AESTHETIC)
+       RESET & ROOT VARIABLES (DESIGN SYSTEM: JOST, JOSEFIN SANS & NEON PALETTE)
        ========================================================================== */
     * {
       box-sizing: border-box;
@@ -19,20 +24,28 @@
     }
 
     :root {
-      --bg-color: #050507;
-      --card-bg: #111114;
-      --border-accent: #f59e0b; /* Âmbar / Amarelo MTV */
+      --bg-color: #0a0a0a;
+      --card-bg: #121215;
+      --border-accent: #f59e0b; /* Âmbar / Laranja */
       --text-main: #f3f4f6;
       --text-muted: #9ca3af;
-      --text-dark: #374151;
-      --border-dim: #26262e;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-main: 'Jost', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-display: 'Josefin Sans', sans-serif;
+
+      /* Paleta Neon Específica para as linhas do Clip Box */
+      --color-pos: #f59e0b;       /* Âmbar / Laranja (Coluna 1) */
+      --color-artist: #ff2a85;    /* Rosa Neon (Linha 1) */
+      --color-artist-conn: #ff85be; /* Conector não-bold mais suave */
+      --color-song: #ffffff;      /* Branco Puro (Linha 2) */
+      --color-album: #00e5ff;     /* Ciano / Azul Neon (Linha 3) */
+      --color-year: #facc15;      /* Amarelo Neon (Linha 4) */
+      --color-director: #c084fc;  /* Roxo Neon / Lilás (Linha 5) */
     }
 
     body {
       background-color: var(--bg-color);
       color: var(--text-main);
-      font-family: var(--font-family);
+      font-family: var(--font-main);
       line-height: 1.4;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -74,6 +87,7 @@
       color: #fff;
       padding: 10px 14px 10px 38px;
       font-size: 14px;
+      font-family: var(--font-main);
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
@@ -106,6 +120,7 @@
       color: var(--text-muted);
       font-weight: 700;
       margin-right: 4px;
+      font-family: var(--font-main);
     }
 
     .sort-btn {
@@ -116,6 +131,7 @@
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
+      font-family: var(--font-main);
       cursor: pointer;
       transition: all 0.2s ease;
       text-transform: uppercase;
@@ -144,6 +160,7 @@
       padding: 6px 12px;
       border-radius: 6px;
       border: 1px solid #22222c;
+      font-family: var(--font-main);
     }
 
     /* ==========================================================================
@@ -193,6 +210,7 @@
     .channel-title {
       font-size: 32px;
       font-weight: 800;
+      font-family: var(--font-display);
       letter-spacing: -0.5px;
       color: #ffffff;
       text-transform: uppercase;
@@ -210,6 +228,7 @@
       font-weight: 700;
       letter-spacing: 1px;
       text-transform: uppercase;
+      font-family: var(--font-main);
       margin-top: 4px;
     }
 
@@ -235,12 +254,14 @@
       letter-spacing: 0.8px;
       color: var(--text-muted);
       font-weight: 700;
+      font-family: var(--font-main);
     }
 
     .stat-value {
       font-size: 18px;
       font-weight: 800;
       color: #ffffff;
+      font-family: var(--font-display);
     }
 
     .stat-value.highlight {
@@ -248,13 +269,12 @@
     }
 
     /* ==========================================================================
-       CLIP LIST & CLIP BOX (.clip-box)
-       Strict adherence to 3-column Grid & page-break-inside avoid
+       CLIP LIST & REVAMPED .clip-box LAYOUT (2-COLUMN GRID + STACKED EMOJIS)
        ========================================================================== */
     .clips-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 14px;
     }
 
     .clip-box {
@@ -268,12 +288,12 @@
       border-top: 1px solid #1a1a20;
       border-right: 1px solid #1a1a20;
       border-bottom: 1px solid #1a1a20;
-      border-radius: 4px;
-      padding: 12px 18px;
+      border-radius: 6px;
+      padding: 16px 20px;
       display: grid;
-      grid-template-columns: 60px 2fr 1fr;
+      grid-template-columns: 60px 1fr;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       transition: transform 0.15s ease, background-color 0.15s ease;
     }
 
@@ -283,7 +303,7 @@
       border-left-color: var(--border-accent);
     }
 
-    /* Coluna 1: Posição original com fonte grande e escura */
+    /* ─── Coluna 1: Posição/ID (Far left, vertically centered, Josefin Sans, Bold, Âmbar) ─── */
     .clip-col-pos {
       display: flex;
       align-items: center;
@@ -291,103 +311,84 @@
     }
 
     .pos-number {
-      font-size: 26px;
-      font-weight: 900;
-      color: var(--text-dark);
-      letter-spacing: -1px;
+      font-family: var(--font-display);
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--color-pos);
+      letter-spacing: -0.5px;
       line-height: 1;
       user-select: none;
     }
 
-    /* Coluna 2: Informações Principais */
-    .clip-col-main {
+    /* ─── Coluna 2: Detalhes Empilhados Verticalmente (Jost, Bold por padrão) ─── */
+    .clip-col-details {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      overflow: hidden;
+      gap: 7px;
+      min-width: 0;
     }
 
-    .clip-header-title {
-      font-size: 16px;
+    /* Linha base com espaçamento generoso e consistente de 12px após o emoji */
+    .clip-info-line {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      font-family: var(--font-main);
       font-weight: 700;
-      color: #ffffff;
-      margin: 0;
-      letter-spacing: -0.2px;
-      white-space: normal;
+      line-height: 1.35;
+    }
+
+    .info-emoji {
+      flex-shrink: 0;
+      width: 22px;
+      text-align: center;
+      font-size: 15px;
+      line-height: 1;
+      display: inline-block;
+    }
+
+    .info-text {
+      flex: 1;
+      min-width: 0;
       word-break: break-word;
     }
 
-    .clip-header-title .artist-part {
-      color: #ffffff;
+    /* Linha 1: Artista (Rosa Neon, Jost, Bold com conectores não-bold) */
+    .line-artist {
+      color: var(--color-artist);
+      font-size: 15px;
     }
 
-    .clip-header-title .song-part {
-      color: #e5e7eb;
-      font-weight: 500;
+    .line-artist .artist-connector {
+      font-weight: 400 !important;
+      opacity: 0.85;
+      color: var(--color-artist-conn);
     }
 
-    .clip-meta-line {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--text-muted);
+    /* Linha 2: Música (Branco Puro #FFFFFF, Jost, Bold, Destaque proeminente) */
+    .line-song {
+      color: var(--color-song);
+      font-size: 17px;
+      letter-spacing: -0.2px;
     }
 
-    .meta-icon {
-      font-size: 11px;
-      opacity: 0.8;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    /* Linha 3: Álbum / Tags (Ciano / Azul Neon, Jost, Bold) */
+    .line-album {
+      color: var(--color-album);
+      font-size: 13.5px;
     }
 
-    /* Coluna 3: Informações Secundárias (separada por borda tracejada) */
-    .clip-col-sec {
-      border-left: 1px dashed var(--border-dim);
-      padding-left: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 11px;
-      color: var(--text-muted);
+    /* Linha 4: Ano (Amarelo Neon, Josefin Sans, Bold) */
+    .line-year {
+      color: var(--color-year);
+      font-family: var(--font-display) !important;
+      font-size: 14px;
     }
 
-    .sec-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .sec-label {
-      color: #6b7280;
-      font-weight: 500;
-    }
-
-    .sec-value {
-      color: #d1d5db;
-      font-weight: 600;
-    }
-
-    .tags-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 4px;
-    }
-
-    .tag-pill {
-      background: #1c1c24;
-      border: 1px solid #2e2e3a;
-      color: #9ca3af;
-      font-size: 9px;
-      font-weight: 700;
-      padding: 1px 7px;
-      border-radius: 9999px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
+    /* Linha 5: Direção (Roxo Neon / Lilás, Jost, Bold) */
+    .line-director {
+      color: var(--color-director);
+      font-size: 13.5px;
     }
 
     /* ==========================================================================
@@ -405,6 +406,7 @@
       padding: 14px 24px;
       font-size: 14px;
       font-weight: 800;
+      font-family: var(--font-main);
       letter-spacing: 0.8px;
       text-transform: uppercase;
       cursor: pointer;
@@ -453,12 +455,14 @@
       font-size: 18px;
       font-weight: 700;
       color: #fff;
+      font-family: var(--font-main);
       margin-bottom: 6px;
     }
 
     .empty-desc {
       font-size: 13px;
       color: var(--text-muted);
+      font-family: var(--font-main);
     }
 
     /* ==========================================================================
@@ -470,7 +474,7 @@
       }
 
       body {
-        background-color: #050507 !important;
+        background-color: #0a0a0a !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -504,7 +508,7 @@
         type="text" 
         id="search-input" 
         class="search-input" 
-        placeholder="Buscar por Artista, Música, Diretor, Ano ou Tag..." 
+        placeholder="Buscar por Artista, Música, Diretor, Ano ou Álbum..." 
         autocomplete="off"
       />
     </div>
@@ -561,7 +565,7 @@
       </div>
     </header>
 
-    <!-- LISTA DE CLIPES (CSS GRID 3-COLUNAS) -->
+    <!-- LISTA DE CLIPES (CSS GRID 2-COLUNAS) -->
     <section class="clips-list" id="clips-list">
       <!-- Inserido dinamicamente via JS -->
     </section>
@@ -612,8 +616,20 @@
         logoUrl: "",
         clips: [
           {
+            artist: "American Football ft. Mike Kinsella",
+            song: "Never Meant",
+            album: "American Football",
+            year: "1999",
+            director: "Chris Strong",
+            views: 45000000,
+            duration: "04:16",
+            dateAdded: "2024-01-10T12:00:00Z",
+            tags: ["Emo", "Math Rock", "Midwest"]
+          },
+          {
             artist: "Nirvana",
             song: "Smells Like Teen Spirit",
+            album: "Nevermind",
             year: "1991",
             director: "Samuel Bayer",
             views: 1850000000,
@@ -624,6 +640,7 @@
           {
             artist: "Beastie Boys",
             song: "Sabotage",
+            album: "Ill Communication",
             year: "1994",
             director: "Spike Jonze",
             views: 115000000,
@@ -632,8 +649,9 @@
             tags: ["Hip-Hop", "Rock", "Clássico"]
           },
           {
-            artist: "Daft Punk",
+            artist: "Daft Punk & Pharrell Williams",
             song: "Around the World",
+            album: "Homework",
             year: "1997",
             director: "Michel Gondry",
             views: 290000000,
@@ -644,6 +662,7 @@
           {
             artist: "Björk",
             song: "Bachelorette",
+            album: "Homogenic",
             year: "1997",
             director: "Michel Gondry",
             views: 42000000,
@@ -654,6 +673,7 @@
           {
             artist: "Radiohead",
             song: "Karma Police",
+            album: "OK Computer",
             year: "1997",
             director: "Jonathan Glazer",
             views: 260000000,
@@ -662,8 +682,9 @@
             tags: ["Alt-Rock", "OK Computer", "90s"]
           },
           {
-            artist: "Fatboy Slim",
+            artist: "Fatboy Slim vs. Spike Jonze",
             song: "Praise You",
+            album: "You've Come a Long Way, Baby",
             year: "1999",
             director: "Spike Jonze",
             views: 89000000,
@@ -687,13 +708,41 @@
           .replace(/'/g, '&#039;');
       }
 
-      // Converte duração em diversos formatos (MM:SS, HH:MM:SS, segundos, etc.) para segundos
+      /**
+       * Helper para formatar o nome do artista com conectores NÃO-BOLD (font-weight: 400).
+       * Detecta: ft., feat., feat, ft, vs., vs, &, x, with, vírgulas e colchetes.
+       */
+      function formatArtistName(name) {
+        if (!name) return 'Desconhecido';
+        
+        const safeName = escapeHTML(name);
+
+        const connectorRegex = /(「[^」]+」|(?<![a-zA-Z0-9À-ÿ])(?:feat\.|feat\b|ft\.|ft\b|vs\.|vs\b|with\b|x\b)(?![a-zA-Z0-9À-ÿ])|&amp;|&(?!(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-fA-F]+);)|(?<!\d),(?!\d))/gi;
+
+        return safeName.replace(connectorRegex, function (match) {
+          return `<span class="artist-connector" style="font-weight: 400;">${match}</span>`;
+        });
+      }
+
+      /**
+       * Helper para exibir Álbum ou Tags com fallback elegante.
+       */
+      function formatAlbumOrTags(clip) {
+        if (clip.album && clip.album.trim()) {
+          return escapeHTML(clip.album.trim());
+        }
+        if (clip.tags && clip.tags.length > 0) {
+          return clip.tags.map(t => escapeHTML(t)).join(' • ');
+        }
+        return 'Single / Álbum não informado';
+      }
+
+      // Converte duração em diversos formatos para segundos
       function parseDurationToSeconds(duration) {
         if (!duration) return 0;
         if (typeof duration === 'number') return Math.floor(duration);
 
         const str = String(duration).trim();
-        // Caso formato ISO 8601 (ex: PT3M21S)
         if (str.startsWith('PT')) {
           const matchH = str.match(/(\d+)H/);
           const matchM = str.match(/(\d+)M/);
@@ -704,17 +753,12 @@
           return h * 3600 + m * 60 + s;
         }
 
-        // Caso minutos:segundos ou horas:minutos:segundos
         if (str.includes(':')) {
           const parts = str.split(':').map(p => parseInt(p, 10) || 0);
-          if (parts.length === 2) {
-            return parts[0] * 60 + parts[1];
-          } else if (parts.length === 3) {
-            return parts[0] * 3600 + parts[1] * 60 + parts[2];
-          }
+          if (parts.length === 2) return parts[0] * 60 + parts[1];
+          if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
         }
 
-        // Apenas dígitos numéricos representando segundos
         const numeric = parseInt(str, 10);
         return isNaN(numeric) ? 0 : numeric;
       }
@@ -743,18 +787,6 @@
         return n.toLocaleString('pt-BR');
       }
 
-      // Formata data ISO para DD/MM/AAAA
-      function formatDate(dateStr) {
-        if (!dateStr) return 'N/A';
-        try {
-          const d = new Date(dateStr);
-          if (isNaN(d.getTime())) return dateStr;
-          return d.toLocaleDateString('pt-BR');
-        } catch (_) {
-          return dateStr;
-        }
-      }
-
       // Formata a posição original com 2 dígitos (01, 02...)
       function formatPosition(num) {
         return String(num).padStart(2, '0');
@@ -781,7 +813,6 @@
 
         // Normalização dos clipes mantendo o índice original
         rawClips = (channelData.clips || []).map((clip, index) => {
-          // Normaliza arrays de tags
           let tags = [];
           if (Array.isArray(clip.tags)) {
             tags = clip.tags;
@@ -793,6 +824,7 @@
             originalIndex: index + 1,
             artist: clip.artist || clip.artista || 'Desconhecido',
             song: clip.song || clip.musica || 'Sem título',
+            album: clip.album || '',
             year: clip.year || clip.ano || '',
             director: clip.director || clip.direcao || '',
             views: Number(clip.views || clip.view_count) || 0,
@@ -831,7 +863,6 @@
 
         groupBadge.textContent = 'GRUPO: ' + groupName.toUpperCase();
 
-        // Cálculo da duração total e views somadas
         let totalSeconds = 0;
         let totalViews = 0;
 
@@ -860,8 +891,9 @@
             const songMatch = c.song.toLowerCase().includes(query);
             const directorMatch = c.director.toLowerCase().includes(query);
             const yearMatch = String(c.year).toLowerCase().includes(query);
+            const albumMatch = c.album ? c.album.toLowerCase().includes(query) : false;
             const tagsMatch = c.tags.some(t => t.toLowerCase().includes(query));
-            return artistMatch || songMatch || directorMatch || yearMatch || tagsMatch;
+            return artistMatch || songMatch || directorMatch || yearMatch || albumMatch || tagsMatch;
           });
         }
 
@@ -871,7 +903,6 @@
         } else if (currentSortMode === 'views') {
           list.sort((a, b) => b.views - a.views);
         } else {
-          // 'original': segue a ordem original
           list.sort((a, b) => a.originalIndex - b.originalIndex);
         }
 
@@ -884,7 +915,6 @@
         const counterEl = document.getElementById('status-counter');
 
         const activeClips = getFilteredAndSortedClips();
-
         counterEl.textContent = `Exibindo ${activeClips.length} de ${rawClips.length} clipes`;
 
         if (activeClips.length === 0) {
@@ -896,53 +926,50 @@
         emptyState.style.display = 'none';
 
         const html = activeClips.map(clip => {
-          // Tags formatadas como rounded pills
-          const tagsHTML = clip.tags.length > 0
-            ? `<div class="tags-list">${clip.tags.map(t => `<span class="tag-pill">${escapeHTML(t)}</span>`).join('')}</div>`
-            : '';
-
-          const directorDisplay = clip.director ? escapeHTML(clip.director) : 'Não informado';
+          const directorDisplay = clip.director ? escapeHTML(clip.director) : 'Direção não informada';
           const yearDisplay = clip.year ? escapeHTML(clip.year) : 'N/A';
+          const albumOrTagsDisplay = formatAlbumOrTags(clip);
 
           return `
             <article class="clip-box">
-              <!-- Coluna 1: Posição original com fonte grande e escura -->
+              <!-- Coluna 1: Posição/ID (Far left, vertically centered, Josefin Sans, Bold, Âmbar) -->
               <div class="clip-col-pos">
                 <span class="pos-number">${formatPosition(clip.originalIndex)}</span>
               </div>
 
-              <!-- Coluna 2: Informações Principais -->
-              <div class="clip-col-main">
-                <h2 class="clip-header-title">
-                  <span class="artist-part">${escapeHTML(clip.artist)}</span>
-                  <span style="opacity: 0.6; margin: 0 4px;">—</span>
-                  <span class="song-part">${escapeHTML(clip.song)}</span>
-                </h2>
-                <div class="clip-meta-line">
-                  <span class="meta-icon">📅</span>
-                  <span>Ano: ${yearDisplay}</span>
+              <!-- Coluna 2: Detalhes Empilhados Verticalmente (Jost, Bold por padrão) -->
+              <div class="clip-col-details">
+                
+                <!-- Linha 1: Artista (Rosa Neon, Jost, Bold, Conectores não-bold) -->
+                <div class="clip-info-line line-artist">
+                  <span class="info-emoji">🎤</span>
+                  <span class="info-text">${formatArtistName(clip.artist)}</span>
                 </div>
-                <div class="clip-meta-line">
-                  <span class="meta-icon">🎬</span>
-                  <span>Direção: ${directorDisplay}</span>
-                </div>
-              </div>
 
-              <!-- Coluna 3: Informações Secundárias com borda tracejada -->
-              <div class="clip-col-sec">
-                <div class="sec-row">
-                  <span class="sec-label">⏱ Duração:</span>
-                  <span class="sec-value">${escapeHTML(clip.duration)}</span>
+                <!-- Linha 2: Música (Branco Puro #FFFFFF, Jost, Bold, Destaque proeminente) -->
+                <div class="clip-info-line line-song">
+                  <span class="info-emoji">🎶</span>
+                  <span class="info-text">${escapeHTML(clip.song)}</span>
                 </div>
-                <div class="sec-row">
-                  <span class="sec-label">👁 Views:</span>
-                  <span class="sec-value">${formatViews(clip.views)}</span>
+
+                <!-- Linha 3: Álbum / Tags (Ciano / Azul Neon, Jost, Bold) -->
+                <div class="clip-info-line line-album">
+                  <span class="info-emoji">💿</span>
+                  <span class="info-text">${albumOrTagsDisplay}</span>
                 </div>
-                <div class="sec-row">
-                  <span class="sec-label">📥 Adicionado:</span>
-                  <span class="sec-value">${formatDate(clip.dateAdded)}</span>
+
+                <!-- Linha 4: Ano (Amarelo Neon, Josefin Sans, Bold) -->
+                <div class="clip-info-line line-year">
+                  <span class="info-emoji">📅</span>
+                  <span class="info-text">${yearDisplay}</span>
                 </div>
-                ${tagsHTML}
+
+                <!-- Linha 5: Direção (Roxo Neon, Jost, Bold) -->
+                <div class="clip-info-line line-director">
+                  <span class="info-emoji">🎬︎</span>
+                  <span class="info-text">${directorDisplay}</span>
+                </div>
+
               </div>
             </article>
           `;
@@ -958,13 +985,11 @@
         const searchInput = document.getElementById('search-input');
         const sortButtons = document.querySelectorAll('.sort-btn');
 
-        // Busca em tempo real
         searchInput.addEventListener('input', function (e) {
           currentFilterText = e.target.value;
           renderClips();
         });
 
-        // Alternância de botões de ordenação
         sortButtons.forEach(btn => {
           btn.addEventListener('click', function () {
             sortButtons.forEach(b => b.classList.remove('active'));
@@ -974,7 +999,6 @@
           });
         });
 
-        // Botão de Download do PDF
         document.getElementById('btn-download-pdf').addEventListener('click', downloadPDF);
       }
 
@@ -993,15 +1017,11 @@
           <span>Gerando PDF...</span>
         `;
 
-        // Alvo da captura: Elemento container do relatório
         const element = document.getElementById('report-container');
-
-        // Nome do arquivo dinâmico com a data atual: DataPlist_[CurrentDate].pdf
         const today = new Date();
-        const dateStr = today.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+        const dateStr = today.toISOString().split('T')[0];
         const filename = `DataPlist_${dateStr}.pdf`;
 
-        // Configuração estrita do html2pdf: margin: 0, scale 2 para alta resolução
         const opt = {
           margin: 0,
           filename: filename,
@@ -1010,7 +1030,7 @@
             scale: 2,
             useCORS: true,
             logging: false,
-            backgroundColor: '#050507'
+            backgroundColor: '#0a0a0a'
           },
           jsPDF: {
             unit: 'mm',
@@ -1039,24 +1059,21 @@
           })
           .catch(err => {
             console.error('Erro ao gerar o PDF:', err);
-            alert('Erro ao gerar o PDF. Consulte o console para mais detalhes.');
+            alert('Erro ao gerar o PDF.');
             btn.disabled = false;
             btn.innerHTML = originalText;
           });
       }
 
-      // Inicialização imediata
       document.addEventListener('DOMContentLoaded', () => {
         loadData();
         setupInteractivity();
       });
 
-      // Executa de pronto se o DOM já estiver carregado
       if (document.readyState === 'interactive' || document.readyState === 'complete') {
         loadData();
         setupInteractivity();
       }
-
     })();
   </script>
 </body>
