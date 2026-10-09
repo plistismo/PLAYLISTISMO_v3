@@ -1275,22 +1275,50 @@ export default function Home({ session }: { session: Session | null }) {
                     {showStatic && <div className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-100 bg-repeat active"></div>}
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
-                      <div className="absolute top-4 right-6 text-right font-['Jost',sans-serif]">
-                        {/* Watermark replaces channel OSD label when available */}
-                        {currentChannelWatermark ? (
-                          currentChannelWatermark.toLowerCase().endsWith('.mp4') || currentChannelWatermark.toLowerCase().endsWith('.webm') ? (
+                      {/* Watermark replaces channel OSD label when available */}
+                      {currentChannelWatermark ? (
+                        <div
+                          className="watermark-container"
+                          style={{
+                            position: 'absolute',
+                            top: '3.5%',
+                            right: '3.5%',
+                            width: '13%',
+                            maxWidth: '150px',
+                            minWidth: '60px',
+                            height: 'clamp(32px, 6vw, 65px)',
+                            maxHeight: '65px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            pointerEvents: 'none',
+                            zIndex: 65,
+                            transform: `scale(${currentChannelWatermarkScale || 1.0})`,
+                            transformOrigin: 'top right',
+                          }}
+                        >
+                          {currentChannelWatermark.toLowerCase().endsWith('.mp4') ||
+                          currentChannelWatermark.toLowerCase().endsWith('.webm') ||
+                          currentChannelWatermark.toLowerCase().endsWith('.mov') ||
+                          currentChannelWatermark.toLowerCase().endsWith('.ogg') ||
+                          /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(currentChannelWatermark) ? (
                             <video
                               key={currentChannelWatermark}
                               src={currentChannelWatermark}
-                              autoPlay loop muted playsInline
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
                               className="watermark-overlay"
                               style={{
-                                transform: `scale(${currentChannelWatermarkScale || 1.0})`,
-                                transformOrigin: 'top right',
                                 maxWidth: '100%',
+                                maxHeight: '100%',
+                                width: 'auto',
+                                height: 'auto',
                                 objectFit: 'contain',
-                                zIndex: 65,
+                                opacity: 0.82,
                                 pointerEvents: 'none',
+                                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
                               }}
                             />
                           ) : (
@@ -1300,16 +1328,20 @@ export default function Home({ session }: { session: Session | null }) {
                               alt="marca d'água"
                               className="watermark-overlay"
                               style={{
-                                transform: `scale(${currentChannelWatermarkScale || 1.0})`,
-                                transformOrigin: 'top right',
                                 maxWidth: '100%',
+                                maxHeight: '100%',
+                                width: 'auto',
+                                height: 'auto',
                                 objectFit: 'contain',
-                                zIndex: 65,
+                                opacity: 0.82,
                                 pointerEvents: 'none',
+                                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
                               }}
                             />
-                          )
-                        ) : currentChannelName ? (
+                          )}
+                        </div>
+                      ) : currentChannelName ? (
+                        <div className="absolute top-4 right-6 text-right font-['Jost',sans-serif] pointer-events-none z-[65]">
                           <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''} font-['Jost',sans-serif]`}>
                             {playlistParts.length > 1 ? (
                               <><div className="osd-line-1">{playlistParts[0].trim()}:</div><div className="osd-line-2">{playlistParts[1].trim()}</div></>
@@ -1317,8 +1349,8 @@ export default function Home({ session }: { session: Session | null }) {
                               <div className="osd-line-1">{currentChannelName}</div>
                             )}
                           </div>
-                        ) : null}
-                      </div>
+                        </div>
+                      ) : null}
                       {statusMessage && (
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center">
                           <div className="inline-block text-[#00ff00] font-pixel text-xs md:text-xl bg-black/90 px-4 py-3 border-2 border-[#00ff00] uppercase tracking-widest shadow-[0_0_15px_#00ff00]">{statusMessage}</div>
