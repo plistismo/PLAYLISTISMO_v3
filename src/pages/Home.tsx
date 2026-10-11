@@ -6,6 +6,10 @@ import AdminPanel from '../components/AdminPanel.tsx';
 import MatrixPanel from '../components/MatrixPanel.tsx';
 import { sanitizeHTML } from '../lib/sanitize.ts';
 import { formatCreditsConnectors } from '../components/RichTextInput.tsx';
+import { manualSpreads } from '../data/manualSpreads.ts';
+import { ManualDirectoryPanel } from '../components/manual/ManualDirectoryPanel.tsx';
+import { ManualSpreadViewer } from '../components/manual/ManualSpreadViewer.tsx';
+import { ManualControlDeck } from '../components/manual/ManualControlDeck.tsx';
 
 declare global {
   interface Window {
@@ -123,6 +127,51 @@ export default function Home({ session }: { session: Session | null }) {
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [currentChannelWatermark, setCurrentChannelWatermark] = useState<string | null>(null);
   const [currentChannelWatermarkScale, setCurrentChannelWatermarkScale] = useState<number>(1.0);
+
+  // OWNER'S MANUAL & MASTER AUDIO GAIN STATE
+  const [isManualMode, setIsManualMode] = useState<boolean>(() => {
+    return new URLSearchParams(window.location.search).has('manual');
+  });
+  const [activeSpreadIndex, setActiveSpreadIndex] = useState<number>(0);
+  const [volume, setVolume] = useState<number>(100);
+
+  const handleVolumeChange = (newVolume: number) => {
+    const clamped = Math.max(0, Math.min(100, Math.round(newVolume)));
+    setVolume(clamped);
+    try {
+      if (playerRef.current && typeof playerRef.current.setVolume === 'function') {
+        playerRef.current.setVolume(clamped);
+        if (clamped > 0 && typeof playerRef.current.unMute === 'function') {
+          playerRef.current.unMute();
+        }
+      }
+    } catch (err) {
+      console.warn("Error setting YouTube volume:", err);
+    }
+    try {
+      if (vimeoPlayerRef.current && typeof vimeoPlayerRef.current.setVolume === 'function') {
+        vimeoPlayerRef.current.setVolume(clamped / 100);
+      }
+    } catch (err) {
+      console.warn("Error setting Vimeo volume:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!isManualMode) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (e.key === 'ArrowLeft') {
+        setActiveSpreadIndex(prev => Math.max(0, prev - 1));
+      } else if (e.key === 'ArrowRight') {
+        setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1));
+      } else if (e.key === 'Escape') {
+        setIsManualMode(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isManualMode]);
   
   // Histórico de Sessão (Shuffle sem Repetição)
   const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
@@ -810,6 +859,32 @@ export default function Home({ session }: { session: Session | null }) {
                 </button>
               </>
             )}
+
+            {/* ── OWNER'S MANUAL Button ── */}
+            <button
+              id="btn-owner-manual"
+              onClick={() => {
+                setIsManualMode(prev => {
+                  const next = !prev;
+                  if (next) {
+                    setIsAdminSidebarOpen(false);
+                    setIsEditDrawerOpen(false);
+                    setIsMatrixOpen(false);
+                    setIsSearchOpen(false);
+                    setIsInfoOpen(false);
+                  }
+                  return next;
+                });
+              }}
+              className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm cursor-pointer ${
+                isManualMode
+                  ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]'
+                  : 'bg-zinc-900/60 text-zinc-300 border-zinc-700/60 hover:bg-zinc-800 hover:text-white hover:border-amber-400/80 shadow-[0_0_15px_rgba(255,255,255,0.05)]'
+              }`}
+              title="Abrir/Fechar Manual do Proprietário (Owner's Manual)"
+            >
+              📖 {isManualMode ? 'EXIT MANUAL' : "OWNER'S MANUAL"}
+            </button>
           </div>
 
           {/* ── MATRIX Full-Screen Overlay Panel ── */}
@@ -868,13 +943,15 @@ export default function Home({ session }: { session: Session | null }) {
 
 
 
-          <div className="relative w-full min-w-0 min-h-0 flex-1 tv-responsive-container flex flex-col items-center justify-center transition-all duration-500 ease-out overflow-hidden">
+          <div className={`relative w-full min-w-0 min-h-0 flex-1 tv-responsive-container flex flex-col transition-all duration-500 ease-out overflow-hidden ${
+            isManualMode ? 'justify-between' : 'items-center justify-center'
+          }`}>
             
             {/* ── GAVETA SUPERIOR: SERVICE MODE / EDIT VIDEO (TOP DRAWER) ──
                 Telemetry-style module mounted above the TV top bezel. Lives in normal
                 document flow (pushes the chassis down) — never overlays, narrows or
                 scales the CRT, so the TV keeps 100% of its column width. */}
-            {isAdmin && (
+            {!isManualMode && isAdmin && (
             <div
               id="tv-drawer-edit"
               inert={!isEditDrawerOpen}
@@ -1030,6 +1107,7 @@ export default function Home({ session }: { session: Session | null }) {
             )}
             
             {/* ── GAVETA SUPERIOR (INFO / PLAYING NOW) ── */}
+            {!isManualMode && (
             <div
               id="tv-drawer-info"
               className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-jost ${
@@ -1141,9 +1219,22 @@ export default function Home({ session }: { session: Session | null }) {
                 </div>
               </div>
             </div>
+            )}
 
-            {/* CHASSI DA TV */}
-            <div className="tv-chassis-wrapper relative w-full flex-1 min-h-0 min-w-0 flex items-center justify-center transition-all duration-500 md:perspective-[1500px] group">
+            {/* ── TOP TIER (50/50 SPLIT IN MANUAL MODE) OR DIRECT CHASSIS WRAPPER ── */}
+            <div className={`transition-all duration-500 min-h-0 min-w-0 ${
+              isManualMode
+                ? 'w-full h-[46vh] md:h-[48vh] shrink-0 grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3.5 overflow-hidden'
+                : 'relative w-full flex-1 flex items-center justify-center'
+            }`}>
+              {/* Left Column (Manual Mode) / Direct Chassis Wrapper (Standard Mode) */}
+              <div className={`w-full h-full flex items-center justify-center min-h-0 min-w-0 overflow-hidden ${
+                isManualMode ? 'p-0.5' : ''
+              }`}>
+                {/* CHASSI DA TV */}
+                <div className={`tv-chassis-wrapper relative w-full flex-1 min-h-0 min-w-0 flex items-center justify-center transition-all duration-500 ${
+                  isManualMode ? 'h-full max-h-full' : 'md:perspective-[1500px]'
+                } group`}>
               <div className={`tv-chassis-frame relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-2.5 sm:p-3 md:p-5 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col justify-center max-h-full max-w-full ${
                 activeSkin === 'y2k' ? 'chassis-y2k' : activeSkin === 'future' ? 'chassis-future' : ''
               }`}>
@@ -1582,6 +1673,50 @@ export default function Home({ session }: { session: Session | null }) {
                       </button>
                     </div>
 
+                    {/* MANUAL Button */}
+                    <div className="flex flex-col items-center">
+                      <span className={`text-[6px] font-bold tracking-widest uppercase ${
+                        activeSkin === 'future' ? 'text-sky-300 drop-shadow-[0_0_4px_#38bdf8]' : activeSkin === 'y2k' ? 'text-sky-900 font-extrabold' : 'text-gray-500'
+                      }`}>
+                        Manual
+                      </span>
+                      <button
+                        id="btn-tv-lateral-manual"
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setIsManualMode(prev => {
+                            const next = !prev;
+                            if (next) {
+                              setIsAdminSidebarOpen(false);
+                              setIsEditDrawerOpen(false);
+                              setIsMatrixOpen(false);
+                              setIsSearchOpen(false);
+                              setIsInfoOpen(false);
+                            }
+                            return next;
+                          }); 
+                        }}
+                        className={`${
+                          activeSkin === 'y2k'
+                            ? `btn-y2k-bubble w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isManualMode ? 'ring-2 ring-white/90 brightness-110' : ''}`
+                            : activeSkin === 'future'
+                            ? `btn-future-chrome w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isManualMode ? 'ring-2 ring-cyan-400 shadow-[0_0_15px_#00e5ff]' : ''}`
+                            : `btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative transition-all ${isManualMode ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`
+                        }`}
+                        title="Abrir/Fechar Manual do Proprietário"
+                      >
+                        <span className={`font-mono font-bold text-xs md:text-sm transition-colors ${
+                          activeSkin === 'future'
+                            ? 'text-cyan-300 drop-shadow-[0_0_6px_#00e5ff]'
+                            : activeSkin === 'y2k'
+                            ? 'text-white drop-shadow-[0_1px_2px_rgba(3,105,161,0.8)]'
+                            : isManualMode ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'
+                        }`}>
+                          📖
+                        </span>
+                      </button>
+                    </div>
+
                     {/* GRP Button */}
                     <div className="flex flex-col items-center">
                       <span className={`text-[6px] font-bold tracking-widest uppercase ${
@@ -1698,16 +1833,53 @@ export default function Home({ session }: { session: Session | null }) {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ── GAVETA INFERIOR MECÂNICA (P100 GUIDE) ── */}
-            <div
-              id="tv-drawer-guide"
-              className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-['Jost',sans-serif] font-jost ${
-                isSearchOpen
-                  ? 'max-h-[38vh] opacity-100 mt-2 md:mt-3 translate-y-0'
-                  : 'max-h-0 opacity-0 mt-0 translate-y-6 pointer-events-none'
-              }`}
-            >
+        {/* Right Column (Manual Mode Only): Manual Directory / Topics Panel */}
+        {isManualMode && (
+          <div className="w-full h-full min-h-0 min-w-0 overflow-hidden">
+            <ManualDirectoryPanel
+              spreads={manualSpreads}
+              activeSpreadIndex={activeSpreadIndex}
+              onSelectSpread={setActiveSpreadIndex}
+              onExitManual={() => setIsManualMode(false)}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* ── BOTTOM TIER (In Manual Mode) OR GUIDE DRAWER + FOOTER (In Standard Mode) ── */}
+      {isManualMode ? (
+        <div className="flex-1 min-h-0 w-full flex flex-col justify-between overflow-hidden mt-1 md:mt-2">
+          <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
+            <ManualSpreadViewer
+              spread={manualSpreads[activeSpreadIndex]}
+              spreadIndex={activeSpreadIndex}
+              totalSpreads={manualSpreads.length}
+            />
+          </div>
+          <div className="shrink-0 w-full pt-1">
+            <ManualControlDeck
+              currentSpreadIndex={activeSpreadIndex}
+              totalSpreads={manualSpreads.length}
+              onPrevPage={() => setActiveSpreadIndex(prev => Math.max(0, prev - 1))}
+              onNextPage={() => setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1))}
+              volume={volume}
+              onVolumeChange={handleVolumeChange}
+              onClose={() => setIsManualMode(false)}
+            />
+          </div>
+        </div>
+      ) : (
+        /* ── GAVETA INFERIOR MECÂNICA (P100 GUIDE) ── */
+        <div
+          id="tv-drawer-guide"
+          className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-['Jost',sans-serif] font-jost ${
+            isSearchOpen
+              ? 'max-h-[38vh] opacity-100 mt-2 md:mt-3 translate-y-0'
+              : 'max-h-0 opacity-0 mt-0 translate-y-6 pointer-events-none'
+          }`}
+        >
               <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-2.5 md:p-4 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-['Jost',sans-serif] font-jost max-h-[38vh] flex flex-col overflow-hidden">
                 
                 {/* Header do Guia */}
@@ -1817,15 +1989,17 @@ export default function Home({ session }: { session: Session | null }) {
                     </div>
                   )}
                 </div>
-
               </div>
             </div>
+          )}
 
           </div>
 
-          <div className="shrink-0 mt-1 md:mt-2 text-center opacity-20 hover:opacity-100 transition-opacity duration-500 pointer-events-none select-none">
-            <span className="font-vt323 text-xs md:text-sm text-white tracking-widest uppercase">powered by @addri0n4 e @sandrobreaker</span>
-          </div>
+          {!isManualMode && (
+            <div className="shrink-0 mt-1 md:mt-2 text-center opacity-20 hover:opacity-100 transition-opacity duration-500 pointer-events-none select-none">
+              <span className="font-vt323 text-xs md:text-sm text-white tracking-widest uppercase">powered by @addri0n4 e @sandrobreaker</span>
+            </div>
+          )}
         </section>
 
         {/* RIGHT PANEL: TABLE INTEGRATION */}
