@@ -8,6 +8,7 @@ interface ManualPageRendererProps {
   pageNumber: number;
   totalPageCount: number;
   cavityRef?: React.RefObject<HTMLDivElement | null>;
+  isZoomed?: boolean;
 }
 
 export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
@@ -16,6 +17,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
   pageNumber,
   totalPageCount,
   cavityRef,
+  isZoomed = false,
 }) => {
   const isCover = page.type === 'cover';
   const isInsideCover = page.type === 'cover-inside';
@@ -23,7 +25,9 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
 
   return (
     <div
-      className={`relative w-full h-full flex flex-col justify-between p-4 sm:p-5 md:p-6 lg:p-7 overflow-hidden select-none font-['Jost',sans-serif] !bg-[#EAE6D8] !text-[#111111] ${
+      className={`relative w-full h-full flex flex-col justify-between ${
+        isZoomed ? 'p-6 sm:p-8 md:p-10' : 'p-4 sm:p-5 md:p-6 lg:p-7'
+      } overflow-hidden select-none font-['Jost',sans-serif] !bg-[#EAE6D8] !text-[#111111] ${
         isLeftPage ? 'manual-page-left' : 'manual-page-right'
       }`}
       style={{ backgroundColor: '#EAE6D8', color: '#111111' }}
@@ -31,7 +35,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
       {/* ── TOP PAGE HEADER (Folio & Technical Stamp) ── */}
       <div className="flex items-center justify-between border-b-2 border-[#111111]/30 pb-2 shrink-0 text-[#111111]">
         {/* Left header: Folio or unit ID */}
-        <div className="flex items-center gap-2 font-mono-tech text-[10px] sm:text-[11px] tracking-wider">
+        <div className={`flex items-center gap-2 font-mono-tech ${isZoomed ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-[11px]'} tracking-wider`}>
           <span className="font-bold text-[#084c78]">PLIST CRT-90</span>
           <span className="opacity-40">|</span>
           <span className="text-[#333333] font-semibold uppercase truncate max-w-[140px] sm:max-w-none">
@@ -40,10 +44,10 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
         </div>
 
         {/* Right header: Section category or stamp */}
-        <div className="flex items-center gap-2.5 font-mono-tech text-[10px] sm:text-[11px]">
+        <div className={`flex items-center gap-2.5 font-mono-tech ${isZoomed ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-[11px]'}`}>
           {page.stamp && (
             <span
-              className={`px-2 py-0.5 border text-[9px] font-bold tracking-widest ${
+              className={`px-2 py-0.5 border ${isZoomed ? 'text-[10px]' : 'text-[9px]'} font-bold tracking-widest ${
                 page.stamp.includes('QC') || page.stamp.includes('APPROVED')
                   ? 'border-[#b31b1b] text-[#b31b1b] bg-[#b31b1b]/8'
                   : 'border-[#084c78] text-[#084c78] bg-[#084c78]/8'
@@ -58,10 +62,10 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
         </div>
       </div>
 
-      {/* ── MAIN CONTENT BODY (With Die-Cut Aperture on Right Page) ── */}
-      <div className="flex-1 min-h-0 py-2.5 sm:py-3.5 overflow-hidden text-[#111111] relative">
-        {/* ── PHYSICAL DIE-CUT CAVITY (Anchored to Bottom-Right on Right Page) ── */}
-        {!isLeftPage && (
+      {/* ── MAIN CONTENT BODY (With Die-Cut Aperture on Right Page when Zoom is OFF) ── */}
+      <div className={`flex-1 min-h-0 ${isZoomed ? 'py-4 sm:py-6' : 'py-2.5 sm:py-3.5'} overflow-hidden text-[#111111] relative`}>
+        {/* ── PHYSICAL DIE-CUT CAVITY (Only when Zoom is OFF on Right Page) ── */}
+        {!isLeftPage && !isZoomed && (
           <>
             {/* Float spacer pushing the cavity down to the bottom */}
             <div className="manual-cavity-spacer" aria-hidden="true" />

@@ -132,6 +132,10 @@ export default function Home({ session }: { session: Session | null }) {
   const [isManualMode, setIsManualMode] = useState<boolean>(() => {
     return new URLSearchParams(window.location.search).has('manual');
   });
+  const [isManualZoomed, setIsManualZoomed] = useState<boolean>(false);
+  const [isPipMinimized, setIsPipMinimized] = useState<boolean>(false);
+  const manualScrollContainerRef = useRef<HTMLDivElement | null>(null);
+
   const [activeSpreadIndex, setActiveSpreadIndex] = useState<number>(0);
   const [volume, setVolume] = useState<number>(100);
   const cavityRef = useRef<HTMLDivElement | null>(null);
@@ -152,8 +156,8 @@ export default function Home({ session }: { session: Session | null }) {
   }, []);
 
   useLayoutEffect(() => {
-    if (!isManualMode) {
-      setCavityCoords(null);
+    if (!isManualMode || isManualZoomed) {
+      if (!isManualMode) setCavityCoords(null);
       return;
     }
     updateCavityCoords();
@@ -170,7 +174,7 @@ export default function Home({ session }: { session: Session | null }) {
       window.removeEventListener('resize', updateCavityCoords);
       window.removeEventListener('scroll', updateCavityCoords);
     };
-  }, [isManualMode, updateCavityCoords, activeSpreadIndex]);
+  }, [isManualMode, isManualZoomed, updateCavityCoords, activeSpreadIndex]);
 
   const handleVolumeChange = (newVolume: number) => {
     const clamped = Math.max(0, Math.min(100, Math.round(newVolume)));
@@ -204,6 +208,8 @@ export default function Home({ session }: { session: Session | null }) {
         setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1));
       } else if (e.key === 'Escape') {
         setIsManualMode(false);
+        setIsManualZoomed(false);
+        setIsPipMinimized(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -828,7 +834,8 @@ export default function Home({ session }: { session: Session | null }) {
 
   const setupBump = getThematicSetup(currentChannelName);
   const playlistParts = currentChannelName.split(':');
-  const isCavityMode = isManualMode;
+  const isCavityMode = isManualMode && !isManualZoomed;
+  const isFloatingPip = isManualMode && isManualZoomed;
 
   return (
     <div className="bg-neutral-950 h-screen w-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
@@ -1241,11 +1248,11 @@ export default function Home({ session }: { session: Session | null }) {
                 {/* CHASSI DA TV (Uninterrupted continuous playback across all states!) */}
                 <div 
                   className={`tv-chassis-wrapper flex items-center justify-center ${
-                    isCavityMode
-                      ? 'pointer-events-auto z-[225]'
+                    isManualMode
+                      ? 'pointer-events-auto'
                       : 'relative w-full flex-1 min-h-0 min-w-0 md:perspective-[1500px] group transition-all duration-500'
                   }`}
-                  style={isCavityMode ? {
+                  style={!isManualMode ? undefined : isCavityMode ? {
                     position: 'fixed',
                     top: cavityCoords ? `${cavityCoords.top}px` : '-9999px',
                     left: cavityCoords ? `${cavityCoords.left}px` : '-9999px',
@@ -1256,21 +1263,58 @@ export default function Home({ session }: { session: Session | null }) {
                     padding: 0,
                     opacity: cavityCoords ? 1 : 0,
                     transition: 'none',
-                  } : undefined}
+                  } : {
+                    position: 'fixed',
+                    bottom: '1rem',
+                    right: '1rem',
+                    width: '320px',
+                    height: '240px',
+                    zIndex: 250,
+                    margin: 0,
+                    padding: 0,
+                    opacity: isPipMinimized ? 0 : 1,
+                    pointerEvents: isPipMinimized ? 'none' : 'auto',
+                    transition: 'opacity 0.25s ease, transform 0.25s ease',
+                    transform: isPipMinimized ? 'scale(0.8) translateY(20px)' : 'scale(1) translateY(0)',
+                  }}
                 >
               <div className={`tv-chassis-frame relative z-10 flex flex-col justify-center max-h-full max-w-full ${
                 isCavityMode
                   ? 'w-full h-full p-0 bg-transparent shadow-none border-0 rounded-2xl'
+                  : isFloatingPip
+                  ? 'w-full h-full p-0 bg-[#0a0a0c] shadow-[0_20px_50px_rgba(0,0,0,0.95),0_0_0_2px_#3c414c,inset_0_1px_1px_rgba(255,255,255,0.2)] rounded-2xl overflow-hidden border border-black'
                   : `bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-2.5 sm:p-3 md:p-5 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d ${
                       activeSkin === 'y2k' ? 'chassis-y2k' : activeSkin === 'future' ? 'chassis-future' : ''
                     }`
               }`}>
 
+              {/* Floating PiP Controls (Minimize to Audio-Only Mode) */}
+              {isFloatingPip && !isPipMinimized && (
+                <div className="absolute top-2 right-2 z-50 flex items-center gap-1.5 select-none">
+                  <div className="bg-black/80 text-amber-400 border border-amber-500/40 rounded px-1.5 py-0.5 font-mono-tech text-[8px] font-bold tracking-wider uppercase flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    <span>PiP LIVE</span>
+                  </div>
+                  <button
+                    type="button"
+                    id="btn-pip-minimize"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPipMinimized(true);
+                    }}
+                    className="bg-black/90 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-600 rounded px-1.5 py-0.5 font-mono-tech text-[9px] font-bold tracking-wider shadow transition-all cursor-pointer active:scale-90"
+                    title="Minimizar Vídeo (Modo Foco em Leitura // Áudio Contínuo)"
+                  >
+                    [ _ ]
+                  </button>
+                </div>
+              )}
+
               {/* Physical Glare & Rim Overlays (Layered Skeuomorphism) */}
-              {!isCavityMode && activeSkin === 'y2k' && (
+              {!isManualMode && activeSkin === 'y2k' && (
                 <div className="chassis-specular-glare pointer-events-none absolute -top-1 left-4 right-4 h-12 md:h-16 rounded-t-[32px] opacity-75 z-20"></div>
               )}
-              {!isCavityMode && activeSkin === 'future' && (
+              {!isManualMode && activeSkin === 'future' && (
                 <>
                   <div className="chassis-chrome-reflection pointer-events-none absolute top-0 left-0 right-0 h-10 md:h-14 rounded-t-[32px] opacity-90 z-20"></div>
                   <div className="chassis-future-rim pointer-events-none absolute -inset-[2px] rounded-[22px] md:rounded-[34px] z-15"></div>
@@ -1278,7 +1322,7 @@ export default function Home({ session }: { session: Session | null }) {
               )}
 
               <div className={`flex flex-row h-full w-full items-stretch transition-all duration-500 relative z-20 ${
-                isCavityMode
+                isManualMode
                   ? 'p-0 bg-transparent shadow-none border-0 rounded-2xl'
                   : `rounded-[16px] md:rounded-[36px] p-2 md:p-3.5 ${
                       activeSkin === 'y2k'
@@ -1290,7 +1334,7 @@ export default function Home({ session }: { session: Session | null }) {
               }`}>
                 {/* ── LEFT BEZEL: ROUND CONCAVE MECHANICAL '?' BUTTON & STATUS LED ── */}
                 <div className={`flex flex-col justify-between items-center w-7 sm:w-8 md:w-10 mr-1.5 sm:mr-2 md:mr-3 shrink-0 h-full py-2 sm:py-3 md:py-4 select-none relative z-30 ${
-                  isCavityMode ? 'hidden' : ''
+                  isManualMode ? 'hidden' : ''
                 }`}>
                   {/* Upper decorative grill */}
                   <div className="flex flex-col items-center gap-1 opacity-40 w-full mb-auto">
@@ -1332,6 +1376,9 @@ export default function Home({ session }: { session: Session | null }) {
                             setIsMatrixOpen(false);
                             setIsSearchOpen(false);
                             setIsInfoOpen(false);
+                          } else {
+                            setIsManualZoomed(false);
+                            setIsPipMinimized(false);
                           }
                           return next;
                         });
@@ -1358,18 +1405,18 @@ export default function Home({ session }: { session: Session | null }) {
                 </div>
 
                 <div className={`relative flex-1 aspect-[4/3] bg-[#050505] overflow-hidden screen-container z-10 box-border max-h-full ${
-                  isCavityMode
+                  isManualMode
                     ? 'w-full h-full rounded-2xl border border-black/60 shadow-[inset_0_0_20px_rgba(0,0,0,0.9)]'
                     : 'rounded-[20px] md:rounded-[44px] border-[4px] md:border-[8px] border-[#080808]'
                 }`}>
                   <div className={`absolute inset-0 crt-overlay z-40 pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)] ${
-                    isCavityMode ? 'rounded-2xl' : 'rounded-[20px] md:rounded-[44px]'
+                    isManualMode ? 'rounded-2xl' : 'rounded-[20px] md:rounded-[44px]'
                   }`}></div>
 
                   {!isOn && <div className="absolute inset-0 bg-[#080808] z-20"></div>}
 
                   <div className={`relative w-full h-full overflow-hidden bg-black ${
-                    isCavityMode ? 'rounded-xl' : 'rounded-[16px] md:rounded-[40px]'
+                    isManualMode ? 'rounded-xl' : 'rounded-[16px] md:rounded-[40px]'
                   } ${isOn ? 'crt-turn-on' : ''}`}>
                     {/* YouTube Player */}
                     <div
@@ -1646,7 +1693,7 @@ export default function Home({ session }: { session: Session | null }) {
 
                 {/* PAINEL DE CONTROLE LATERAL DIREITO */}
                 <div className={`flex flex-col w-14 sm:w-16 md:w-28 lg:w-32 ml-2 md:ml-3 p-1.5 md:p-2.5 justify-between items-center gap-2 md:gap-3 shrink-0 rounded-r-lg h-full overflow-hidden font-['Jost',sans-serif] transition-all duration-500 relative z-30 ${
-                  isCavityMode ? 'hidden' : ''
+                  isManualMode ? 'hidden' : ''
                 } ${
                   activeSkin === 'y2k'
                     ? 'panel-y2k'
@@ -1876,29 +1923,74 @@ export default function Home({ session }: { session: Session | null }) {
 
       </div>
 
-      {/* ── FULLSCREEN OWNER'S MANUAL OVERLAY (With Embedded Die-Cut Cavity) ── */}
+      {/* ── FULLSCREEN OWNER'S MANUAL OVERLAY (With Embedded Die-Cut Cavity & Zoom) ── */}
       {isManualMode && (
         <div className="fixed inset-0 z-[200] bg-neutral-950/98 backdrop-blur-md p-2 sm:p-4 md:p-6 flex flex-col justify-between overflow-hidden">
-          <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
+          <div 
+            ref={manualScrollContainerRef}
+            className={`flex-1 min-h-0 w-full flex justify-center ${
+              isManualZoomed ? 'items-start overflow-y-auto custom-scrollbar' : 'items-center overflow-hidden'
+            }`}
+          >
             <ManualSpreadViewer
               spread={manualSpreads[activeSpreadIndex]}
               spreadIndex={activeSpreadIndex}
               totalSpreads={manualSpreads.length}
               cavityRef={cavityRef}
+              isZoomed={isManualZoomed}
             />
           </div>
-          <div className="shrink-0 w-full pt-1.5">
+          <div className="shrink-0 w-full pt-1.5 z-[210]">
             <ManualControlDeck
               currentSpreadIndex={activeSpreadIndex}
               totalSpreads={manualSpreads.length}
-              onPrevPage={() => setActiveSpreadIndex(prev => Math.max(0, prev - 1))}
-              onNextPage={() => setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1))}
+              onPrevPage={() => {
+                setActiveSpreadIndex(prev => Math.max(0, prev - 1));
+                if (manualScrollContainerRef.current) {
+                  manualScrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              onNextPage={() => {
+                setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1));
+                if (manualScrollContainerRef.current) {
+                  manualScrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
               volume={volume}
               onVolumeChange={handleVolumeChange}
-              onClose={() => setIsManualMode(false)}
+              onClose={() => {
+                setIsManualMode(false);
+                setIsManualZoomed(false);
+                setIsPipMinimized(false);
+              }}
+              isZoomed={isManualZoomed}
+              onToggleZoom={() => {
+                setIsManualZoomed(prev => {
+                  const next = !prev;
+                  if (!next) {
+                    setIsPipMinimized(false);
+                  }
+                  return next;
+                });
+              }}
             />
           </div>
         </div>
+      )}
+
+      {/* ── PiP MINIMIZED RESTORE BADGE (AUDIO-ONLY MODE) ── */}
+      {isManualMode && isManualZoomed && isPipMinimized && (
+        <button
+          type="button"
+          id="btn-pip-restore-badge"
+          onClick={() => setIsPipMinimized(false)}
+          className="fixed bottom-4 right-4 z-[260] bg-[#121418] hover:bg-[#1a1e24] text-amber-300 hover:text-amber-200 border-2 border-amber-500/70 hover:border-amber-400 px-3.5 py-2.5 rounded-lg shadow-[0_12px_30px_rgba(0,0,0,0.9),0_0_15px_rgba(245,158,11,0.25)] flex items-center gap-2.5 font-mono-tech text-xs font-bold tracking-wider uppercase transition-all cursor-pointer active:scale-95 animate-pulse"
+          title="Restaurar Janela PiP do CRT"
+        >
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+          <span>🔊 AUDIO ACTIVE — RESTORE TV</span>
+          <span className="text-zinc-500 text-[10px]">▲</span>
+        </button>
       )}
 
       {/* ── GAVETA INFERIOR MECÂNICA (P100 GUIDE) ── */}

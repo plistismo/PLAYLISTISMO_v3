@@ -8,6 +8,8 @@ interface ManualControlDeckProps {
   volume: number; // 0 to 100
   onVolumeChange: (val: number) => void;
   onClose?: () => void;
+  isZoomed?: boolean;
+  onToggleZoom?: () => void;
 }
 
 export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
@@ -18,6 +20,8 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
   volume,
   onVolumeChange,
   onClose,
+  isZoomed = false,
+  onToggleZoom,
 }) => {
   const currentLeftPage = currentSpreadIndex * 2 + 1;
   const currentRightPage = currentSpreadIndex * 2 + 2;
@@ -34,7 +38,7 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
       <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-3.5">
         
         {/* ── LEFT: PREV PAGE BUTTON & DIE-CUT APERTURE STATUS ── */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <button
             type="button"
             id="btn-manual-prev"
@@ -47,13 +51,30 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
             <span>PREV PAGE</span>
           </button>
 
-          {/* Aperture Live Status Badge */}
+          {/* Aperture / PiP Live Status Badge */}
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#0b0c0e] border border-amber-500/30 rounded-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="font-mono-tech text-[9px] text-amber-300 font-bold uppercase tracking-wider">
-              DIE-CUT CAVITY // ACTIVE
+            <span className={`w-1.5 h-1.5 rounded-full ${isZoomed ? 'bg-sky-400 shadow-[0_0_6px_#38bdf8]' : 'bg-amber-400 animate-pulse'}`} />
+            <span className={`font-mono-tech text-[9px] font-bold uppercase tracking-wider ${isZoomed ? 'text-sky-300' : 'text-amber-300'}`}>
+              {isZoomed ? 'PiP MODE // FLOATING' : 'DIE-CUT CAVITY // ACTIVE'}
             </span>
           </div>
+
+          {/* Zoom Toggle Button */}
+          {onToggleZoom && (
+            <button
+              type="button"
+              id="btn-manual-zoom"
+              onClick={onToggleZoom}
+              className={`btn-mech-deck px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs flex items-center gap-1.5 active:translate-y-0.5 cursor-pointer transition-all ${
+                isZoomed
+                  ? '!bg-amber-400 !text-black !border-amber-300 font-black shadow-[0_0_12px_rgba(245,158,11,0.5)]'
+                  : 'text-zinc-300 hover:text-amber-400'
+              }`}
+              title={isZoomed ? "Desativar Zoom (Restaurar Cavidade)" : "Ativar Modo Zoom (Leitura Ampliada & PiP)"}
+            >
+              <span>{isZoomed ? '🔍 ZOOM: ON' : '🔍 ZOOM'}</span>
+            </button>
+          )}
         </div>
 
         {/* ── CENTER: CRT VOLUME ROTARY KNOB & SLIDER CONTROL ── */}
