@@ -61,24 +61,18 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
         </div>
       </div>
 
-      {/* ── MAIN CONTENT BODY (With Die-Cut Aperture on Right Page when Zoom is OFF) ── */}
-      <div className="flex-1 min-h-0 py-2.5 sm:py-3.5 flex flex-col justify-between text-[#111111] relative">
-        {/* ── PHYSICAL DIE-CUT CAVITY (Only when Zoom is 1.0x on Right Page) ── */}
-        {!isLeftPage && !isZoomed && (
-          <>
-            {/* Float spacer pushing the cavity down to the bottom */}
-            <div className="manual-cavity-spacer" aria-hidden="true" />
-
-            {/* Die-Cut Aperture Cavity */}
+      {/* ── MAIN CONTENT BODY (Separated by Left Page / Right Page 1.0x Cavity / Zoomed) ── */}
+      {!isLeftPage && !isZoomed ? (
+        /* ── RIGHT PAGE (1.0x MODE): BULLETPROOF DIE-CUT CAVITY DOCKED AT BOTTOM-RIGHT ── */
+        <div className="flex-1 min-h-0 h-full relative overflow-hidden py-2 text-[#111111]">
+          <div className="manual-page-right-content w-full h-full relative">
+            {/* Rigid Die-Cut Cavity (Pushed to bottom-right by ::before in style.css) */}
             <div
               id="manual-die-cut-cavity"
               ref={cavityRef}
               className="manual-die-cut-cavity die-cut-cavity rounded-2xl relative select-none pointer-events-none z-10"
-              style={{
-                shapeOutside: 'margin-box',
-              }}
             >
-              {/* Paper cut edge bevel, recessed drop shadow, technical registration marks */}
+              {/* Beveled cutout border, recessed shadow, technical registration marks */}
               <div className="w-full h-full rounded-2xl border-2 border-[#b8ae9c] shadow-[inset_0_4px_14px_rgba(0,0,0,0.85),inset_0_1px_3px_rgba(0,0,0,0.95),0_1px_1px_rgba(255,255,255,0.7)] bg-[#080808] relative overflow-hidden flex flex-col justify-between p-2">
                 <div className="flex justify-between items-center opacity-70">
                   <span className="font-mono-tech text-[7px] text-[#084c78] font-bold tracking-wider">✛ APERTURE REF-90</span>
@@ -90,170 +84,261 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
                 </div>
               </div>
             </div>
-          </>
-        )}
 
-        {isCover ? (
-          /* ── COVER PAGE ── */
-          <div className="flex-1 h-full flex flex-col justify-between py-1">
-            <div>
-              <div className="inline-block px-2.5 py-1 mb-2 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
-                {page.badge || "OFFICIAL OPERATING MONOGRAPH"}
-              </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight text-[#111111] font-['Jost',sans-serif] uppercase mb-1">
-                {page.title}
-              </h1>
-              <div className="text-xs sm:text-sm font-bold tracking-widest text-[#084c78] font-mono-tech border-b-2 border-[#111111] pb-1.5 mb-2.5">
-                {page.subtitle || "OWNER'S INSTRUCTION MANUAL"}
-              </div>
-            </div>
-
-            <div className="space-y-2 mt-auto">
-              <p className="text-xs sm:text-sm leading-relaxed text-[#111111] font-['Jost',sans-serif] italic font-medium">
-                {page.placeholder}
-              </p>
-              <div className="flex items-center justify-between pt-2 border-t border-[#111111]/30 font-mono-tech text-[9px] sm:text-[10px] text-[#222222]">
-                <span className="font-bold">SERIAL: {page.serial || 'PLIST-96-001'}</span>
-                <span className="text-[#b31b1b] font-bold">STRICTLY NON-COMMERCIAL</span>
-              </div>
-            </div>
-          </div>
-        ) : isInsideCover ? (
-          /* ── INSIDE COVER / REGULATORY ── */
-          <div className="flex-1 h-full flex flex-col justify-between py-1">
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111111] uppercase">
-                  {page.title}
-                </h2>
-                <div className="rubber-stamp text-[10px]">QC PASSED</div>
-              </div>
-              <div className="text-xs sm:text-sm font-mono-tech text-[#084c78] font-bold tracking-wider mb-2.5">
-                {page.subtitle}
-              </div>
-            </div>
-
-            {/* Warning Callout Box */}
-            <div className="border-2 border-[#b31b1b] bg-[#b31b1b]/8 p-2.5 sm:p-3 rounded-sm mb-3 text-[#b31b1b]">
-              <div className="font-mono-tech text-[10px] sm:text-xs font-bold flex items-center gap-1.5 mb-1 tracking-wide">
-                <span>⚠</span> CAUTION: HIGH VOLTAGE CRT CHASSIS
-              </div>
-              <p className="text-[10px] sm:text-xs leading-relaxed font-['Jost',sans-serif] font-medium text-[#111111]">
-                Do not remove rear chassis panel. No user-serviceable parts inside. Refer servicing to qualified PlayListismo broadcast engineers.
-              </p>
-            </div>
-
-            {/* Regulatory Sections */}
-            <div className="space-y-2.5 flex-1">
-              {page.sections?.map((sec, i) => (
-                <div key={i} className="text-xs leading-relaxed">
-                  {sec.heading && (
-                    <div className="font-mono-tech font-bold text-[10px] sm:text-xs text-[#111111] mb-0.5 uppercase tracking-wide">
-                      {sec.heading}
-                    </div>
-                  )}
-                  {sec.body && <p className="text-[#111111] font-medium mb-1">{sec.body}</p>}
-                  {sec.bullets && (
-                    <ul className="list-disc list-inside space-y-0.5 text-[10px] sm:text-xs font-mono-tech font-medium text-[#222222]">
-                      {sec.bullets.map((b, bi) => (
-                        <li key={bi} className="truncate">{b}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="font-mono-tech text-[9px] text-[#444444] pt-2 border-t border-[#111111]/20 flex justify-between font-semibold shrink-0 mt-auto">
-              <span>DOC REF: {page.serial}</span>
-              <span>STANDARDS COMPLIANT (NTSC/PAL)</span>
-            </div>
-          </div>
-        ) : isSchematic ? (
-          /* ── SCHEMATIC PAGE ── */
-          <div className="flex-1 h-full flex flex-col justify-between">
-            <div className="mb-1.5 shrink-0">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#111111] uppercase">
-                {page.title}
-              </h2>
-              <div className="text-[10px] sm:text-xs font-mono-tech text-[#084c78] font-bold tracking-wider">
-                {page.subtitle}
-              </div>
-            </div>
-
-            <div className="flex-1 min-h-[220px] bg-white/70 border-2 border-[#084c78]/40 rounded-sm overflow-hidden shadow-inner my-1">
-              <ManualIsometricSchematic />
-            </div>
-
-            <div className="mt-auto font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between pt-1.5 border-t border-[#111111]/20 font-bold shrink-0">
-              <span>CIRCUIT BOARD: PCB-REV-96</span>
-              <span className="text-[#084c78]">1PX WIREFRAME STANDARD</span>
-            </div>
-          </div>
-        ) : (
-          /* ── GENERAL EDITORIAL / CHANNELS / COLOPHON ── */
-          <div className="flex-1 h-full flex flex-col justify-between py-1">
-            <div className="shrink-0">
-              <div className="flex items-center justify-between mb-1.5">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#111111] uppercase leading-tight font-['Jost',sans-serif]">
-                  {page.title}
-                </h2>
-                {page.type === 'channels' && (
-                  <span className="rubber-stamp-cyan text-[9px] font-mono-tech">BROADCAST ACTIVE</span>
+            {/* Right Page Editorial Content (Flows cleanly around bottom-right cavity) */}
+            {isCover ? (
+              <div>
+                {page.badge && (
+                  <div className="inline-block px-2.5 py-1 mb-2 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
+                    {page.badge}
+                  </div>
                 )}
-              </div>
-              {page.subtitle && (
-                <div className="text-[10px] sm:text-xs font-mono-tech text-[#084c78] font-bold tracking-wider mb-2.5">
-                  {page.subtitle}
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight leading-tight text-[#111111] font-['Jost',sans-serif] uppercase mb-1">
+                  {page.title}
+                </h1>
+                <div className="text-xs sm:text-sm font-bold tracking-widest text-[#084c78] font-mono-tech border-b-2 border-[#111111] pb-1.5 mb-2.5">
+                  {page.subtitle || "OWNER'S INSTRUCTION MANUAL"}
                 </div>
-              )}
-            </div>
-
-            {/* Sections & Body Content */}
-            <div className="space-y-3 flex-1 my-2">
-              {page.sections?.map((sec, i) => (
-                <div key={i} className="text-xs sm:text-sm leading-relaxed">
-                  {sec.heading && (
-                    <div className="font-mono-tech font-bold text-[10px] sm:text-xs text-[#111111] mb-1 uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="text-[#084c78]">■</span>
-                      <span>{sec.heading}</span>
-                    </div>
-                  )}
-                  {sec.body && (
-                    <p className="text-[#111111] font-medium leading-relaxed font-['Jost',sans-serif]">
-                      {sec.body}
-                    </p>
-                  )}
-                  {sec.callout && (
-                    <div className="my-2 p-2.5 bg-[#084c78]/8 border-l-4 border-[#084c78] text-xs sm:text-sm font-['Jost',sans-serif] italic text-[#084c78] font-semibold">
-                      {sec.callout}
-                    </div>
-                  )}
-                  {sec.bullets && (
-                    <ul className="list-disc list-inside space-y-1 text-[10px] sm:text-xs font-mono-tech text-[#222222] font-semibold mt-1.5">
-                      {sec.bullets.map((b, bi) => (
-                        <li key={bi} className="truncate">{b}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-
-              {(!page.sections || page.sections.length === 0) && (
-                <p className="text-xs sm:text-sm text-[#111111] leading-relaxed font-['Jost',sans-serif] font-medium">
+                <p className="text-xs sm:text-sm leading-relaxed text-[#111111] font-['Jost',sans-serif] italic font-medium mb-3">
                   {page.placeholder}
                 </p>
-              )}
-            </div>
+                {page.sections?.map((sec, i) => (
+                  <div key={i} className="text-xs sm:text-sm leading-relaxed mb-2">
+                    {sec.heading && (
+                      <div className="font-mono-tech font-bold text-[10px] sm:text-xs text-[#111111] mb-1 uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="text-[#084c78]">■</span>
+                        <span>{sec.heading}</span>
+                      </div>
+                    )}
+                    {sec.body && (
+                      <p className="text-[#111111] font-medium leading-relaxed font-['Jost',sans-serif]">
+                        {sec.body}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>
+                <div className="mb-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#111111] uppercase leading-tight font-['Jost',sans-serif]">
+                      {page.title}
+                    </h2>
+                    {page.type === 'channels' && (
+                      <span className="rubber-stamp-cyan text-[9px] font-mono-tech">BROADCAST ACTIVE</span>
+                    )}
+                  </div>
+                  {page.subtitle && (
+                    <div className="text-[10px] sm:text-xs font-mono-tech text-[#084c78] font-bold tracking-wider mb-2">
+                      {page.subtitle}
+                    </div>
+                  )}
+                </div>
 
-            {/* Page Bottom Technical Stamp */}
-            <div className="mt-auto pt-2 border-t border-[#111111]/20 font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between items-center font-bold shrink-0">
-              <span>REF: {page.serial || 'SEC-PLIST'}</span>
-              <span className="text-[#111111]">ARCHIVAL BROADCAST RECORD</span>
-            </div>
+                <div className="space-y-2">
+                  {page.sections?.map((sec, i) => (
+                    <div key={i} className="text-xs sm:text-sm leading-relaxed">
+                      {sec.heading && (
+                        <div className="font-mono-tech font-bold text-[10px] sm:text-xs text-[#111111] mb-0.5 uppercase tracking-wider flex items-center gap-1.5">
+                          <span className="text-[#084c78]">■</span>
+                          <span>{sec.heading}</span>
+                        </div>
+                      )}
+                      {sec.body && (
+                        <p className="text-[#111111] font-medium leading-relaxed font-['Jost',sans-serif]">
+                          {sec.body}
+                        </p>
+                      )}
+                      {sec.callout && (
+                        <div className="my-1.5 p-2 bg-[#084c78]/8 border-l-4 border-[#084c78] text-xs sm:text-sm font-['Jost',sans-serif] italic text-[#084c78] font-semibold">
+                          {sec.callout}
+                        </div>
+                      )}
+                      {sec.bullets && (
+                        <ul className="list-disc list-inside space-y-0.5 text-[10px] sm:text-xs font-mono-tech text-[#222222] font-semibold mt-1">
+                          {sec.bullets.map((b, bi) => (
+                            <li key={bi} className="truncate">{b}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                  {(!page.sections || page.sections.length === 0) && page.placeholder && (
+                    <p className="text-xs sm:text-sm text-[#111111] leading-relaxed font-['Jost',sans-serif] font-medium">
+                      {page.placeholder}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* ── LEFT PAGE OR ZOOMED MODE: EXPANDED FULL-WIDTH FLEX LAYOUT ── */
+        <div className="flex-1 min-h-0 py-2.5 sm:py-3.5 flex flex-col justify-between text-[#111111] relative">
+          {isCover ? (
+            /* ── COVER PAGE ── */
+            <div className="flex-1 h-full flex flex-col justify-between py-1">
+              <div>
+                <div className="inline-block px-2.5 py-1 mb-2 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
+                  {page.badge || "OFFICIAL OPERATING MONOGRAPH"}
+                </div>
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight text-[#111111] font-['Jost',sans-serif] uppercase mb-1">
+                  {page.title}
+                </h1>
+                <div className="text-xs sm:text-sm font-bold tracking-widest text-[#084c78] font-mono-tech border-b-2 border-[#111111] pb-1.5 mb-2.5">
+                  {page.subtitle || "OWNER'S INSTRUCTION MANUAL"}
+                </div>
+              </div>
+
+              <div className="space-y-2 mt-auto">
+                <p className="text-xs sm:text-sm leading-relaxed text-[#111111] font-['Jost',sans-serif] italic font-medium">
+                  {page.placeholder}
+                </p>
+                <div className="flex items-center justify-between pt-2 border-t border-[#111111]/30 font-mono-tech text-[9px] sm:text-[10px] text-[#222222]">
+                  <span className="font-bold">SERIAL: {page.serial || 'PLIST-96-001'}</span>
+                  <span className="text-[#b31b1b] font-bold">STRICTLY NON-COMMERCIAL</span>
+                </div>
+              </div>
+            </div>
+          ) : isInsideCover ? (
+            /* ── INSIDE COVER / REGULATORY ── */
+            <div className="flex-1 h-full flex flex-col justify-between py-1">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111111] uppercase">
+                    {page.title}
+                  </h2>
+                  <div className="rubber-stamp text-[10px]">QC PASSED</div>
+                </div>
+                <div className="text-xs sm:text-sm font-mono-tech text-[#084c78] font-bold tracking-wider mb-2.5">
+                  {page.subtitle}
+                </div>
+              </div>
+
+              {/* Warning Callout Box */}
+              <div className="border-2 border-[#b31b1b] bg-[#b31b1b]/8 p-2.5 sm:p-3 rounded-sm mb-3 text-[#b31b1b]">
+                <div className="font-mono-tech text-[10px] sm:text-xs font-bold flex items-center gap-1.5 mb-1 tracking-wide">
+                  <span>⚠</span> CAUTION: HIGH VOLTAGE CRT CHASSIS
+                </div>
+                <p className="text-[10px] sm:text-xs leading-relaxed font-['Jost',sans-serif] font-medium text-[#111111]">
+                  Do not remove rear chassis panel. No user-serviceable parts inside. Refer servicing to qualified PlayListismo broadcast engineers.
+                </p>
+              </div>
+
+              {/* Regulatory Sections */}
+              <div className="space-y-2.5 flex-1">
+                {page.sections?.map((sec, i) => (
+                  <div key={i} className="text-xs leading-relaxed">
+                    {sec.heading && (
+                      <div className="font-mono-tech font-bold text-[10px] sm:text-xs text-[#111111] mb-0.5 uppercase tracking-wide">
+                        {sec.heading}
+                      </div>
+                    )}
+                    {sec.body && <p className="text-[#111111] font-medium mb-1">{sec.body}</p>}
+                    {sec.bullets && (
+                      <ul className="list-disc list-inside space-y-0.5 text-[10px] sm:text-xs font-mono-tech font-medium text-[#222222]">
+                        {sec.bullets.map((b, bi) => (
+                          <li key={bi} className="truncate">{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="font-mono-tech text-[9px] text-[#444444] pt-2 border-t border-[#111111]/20 flex justify-between font-semibold shrink-0 mt-auto">
+                <span>DOC REF: {page.serial}</span>
+                <span>STANDARDS COMPLIANT (NTSC/PAL)</span>
+              </div>
+            </div>
+          ) : isSchematic ? (
+            /* ── SCHEMATIC PAGE ── */
+            <div className="flex-1 h-full flex flex-col justify-between">
+              <div className="mb-1.5 shrink-0">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#111111] uppercase">
+                  {page.title}
+                </h2>
+                <div className="text-[10px] sm:text-xs font-mono-tech text-[#084c78] font-bold tracking-wider">
+                  {page.subtitle}
+                </div>
+              </div>
+
+              <div className="flex-1 min-h-[220px] bg-white/70 border-2 border-[#084c78]/40 rounded-sm overflow-hidden shadow-inner my-1">
+                <ManualIsometricSchematic />
+              </div>
+
+              <div className="mt-auto font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between pt-1.5 border-t border-[#111111]/20 font-bold shrink-0">
+                <span>CIRCUIT BOARD: PCB-REV-96</span>
+                <span className="text-[#084c78]">1PX WIREFRAME STANDARD</span>
+              </div>
+            </div>
+          ) : (
+            /* ── GENERAL EDITORIAL / CHANNELS / COLOPHON ── */
+            <div className="flex-1 h-full flex flex-col justify-between py-1">
+              <div className="shrink-0">
+                <div className="flex items-center justify-between mb-1.5">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#111111] uppercase leading-tight font-['Jost',sans-serif]">
+                    {page.title}
+                  </h2>
+                  {page.type === 'channels' && (
+                    <span className="rubber-stamp-cyan text-[9px] font-mono-tech">BROADCAST ACTIVE</span>
+                  )}
+                </div>
+                {page.subtitle && (
+                  <div className="text-[10px] sm:text-xs font-mono-tech text-[#084c78] font-bold tracking-wider mb-2.5">
+                    {page.subtitle}
+                  </div>
+                )}
+              </div>
+
+              {/* Sections & Body Content */}
+              <div className="space-y-3 flex-1 my-2">
+                {page.sections?.map((sec, i) => (
+                  <div key={i} className="text-xs sm:text-sm leading-relaxed">
+                    {sec.heading && (
+                      <div className="font-mono-tech font-bold text-[10px] sm:text-xs text-[#111111] mb-1 uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="text-[#084c78]">■</span>
+                        <span>{sec.heading}</span>
+                      </div>
+                    )}
+                    {sec.body && (
+                      <p className="text-[#111111] font-medium leading-relaxed font-['Jost',sans-serif]">
+                        {sec.body}
+                      </p>
+                    )}
+                    {sec.callout && (
+                      <div className="my-2 p-2.5 bg-[#084c78]/8 border-l-4 border-[#084c78] text-xs sm:text-sm font-['Jost',sans-serif] italic text-[#084c78] font-semibold">
+                        {sec.callout}
+                      </div>
+                    )}
+                    {sec.bullets && (
+                      <ul className="list-disc list-inside space-y-1 text-[10px] sm:text-xs font-mono-tech text-[#222222] font-semibold mt-1.5">
+                        {sec.bullets.map((b, bi) => (
+                          <li key={bi} className="truncate">{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+
+                {(!page.sections || page.sections.length === 0) && (
+                  <p className="text-xs sm:text-sm text-[#111111] leading-relaxed font-['Jost',sans-serif] font-medium">
+                    {page.placeholder}
+                  </p>
+                )}
+              </div>
+
+              {/* Page Bottom Technical Stamp */}
+              <div className="mt-auto pt-2 border-t border-[#111111]/20 font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between items-center font-bold shrink-0">
+                <span>REF: {page.serial || 'SEC-PLIST'}</span>
+                <span className="text-[#111111]">ARCHIVAL BROADCAST RECORD</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── BOTTOM PAGE FOOTER (Folio & Page Indicator) ── */}
       <div className="flex items-center justify-between border-t-2 border-[#111111]/30 pt-2 shrink-0 font-mono-tech text-[10px] sm:text-[11px] text-[#111111] font-bold">

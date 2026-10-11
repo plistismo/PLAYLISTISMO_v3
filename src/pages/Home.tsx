@@ -170,21 +170,23 @@ export default function Home({ session }: { session: Session | null }) {
       if (!isManualMode) setCavityCoords(null);
       return;
     }
+
+    // Initial measurement
     updateCavityCoords();
-    const el = cavityRef.current;
-    let ro: ResizeObserver | null = null;
-    if (el && typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => updateCavityCoords());
-      ro.observe(el);
-    }
+
+    // Settle on next frame after modal/overlay paints
+    const rafId = requestAnimationFrame(updateCavityCoords);
+    const timeoutId = setTimeout(updateCavityCoords, 60);
+
     window.addEventListener('resize', updateCavityCoords);
     window.addEventListener('scroll', updateCavityCoords);
     return () => {
-      if (ro) ro.disconnect();
+      cancelAnimationFrame(rafId);
+      clearTimeout(timeoutId);
       window.removeEventListener('resize', updateCavityCoords);
       window.removeEventListener('scroll', updateCavityCoords);
     };
-  }, [isManualMode, manualZoomLevel, updateCavityCoords, activeSpreadIndex]);
+  }, [isManualMode, manualZoomLevel, updateCavityCoords]);
 
   const handleVolumeChange = (newVolume: number) => {
     const clamped = Math.max(0, Math.min(100, Math.round(newVolume)));
