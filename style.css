@@ -859,10 +859,120 @@ body {
         0 0 8px rgba(245, 158, 11, 0.4);
 }
 
-/* Die-Cut Cavity Aperture (Embedded CRT TV in Right Page) */
+/* Die-Cut Cavity Variables & Bottom-Right Positioning */
+:root {
+    --manual-cavity-w: 270px;
+    --manual-cavity-h: 202px;
+}
+@media (min-width: 640px) {
+    :root {
+        --manual-cavity-w: 290px;
+        --manual-cavity-h: 218px;
+    }
+}
+@media (min-width: 1024px) {
+    :root {
+        --manual-cavity-w: 330px;
+        --manual-cavity-h: 248px;
+    }
+}
+
+.manual-cavity-spacer {
+    float: right;
+    width: 0;
+    height: max(0px, calc(100% - var(--manual-cavity-h) - 2rem));
+    pointer-events: none;
+}
+
+.manual-die-cut-cavity,
 .die-cut-cavity {
+    float: right;
+    clear: right;
+    width: var(--manual-cavity-w);
+    height: var(--manual-cavity-h);
+    margin-top: 2rem !important;
+    margin-left: 2rem !important;
     shape-outside: margin-box;
     clip-path: inset(0 round 16px);
+}
+
+/* 3D Page Flip Mechanics (Booklet Metaphor) */
+.book-perspective-stage {
+    perspective: 2500px;
+    perspective-origin: 50% 50%;
+    transform-style: preserve-3d;
+}
+
+.book-turning-leaf {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 650ms cubic-bezier(0.35, 0.05, 0.25, 1);
+    will-change: transform;
+    z-index: 35;
+    pointer-events: none;
+}
+
+.book-turning-leaf.leaf-next {
+    left: 50%;
+    transform-origin: left center;
+}
+
+.book-turning-leaf.leaf-prev {
+    left: 0;
+    transform-origin: right center;
+}
+
+.book-turning-leaf.leaf-next.is-flipping {
+    transform: rotateY(-180deg);
+}
+
+.book-turning-leaf.leaf-prev.is-flipping {
+    transform: rotateY(180deg);
+}
+
+.leaf-face {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    overflow: hidden;
+    background-color: #EAE6D8;
+    color: #111111;
+}
+
+.leaf-face-front {
+    transform: rotateY(0deg);
+}
+
+.leaf-face-back-next {
+    transform: rotateY(180deg);
+}
+
+.leaf-face-back-prev {
+    transform: rotateY(-180deg);
+}
+
+/* Dynamic Page Lighting and Crease Shadows */
+.leaf-lighting-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 30;
+    opacity: 0;
+    transition: opacity 650ms ease;
+}
+
+.leaf-shadow-spine-next {
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.08) 30%, transparent 65%);
+}
+
+.leaf-shadow-spine-prev {
+    background: linear-gradient(to left, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.08) 30%, transparent 65%);
 }
 
 .btn-bezel-concave:active {

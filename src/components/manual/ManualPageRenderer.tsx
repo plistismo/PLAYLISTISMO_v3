@@ -60,33 +60,39 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
 
       {/* ── MAIN CONTENT BODY (With Die-Cut Aperture on Right Page) ── */}
       <div className="flex-1 min-h-0 py-2.5 sm:py-3.5 overflow-hidden text-[#111111] relative">
-        {/* ── PHYSICAL DIE-CUT CAVITY (Right Page Flow Anchor) ── */}
+        {/* ── PHYSICAL DIE-CUT CAVITY (Anchored to Bottom-Right on Right Page) ── */}
         {!isLeftPage && (
-          <div
-            id="manual-die-cut-cavity"
-            ref={cavityRef}
-            className="die-cut-cavity float-right ml-3.5 mb-2.5 w-[210px] sm:w-[250px] md:w-[290px] lg:w-[330px] aspect-[4/3] rounded-2xl relative select-none pointer-events-none clear-none z-10"
-            style={{
-              shapeOutside: 'margin-box',
-            }}
-          >
-            {/* Paper cut edge bevel, recessed drop shadow, technical registration marks */}
-            <div className="w-full h-full rounded-2xl border-2 border-[#b8ae9c] shadow-[inset_0_4px_14px_rgba(0,0,0,0.85),inset_0_1px_3px_rgba(0,0,0,0.95),0_1px_1px_rgba(255,255,255,0.7)] bg-[#080808] relative overflow-hidden flex flex-col justify-between p-2">
-              <div className="flex justify-between items-center opacity-70">
-                <span className="font-mono-tech text-[7px] text-[#084c78] font-bold tracking-wider">✛ APERTURE REF-90</span>
-                <span className="font-mono-tech text-[7px] text-amber-500 font-bold uppercase tracking-widest">NTSC 4:3</span>
-              </div>
-              <div className="flex justify-between items-end opacity-60">
-                <span className="font-mono-tech text-[6px] text-zinc-400 font-semibold uppercase">CRT PHOSPHOR CAVITY</span>
-                <span className="font-mono-tech text-[7px] text-[#084c78] font-bold">✛</span>
+          <>
+            {/* Float spacer pushing the cavity down to the bottom */}
+            <div className="manual-cavity-spacer" aria-hidden="true" />
+
+            {/* Die-Cut Aperture Cavity */}
+            <div
+              id="manual-die-cut-cavity"
+              ref={cavityRef}
+              className="manual-die-cut-cavity die-cut-cavity rounded-2xl relative select-none pointer-events-none z-10"
+              style={{
+                shapeOutside: 'margin-box',
+              }}
+            >
+              {/* Paper cut edge bevel, recessed drop shadow, technical registration marks */}
+              <div className="w-full h-full rounded-2xl border-2 border-[#b8ae9c] shadow-[inset_0_4px_14px_rgba(0,0,0,0.85),inset_0_1px_3px_rgba(0,0,0,0.95),0_1px_1px_rgba(255,255,255,0.7)] bg-[#080808] relative overflow-hidden flex flex-col justify-between p-2">
+                <div className="flex justify-between items-center opacity-70">
+                  <span className="font-mono-tech text-[7px] text-[#084c78] font-bold tracking-wider">✛ APERTURE REF-90</span>
+                  <span className="font-mono-tech text-[7px] text-amber-500 font-bold uppercase tracking-widest">NTSC 4:3</span>
+                </div>
+                <div className="flex justify-between items-end opacity-60">
+                  <span className="font-mono-tech text-[6px] text-zinc-400 font-semibold uppercase">CRT PHOSPHOR CAVITY</span>
+                  <span className="font-mono-tech text-[7px] text-[#084c78] font-bold">✛</span>
+                </div>
               </div>
             </div>
-          </div>
+          </>
         )}
 
         {isCover ? (
           /* ── COVER PAGE ── */
-          <div className="h-full flex flex-col justify-between py-1">
+          <div className={isLeftPage ? "h-full flex flex-col justify-between py-1" : "block py-1"}>
             <div>
               <div className="inline-block px-2.5 py-1 mb-2 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
                 {page.badge || "OFFICIAL OPERATING MONOGRAPH"}
@@ -183,10 +189,10 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
           </div>
         ) : (
           /* ── GENERAL EDITORIAL / CHANNELS / COLOPHON ── */
-          <div className="h-full flex flex-col justify-between py-1">
+          <div className={isLeftPage ? "h-full flex flex-col justify-between py-1" : "block py-1"}>
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#111111] uppercase leading-tight">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#111111] uppercase leading-tight font-['Jost',sans-serif]">
                   {page.title}
                 </h2>
                 {page.type === 'channels' && (
@@ -201,7 +207,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
             </div>
 
             {/* Sections & Body Content */}
-            <div className="space-y-3 overflow-hidden">
+            <div className="space-y-3">
               {page.sections?.map((sec, i) => (
                 <div key={i} className="text-xs sm:text-sm leading-relaxed">
                   {sec.heading && (
@@ -239,7 +245,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
             </div>
 
             {/* Page Bottom Technical Stamp */}
-            <div className="pt-2 border-t border-[#111111]/20 font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between items-center font-bold">
+            <div className="mt-3 pt-2 border-t border-[#111111]/20 font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between items-center font-bold">
               <span>REF: {page.serial || 'SEC-PLIST'}</span>
               <span className="text-[#111111]">ARCHIVAL BROADCAST RECORD</span>
             </div>
