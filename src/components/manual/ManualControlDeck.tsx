@@ -8,10 +8,6 @@ interface ManualControlDeckProps {
   volume: number; // 0 to 100
   onVolumeChange: (val: number) => void;
   onClose?: () => void;
-  isFullscreen?: boolean;
-  onToggleFullscreen?: () => void;
-  isPipActive?: boolean;
-  onTogglePip?: () => void;
 }
 
 export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
@@ -22,10 +18,6 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
   volume,
   onVolumeChange,
   onClose,
-  isFullscreen = false,
-  onToggleFullscreen,
-  isPipActive = false,
-  onTogglePip,
 }) => {
   const currentLeftPage = currentSpreadIndex * 2 + 1;
   const currentRightPage = currentSpreadIndex * 2 + 2;
@@ -38,13 +30,11 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
   const knobAngle = -135 + (volume / 100) * 270;
 
   return (
-    <div className={`w-full max-w-[1250px] mx-auto bg-[#121418] border border-[#2b303a] rounded-md p-2 sm:p-2.5 shadow-[0_12px_30px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.08)] select-none ${
-      isFullscreen ? 'border-amber-500/30' : ''
-    }`}>
+    <div className="w-full max-w-[1250px] mx-auto bg-[#121418] border border-[#2b303a] rounded-md p-2 sm:p-2.5 shadow-[0_12px_30px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.08)] select-none">
       <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-3.5">
         
-        {/* ── LEFT: PREV PAGE BUTTON & FULLSCREEN TOGGLE ── */}
-        <div className="flex items-center gap-2">
+        {/* ── LEFT: PREV PAGE BUTTON & DIE-CUT APERTURE STATUS ── */}
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             id="btn-manual-prev"
@@ -57,40 +47,13 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
             <span>PREV PAGE</span>
           </button>
 
-          {/* Fullscreen / Expand Reading Mode Toggle */}
-          {onToggleFullscreen && (
-            <button
-              type="button"
-              id="btn-manual-fullscreen"
-              onClick={onToggleFullscreen}
-              className={`btn-mech-deck px-2.5 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer ${
-                isFullscreen ? 'border-amber-400 text-amber-300' : ''
-              }`}
-              title={isFullscreen ? "Sair do Modo Tela Cheia (ESC)" : "Modo Leitura Imersivo (Tela Cheia)"}
-            >
-              <span>{isFullscreen ? '縮' : '⛶'}</span>
-              <span className="hidden sm:inline">{isFullscreen ? 'NORMAL VIEW' : 'FULLSCREEN'}</span>
-            </button>
-          )}
-
-          {/* Picture-in-Picture Toggle (Visible in Fullscreen Mode) */}
-          {isFullscreen && onTogglePip && (
-            <button
-              type="button"
-              id="btn-manual-pip"
-              onClick={onTogglePip}
-              className={`btn-mech-deck px-2.5 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer transition-all ${
-                isPipActive
-                  ? 'border-cyan-400 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.3)] bg-cyan-950/40'
-                  : 'text-zinc-400'
-              }`}
-              title={isPipActive ? "Desativar PiP Flutuante" : "Ativar CRT TV Picture-in-Picture Flutuante"}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${isPipActive ? 'bg-cyan-400 shadow-[0_0_6px_#22d3ee] animate-pulse' : 'bg-zinc-600'}`} />
-              <span>CRT PiP</span>
-              <span className="text-[9px] opacity-75">{isPipActive ? 'ON' : 'OFF'}</span>
-            </button>
-          )}
+          {/* Aperture Live Status Badge */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#0b0c0e] border border-amber-500/30 rounded-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="font-mono-tech text-[9px] text-amber-300 font-bold uppercase tracking-wider">
+              DIE-CUT CAVITY // ACTIVE
+            </span>
+          </div>
         </div>
 
         {/* ── CENTER: CRT VOLUME ROTARY KNOB & SLIDER CONTROL ── */}

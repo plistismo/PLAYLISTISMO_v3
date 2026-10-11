@@ -859,6 +859,12 @@ body {
         0 0 8px rgba(245, 158, 11, 0.4);
 }
 
+/* Die-Cut Cavity Aperture (Embedded CRT TV in Right Page) */
+.die-cut-cavity {
+    shape-outside: margin-box;
+    clip-path: inset(0 round 16px);
+}
+
 .btn-bezel-concave:active {
     transform: scale(0.94);
     box-shadow: 

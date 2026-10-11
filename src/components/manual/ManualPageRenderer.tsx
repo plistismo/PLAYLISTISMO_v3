@@ -7,6 +7,7 @@ interface ManualPageRendererProps {
   isLeftPage: boolean;
   pageNumber: number;
   totalPageCount: number;
+  cavityRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
@@ -14,6 +15,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
   isLeftPage,
   pageNumber,
   totalPageCount,
+  cavityRef,
 }) => {
   const isCover = page.type === 'cover';
   const isInsideCover = page.type === 'cover-inside';
@@ -56,40 +58,52 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
         </div>
       </div>
 
-      {/* ── MAIN CONTENT BODY (Decoupled by Type) ── */}
-      <div className="flex-1 min-h-0 flex flex-col justify-start py-3 sm:py-4 overflow-hidden text-[#111111]">
+      {/* ── MAIN CONTENT BODY (With Die-Cut Aperture on Right Page) ── */}
+      <div className="flex-1 min-h-0 py-2.5 sm:py-3.5 overflow-hidden text-[#111111] relative">
+        {/* ── PHYSICAL DIE-CUT CAVITY (Right Page Flow Anchor) ── */}
+        {!isLeftPage && (
+          <div
+            id="manual-die-cut-cavity"
+            ref={cavityRef}
+            className="die-cut-cavity float-right ml-3.5 mb-2.5 w-[210px] sm:w-[250px] md:w-[290px] lg:w-[330px] aspect-[4/3] rounded-2xl relative select-none pointer-events-none clear-none z-10"
+            style={{
+              shapeOutside: 'margin-box',
+            }}
+          >
+            {/* Paper cut edge bevel, recessed drop shadow, technical registration marks */}
+            <div className="w-full h-full rounded-2xl border-2 border-[#b8ae9c] shadow-[inset_0_4px_14px_rgba(0,0,0,0.85),inset_0_1px_3px_rgba(0,0,0,0.95),0_1px_1px_rgba(255,255,255,0.7)] bg-[#080808] relative overflow-hidden flex flex-col justify-between p-2">
+              <div className="flex justify-between items-center opacity-70">
+                <span className="font-mono-tech text-[7px] text-[#084c78] font-bold tracking-wider">✛ APERTURE REF-90</span>
+                <span className="font-mono-tech text-[7px] text-amber-500 font-bold uppercase tracking-widest">NTSC 4:3</span>
+              </div>
+              <div className="flex justify-between items-end opacity-60">
+                <span className="font-mono-tech text-[6px] text-zinc-400 font-semibold uppercase">CRT PHOSPHOR CAVITY</span>
+                <span className="font-mono-tech text-[7px] text-[#084c78] font-bold">✛</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isCover ? (
           /* ── COVER PAGE ── */
-          <div className="h-full flex flex-col justify-between py-1 sm:py-2">
+          <div className="h-full flex flex-col justify-between py-1">
             <div>
-              <div className="inline-block px-2.5 py-1 mb-2.5 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
+              <div className="inline-block px-2.5 py-1 mb-2 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
                 {page.badge || "OFFICIAL OPERATING MONOGRAPH"}
               </div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-[#111111] font-['Jost',sans-serif] uppercase mb-1.5">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight text-[#111111] font-['Jost',sans-serif] uppercase mb-1">
                 {page.title}
               </h1>
-              <div className="text-xs sm:text-sm md:text-base font-bold tracking-widest text-[#084c78] font-mono-tech border-b-2 border-[#111111] pb-2 mb-3">
+              <div className="text-xs sm:text-sm font-bold tracking-widest text-[#084c78] font-mono-tech border-b-2 border-[#111111] pb-1.5 mb-2.5">
                 {page.subtitle || "OWNER'S INSTRUCTION MANUAL"}
               </div>
             </div>
 
-            {/* Cover Graphic: CRT Graphic & Warning Box */}
-            <div className="my-auto flex items-center justify-center p-3 sm:p-4 bg-[#111111]/5 border-2 border-[#111111]/30 rounded-sm">
-              <div className="text-center space-y-1">
-                <div className="font-mono-tech text-base sm:text-xl font-bold tracking-[0.2em] text-[#111111]">
-                  [ 4:3 BROADCAST CHASSIS ]
-                </div>
-                <div className="text-[10px] sm:text-xs text-[#333333] font-mono-tech font-semibold tracking-wide">
-                  SERIES 1996 • ALL-SOLID-STATE VIDEO MATRIX
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               <p className="text-xs sm:text-sm leading-relaxed text-[#111111] font-['Jost',sans-serif] italic font-medium">
                 {page.placeholder}
               </p>
-              <div className="flex items-center justify-between pt-2.5 border-t border-[#111111]/30 font-mono-tech text-[9px] sm:text-[10px] text-[#222222]">
+              <div className="flex items-center justify-between pt-2 border-t border-[#111111]/30 font-mono-tech text-[9px] sm:text-[10px] text-[#222222]">
                 <span className="font-bold">SERIAL: {page.serial || 'PLIST-96-001'}</span>
                 <span className="text-[#b31b1b] font-bold">STRICTLY NON-COMMERCIAL</span>
               </div>

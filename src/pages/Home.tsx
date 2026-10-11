@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from 'react';
 import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -134,8 +134,43 @@ export default function Home({ session }: { session: Session | null }) {
   });
   const [activeSpreadIndex, setActiveSpreadIndex] = useState<number>(0);
   const [volume, setVolume] = useState<number>(100);
-  const [isFullscreenManual, setIsFullscreenManual] = useState<boolean>(false);
-  const [isPipActive, setIsPipActive] = useState<boolean>(false);
+  const cavityRef = useRef<HTMLDivElement | null>(null);
+  const [cavityCoords, setCavityCoords] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+  const updateCavityCoords = useCallback(() => {
+    if (cavityRef.current) {
+      const rect = cavityRef.current.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setCavityCoords({
+          top: Math.round(rect.top),
+          left: Math.round(rect.left),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        });
+      }
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isManualMode) {
+      setCavityCoords(null);
+      return;
+    }
+    updateCavityCoords();
+    const el = cavityRef.current;
+    let ro: ResizeObserver | null = null;
+    if (el && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => updateCavityCoords());
+      ro.observe(el);
+    }
+    window.addEventListener('resize', updateCavityCoords);
+    window.addEventListener('scroll', updateCavityCoords);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', updateCavityCoords);
+      window.removeEventListener('scroll', updateCavityCoords);
+    };
+  }, [isManualMode, updateCavityCoords, activeSpreadIndex]);
 
   const handleVolumeChange = (newVolume: number) => {
     const clamped = Math.max(0, Math.min(100, Math.round(newVolume)));
@@ -168,16 +203,12 @@ export default function Home({ session }: { session: Session | null }) {
       } else if (e.key === 'ArrowRight') {
         setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1));
       } else if (e.key === 'Escape') {
-        if (isFullscreenManual) {
-          setIsFullscreenManual(false);
-        } else {
-          setIsManualMode(false);
-        }
+        setIsManualMode(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isManualMode, isFullscreenManual]);
+  }, [isManualMode]);
   
   // Histórico de Sessão (Shuffle sem Repetição)
   const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
@@ -797,7 +828,7 @@ export default function Home({ session }: { session: Session | null }) {
 
   const setupBump = getThematicSetup(currentChannelName);
   const playlistParts = currentChannelName.split(':');
-  const isPipDisplay = isManualMode && isFullscreenManual && isPipActive;
+  const isCavityMode = isManualMode;
 
   return (
     <div className="bg-neutral-950 h-screen w-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
@@ -1202,44 +1233,33 @@ export default function Home({ session }: { session: Session | null }) {
             </div>
             )}
 
-            {/* ── TOP TIER (35-37% VIEWPORT SPLIT) OR DIRECT CHASSIS WRAPPER / PiP ── */}
-            <div className={`transition-all duration-500 min-h-0 min-w-0 ${
-              isManualMode
-                ? isFullscreenManual
-                  ? isPipActive
-                    ? 'fixed bottom-16 right-4 sm:bottom-20 sm:right-6 z-[260] w-[260px] sm:w-[320px] md:w-[380px] aspect-[4/3] rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.95)] bg-transparent p-0 pointer-events-auto'
-                    : 'fixed -top-[9999px] -left-[9999px] w-[320px] h-[240px] pointer-events-none opacity-0'
-                  : 'w-full h-[34vh] md:h-[36vh] max-h-[38vh] shrink-0 grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3.5 overflow-hidden'
-                : 'relative w-full flex-1 flex items-center justify-center'
+            {/* ── CENTRAL TV STAGE (Standard Mode) / EMBEDDED CAVITY DOCK (Manual Mode) ── */}
+            <div className={`w-full flex items-center justify-center min-h-0 min-w-0 ${
+              isManualMode ? 'pointer-events-none' : 'relative flex-1'
             }`}>
-              {/* Left Column (Manual Mode) / Direct Chassis Wrapper (Standard Mode) */}
-              <div className={`w-full h-full flex items-center justify-center min-h-0 min-w-0 overflow-hidden relative ${
-                isManualMode && !isFullscreenManual ? 'p-0.5' : ''
-              }`}>
-                {/* Floating PiP Header and Close Button */}
-                {isPipDisplay && (
-                  <div className="absolute top-2 left-2 right-2 z-[70] flex items-center justify-between pointer-events-auto px-1">
-                    <span className="bg-black/90 backdrop-blur-md border border-amber-500/50 text-amber-400 font-mono-tech font-bold text-[9px] px-2 py-0.5 rounded shadow-lg flex items-center gap-1.5 select-none">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                      CRT VIDEO // LIVE
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setIsPipActive(false); }}
-                      className="bg-black/90 hover:bg-red-950 hover:border-red-500/70 border border-white/25 text-white text-[11px] w-5 h-5 rounded flex items-center justify-center font-bold cursor-pointer transition-colors shadow-lg"
-                      title="Fechar PiP"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-
-                {/* CHASSI DA TV (Uninterrupted playback under all states!) */}
-                <div className={`tv-chassis-wrapper relative w-full flex-1 min-h-0 min-w-0 flex items-center justify-center transition-all duration-500 ${
-                  isManualMode && !isFullscreenManual ? 'h-full max-h-full' : isPipDisplay ? 'h-full w-full' : 'md:perspective-[1500px]'
-                } group`}>
+              <div className="w-full h-full flex items-center justify-center min-h-0 min-w-0 relative">
+                {/* CHASSI DA TV (Uninterrupted continuous playback across all states!) */}
+                <div 
+                  className={`tv-chassis-wrapper flex items-center justify-center ${
+                    isCavityMode
+                      ? 'pointer-events-auto z-[225]'
+                      : 'relative w-full flex-1 min-h-0 min-w-0 md:perspective-[1500px] group transition-all duration-500'
+                  }`}
+                  style={isCavityMode ? {
+                    position: 'fixed',
+                    top: cavityCoords ? `${cavityCoords.top}px` : '-9999px',
+                    left: cavityCoords ? `${cavityCoords.left}px` : '-9999px',
+                    width: cavityCoords ? `${cavityCoords.width}px` : '320px',
+                    height: cavityCoords ? `${cavityCoords.height}px` : '240px',
+                    zIndex: 225,
+                    margin: 0,
+                    padding: 0,
+                    opacity: cavityCoords ? 1 : 0,
+                    transition: 'none',
+                  } : undefined}
+                >
               <div className={`tv-chassis-frame relative z-10 flex flex-col justify-center max-h-full max-w-full ${
-                isPipDisplay
+                isCavityMode
                   ? 'w-full h-full p-0 bg-transparent shadow-none border-0 rounded-2xl'
                   : `bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-2.5 sm:p-3 md:p-5 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d ${
                       activeSkin === 'y2k' ? 'chassis-y2k' : activeSkin === 'future' ? 'chassis-future' : ''
@@ -1247,10 +1267,10 @@ export default function Home({ session }: { session: Session | null }) {
               }`}>
 
               {/* Physical Glare & Rim Overlays (Layered Skeuomorphism) */}
-              {!isPipDisplay && activeSkin === 'y2k' && (
+              {!isCavityMode && activeSkin === 'y2k' && (
                 <div className="chassis-specular-glare pointer-events-none absolute -top-1 left-4 right-4 h-12 md:h-16 rounded-t-[32px] opacity-75 z-20"></div>
               )}
-              {!isPipDisplay && activeSkin === 'future' && (
+              {!isCavityMode && activeSkin === 'future' && (
                 <>
                   <div className="chassis-chrome-reflection pointer-events-none absolute top-0 left-0 right-0 h-10 md:h-14 rounded-t-[32px] opacity-90 z-20"></div>
                   <div className="chassis-future-rim pointer-events-none absolute -inset-[2px] rounded-[22px] md:rounded-[34px] z-15"></div>
@@ -1258,7 +1278,7 @@ export default function Home({ session }: { session: Session | null }) {
               )}
 
               <div className={`flex flex-row h-full w-full items-stretch transition-all duration-500 relative z-20 ${
-                isPipDisplay
+                isCavityMode
                   ? 'p-0 bg-transparent shadow-none border-0 rounded-2xl'
                   : `rounded-[16px] md:rounded-[36px] p-2 md:p-3.5 ${
                       activeSkin === 'y2k'
@@ -1270,7 +1290,7 @@ export default function Home({ session }: { session: Session | null }) {
               }`}>
                 {/* ── LEFT BEZEL: ROUND CONCAVE MECHANICAL '?' BUTTON & STATUS LED ── */}
                 <div className={`flex flex-col justify-between items-center w-7 sm:w-8 md:w-10 mr-1.5 sm:mr-2 md:mr-3 shrink-0 h-full py-2 sm:py-3 md:py-4 select-none relative z-30 ${
-                  isPipDisplay ? 'hidden' : ''
+                  isCavityMode ? 'hidden' : ''
                 }`}>
                   {/* Upper decorative grill */}
                   <div className="flex flex-col items-center gap-1 opacity-40 w-full mb-auto">
@@ -1312,9 +1332,6 @@ export default function Home({ session }: { session: Session | null }) {
                             setIsMatrixOpen(false);
                             setIsSearchOpen(false);
                             setIsInfoOpen(false);
-                          } else {
-                            setIsFullscreenManual(false);
-                            setIsPipActive(false);
                           }
                           return next;
                         });
@@ -1341,18 +1358,18 @@ export default function Home({ session }: { session: Session | null }) {
                 </div>
 
                 <div className={`relative flex-1 aspect-[4/3] bg-[#050505] overflow-hidden screen-container z-10 box-border max-h-full ${
-                  isPipDisplay
-                    ? 'w-full h-full rounded-2xl border-2 border-amber-500/70 shadow-[0_12px_40px_rgba(0,0,0,0.95),0_0_25px_rgba(245,158,11,0.25)]'
+                  isCavityMode
+                    ? 'w-full h-full rounded-2xl border border-black/60 shadow-[inset_0_0_20px_rgba(0,0,0,0.9)]'
                     : 'rounded-[20px] md:rounded-[44px] border-[4px] md:border-[8px] border-[#080808]'
                 }`}>
                   <div className={`absolute inset-0 crt-overlay z-40 pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)] ${
-                    isPipDisplay ? 'rounded-2xl' : 'rounded-[20px] md:rounded-[44px]'
+                    isCavityMode ? 'rounded-2xl' : 'rounded-[20px] md:rounded-[44px]'
                   }`}></div>
 
                   {!isOn && <div className="absolute inset-0 bg-[#080808] z-20"></div>}
 
                   <div className={`relative w-full h-full overflow-hidden bg-black ${
-                    isPipDisplay ? 'rounded-xl' : 'rounded-[16px] md:rounded-[40px]'
+                    isCavityMode ? 'rounded-xl' : 'rounded-[16px] md:rounded-[40px]'
                   } ${isOn ? 'crt-turn-on' : ''}`}>
                     {/* YouTube Player */}
                     <div
@@ -1629,7 +1646,7 @@ export default function Home({ session }: { session: Session | null }) {
 
                 {/* PAINEL DE CONTROLE LATERAL DIREITO */}
                 <div className={`flex flex-col w-14 sm:w-16 md:w-28 lg:w-32 ml-2 md:ml-3 p-1.5 md:p-2.5 justify-between items-center gap-2 md:gap-3 shrink-0 rounded-r-lg h-full overflow-hidden font-['Jost',sans-serif] transition-all duration-500 relative z-30 ${
-                  isPipDisplay ? 'hidden' : ''
+                  isCavityMode ? 'hidden' : ''
                 } ${
                   activeSkin === 'y2k'
                     ? 'panel-y2k'
@@ -1857,39 +1874,20 @@ export default function Home({ session }: { session: Session | null }) {
           </div>
         </div>
 
-        {/* Right Column (Manual Mode Only): Manual Directory / Topics Panel */}
-        {isManualMode && !isFullscreenManual && (
-          <div className="w-full h-full min-h-0 min-w-0 overflow-hidden">
-            <ManualDirectoryPanel
-              spreads={manualSpreads}
-              activeSpreadIndex={activeSpreadIndex}
-              onSelectSpread={setActiveSpreadIndex}
-              onExitManual={() => {
-                setIsManualMode(false);
-                setIsFullscreenManual(false);
-                setIsPipActive(false);
-              }}
-            />
-          </div>
-        )}
       </div>
 
-      {/* ── BOTTOM TIER (In Manual Mode) OR GUIDE DRAWER + FOOTER (In Standard Mode) ── */}
-      {isManualMode ? (
-        <div className={`${
-          isFullscreenManual 
-            ? 'fixed inset-0 z-[200] bg-neutral-950/98 backdrop-blur-md p-2 sm:p-4 flex flex-col justify-between overflow-hidden' 
-            : 'flex-1 min-h-0 w-full flex flex-col justify-between overflow-hidden mt-1 md:mt-2'
-        }`}>
+      {/* ── FULLSCREEN OWNER'S MANUAL OVERLAY (With Embedded Die-Cut Cavity) ── */}
+      {isManualMode && (
+        <div className="fixed inset-0 z-[200] bg-neutral-950/98 backdrop-blur-md p-2 sm:p-4 md:p-6 flex flex-col justify-between overflow-hidden">
           <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
             <ManualSpreadViewer
               spread={manualSpreads[activeSpreadIndex]}
               spreadIndex={activeSpreadIndex}
               totalSpreads={manualSpreads.length}
-              isFullscreen={isFullscreenManual}
+              cavityRef={cavityRef}
             />
           </div>
-          <div className="shrink-0 w-full pt-1">
+          <div className="shrink-0 w-full pt-1.5">
             <ManualControlDeck
               currentSpreadIndex={activeSpreadIndex}
               totalSpreads={manualSpreads.length}
@@ -1897,21 +1895,14 @@ export default function Home({ session }: { session: Session | null }) {
               onNextPage={() => setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1))}
               volume={volume}
               onVolumeChange={handleVolumeChange}
-              onClose={() => {
-                setIsManualMode(false);
-                setIsFullscreenManual(false);
-                setIsPipActive(false);
-              }}
-              isFullscreen={isFullscreenManual}
-              onToggleFullscreen={() => setIsFullscreenManual(prev => !prev)}
-              isPipActive={isPipActive}
-              onTogglePip={() => setIsPipActive(prev => !prev)}
+              onClose={() => setIsManualMode(false)}
             />
           </div>
         </div>
-      ) : (
-        /* ── GAVETA INFERIOR MECÂNICA (P100 GUIDE) ── */
-        <div
+      )}
+
+      {/* ── GAVETA INFERIOR MECÂNICA (P100 GUIDE) ── */}
+      <div
           id="tv-drawer-guide"
           className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-['Jost',sans-serif] font-jost ${
             isSearchOpen
@@ -2030,7 +2021,6 @@ export default function Home({ session }: { session: Session | null }) {
                 </div>
               </div>
             </div>
-          )}
 
           </div>
 
