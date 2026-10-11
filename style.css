@@ -740,90 +740,117 @@ body {
     font-family: 'Space Mono', 'Courier New', 'OCR-B', monospace;
 }
 
-/* Aged Paper Base Texture */
+/* Aged Paper Base Texture - Much lighter, realistic aged ivory parchment */
 .manual-paper-aged {
-    background: linear-gradient(135deg, #f0ebd9 0%, #ece6d9 50%, #e4dccb 100%);
-    color: #1a1918;
+    background: linear-gradient(135deg, #f9f7f1 0%, #f4f1ea 45%, #eae6d8 100%);
+    color: #111111;
     position: relative;
     box-shadow: 
-        inset 0 0 30px rgba(139, 107, 61, 0.16),
-        inset 0 0 6px rgba(110, 80, 40, 0.22),
-        0 12px 36px rgba(0, 0, 0, 0.45);
+        inset 0 0 25px rgba(139, 107, 61, 0.08),
+        inset 0 0 4px rgba(110, 80, 40, 0.12),
+        0 16px 48px rgba(0, 0, 0, 0.55);
 }
 
-/* Subtle Organic Degradation (Turbulence noise overlay) */
+/* Subtle Organic Degradation (Extremely faint turbulence noise overlay) */
 .manual-paper-noise {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.1   0 0 0 0 0.1   0 0 0 0 0.1  0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.05   0 0 0 0 0.05   0 0 0 0 0.05  0 0 0 0.018 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
 }
 
 /* Left Page & Right Page Edge Oxidation and Gutter Shadows */
 .manual-page-left {
     box-shadow: 
-        inset 0 0 16px rgba(160, 130, 80, 0.15),
-        inset -18px 0 24px -10px rgba(25, 18, 10, 0.38),
-        inset -4px 0 6px -2px rgba(10, 5, 2, 0.5);
+        inset 0 0 12px rgba(160, 130, 80, 0.08),
+        inset -14px 0 20px -10px rgba(25, 18, 10, 0.28),
+        inset -3px 0 4px -2px rgba(10, 5, 2, 0.4);
     border-radius: 4px 1px 1px 4px;
 }
 
 .manual-page-right {
     box-shadow: 
-        inset 0 0 16px rgba(160, 130, 80, 0.15),
-        inset 18px 0 24px -10px rgba(25, 18, 10, 0.38),
-        inset 4px 0 6px -2px rgba(10, 5, 2, 0.5);
+        inset 0 0 12px rgba(160, 130, 80, 0.08),
+        inset 14px 0 20px -10px rgba(25, 18, 10, 0.28),
+        inset 3px 0 4px -2px rgba(10, 5, 2, 0.4);
     border-radius: 1px 4px 4px 1px;
 }
 
 /* Central Gutter Seam & Staple Binding */
 .manual-spine-gutter {
     background: linear-gradient(90deg, 
-        rgba(0,0,0,0.4) 0%, 
-        rgba(0,0,0,0.12) 30%, 
-        rgba(255,255,255,0.08) 50%, 
-        rgba(0,0,0,0.12) 70%, 
-        rgba(0,0,0,0.4) 100%
+        rgba(0,0,0,0.3) 0%, 
+        rgba(0,0,0,0.08) 30%, 
+        rgba(255,255,255,0.15) 50%, 
+        rgba(0,0,0,0.08) 70%, 
+        rgba(0,0,0,0.3) 100%
     );
 }
 
-/* Duotone Print Accent Colors */
+/* Duotone Print Accent Colors (High Contrast) */
 .ink-charcoal {
-    color: #1a1918;
+    color: #111111;
 }
 .ink-cyan {
-    color: #0c5a8c;
+    color: #084c78;
 }
 .border-ink-cyan {
-    border-color: #0c5a8c;
+    border-color: #084c78;
 }
 .bg-ink-cyan {
-    background-color: #0c5a8c;
+    background-color: #084c78;
 }
 .ink-red {
-    color: #a82d22;
+    color: #b31b1b;
 }
 .border-ink-red {
-    border-color: #a82d22;
+    border-color: #b31b1b;
 }
 
-/* Rubber Inspection Stamps */
+/* Rubber Inspection Stamps (High Contrast) */
 .rubber-stamp {
     font-family: 'Space Mono', monospace;
     font-weight: 700;
     text-transform: uppercase;
     display: inline-block;
     padding: 0.2rem 0.55rem;
-    border: 2px dashed #a82d22;
-    color: #a82d22;
+    border: 2px dashed #b31b1b;
+    color: #b31b1b;
     letter-spacing: 0.12em;
     transform: rotate(-3deg);
-    opacity: 0.88;
-    mask-image: radial-gradient(circle, black 70%, rgba(0,0,0,0.6) 100%);
-    filter: contrast(120%);
+    opacity: 0.95;
+    mask-image: radial-gradient(circle, black 75%, rgba(0,0,0,0.6) 100%);
+    filter: contrast(130%);
 }
 
 .rubber-stamp-cyan {
-    border: 2px dashed #0c5a8c;
-    color: #0c5a8c;
+    border: 2px dashed #084c78;
+    color: #084c78;
     transform: rotate(2deg);
+}
+
+/* Round Concave Mechanical Button (TV Left Bezel) */
+.btn-bezel-concave {
+    background: radial-gradient(circle at 35% 35%, #2c2f36 0%, #17181c 60%, #0d0e11 100%);
+    border: 2px solid #3c414c;
+    box-shadow: 
+        inset 0 3px 5px rgba(0, 0, 0, 0.95), 
+        inset 0 -1px 2px rgba(255, 255, 255, 0.2), 
+        0 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 1px rgba(255, 255, 255, 0.1);
+    transition: all 0.1s ease;
+}
+
+.btn-bezel-concave:hover {
+    border-color: #f59e0b;
+    box-shadow: 
+        inset 0 3px 5px rgba(0, 0, 0, 0.95), 
+        inset 0 -1px 2px rgba(255, 255, 255, 0.3), 
+        0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.btn-bezel-concave:active {
+    transform: scale(0.94);
+    box-shadow: 
+        inset 0 4px 8px rgba(0, 0, 0, 1), 
+        0 1px 1px rgba(0, 0, 0, 0.6);
 }
 
 /* Mechanical Push Button (Tactile Hardware Click) */

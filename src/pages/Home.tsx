@@ -134,6 +134,8 @@ export default function Home({ session }: { session: Session | null }) {
   });
   const [activeSpreadIndex, setActiveSpreadIndex] = useState<number>(0);
   const [volume, setVolume] = useState<number>(100);
+  const [isFullscreenManual, setIsFullscreenManual] = useState<boolean>(false);
+  const [isPipActive, setIsPipActive] = useState<boolean>(false);
 
   const handleVolumeChange = (newVolume: number) => {
     const clamped = Math.max(0, Math.min(100, Math.round(newVolume)));
@@ -166,12 +168,16 @@ export default function Home({ session }: { session: Session | null }) {
       } else if (e.key === 'ArrowRight') {
         setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1));
       } else if (e.key === 'Escape') {
-        setIsManualMode(false);
+        if (isFullscreenManual) {
+          setIsFullscreenManual(false);
+        } else {
+          setIsManualMode(false);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isManualMode]);
+  }, [isManualMode, isFullscreenManual]);
   
   // Histórico de Sessão (Shuffle sem Repetição)
   const [playedHistory, setPlayedHistory] = useState<Record<string, string[]>>({});
@@ -859,32 +865,6 @@ export default function Home({ session }: { session: Session | null }) {
                 </button>
               </>
             )}
-
-            {/* ── OWNER'S MANUAL Button ── */}
-            <button
-              id="btn-owner-manual"
-              onClick={() => {
-                setIsManualMode(prev => {
-                  const next = !prev;
-                  if (next) {
-                    setIsAdminSidebarOpen(false);
-                    setIsEditDrawerOpen(false);
-                    setIsMatrixOpen(false);
-                    setIsSearchOpen(false);
-                    setIsInfoOpen(false);
-                  }
-                  return next;
-                });
-              }}
-              className={`min-w-[180px] px-6 py-3 font-vt323 text-2xl tracking-widest transition-all uppercase backdrop-blur-sm flex items-center justify-center gap-2 border shadow-lg rounded-sm cursor-pointer ${
-                isManualMode
-                  ? 'bg-amber-600 text-black border-amber-400 scale-105 shadow-[0_0_20px_rgba(217,119,6,0.4)]'
-                  : 'bg-zinc-900/60 text-zinc-300 border-zinc-700/60 hover:bg-zinc-800 hover:text-white hover:border-amber-400/80 shadow-[0_0_15px_rgba(255,255,255,0.05)]'
-              }`}
-              title="Abrir/Fechar Manual do Proprietário (Owner's Manual)"
-            >
-              📖 {isManualMode ? 'EXIT MANUAL' : "OWNER'S MANUAL"}
-            </button>
           </div>
 
           {/* ── MATRIX Full-Screen Overlay Panel ── */}
@@ -1221,19 +1201,41 @@ export default function Home({ session }: { session: Session | null }) {
             </div>
             )}
 
-            {/* ── TOP TIER (50/50 SPLIT IN MANUAL MODE) OR DIRECT CHASSIS WRAPPER ── */}
+            {/* ── TOP TIER (35-37% VIEWPORT SPLIT) OR DIRECT CHASSIS WRAPPER / PiP ── */}
             <div className={`transition-all duration-500 min-h-0 min-w-0 ${
               isManualMode
-                ? 'w-full h-[46vh] md:h-[48vh] shrink-0 grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3.5 overflow-hidden'
+                ? isFullscreenManual
+                  ? isPipActive
+                    ? 'fixed bottom-16 right-4 sm:bottom-20 sm:right-6 z-[260] w-[260px] sm:w-[320px] md:w-[360px] aspect-[4/3] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.95),0_0_0_2px_rgba(245,158,11,0.6)] bg-[#141414] p-1 sm:p-1.5 pointer-events-auto'
+                    : 'fixed -top-[9999px] -left-[9999px] w-[320px] h-[240px] pointer-events-none opacity-0'
+                  : 'w-full h-[34vh] md:h-[36vh] max-h-[38vh] shrink-0 grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3.5 overflow-hidden'
                 : 'relative w-full flex-1 flex items-center justify-center'
             }`}>
               {/* Left Column (Manual Mode) / Direct Chassis Wrapper (Standard Mode) */}
-              <div className={`w-full h-full flex items-center justify-center min-h-0 min-w-0 overflow-hidden ${
-                isManualMode ? 'p-0.5' : ''
+              <div className={`w-full h-full flex items-center justify-center min-h-0 min-w-0 overflow-hidden relative ${
+                isManualMode && !isFullscreenManual ? 'p-0.5' : ''
               }`}>
-                {/* CHASSI DA TV */}
+                {/* Floating PiP Banner and Close Button */}
+                {isManualMode && isFullscreenManual && isPipActive && (
+                  <div className="absolute top-2 left-3 right-3 z-[70] flex items-center justify-between pointer-events-auto">
+                    <span className="bg-black/90 border border-amber-500/50 text-amber-400 font-mono-tech font-bold text-[8px] px-2 py-0.5 rounded flex items-center gap-1.5 shadow-md">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                      CRT PiP // LIVE
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setIsPipActive(false); }}
+                      className="bg-black/80 hover:bg-red-900 border border-white/20 text-white text-[10px] w-5 h-5 rounded flex items-center justify-center font-bold cursor-pointer transition-colors"
+                      title="Fechar PiP"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {/* CHASSI DA TV (Uninterrupted playback under all states!) */}
                 <div className={`tv-chassis-wrapper relative w-full flex-1 min-h-0 min-w-0 flex items-center justify-center transition-all duration-500 ${
-                  isManualMode ? 'h-full max-h-full' : 'md:perspective-[1500px]'
+                  isManualMode && !isFullscreenManual ? 'h-full max-h-full' : isFullscreenManual && isPipActive ? 'h-full w-full' : 'md:perspective-[1500px]'
                 } group`}>
               <div className={`tv-chassis-frame relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-2.5 sm:p-3 md:p-5 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col justify-center max-h-full max-w-full ${
                 activeSkin === 'y2k' ? 'chassis-y2k' : activeSkin === 'future' ? 'chassis-future' : ''
@@ -1257,32 +1259,75 @@ export default function Home({ session }: { session: Session | null }) {
                   ? 'inner-housing-future'
                   : 'bg-[#111] shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222]'
               }`}>
-                {activeSkin === 'y2k' ? (
-                  <div className="hidden md:flex flex-col justify-between w-9 lg:w-11 mr-2 md:mr-3 p-1.5 shrink-0 h-full py-4 rounded-full bg-gradient-to-b from-cyan-200/40 via-cyan-400/20 to-sky-600/40 border border-white/60 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),inset_0_-2px_4px_rgba(10,50,80,0.5),0_0_12px_rgba(56,189,248,0.25)] relative overflow-hidden">
-                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-4/5 h-6 bg-gradient-to-b from-white/70 to-transparent rounded-full pointer-events-none"></div>
-                    <div className="flex flex-col justify-center items-center gap-1.5 my-auto w-full opacity-70">
-                      {Array.from({ length: 18 }).map((_, i) => (
-                        <div key={i} className="w-3/4 h-1 rounded-full bg-cyan-900/40 shadow-[inset_0_1px_1px_rgba(0,0,0,0.6),0_1px_0_rgba(255,255,255,0.4)]" />
-                      ))}
-                    </div>
+                {/* ── LEFT BEZEL: ROUND CONCAVE MECHANICAL '?' BUTTON & STATUS LED ── */}
+                <div className="flex flex-col justify-between items-center w-7 sm:w-8 md:w-10 mr-1.5 sm:mr-2 md:mr-3 shrink-0 h-full py-2 sm:py-3 md:py-4 select-none relative z-30">
+                  {/* Upper decorative grill */}
+                  <div className="flex flex-col items-center gap-1 opacity-40 w-full mb-auto">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={`vent-t-${i}`} className="w-3/4 h-[1.5px] bg-black/70 rounded-full" />
+                    ))}
                   </div>
-                ) : activeSkin === 'future' ? (
-                  <div className="hidden md:flex flex-col justify-between w-9 lg:w-12 mr-2 md:mr-3 p-1.5 shrink-0 h-full py-3 rounded-2xl bg-gradient-to-b from-white/80 via-slate-400/50 to-slate-800/80 border border-white/70 shadow-[inset_0_2px_4px_rgba(255,255,255,1),inset_0_-3px_6px_rgba(0,0,0,0.8),0_0_15px_rgba(56,189,248,0.3)] relative overflow-hidden select-none">
-                    <div className="absolute top-0 bottom-0 left-1 w-1 bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 shadow-[0_0_6px_rgba(245,158,11,0.6)] rounded-full"></div>
-                    <div className="my-auto flex flex-col items-center justify-center -rotate-90 origin-center whitespace-nowrap text-[7px] lg:text-[8px] font-black tracking-[0.25em] text-amber-300 drop-shadow-[0_0_4px_rgba(245,158,11,0.8)] font-['Jost',sans-serif]">
-                      PLIST • 2005
+
+                  {/* CENTER HARDWARE MODULE: STATUS LED + CONCAVE '?' BUTTON */}
+                  <div className="my-auto flex flex-col items-center gap-1 sm:gap-1.5">
+                    {/* Status LED: Glows amber when manual is open */}
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div 
+                        className={`w-2 h-2 rounded-full border transition-all duration-300 ${
+                          isManualMode 
+                            ? 'bg-amber-400 border-amber-300 shadow-[0_0_10px_#f59e0b,0_0_4px_#fbbf24] animate-pulse' 
+                            : 'bg-zinc-800 border-zinc-950 shadow-none opacity-40'
+                        }`} 
+                        title={isManualMode ? "Owner's Manual Active" : "Owner's Manual Standby"}
+                      />
+                      <span className={`text-[6px] font-mono-tech font-bold uppercase tracking-wider ${
+                        isManualMode ? 'text-amber-400 drop-shadow-[0_0_4px_#f59e0b]' : 'text-zinc-600'
+                      }`}>
+                        DOC
+                      </span>
                     </div>
-                    <div className="flex flex-col justify-center items-center gap-1 opacity-60">
-                      {Array.from({ length: 10 }).map((_, i) => (
-                        <div key={i} className="w-2.5 h-0.5 rounded-full bg-cyan-400 shadow-[0_0_4px_#38bdf8]" />
-                      ))}
-                    </div>
+
+                    {/* Round Concave Mechanical '?' Button */}
+                    <button
+                      type="button"
+                      id="btn-tv-manual-bezel"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsManualMode(prev => {
+                          const next = !prev;
+                          if (next) {
+                            setIsAdminSidebarOpen(false);
+                            setIsEditDrawerOpen(false);
+                            setIsMatrixOpen(false);
+                            setIsSearchOpen(false);
+                            setIsInfoOpen(false);
+                          } else {
+                            setIsFullscreenManual(false);
+                            setIsPipActive(false);
+                          }
+                          return next;
+                        });
+                      }}
+                      className={`btn-bezel-concave w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center cursor-pointer group relative ${
+                        isManualMode ? 'ring-1 ring-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.5)]' : ''
+                      }`}
+                      title="Owner's Manual [?] — Clique para abrir/fechar o manual do proprietário"
+                    >
+                      <span className={`font-mono-tech font-bold text-xs sm:text-sm md:text-base leading-none select-none transition-colors ${
+                        isManualMode ? 'text-amber-400 drop-shadow-[0_0_6px_#f59e0b]' : 'text-zinc-400 group-hover:text-amber-300'
+                      }`}>
+                        ?
+                      </span>
+                    </button>
                   </div>
-                ) : (
-                  <div className="hidden md:flex flex-col justify-center w-8 lg:w-10 mr-2 md:mr-3 space-y-0.5 opacity-50 shrink-0 h-full py-4">
-                    {Array.from({ length: 40 }).map((_, i) => <div key={i} className="w-full h-px bg-black/50" />)}
+
+                  {/* Lower decorative grill */}
+                  <div className="flex flex-col items-center gap-1 opacity-40 w-full mt-auto">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={`vent-b-${i}`} className="w-3/4 h-[1.5px] bg-black/70 rounded-full" />
+                    ))}
                   </div>
-                )}
+                </div>
 
                 <div className="relative flex-1 aspect-[4/3] bg-[#050505] rounded-[20px] md:rounded-[44px] overflow-hidden screen-container border-[4px] md:border-[8px] border-[#080808] z-10 box-border max-h-full">
                   <div className="absolute inset-0 crt-overlay z-40 rounded-[20px] md:rounded-[44px] pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]"></div>
@@ -1673,50 +1718,6 @@ export default function Home({ session }: { session: Session | null }) {
                       </button>
                     </div>
 
-                    {/* MANUAL Button */}
-                    <div className="flex flex-col items-center">
-                      <span className={`text-[6px] font-bold tracking-widest uppercase ${
-                        activeSkin === 'future' ? 'text-sky-300 drop-shadow-[0_0_4px_#38bdf8]' : activeSkin === 'y2k' ? 'text-sky-900 font-extrabold' : 'text-gray-500'
-                      }`}>
-                        Manual
-                      </span>
-                      <button
-                        id="btn-tv-lateral-manual"
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          setIsManualMode(prev => {
-                            const next = !prev;
-                            if (next) {
-                              setIsAdminSidebarOpen(false);
-                              setIsEditDrawerOpen(false);
-                              setIsMatrixOpen(false);
-                              setIsSearchOpen(false);
-                              setIsInfoOpen(false);
-                            }
-                            return next;
-                          }); 
-                        }}
-                        className={`${
-                          activeSkin === 'y2k'
-                            ? `btn-y2k-bubble w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isManualMode ? 'ring-2 ring-white/90 brightness-110' : ''}`
-                            : activeSkin === 'future'
-                            ? `btn-future-chrome w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isManualMode ? 'ring-2 ring-cyan-400 shadow-[0_0_15px_#00e5ff]' : ''}`
-                            : `btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative transition-all ${isManualMode ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`
-                        }`}
-                        title="Abrir/Fechar Manual do Proprietário"
-                      >
-                        <span className={`font-mono font-bold text-xs md:text-sm transition-colors ${
-                          activeSkin === 'future'
-                            ? 'text-cyan-300 drop-shadow-[0_0_6px_#00e5ff]'
-                            : activeSkin === 'y2k'
-                            ? 'text-white drop-shadow-[0_1px_2px_rgba(3,105,161,0.8)]'
-                            : isManualMode ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]' : 'text-gray-400 group-hover:text-white'
-                        }`}>
-                          📖
-                        </span>
-                      </button>
-                    </div>
-
                     {/* GRP Button */}
                     <div className="flex flex-col items-center">
                       <span className={`text-[6px] font-bold tracking-widest uppercase ${
@@ -1836,13 +1837,17 @@ export default function Home({ session }: { session: Session | null }) {
         </div>
 
         {/* Right Column (Manual Mode Only): Manual Directory / Topics Panel */}
-        {isManualMode && (
+        {isManualMode && !isFullscreenManual && (
           <div className="w-full h-full min-h-0 min-w-0 overflow-hidden">
             <ManualDirectoryPanel
               spreads={manualSpreads}
               activeSpreadIndex={activeSpreadIndex}
               onSelectSpread={setActiveSpreadIndex}
-              onExitManual={() => setIsManualMode(false)}
+              onExitManual={() => {
+                setIsManualMode(false);
+                setIsFullscreenManual(false);
+                setIsPipActive(false);
+              }}
             />
           </div>
         )}
@@ -1850,12 +1855,17 @@ export default function Home({ session }: { session: Session | null }) {
 
       {/* ── BOTTOM TIER (In Manual Mode) OR GUIDE DRAWER + FOOTER (In Standard Mode) ── */}
       {isManualMode ? (
-        <div className="flex-1 min-h-0 w-full flex flex-col justify-between overflow-hidden mt-1 md:mt-2">
+        <div className={`${
+          isFullscreenManual 
+            ? 'fixed inset-0 z-[200] bg-neutral-950/98 backdrop-blur-md p-2 sm:p-4 flex flex-col justify-between overflow-hidden' 
+            : 'flex-1 min-h-0 w-full flex flex-col justify-between overflow-hidden mt-1 md:mt-2'
+        }`}>
           <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
             <ManualSpreadViewer
               spread={manualSpreads[activeSpreadIndex]}
               spreadIndex={activeSpreadIndex}
               totalSpreads={manualSpreads.length}
+              isFullscreen={isFullscreenManual}
             />
           </div>
           <div className="shrink-0 w-full pt-1">
@@ -1866,7 +1876,15 @@ export default function Home({ session }: { session: Session | null }) {
               onNextPage={() => setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1))}
               volume={volume}
               onVolumeChange={handleVolumeChange}
-              onClose={() => setIsManualMode(false)}
+              onClose={() => {
+                setIsManualMode(false);
+                setIsFullscreenManual(false);
+                setIsPipActive(false);
+              }}
+              isFullscreen={isFullscreenManual}
+              onToggleFullscreen={() => setIsFullscreenManual(prev => !prev)}
+              isPipActive={isPipActive}
+              onTogglePip={() => setIsPipActive(prev => !prev)}
             />
           </div>
         </div>

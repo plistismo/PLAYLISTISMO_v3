@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 interface ManualControlDeckProps {
   currentSpreadIndex: number;
@@ -8,6 +8,10 @@ interface ManualControlDeckProps {
   volume: number; // 0 to 100
   onVolumeChange: (val: number) => void;
   onClose?: () => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+  isPipActive?: boolean;
+  onTogglePip?: () => void;
 }
 
 export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
@@ -18,6 +22,10 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
   volume,
   onVolumeChange,
   onClose,
+  isFullscreen = false,
+  onToggleFullscreen,
+  isPipActive = false,
+  onTogglePip,
 }) => {
   const currentLeftPage = currentSpreadIndex * 2 + 1;
   const currentRightPage = currentSpreadIndex * 2 + 2;
@@ -30,10 +38,12 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
   const knobAngle = -135 + (volume / 100) * 270;
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto bg-[#121418] border border-[#2b303a] rounded-md p-2 sm:p-2.5 shadow-[0_10px_25px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.08)] select-none">
-      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 sm:gap-4">
+    <div className={`w-full max-w-[1250px] mx-auto bg-[#121418] border border-[#2b303a] rounded-md p-2 sm:p-2.5 shadow-[0_12px_30px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.08)] select-none ${
+      isFullscreen ? 'border-amber-500/30' : ''
+    }`}>
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-3.5">
         
-        {/* ── LEFT: PREV PAGE BUTTON ── */}
+        {/* ── LEFT: PREV PAGE BUTTON & FULLSCREEN TOGGLE ── */}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -46,37 +56,72 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
             <span>◄</span>
             <span>PREV PAGE</span>
           </button>
+
+          {/* Fullscreen / Expand Reading Mode Toggle */}
+          {onToggleFullscreen && (
+            <button
+              type="button"
+              id="btn-manual-fullscreen"
+              onClick={onToggleFullscreen}
+              className={`btn-mech-deck px-2.5 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer ${
+                isFullscreen ? 'border-amber-400 text-amber-300' : ''
+              }`}
+              title={isFullscreen ? "Sair do Modo Tela Cheia (ESC)" : "Modo Leitura Imersivo (Tela Cheia)"}
+            >
+              <span>{isFullscreen ? '縮' : '⛶'}</span>
+              <span className="hidden sm:inline">{isFullscreen ? 'NORMAL VIEW' : 'FULLSCREEN'}</span>
+            </button>
+          )}
+
+          {/* Picture-in-Picture Toggle (Visible in Fullscreen Mode) */}
+          {isFullscreen && onTogglePip && (
+            <button
+              type="button"
+              id="btn-manual-pip"
+              onClick={onTogglePip}
+              className={`btn-mech-deck px-2.5 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] flex items-center gap-1.5 cursor-pointer transition-all ${
+                isPipActive
+                  ? 'border-cyan-400 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.3)] bg-cyan-950/40'
+                  : 'text-zinc-400'
+              }`}
+              title={isPipActive ? "Desativar PiP Flutuante" : "Ativar CRT TV Picture-in-Picture Flutuante"}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isPipActive ? 'bg-cyan-400 shadow-[0_0_6px_#22d3ee] animate-pulse' : 'bg-zinc-600'}`} />
+              <span>CRT PiP</span>
+              <span className="text-[9px] opacity-75">{isPipActive ? 'ON' : 'OFF'}</span>
+            </button>
+          )}
         </div>
 
         {/* ── CENTER: CRT VOLUME ROTARY KNOB & SLIDER CONTROL ── */}
-        <div className="flex-1 flex items-center justify-center gap-3 sm:gap-4 px-2 py-1 bg-[#0b0c0e] border border-[#1f232b] rounded-sm shadow-inner min-w-[200px]">
+        <div className="flex-1 flex items-center justify-center gap-2.5 sm:gap-4 px-2 py-1 bg-[#0b0c0e] border border-[#1f232b] rounded-sm shadow-inner min-w-[180px]">
           
           {/* Rotary Knob Graphic */}
           <div className="flex items-center gap-2">
             <div 
-              className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-[#3c4048] to-[#16181c] border-2 border-[#545b66] shadow-[0_2px_4px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.3)] flex items-center justify-center cursor-pointer shrink-0"
+              className="relative w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-[#3c4048] to-[#16181c] border-2 border-[#545b66] shadow-[0_2px_4px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.3)] flex items-center justify-center cursor-pointer shrink-0"
               title={`CRT Master Gain: ${volume}%`}
             >
               {/* Pointer tick line */}
               <div 
-                className="absolute top-1 w-0.5 h-2.5 bg-amber-400 rounded-full shadow-[0_0_4px_#f59e0b] transition-transform duration-75"
+                className="absolute top-0.5 sm:top-1 w-0.5 h-2 sm:h-2.5 bg-amber-400 rounded-full shadow-[0_0_4px_#f59e0b] transition-transform duration-75"
                 style={{ transform: `rotate(${knobAngle}deg)`, transformOrigin: '50% 12px' }}
               />
-              <div className="w-2.5 h-2.5 rounded-full bg-[#181a1e] border border-[#30343c]" />
+              <div className="w-2 h-2 rounded-full bg-[#181a1e] border border-[#30343c]" />
             </div>
 
             <div className="flex flex-col text-left">
-              <span className="font-mono-tech text-[8px] sm:text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
+              <span className="font-mono-tech text-[7px] sm:text-[8px] md:text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
                 CRT VOLUME
               </span>
-              <span className="font-mono-tech text-[10px] sm:text-[11px] font-bold text-amber-400">
+              <span className="font-mono-tech text-[9px] sm:text-[10px] md:text-[11px] font-bold text-amber-400">
                 {String(volume).padStart(3, ' ')}%
               </span>
             </div>
           </div>
 
           {/* Master Gain Horizontal Slider */}
-          <div className="flex-1 max-w-[160px] sm:max-w-[220px] flex flex-col justify-center gap-1">
+          <div className="flex-1 max-w-[140px] sm:max-w-[200px] flex flex-col justify-center gap-0.5">
             <input
               type="range"
               id="crt-volume-slider"
@@ -88,7 +133,7 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
               className="crt-vol-slider w-full cursor-pointer"
               title={`Ajustar Volume CRT (${volume}%)`}
             />
-            <div className="flex justify-between font-mono-tech text-[7px] text-zinc-500 uppercase px-0.5">
+            <div className="flex justify-between font-mono-tech text-[6px] sm:text-[7px] text-zinc-500 uppercase px-0.5">
               <span>MIN</span>
               <span>-12dB</span>
               <span>-6dB</span>
@@ -98,13 +143,13 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
         </div>
 
         {/* ── RIGHT: NUMERIC SPREAD INDICATOR & NEXT BUTTON ── */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Numeric Indicator */}
-          <div className="bg-[#0b0c0e] border border-[#2a2e38] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-sm flex flex-col items-center justify-center shadow-inner">
-            <span className="font-mono-tech text-[7px] text-zinc-500 tracking-wider uppercase font-bold">
+          <div className="bg-[#0b0c0e] border border-[#2a2e38] px-2 sm:px-3 py-1 rounded-sm flex flex-col items-center justify-center shadow-inner">
+            <span className="font-mono-tech text-[6px] sm:text-[7px] text-zinc-500 tracking-wider uppercase font-bold">
               SPREAD {String(currentSpreadIndex + 1).padStart(2, '0')} / {String(totalSpreads).padStart(2, '0')}
             </span>
-            <span className="font-mono-tech text-[11px] sm:text-xs font-bold text-emerald-400 tracking-wider">
+            <span className="font-mono-tech text-[10px] sm:text-xs font-bold text-emerald-400 tracking-wider">
               PAGE {String(currentLeftPage).padStart(2, '0')} / {String(totalPages).padStart(2, '0')}
             </span>
           </div>
@@ -122,12 +167,13 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
             <span>►</span>
           </button>
 
-          {/* Optional Return to Broadcast button */}
+          {/* Exit / Close button (Return to broadcast view) */}
           {onClose && (
             <button
               type="button"
+              id="btn-manual-close-deck"
               onClick={onClose}
-              className="ml-1 px-2 py-1.5 bg-red-950/40 hover:bg-red-800 text-red-300 hover:text-white border border-red-700/50 rounded-sm font-mono-tech text-[10px] tracking-wider transition-all uppercase"
+              className="ml-0.5 px-2 py-1.5 bg-red-950/40 hover:bg-red-800 text-red-300 hover:text-white border border-red-700/50 rounded-sm font-mono-tech text-[10px] tracking-wider transition-all uppercase cursor-pointer"
               title="Fechar Manual e Retornar ao Modo Broadcast"
             >
               ✕ EXIT
