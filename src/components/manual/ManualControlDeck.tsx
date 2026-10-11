@@ -8,8 +8,8 @@ interface ManualControlDeckProps {
   volume: number; // 0 to 100
   onVolumeChange: (val: number) => void;
   onClose?: () => void;
-  isZoomed?: boolean;
-  onToggleZoom?: () => void;
+  zoomLevel?: number; // 1 | 1.25 | 1.5
+  onCycleZoom?: () => void;
 }
 
 export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
@@ -20,8 +20,8 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
   volume,
   onVolumeChange,
   onClose,
-  isZoomed = false,
-  onToggleZoom,
+  zoomLevel = 1,
+  onCycleZoom,
 }) => {
   const currentLeftPage = currentSpreadIndex * 2 + 1;
   const currentRightPage = currentSpreadIndex * 2 + 2;
@@ -29,6 +29,8 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
 
   const isFirstSpread = currentSpreadIndex === 0;
   const isLastSpread = currentSpreadIndex === totalSpreads - 1;
+  const isZoomed = zoomLevel > 1;
+  const zoomLabel = zoomLevel === 1 ? '1.0x' : zoomLevel === 1.25 ? '1.25x' : `${zoomLevel}x`;
 
   // Visual rotary knob angle (-135deg to +135deg)
   const knobAngle = -135 + (volume / 100) * 270;
@@ -55,24 +57,24 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#0b0c0e] border border-amber-500/30 rounded-sm">
             <span className={`w-1.5 h-1.5 rounded-full ${isZoomed ? 'bg-sky-400 shadow-[0_0_6px_#38bdf8]' : 'bg-amber-400 animate-pulse'}`} />
             <span className={`font-mono-tech text-[9px] font-bold uppercase tracking-wider ${isZoomed ? 'text-sky-300' : 'text-amber-300'}`}>
-              {isZoomed ? 'PiP MODE // FLOATING' : 'DIE-CUT CAVITY // ACTIVE'}
+              {isZoomed ? `PiP MODE // FLOATING (${zoomLabel})` : 'DIE-CUT CAVITY // ACTIVE'}
             </span>
           </div>
 
-          {/* Zoom Toggle Button */}
-          {onToggleZoom && (
+          {/* Zoom Toggle / Cycle Button (1.0x -> 1.25x -> 1.5x -> 1.0x) */}
+          {onCycleZoom && (
             <button
               type="button"
               id="btn-manual-zoom"
-              onClick={onToggleZoom}
+              onClick={onCycleZoom}
               className={`btn-mech-deck px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs flex items-center gap-1.5 active:translate-y-0.5 cursor-pointer transition-all ${
                 isZoomed
                   ? '!bg-amber-400 !text-black !border-amber-300 font-black shadow-[0_0_12px_rgba(245,158,11,0.5)]'
                   : 'text-zinc-300 hover:text-amber-400'
               }`}
-              title={isZoomed ? "Desativar Zoom (Restaurar Cavidade)" : "Ativar Modo Zoom (Leitura Ampliada & PiP)"}
+              title={`Ajustar Zoom de Leitura (Atual: ${zoomLabel} • Clique para alternar 1.0x / 1.25x / 1.5x)`}
             >
-              <span>{isZoomed ? '🔍 ZOOM: ON' : '🔍 ZOOM'}</span>
+              <span>{`🔍 ZOOM: ${zoomLabel}`}</span>
             </button>
           )}
         </div>

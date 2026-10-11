@@ -8,7 +8,7 @@ interface ManualPageRendererProps {
   pageNumber: number;
   totalPageCount: number;
   cavityRef?: React.RefObject<HTMLDivElement | null>;
-  isZoomed?: boolean;
+  zoomLevel?: number;
 }
 
 export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
@@ -17,17 +17,16 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
   pageNumber,
   totalPageCount,
   cavityRef,
-  isZoomed = false,
+  zoomLevel = 1,
 }) => {
   const isCover = page.type === 'cover';
   const isInsideCover = page.type === 'cover-inside';
   const isSchematic = page.type === 'schematic';
+  const isZoomed = zoomLevel > 1;
 
   return (
     <div
-      className={`relative w-full h-full flex flex-col justify-between ${
-        isZoomed ? 'p-6 sm:p-8 md:p-10' : 'p-4 sm:p-5 md:p-6 lg:p-7'
-      } overflow-hidden select-none font-['Jost',sans-serif] !bg-[#EAE6D8] !text-[#111111] ${
+      className={`relative w-full h-full flex flex-col justify-between p-4 sm:p-5 md:p-6 lg:p-7 overflow-hidden select-none font-['Jost',sans-serif] !bg-[#EAE6D8] !text-[#111111] ${
         isLeftPage ? 'manual-page-left' : 'manual-page-right'
       }`}
       style={{ backgroundColor: '#EAE6D8', color: '#111111' }}
@@ -35,7 +34,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
       {/* ── TOP PAGE HEADER (Folio & Technical Stamp) ── */}
       <div className="flex items-center justify-between border-b-2 border-[#111111]/30 pb-2 shrink-0 text-[#111111]">
         {/* Left header: Folio or unit ID */}
-        <div className={`flex items-center gap-2 font-mono-tech ${isZoomed ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-[11px]'} tracking-wider`}>
+        <div className="flex items-center gap-2 font-mono-tech text-[10px] sm:text-[11px] tracking-wider">
           <span className="font-bold text-[#084c78]">PLIST CRT-90</span>
           <span className="opacity-40">|</span>
           <span className="text-[#333333] font-semibold uppercase truncate max-w-[140px] sm:max-w-none">
@@ -44,10 +43,10 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
         </div>
 
         {/* Right header: Section category or stamp */}
-        <div className={`flex items-center gap-2.5 font-mono-tech ${isZoomed ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-[11px]'}`}>
+        <div className="flex items-center gap-2.5 font-mono-tech text-[10px] sm:text-[11px]">
           {page.stamp && (
             <span
-              className={`px-2 py-0.5 border ${isZoomed ? 'text-[10px]' : 'text-[9px]'} font-bold tracking-widest ${
+              className={`px-2 py-0.5 border text-[9px] font-bold tracking-widest ${
                 page.stamp.includes('QC') || page.stamp.includes('APPROVED')
                   ? 'border-[#b31b1b] text-[#b31b1b] bg-[#b31b1b]/8'
                   : 'border-[#084c78] text-[#084c78] bg-[#084c78]/8'
@@ -63,8 +62,8 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
       </div>
 
       {/* ── MAIN CONTENT BODY (With Die-Cut Aperture on Right Page when Zoom is OFF) ── */}
-      <div className={`flex-1 min-h-0 ${isZoomed ? 'py-4 sm:py-6' : 'py-2.5 sm:py-3.5'} overflow-hidden text-[#111111] relative`}>
-        {/* ── PHYSICAL DIE-CUT CAVITY (Only when Zoom is OFF on Right Page) ── */}
+      <div className="flex-1 min-h-0 py-2.5 sm:py-3.5 flex flex-col justify-between text-[#111111] relative">
+        {/* ── PHYSICAL DIE-CUT CAVITY (Only when Zoom is 1.0x on Right Page) ── */}
         {!isLeftPage && !isZoomed && (
           <>
             {/* Float spacer pushing the cavity down to the bottom */}
@@ -96,7 +95,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
 
         {isCover ? (
           /* ── COVER PAGE ── */
-          <div className={isLeftPage ? "h-full flex flex-col justify-between py-1" : "block py-1"}>
+          <div className="flex-1 h-full flex flex-col justify-between py-1">
             <div>
               <div className="inline-block px-2.5 py-1 mb-2 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
                 {page.badge || "OFFICIAL OPERATING MONOGRAPH"}
@@ -109,7 +108,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 mt-auto">
               <p className="text-xs sm:text-sm leading-relaxed text-[#111111] font-['Jost',sans-serif] italic font-medium">
                 {page.placeholder}
               </p>
@@ -121,7 +120,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
           </div>
         ) : isInsideCover ? (
           /* ── INSIDE COVER / REGULATORY ── */
-          <div className="h-full flex flex-col justify-between py-1">
+          <div className="flex-1 h-full flex flex-col justify-between py-1">
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111111] uppercase">
@@ -145,7 +144,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
             </div>
 
             {/* Regulatory Sections */}
-            <div className="space-y-2.5">
+            <div className="space-y-2.5 flex-1">
               {page.sections?.map((sec, i) => (
                 <div key={i} className="text-xs leading-relaxed">
                   {sec.heading && (
@@ -165,15 +164,15 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
               ))}
             </div>
 
-            <div className="font-mono-tech text-[9px] text-[#444444] pt-2 border-t border-[#111111]/20 flex justify-between font-semibold">
+            <div className="font-mono-tech text-[9px] text-[#444444] pt-2 border-t border-[#111111]/20 flex justify-between font-semibold shrink-0 mt-auto">
               <span>DOC REF: {page.serial}</span>
               <span>STANDARDS COMPLIANT (NTSC/PAL)</span>
             </div>
           </div>
         ) : isSchematic ? (
           /* ── SCHEMATIC PAGE ── */
-          <div className="h-full flex flex-col justify-between">
-            <div className="mb-1.5">
+          <div className="flex-1 h-full flex flex-col justify-between">
+            <div className="mb-1.5 shrink-0">
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#111111] uppercase">
                 {page.title}
               </h2>
@@ -182,19 +181,19 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 bg-white/70 border-2 border-[#084c78]/40 rounded-sm overflow-hidden shadow-inner">
+            <div className="flex-1 min-h-[220px] bg-white/70 border-2 border-[#084c78]/40 rounded-sm overflow-hidden shadow-inner my-1">
               <ManualIsometricSchematic />
             </div>
 
-            <div className="mt-1.5 font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between pt-1.5 border-t border-[#111111]/20 font-bold">
+            <div className="mt-auto font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between pt-1.5 border-t border-[#111111]/20 font-bold shrink-0">
               <span>CIRCUIT BOARD: PCB-REV-96</span>
               <span className="text-[#084c78]">1PX WIREFRAME STANDARD</span>
             </div>
           </div>
         ) : (
           /* ── GENERAL EDITORIAL / CHANNELS / COLOPHON ── */
-          <div className={isLeftPage ? "h-full flex flex-col justify-between py-1" : "block py-1"}>
-            <div>
+          <div className="flex-1 h-full flex flex-col justify-between py-1">
+            <div className="shrink-0">
               <div className="flex items-center justify-between mb-1.5">
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-[#111111] uppercase leading-tight font-['Jost',sans-serif]">
                   {page.title}
@@ -211,7 +210,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
             </div>
 
             {/* Sections & Body Content */}
-            <div className="space-y-3">
+            <div className="space-y-3 flex-1 my-2">
               {page.sections?.map((sec, i) => (
                 <div key={i} className="text-xs sm:text-sm leading-relaxed">
                   {sec.heading && (
@@ -240,7 +239,6 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
                 </div>
               ))}
 
-              {/* If no sections provided, show placeholder */}
               {(!page.sections || page.sections.length === 0) && (
                 <p className="text-xs sm:text-sm text-[#111111] leading-relaxed font-['Jost',sans-serif] font-medium">
                   {page.placeholder}
@@ -249,7 +247,7 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
             </div>
 
             {/* Page Bottom Technical Stamp */}
-            <div className="mt-3 pt-2 border-t border-[#111111]/20 font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between items-center font-bold">
+            <div className="mt-auto pt-2 border-t border-[#111111]/20 font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between items-center font-bold shrink-0">
               <span>REF: {page.serial || 'SEC-PLIST'}</span>
               <span className="text-[#111111]">ARCHIVAL BROADCAST RECORD</span>
             </div>

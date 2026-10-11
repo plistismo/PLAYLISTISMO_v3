@@ -132,9 +132,19 @@ export default function Home({ session }: { session: Session | null }) {
   const [isManualMode, setIsManualMode] = useState<boolean>(() => {
     return new URLSearchParams(window.location.search).has('manual');
   });
-  const [isManualZoomed, setIsManualZoomed] = useState<boolean>(false);
+  const [manualZoomLevel, setManualZoomLevel] = useState<number>(1);
   const [isPipMinimized, setIsPipMinimized] = useState<boolean>(false);
   const manualScrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const handleCycleZoom = useCallback(() => {
+    setManualZoomLevel(prev => {
+      const next = prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : 1;
+      if (next === 1) {
+        setIsPipMinimized(false);
+      }
+      return next;
+    });
+  }, []);
 
   const [activeSpreadIndex, setActiveSpreadIndex] = useState<number>(0);
   const [volume, setVolume] = useState<number>(100);
@@ -156,7 +166,7 @@ export default function Home({ session }: { session: Session | null }) {
   }, []);
 
   useLayoutEffect(() => {
-    if (!isManualMode || isManualZoomed) {
+    if (!isManualMode || manualZoomLevel > 1) {
       if (!isManualMode) setCavityCoords(null);
       return;
     }
@@ -174,7 +184,7 @@ export default function Home({ session }: { session: Session | null }) {
       window.removeEventListener('resize', updateCavityCoords);
       window.removeEventListener('scroll', updateCavityCoords);
     };
-  }, [isManualMode, isManualZoomed, updateCavityCoords, activeSpreadIndex]);
+  }, [isManualMode, manualZoomLevel, updateCavityCoords, activeSpreadIndex]);
 
   const handleVolumeChange = (newVolume: number) => {
     const clamped = Math.max(0, Math.min(100, Math.round(newVolume)));
@@ -208,7 +218,7 @@ export default function Home({ session }: { session: Session | null }) {
         setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1));
       } else if (e.key === 'Escape') {
         setIsManualMode(false);
-        setIsManualZoomed(false);
+        setManualZoomLevel(1);
         setIsPipMinimized(false);
       }
     };
@@ -834,8 +844,8 @@ export default function Home({ session }: { session: Session | null }) {
 
   const setupBump = getThematicSetup(currentChannelName);
   const playlistParts = currentChannelName.split(':');
-  const isCavityMode = isManualMode && !isManualZoomed;
-  const isFloatingPip = isManualMode && isManualZoomed;
+  const isCavityMode = isManualMode && manualZoomLevel === 1;
+  const isFloatingPip = isManualMode && manualZoomLevel > 1;
 
   return (
     <div className="bg-neutral-950 h-screen w-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
@@ -1265,8 +1275,8 @@ export default function Home({ session }: { session: Session | null }) {
                     transition: 'none',
                   } : {
                     position: 'fixed',
-                    bottom: '1rem',
-                    right: '1rem',
+                    bottom: '5.5rem',
+                    right: '1.5rem',
                     width: '320px',
                     height: '240px',
                     zIndex: 250,
@@ -1377,7 +1387,7 @@ export default function Home({ session }: { session: Session | null }) {
                             setIsSearchOpen(false);
                             setIsInfoOpen(false);
                           } else {
-                            setIsManualZoomed(false);
+                            setManualZoomLevel(1);
                             setIsPipMinimized(false);
                           }
                           return next;
@@ -1929,7 +1939,7 @@ export default function Home({ session }: { session: Session | null }) {
           <div 
             ref={manualScrollContainerRef}
             className={`flex-1 min-h-0 w-full flex justify-center ${
-              isManualZoomed ? 'items-start overflow-y-auto custom-scrollbar' : 'items-center overflow-hidden'
+              manualZoomLevel > 1 ? 'items-start overflow-y-auto custom-scrollbar' : 'items-center overflow-hidden'
             }`}
           >
             <ManualSpreadViewer
@@ -1937,7 +1947,7 @@ export default function Home({ session }: { session: Session | null }) {
               spreadIndex={activeSpreadIndex}
               totalSpreads={manualSpreads.length}
               cavityRef={cavityRef}
-              isZoomed={isManualZoomed}
+              zoomLevel={manualZoomLevel}
             />
           </div>
           <div className="shrink-0 w-full pt-1.5 z-[210]">
@@ -1960,31 +1970,23 @@ export default function Home({ session }: { session: Session | null }) {
               onVolumeChange={handleVolumeChange}
               onClose={() => {
                 setIsManualMode(false);
-                setIsManualZoomed(false);
+                setManualZoomLevel(1);
                 setIsPipMinimized(false);
               }}
-              isZoomed={isManualZoomed}
-              onToggleZoom={() => {
-                setIsManualZoomed(prev => {
-                  const next = !prev;
-                  if (!next) {
-                    setIsPipMinimized(false);
-                  }
-                  return next;
-                });
-              }}
+              zoomLevel={manualZoomLevel}
+              onCycleZoom={handleCycleZoom}
             />
           </div>
         </div>
       )}
 
       {/* ── PiP MINIMIZED RESTORE BADGE (AUDIO-ONLY MODE) ── */}
-      {isManualMode && isManualZoomed && isPipMinimized && (
+      {isManualMode && manualZoomLevel > 1 && isPipMinimized && (
         <button
           type="button"
           id="btn-pip-restore-badge"
           onClick={() => setIsPipMinimized(false)}
-          className="fixed bottom-4 right-4 z-[260] bg-[#121418] hover:bg-[#1a1e24] text-amber-300 hover:text-amber-200 border-2 border-amber-500/70 hover:border-amber-400 px-3.5 py-2.5 rounded-lg shadow-[0_12px_30px_rgba(0,0,0,0.9),0_0_15px_rgba(245,158,11,0.25)] flex items-center gap-2.5 font-mono-tech text-xs font-bold tracking-wider uppercase transition-all cursor-pointer active:scale-95 animate-pulse"
+          className="fixed bottom-24 right-6 z-[260] bg-[#121418] hover:bg-[#1a1e24] text-amber-300 hover:text-amber-200 border-2 border-amber-500/70 hover:border-amber-400 px-3.5 py-2.5 rounded-lg shadow-[0_12px_30px_rgba(0,0,0,0.9),0_0_15px_rgba(245,158,11,0.25)] flex items-center gap-2.5 font-mono-tech text-xs font-bold tracking-wider uppercase transition-all cursor-pointer active:scale-95 animate-pulse"
           title="Restaurar Janela PiP do CRT"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />

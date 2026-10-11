@@ -7,7 +7,7 @@ interface ManualSpreadViewerProps {
   spreadIndex: number;
   totalSpreads: number;
   cavityRef?: React.RefObject<HTMLDivElement | null>;
-  isZoomed?: boolean;
+  zoomLevel?: number;
 }
 
 interface FlipState {
@@ -22,9 +22,10 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
   spreadIndex,
   totalSpreads,
   cavityRef,
-  isZoomed = false,
+  zoomLevel = 1,
 }) => {
   const totalPages = totalSpreads * 2;
+  const isZoomed = zoomLevel > 1;
   const lastIndexRef = useRef(spreadIndex);
   const [flipState, setFlipState] = useState<FlipState | null>(null);
 
@@ -86,11 +87,15 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
     : spreadIndex * 2 + 2;
 
   return (
-    <div className={`relative w-full ${isZoomed ? 'min-h-[960px] max-w-[1500px] my-3' : 'h-full max-w-[1400px]'} flex-1 min-h-0 flex items-center justify-center select-none p-2 sm:p-4 mx-auto`}>
+    <div className={`relative w-full ${isZoomed ? 'min-h-full max-w-[1400px] my-auto py-2' : 'h-full max-w-[1250px]'} flex-1 min-h-0 flex items-center justify-center select-none p-2 sm:p-4 mx-auto`}>
       {/* ── BOOKLET CONTAINER (3D Perspective Stage, Aged Paper, Natural Binding) ── */}
       <div 
-        className={`manual-paper-aged manual-paper-noise book-perspective-stage relative w-full ${isZoomed ? 'min-h-[960px]' : 'h-full'} max-w-[1400px] flex rounded-md overflow-hidden border border-[#c4baa6] shadow-[0_24px_60px_rgba(0,0,0,0.85),0_2px_4px_rgba(0,0,0,0.5)] !bg-[#EAE6D8] !text-[#111111]`}
-        style={{ backgroundColor: '#EAE6D8', color: '#111111' }}
+        className={`manual-paper-aged manual-paper-noise book-perspective-stage relative w-full ${isZoomed ? 'min-h-full' : 'h-full'} max-w-[1250px] flex rounded-md overflow-hidden border border-[#c4baa6] shadow-[0_24px_60px_rgba(0,0,0,0.85),0_2px_4px_rgba(0,0,0,0.5)] !bg-[#EAE6D8] !text-[#111111] transition-all duration-300`}
+        style={{ 
+          backgroundColor: '#EAE6D8', 
+          color: '#111111',
+          zoom: isZoomed ? zoomLevel : 1,
+        }}
       >
         {/* Subtle Organic Corner Vignette / Aging */}
         <div className="absolute inset-0 pointer-events-none z-30 shadow-[inset_0_0_35px_rgba(110,80,35,0.12)] rounded-md" />
@@ -109,7 +114,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
             isLeftPage={true}
             pageNumber={baseLeftPageNum}
             totalPageCount={totalPages}
-            isZoomed={isZoomed}
+            zoomLevel={zoomLevel}
           />
 
           {/* Dynamic shadow cast on left page as turning leaf approaches */}
@@ -135,7 +140,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
             pageNumber={baseRightPageNum}
             totalPageCount={totalPages}
             cavityRef={cavityRef}
-            isZoomed={isZoomed}
+            zoomLevel={zoomLevel}
           />
 
           {/* Dynamic shadow cast on right page as turning leaf approaches */}
@@ -157,7 +162,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
                 isLeftPage={false}
                 pageNumber={flipState.fromIndex * 2 + 2}
                 totalPageCount={totalPages}
-                isZoomed={isZoomed}
+                zoomLevel={zoomLevel}
               />
               <div 
                 className="leaf-lighting-overlay leaf-shadow-spine-next"
@@ -172,7 +177,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
                 isLeftPage={true}
                 pageNumber={flipState.toIndex * 2 + 1}
                 totalPageCount={totalPages}
-                isZoomed={isZoomed}
+                zoomLevel={zoomLevel}
               />
               <div 
                 className="leaf-lighting-overlay leaf-shadow-spine-prev"
@@ -191,7 +196,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
                 isLeftPage={true}
                 pageNumber={flipState.fromIndex * 2 + 1}
                 totalPageCount={totalPages}
-                isZoomed={isZoomed}
+                zoomLevel={zoomLevel}
               />
               <div 
                 className="leaf-lighting-overlay leaf-shadow-spine-prev"
@@ -206,7 +211,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
                 isLeftPage={false}
                 pageNumber={flipState.toIndex * 2 + 2}
                 totalPageCount={totalPages}
-                isZoomed={isZoomed}
+                zoomLevel={zoomLevel}
               />
               <div 
                 className="leaf-lighting-overlay leaf-shadow-spine-next"
