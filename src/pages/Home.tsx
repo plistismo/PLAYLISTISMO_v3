@@ -797,6 +797,7 @@ export default function Home({ session }: { session: Session | null }) {
 
   const setupBump = getThematicSetup(currentChannelName);
   const playlistParts = currentChannelName.split(':');
+  const isPipDisplay = isManualMode && isFullscreenManual && isPipActive;
 
   return (
     <div className="bg-neutral-950 h-screen w-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
@@ -1206,7 +1207,7 @@ export default function Home({ session }: { session: Session | null }) {
               isManualMode
                 ? isFullscreenManual
                   ? isPipActive
-                    ? 'fixed bottom-16 right-4 sm:bottom-20 sm:right-6 z-[260] w-[260px] sm:w-[320px] md:w-[360px] aspect-[4/3] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.95),0_0_0_2px_rgba(245,158,11,0.6)] bg-[#141414] p-1 sm:p-1.5 pointer-events-auto'
+                    ? 'fixed bottom-16 right-4 sm:bottom-20 sm:right-6 z-[260] w-[260px] sm:w-[320px] md:w-[380px] aspect-[4/3] rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.95)] bg-transparent p-0 pointer-events-auto'
                     : 'fixed -top-[9999px] -left-[9999px] w-[320px] h-[240px] pointer-events-none opacity-0'
                   : 'w-full h-[34vh] md:h-[36vh] max-h-[38vh] shrink-0 grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3.5 overflow-hidden'
                 : 'relative w-full flex-1 flex items-center justify-center'
@@ -1215,17 +1216,17 @@ export default function Home({ session }: { session: Session | null }) {
               <div className={`w-full h-full flex items-center justify-center min-h-0 min-w-0 overflow-hidden relative ${
                 isManualMode && !isFullscreenManual ? 'p-0.5' : ''
               }`}>
-                {/* Floating PiP Banner and Close Button */}
-                {isManualMode && isFullscreenManual && isPipActive && (
-                  <div className="absolute top-2 left-3 right-3 z-[70] flex items-center justify-between pointer-events-auto">
-                    <span className="bg-black/90 border border-amber-500/50 text-amber-400 font-mono-tech font-bold text-[8px] px-2 py-0.5 rounded flex items-center gap-1.5 shadow-md">
+                {/* Floating PiP Header and Close Button */}
+                {isPipDisplay && (
+                  <div className="absolute top-2 left-2 right-2 z-[70] flex items-center justify-between pointer-events-auto px-1">
+                    <span className="bg-black/90 backdrop-blur-md border border-amber-500/50 text-amber-400 font-mono-tech font-bold text-[9px] px-2 py-0.5 rounded shadow-lg flex items-center gap-1.5 select-none">
                       <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                      CRT PiP // LIVE
+                      CRT VIDEO // LIVE
                     </span>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setIsPipActive(false); }}
-                      className="bg-black/80 hover:bg-red-900 border border-white/20 text-white text-[10px] w-5 h-5 rounded flex items-center justify-center font-bold cursor-pointer transition-colors"
+                      className="bg-black/90 hover:bg-red-950 hover:border-red-500/70 border border-white/25 text-white text-[11px] w-5 h-5 rounded flex items-center justify-center font-bold cursor-pointer transition-colors shadow-lg"
                       title="Fechar PiP"
                     >
                       ✕
@@ -1235,32 +1236,42 @@ export default function Home({ session }: { session: Session | null }) {
 
                 {/* CHASSI DA TV (Uninterrupted playback under all states!) */}
                 <div className={`tv-chassis-wrapper relative w-full flex-1 min-h-0 min-w-0 flex items-center justify-center transition-all duration-500 ${
-                  isManualMode && !isFullscreenManual ? 'h-full max-h-full' : isFullscreenManual && isPipActive ? 'h-full w-full' : 'md:perspective-[1500px]'
+                  isManualMode && !isFullscreenManual ? 'h-full max-h-full' : isPipDisplay ? 'h-full w-full' : 'md:perspective-[1500px]'
                 } group`}>
-              <div className={`tv-chassis-frame relative bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-2.5 sm:p-3 md:p-5 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d z-10 flex flex-col justify-center max-h-full max-w-full ${
-                activeSkin === 'y2k' ? 'chassis-y2k' : activeSkin === 'future' ? 'chassis-future' : ''
+              <div className={`tv-chassis-frame relative z-10 flex flex-col justify-center max-h-full max-w-full ${
+                isPipDisplay
+                  ? 'w-full h-full p-0 bg-transparent shadow-none border-0 rounded-2xl'
+                  : `bg-[#181818] texture-plastic rounded-[20px] md:rounded-[32px] p-2.5 sm:p-3 md:p-5 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_2px_3px_rgba(255,255,255,0.15)] border-t border-[#333] md:tv-3d-tilt transform-style-3d ${
+                      activeSkin === 'y2k' ? 'chassis-y2k' : activeSkin === 'future' ? 'chassis-future' : ''
+                    }`
               }`}>
 
               {/* Physical Glare & Rim Overlays (Layered Skeuomorphism) */}
-              {activeSkin === 'y2k' && (
+              {!isPipDisplay && activeSkin === 'y2k' && (
                 <div className="chassis-specular-glare pointer-events-none absolute -top-1 left-4 right-4 h-12 md:h-16 rounded-t-[32px] opacity-75 z-20"></div>
               )}
-              {activeSkin === 'future' && (
+              {!isPipDisplay && activeSkin === 'future' && (
                 <>
                   <div className="chassis-chrome-reflection pointer-events-none absolute top-0 left-0 right-0 h-10 md:h-14 rounded-t-[32px] opacity-90 z-20"></div>
                   <div className="chassis-future-rim pointer-events-none absolute -inset-[2px] rounded-[22px] md:rounded-[34px] z-15"></div>
                 </>
               )}
 
-              <div className={`flex flex-row rounded-[16px] md:rounded-[36px] p-2 md:p-3.5 h-full w-full items-stretch transition-all duration-500 relative z-20 ${
-                activeSkin === 'y2k'
-                  ? 'inner-housing-y2k'
-                  : activeSkin === 'future'
-                  ? 'inner-housing-future'
-                  : 'bg-[#111] shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222]'
+              <div className={`flex flex-row h-full w-full items-stretch transition-all duration-500 relative z-20 ${
+                isPipDisplay
+                  ? 'p-0 bg-transparent shadow-none border-0 rounded-2xl'
+                  : `rounded-[16px] md:rounded-[36px] p-2 md:p-3.5 ${
+                      activeSkin === 'y2k'
+                        ? 'inner-housing-y2k'
+                        : activeSkin === 'future'
+                        ? 'inner-housing-future'
+                        : 'bg-[#111] shadow-[inset_0_0_25px_rgba(0,0,0,1)] border-b-4 border-r-4 border-[#080808] border-t border-l border-[#222]'
+                    }`
               }`}>
                 {/* ── LEFT BEZEL: ROUND CONCAVE MECHANICAL '?' BUTTON & STATUS LED ── */}
-                <div className="flex flex-col justify-between items-center w-7 sm:w-8 md:w-10 mr-1.5 sm:mr-2 md:mr-3 shrink-0 h-full py-2 sm:py-3 md:py-4 select-none relative z-30">
+                <div className={`flex flex-col justify-between items-center w-7 sm:w-8 md:w-10 mr-1.5 sm:mr-2 md:mr-3 shrink-0 h-full py-2 sm:py-3 md:py-4 select-none relative z-30 ${
+                  isPipDisplay ? 'hidden' : ''
+                }`}>
                   {/* Upper decorative grill */}
                   <div className="flex flex-col items-center gap-1 opacity-40 w-full mb-auto">
                     {Array.from({ length: 6 }).map((_, i) => (
@@ -1329,12 +1340,20 @@ export default function Home({ session }: { session: Session | null }) {
                   </div>
                 </div>
 
-                <div className="relative flex-1 aspect-[4/3] bg-[#050505] rounded-[20px] md:rounded-[44px] overflow-hidden screen-container border-[4px] md:border-[8px] border-[#080808] z-10 box-border max-h-full">
-                  <div className="absolute inset-0 crt-overlay z-40 rounded-[20px] md:rounded-[44px] pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]"></div>
+                <div className={`relative flex-1 aspect-[4/3] bg-[#050505] overflow-hidden screen-container z-10 box-border max-h-full ${
+                  isPipDisplay
+                    ? 'w-full h-full rounded-2xl border-2 border-amber-500/70 shadow-[0_12px_40px_rgba(0,0,0,0.95),0_0_25px_rgba(245,158,11,0.25)]'
+                    : 'rounded-[20px] md:rounded-[44px] border-[4px] md:border-[8px] border-[#080808]'
+                }`}>
+                  <div className={`absolute inset-0 crt-overlay z-40 pointer-events-none shadow-[inset_0_0_60px_rgba(0,0,0,0.6)] ${
+                    isPipDisplay ? 'rounded-2xl' : 'rounded-[20px] md:rounded-[44px]'
+                  }`}></div>
 
                   {!isOn && <div className="absolute inset-0 bg-[#080808] z-20"></div>}
 
-                  <div className={`relative w-full h-full rounded-[16px] md:rounded-[40px] overflow-hidden bg-black ${isOn ? 'crt-turn-on' : ''}`}>
+                  <div className={`relative w-full h-full overflow-hidden bg-black ${
+                    isPipDisplay ? 'rounded-xl' : 'rounded-[16px] md:rounded-[40px]'
+                  } ${isOn ? 'crt-turn-on' : ''}`}>
                     {/* YouTube Player */}
                     <div
                       id="yt-player"
@@ -1610,6 +1629,8 @@ export default function Home({ session }: { session: Session | null }) {
 
                 {/* PAINEL DE CONTROLE LATERAL DIREITO */}
                 <div className={`flex flex-col w-14 sm:w-16 md:w-28 lg:w-32 ml-2 md:ml-3 p-1.5 md:p-2.5 justify-between items-center gap-2 md:gap-3 shrink-0 rounded-r-lg h-full overflow-hidden font-['Jost',sans-serif] transition-all duration-500 relative z-30 ${
+                  isPipDisplay ? 'hidden' : ''
+                } ${
                   activeSkin === 'y2k'
                     ? 'panel-y2k'
                     : activeSkin === 'future'

@@ -21,9 +21,10 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
 
   return (
     <div
-      className={`relative w-full h-full flex flex-col justify-between p-4 sm:p-5 md:p-6 lg:p-7 overflow-hidden select-none font-['Jost',sans-serif] ${
+      className={`relative w-full h-full flex flex-col justify-between p-4 sm:p-5 md:p-6 lg:p-7 overflow-hidden select-none font-['Jost',sans-serif] !bg-[#EAE6D8] !text-[#111111] ${
         isLeftPage ? 'manual-page-left' : 'manual-page-right'
       }`}
+      style={{ backgroundColor: '#EAE6D8', color: '#111111' }}
     >
       {/* ── TOP PAGE HEADER (Folio & Technical Stamp) ── */}
       <div className="flex items-center justify-between border-b-2 border-[#111111]/30 pb-2 shrink-0 text-[#111111]">
