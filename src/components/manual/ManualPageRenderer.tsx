@@ -33,32 +33,77 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
     >
       {/* ── TOP PAGE HEADER (Folio & Technical Stamp) ── */}
       <div className="flex items-center justify-between border-b-2 border-[#111111]/30 pb-2 shrink-0 text-[#111111]">
-        {/* Left header: Folio or unit ID */}
-        <div className="flex items-center gap-2 font-mono-tech text-[10px] sm:text-[11px] tracking-wider">
-          <span className="font-bold text-[#084c78]">PLIST CRT-90</span>
-          <span className="opacity-40">|</span>
-          <span className="text-[#333333] font-semibold uppercase truncate max-w-[140px] sm:max-w-none">
-            {page.serial || `SEC-${String(pageNumber).padStart(2, '0')}`}
-          </span>
-        </div>
+        {page.header ? (
+          (() => {
+            const parts = page.header.split('|').map((s) => s.trim());
+            const folio = parts[0] || 'PLIST CRT-90';
+            const docRef = parts[1] || `SEC-${String(pageNumber).padStart(2, '0')}`;
+            const stampText = parts[2];
+            const displayPageNum = page.pageNumber || String(pageNumber).padStart(2, '0');
 
-        {/* Right header: Section category or stamp */}
-        <div className="flex items-center gap-2.5 font-mono-tech text-[10px] sm:text-[11px]">
-          {page.stamp && (
-            <span
-              className={`px-2 py-0.5 border text-[9px] font-bold tracking-widest ${
-                page.stamp.includes('QC') || page.stamp.includes('APPROVED')
-                  ? 'border-[#b31b1b] text-[#b31b1b] bg-[#b31b1b]/8'
-                  : 'border-[#084c78] text-[#084c78] bg-[#084c78]/8'
-              }`}
-            >
-              {page.stamp}
-            </span>
-          )}
-          <span className="font-bold text-[#111111]">
-            {String(pageNumber).padStart(2, '0')}
-          </span>
-        </div>
+            return (
+              <div className="w-full flex items-center justify-between font-mono-tech text-[10px] sm:text-[11px] tracking-wider">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[#084c78]">{folio}</span>
+                  {docRef && (
+                    <>
+                      <span className="opacity-40">|</span>
+                      <span className="text-[#333333] font-semibold uppercase truncate max-w-[140px] sm:max-w-none">
+                        {docRef}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  {stampText && (
+                    <span
+                      className={`px-2 py-0.5 border text-[9px] font-bold tracking-widest ${
+                        stampText.includes('QC') ||
+                        stampText.includes('APROVADO') ||
+                        stampText.includes('TESTADO')
+                          ? 'border-[#b31b1b] text-[#b31b1b] bg-[#b31b1b]/8'
+                          : 'border-[#084c78] text-[#084c78] bg-[#084c78]/8'
+                      }`}
+                    >
+                      {stampText}
+                    </span>
+                  )}
+                  <span className="font-bold text-[#111111]">{displayPageNum}</span>
+                </div>
+              </div>
+            );
+          })()
+        ) : (
+          <>
+            {/* Left header: Folio or unit ID */}
+            <div className="flex items-center gap-2 font-mono-tech text-[10px] sm:text-[11px] tracking-wider">
+              <span className="font-bold text-[#084c78]">PLIST CRT-90</span>
+              <span className="opacity-40">|</span>
+              <span className="text-[#333333] font-semibold uppercase truncate max-w-[140px] sm:max-w-none">
+                {page.serial || `SEC-${String(pageNumber).padStart(2, '0')}`}
+              </span>
+            </div>
+
+            {/* Right header: Section category or stamp */}
+            <div className="flex items-center gap-2.5 font-mono-tech text-[10px] sm:text-[11px]">
+              {page.stamp && (
+                <span
+                  className={`px-2 py-0.5 border text-[9px] font-bold tracking-widest ${
+                    page.stamp.includes('QC') || page.stamp.includes('APPROVED')
+                      ? 'border-[#b31b1b] text-[#b31b1b] bg-[#b31b1b]/8'
+                      : 'border-[#084c78] text-[#084c78] bg-[#084c78]/8'
+                  }`}
+                >
+                  {page.stamp}
+                </span>
+              )}
+              <span className="font-bold text-[#111111]">
+                {String(pageNumber).padStart(2, '0')}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── MAIN CONTENT BODY (Separated by Left Page / Right Page 1.0x Cavity / Zoomed) ── */}
@@ -86,7 +131,29 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
             </div>
 
             {/* Right Page Editorial Content (Flows cleanly around bottom-right cavity) */}
-            {isCover ? (
+            {page.content ? (
+              <div>
+                {page.badge && (
+                  <div className="inline-block px-2.5 py-1 mb-2 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
+                    {page.badge}
+                  </div>
+                )}
+                {page.title && (
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight leading-tight text-[#111111] font-['Jost',sans-serif] uppercase mb-1">
+                    {page.title}
+                  </h1>
+                )}
+                {page.subtitle && (
+                  <div className="text-xs sm:text-sm font-bold tracking-widest text-[#084c78] font-mono-tech border-b-2 border-[#111111] pb-1.5 mb-2.5">
+                    {page.subtitle}
+                  </div>
+                )}
+                <div
+                  className="manual-editorial-html font-['Jost',sans-serif] text-[#111111]"
+                  dangerouslySetInnerHTML={{ __html: page.content }}
+                />
+              </div>
+            ) : isCover ? (
               <div>
                 {page.badge && (
                   <div className="inline-block px-2.5 py-1 mb-2 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
@@ -176,8 +243,39 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
         </div>
       ) : (
         /* ── LEFT PAGE OR ZOOMED MODE: EXPANDED FULL-WIDTH FLEX LAYOUT ── */
-        <div className="flex-1 min-h-0 py-2.5 sm:py-3.5 flex flex-col justify-between text-[#111111] relative">
-          {isCover ? (
+        <div className="flex-1 min-h-0 py-2.5 sm:py-3.5 flex flex-col justify-between text-[#111111] relative overflow-y-auto custom-scrollbar">
+          {page.content ? (
+            <div className="flex-1 h-full flex flex-col justify-between py-1">
+              <div>
+                {page.badge && (
+                  <div className="inline-block px-2.5 py-1 mb-2 bg-[#111111] text-[#f4f1ea] font-mono-tech text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">
+                    {page.badge}
+                  </div>
+                )}
+                {page.title && (
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight leading-tight text-[#111111] font-['Jost',sans-serif] uppercase mb-1">
+                    {page.title}
+                  </h1>
+                )}
+                {page.subtitle && (
+                  <div className="text-xs sm:text-sm font-bold tracking-widest text-[#084c78] font-mono-tech border-b-2 border-[#111111] pb-1.5 mb-2.5">
+                    {page.subtitle}
+                  </div>
+                )}
+                <div
+                  className="manual-editorial-html font-['Jost',sans-serif] text-[#111111] mt-2"
+                  dangerouslySetInnerHTML={{ __html: page.content }}
+                />
+              </div>
+
+              {page.footer && (
+                <div className="mt-auto pt-2 border-t border-[#111111]/20 font-mono-tech text-[9px] sm:text-[10px] text-[#333333] flex justify-between items-center font-bold shrink-0">
+                  <span>{page.footer}</span>
+                  <span className="text-[#111111]">PÁGINA {page.pageNumber || String(pageNumber).padStart(2, '0')}</span>
+                </div>
+              )}
+            </div>
+          ) : isCover ? (
             /* ── COVER PAGE ── */
             <div className="flex-1 h-full flex flex-col justify-between py-1">
               <div>
@@ -344,16 +442,16 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
       <div className="flex items-center justify-between border-t-2 border-[#111111]/30 pt-2 shrink-0 font-mono-tech text-[10px] sm:text-[11px] text-[#111111] font-bold">
         <div>
           {isLeftPage ? (
-            <span>PAGE {String(pageNumber).padStart(2, '0')}</span>
+            <span>PAGE {page.pageNumber || String(pageNumber).padStart(2, '0')}</span>
           ) : (
-            <span className="text-[#444444]">PLAYLISTISMO CRT-90 MANUAL</span>
+            <span className="text-[#444444]">{page.footer || "PLAYLISTISMO CRT-90 MANUAL"}</span>
           )}
         </div>
         <div>
           {!isLeftPage ? (
-            <span>PAGE {String(pageNumber).padStart(2, '0')}</span>
+            <span>PAGE {page.pageNumber || String(pageNumber).padStart(2, '0')}</span>
           ) : (
-            <span className="text-[#444444]">PLAYLISTISMO CRT-90 MANUAL</span>
+            <span className="text-[#444444]">{page.footer || "PLAYLISTISMO CRT-90 MANUAL"}</span>
           )}
         </div>
       </div>

@@ -889,6 +889,11 @@ body {
     box-sizing: border-box;
 }
 
+.manual-page-right-content .manual-editorial-html .bg-gray-200,
+.manual-page-right-content .manual-editorial-html .border-l-4 {
+    overflow: hidden;
+}
+
 /* 3D Page Flip Mechanics (Booklet Metaphor) */
 .book-perspective-stage {
     perspective: 2500px;
