@@ -146,6 +146,68 @@ export const spread02 = {
   }
 };
 
+export const spread03 = {
+  leftPage: {
+    header: "PLIST CRT-90 | CHASSI-SPEC | CONTROLE TÁTICO 05",
+    title: "ANATOMIA DO RECEPTOR",
+    subtitle: "INTERFACE DE HARDWARE E CONTROLES",
+    content: `
+      <div class="mb-6">
+        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ O PAINEL DE CONTROLE</h4>
+        <p class="text-sm text-gray-800 leading-relaxed font-medium">O CRT-90 não possui tela de toque ou interfaces invisíveis. Operar a emissora exige intenção e fisicalidade. Cada módulo no deck inferior foi forjado para navegação linear tática, ignorando os padrões de usabilidade que anestesiam o usuário moderno.</p>
+      </div>
+
+      <div class="mb-6">
+        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ MÓDULOS DE NAVEGAÇÃO</h4>
+        <ul class="space-y-3 mt-3">
+          <li class="text-sm text-gray-800 leading-relaxed font-medium">
+            <strong class="text-gray-900">CHAVE SELETORA DE CANAL:</strong> Não gostou do clipe? Sintoniza outra frequência. Aqui você pula de canal, não de vídeo. A linearidade não negocia com a sua impaciência.
+          </li>
+          <li class="text-sm text-gray-800 leading-relaxed font-medium">
+            <strong class="text-gray-900">DIAL DE GANHO (VOLUME):</strong> Potenciômetro analógico. Sem suavização digital. Cuidado com picos de áudio não comprimidos em transmissões piratas de arquivo.
+          </li>
+          <li class="text-sm text-gray-800 leading-relaxed font-medium">
+            <strong class="text-gray-900">MÓDULO PiP / ZOOM:</strong> O botão de fuga. Desanca o tubo CRT do chassi principal e expande a imagem quando a densidade do texto for demasiada para o processamento do espectador.
+          </li>
+        </ul>
+      </div>
+    `,
+    footer: "REF: CHASSI-SPEC",
+    pageNumber: "05"
+  },
+  rightPage: {
+    header: "PLIST CRT-90 | CHASSI-SPEC | MANUTENÇÃO 06",
+    title: "ACESSO RESTRITO",
+    subtitle: "FERRAMENTAS DE DIAGNÓSTICO E CURADORIA",
+    content: `
+      <div class="mb-6">
+        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ O SUBMUNDO DO CHASSI</h4>
+        <p class="text-sm text-gray-800 leading-relaxed font-medium">Atrás do painel principal, o PlayListismo esconde as portas de acesso ao banco de dados Supabase e aos protocolos de telemetria da curadoria. O acesso não autorizado a estas portas pode resultar em dessincronização irreversível da grade de programação.</p>
+      </div>
+
+      <div class="mb-6">
+        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ PORTAS DE MANUTENÇÃO</h4>
+        <ul class="space-y-3 mt-3">
+          <li class="text-sm text-gray-800 leading-relaxed font-medium">
+            <strong class="text-gray-900">PLIST EDIT:</strong> O terminal de injeção de fitas. É por esta porta que a engenharia de transmissão sobe novos links, altera IDs de vídeo e forja novos canais direto na base de dados.
+          </li>
+          <li class="text-sm text-gray-800 leading-relaxed font-medium">
+            <strong class="text-gray-900">SERVICE MODE:</strong> As gavetas de diagnóstico. Monitoramento em tempo real do ecossistema, 100% exposto. Um espaço brutalista para quem precisa ver as engrenagens da máquina rodando a seco.
+          </li>
+        </ul>
+      </div>
+
+      <div class="mt-6 p-4 bg-gray-200 border-l-4 border-gray-900">
+        <p class="text-sm italic font-bold text-gray-900 leading-relaxed">
+          « A interface não é amigável, porque a arqueologia de mídia não pede licença. É você quem se adapta à máquina. »
+        </p>
+      </div>
+    `,
+    footer: "PLAYLISTISMO CRT-90 MANUAL",
+    pageNumber: "06"
+  }
+};
+
 export const manualSpreads: ManualSpread[] = [
   {
     id: "cover",
@@ -164,96 +226,11 @@ export const manualSpreads: ManualSpread[] = [
     rightPage: spread02.rightPage,
   },
   {
-    id: "channels",
-    menuLabel: "02. CHANNEL LINE-UP GUIDE",
-    left: {
-      type: "channels",
-      title: "CHANNEL 01: OFFSTAGE",
-      subtitle: "RAW PERFORMANCE & ARCHIVAL GIGS",
-      serial: "CH-GUIDE-01",
-      stamp: "FREQ: 54-60 MHz",
-      placeholder: "Raw performance & live archives. Unvarnished soundboard direct captures, basement sessions, and telecast bootlegs.",
-      sections: [
-        {
-          heading: "CURATORIAL FOCUS",
-          body: "Direct live takes, acoustic unplugs, and rare rehearsal room tapes preserving genuine sweat and room acoustics."
-        },
-        {
-          heading: "CHANNEL PARAMETERS",
-          bullets: [
-            "Audio: Stereo Direct Board Master / Linear PCM",
-            "Video Matrix: 4:3 Raw Field Capture",
-            "Rotation Policy: Non-repeating circular queue"
-          ]
-        }
-      ]
-    },
-    right: {
-      type: "channels",
-      title: "SHIFT & SAZÓN",
-      subtitle: "GLITCH, IDM & RHYTHMIC DIASPORA",
-      serial: "CH-GUIDE-02",
-      stamp: "FREQ: 66-72 MHz",
-      placeholder: "Glitch/IDM and rhythmic diaspora notes. Polyrhythmic syncretism meeting electronic modular synthesis.",
-      sections: [
-        {
-          heading: "SONIC TERRITORY",
-          body: "From UK garage breakbeats and Latin American cumbia club mutations to Japanese footwork and Detroit electro."
-        },
-        {
-          heading: "BROADCAST TIMING",
-          bullets: [
-            "Sync Mode: Phase-Locked Telemetry",
-            "Cross-Modulation: Continuous Flow",
-            "Visual Accents: Abstract glitch graphics and kinetic typography"
-          ]
-        }
-      ]
-    }
+    id: "controls",
+    menuLabel: "02. ANATOMIA & CONTROLES",
+    left: spread03.leftPage,
+    right: spread03.rightPage,
+    leftPage: spread03.leftPage,
+    rightPage: spread03.rightPage,
   },
-  {
-    id: "specs",
-    menuLabel: "03. CONTROLS & SERVICE SPECS",
-    left: {
-      type: "schematic",
-      title: "CHASSIS MAPPING",
-      subtitle: "ISOMETRIC DECK & SIGNAL FLOW",
-      serial: "SCHEM-REV-96",
-      stamp: "BLUEPRINT // ARCH-01",
-      placeholder: "Isometric 1px wireframe diagram and physical control deck mapping for the CRT-90 receiver unit.",
-      sections: [
-        {
-          heading: "SUB-CHASSIS SPECIFICATIONS",
-          body: "Dual-rail transformer with independent power decoupling for the video signal pipeline and audio preamp stage."
-        },
-        {
-          heading: "HARDWARE DECK CONTROLS",
-          bullets: [
-            "Primary Tube: 4:3 High-Focus Phosphor Triad",
-            "Rotary Master: Dual-Gang CRT Gain Potentiometer",
-            "Mechanical Push Deck: Tactile snap-action momentary switches"
-          ]
-        }
-      ]
-    },
-    right: {
-      type: "colophon",
-      title: "SERVICE NOTES",
-      subtitle: "COLOPHON & TECHNICAL SPECIFICATIONS",
-      serial: "SPEC-COLOPHON",
-      stamp: "INSPECTED // OK",
-      placeholder: "Colophon, tech stack & non-commercial notice. Engineered for continuous broadcast without algorithmic mediation.",
-      sections: [
-        {
-          heading: "CORE ENGINE & STACK",
-          body: "React 19 / TypeScript / Vite / Tailwind CSS / Supabase Realtime / YouTube & Vimeo Synchronized Embed Drivers."
-        },
-        {
-          heading: "NON-COMMERCIAL NOTICE",
-          body: "PlayListismo is an educational, archival, and non-profit cultural initiative celebrating the music video artform. All broadcast materials remain the copyrighted property of their respective creators.",
-          callout: "CALIBRATION COMPLETE • REV. 1996 • NO RIGHTS RESERVED FOR MONETIZATION"
-        }
-      ]
-    }
-  }
 ];
