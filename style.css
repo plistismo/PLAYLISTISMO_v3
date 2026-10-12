@@ -890,6 +890,8 @@ body {
 }
 
 .manual-page-right-content .manual-editorial-html .bg-gray-200,
+.manual-page-right-content .manual-editorial-html .bg-yellow-400,
+.manual-page-right-content .manual-editorial-html .border-4,
 .manual-page-right-content .manual-editorial-html .border-l-4 {
     overflow: hidden;
 }

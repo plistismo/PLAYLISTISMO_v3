@@ -208,6 +208,63 @@ export const spread03 = {
   }
 };
 
+export const spread04 = {
+  leftPage: {
+    header: "PLIST CRT-90 | TESE-URBANA | SINAL 07",
+    title: "A CIDADE E O TUBO",
+    subtitle: "EXPANSÃO DE ARQUIVO E MOBILIDADE",
+    content: `
+      <div class="mb-6">
+        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ O CIRCUITO METROPOLITANO</h4>
+        <p class="text-sm text-gray-800 leading-relaxed font-medium">O <em>PlayListismo</em> é apenas o módulo inicial de um ecossistema de arqueologia de mídia. Em sua frequência paralela e futura (o projeto <em>Retrovisor Coletivo</em>, atualmente em fase de documentação), a mesma lógica de resgate é aplicada à cidade: a preservação da tipografia Kabel Black dos letreiros e a memória da mobilidade urbana.</p>
+      </div>
+
+      <div class="mb-6">
+        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ VETORES DE TRANSMISSÃO</h4>
+        <p class="text-sm text-gray-800 leading-relaxed font-medium">Um sinal de TV pirata invadindo a madrugada e a rota de um ônibus noturno cruzando São Paulo têm a mesma função tática: atravessar o escuro e conectar pontos isolados. Não estamos apenas construindo um receptor de videoclipes; estamos documentando a tecnologia da sobrevivência — seja no tubo de imagem ou no asfalto.</p>
+      </div>
+
+      <div class="mt-6 p-4 bg-gray-200 border-l-4 border-gray-900">
+        <p class="text-sm italic font-bold text-gray-900 leading-relaxed">
+          « O letreiro aponta o destino. O sinal linear pavimenta o caminho. »
+        </p>
+      </div>
+    `,
+    footer: "REF: TESE-URBANA",
+    pageNumber: "07"
+  },
+  rightPage: {
+    header: "PLIST CRT-90 | EOF-1996 | DESLIGAMENTO 08",
+    title: "FIM DE TRANSMISSÃO",
+    subtitle: "PROCEDIMENTO DE DESCONEXÃO",
+    content: `
+      <div class="mb-6 border-b-2 border-gray-900 pb-2">
+        <span class="bg-gray-900 text-gray-100 text-xs px-2 py-1 font-bold uppercase tracking-widest">Desligamento Térmico</span>
+      </div>
+      
+      <div class="mt-6 mb-6">
+        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ CÓDIGO DE ENCERRAMENTO</h4>
+        <p class="text-sm text-gray-800 leading-relaxed font-medium">A unidade CRT-90 atingiu o limite de operação térmica contínua do manual. Retorne ao painel principal, selecione um canal e permita que o sinal assuma o controle.</p>
+      </div>
+
+      <div class="mb-6">
+        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ REGISTRO DE PATRIMÔNIO</h4>
+        <ul class="space-y-2 mt-2">
+          <li class="text-sm text-gray-800 leading-relaxed font-medium"><strong class="text-gray-900">Propriedade:</strong> Sistema de Curadoria Independente.</li>
+          <li class="text-sm text-gray-800 leading-relaxed font-medium"><strong class="text-gray-900">Manutenção:</strong> Nenhuma atualização de interface garantida. Sobreviva com o que está na tela.</li>
+        </ul>
+      </div>
+
+      <div class="mt-8 p-4 bg-yellow-400 border-4 border-black text-black">
+        <h4 class="font-black mb-1 uppercase tracking-widest">⚠ AVISO FINAL DO SISTEMA</h4>
+        <p class="text-sm font-bold leading-relaxed">Desligue a racionalidade. Ligue o monitor. A revolução não será algoritmizada.</p>
+      </div>
+    `,
+    footer: "PLAYLISTISMO CRT-90 MANUAL",
+    pageNumber: "08"
+  }
+};
+
 export const manualSpreads: ManualSpread[] = [
   {
     id: "cover",
@@ -232,5 +289,13 @@ export const manualSpreads: ManualSpread[] = [
     right: spread03.rightPage,
     leftPage: spread03.leftPage,
     rightPage: spread03.rightPage,
+  },
+  {
+    id: "colophon",
+    menuLabel: "03. CIDADE & ENCERRAMENTO",
+    left: spread04.leftPage,
+    right: spread04.rightPage,
+    leftPage: spread04.leftPage,
+    rightPage: spread04.rightPage,
   },
 ];
