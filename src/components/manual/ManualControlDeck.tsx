@@ -1,8 +1,9 @@
 import React from 'react';
+import { manualSpreads } from '../../data/manualSpreads.ts';
 
 interface ManualControlDeckProps {
   currentSpreadIndex: number;
-  totalSpreads: number;
+  totalSpreads?: number;
   onPrevPage: () => void;
   onNextPage: () => void;
   volume: number; // 0 to 100
@@ -14,7 +15,7 @@ interface ManualControlDeckProps {
 
 export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
   currentSpreadIndex,
-  totalSpreads,
+  totalSpreads: totalSpreadsProp,
   onPrevPage,
   onNextPage,
   volume,
@@ -23,12 +24,13 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
   zoomLevel = 1,
   onCycleZoom,
 }) => {
+  const totalSpreadsCount = manualSpreads.length || totalSpreadsProp || 4;
   const currentLeftPage = currentSpreadIndex * 2 + 1;
   const currentRightPage = currentSpreadIndex * 2 + 2;
-  const totalPages = totalSpreads * 2;
+  const totalPages = totalSpreadsCount * 2;
 
   const isFirstSpread = currentSpreadIndex === 0;
-  const isLastSpread = currentSpreadIndex === totalSpreads - 1;
+  const isLastSpread = currentSpreadIndex >= totalSpreadsCount - 1;
   const isZoomed = zoomLevel > 1;
   const zoomLabel = zoomLevel === 1 ? '1.0x' : zoomLevel === 1.25 ? '1.25x' : `${zoomLevel}x`;
 
@@ -133,7 +135,7 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
           {/* Numeric Indicator */}
           <div className="bg-[#0b0c0e] border border-[#2a2e38] px-2 sm:px-3 py-1 rounded-sm flex flex-col items-center justify-center shadow-inner">
             <span className="font-mono-tech text-[6px] sm:text-[7px] text-zinc-500 tracking-wider uppercase font-bold">
-              SPREAD {String(currentSpreadIndex + 1).padStart(2, '0')} / {String(totalSpreads).padStart(2, '0')}
+              SPREAD {String(currentSpreadIndex + 1).padStart(2, '0')} / {String(totalSpreadsCount).padStart(2, '0')}
             </span>
             <span className="font-mono-tech text-[10px] sm:text-xs font-bold text-emerald-400 tracking-wider">
               PAGE {String(currentLeftPage).padStart(2, '0')} / {String(totalPages).padStart(2, '0')}

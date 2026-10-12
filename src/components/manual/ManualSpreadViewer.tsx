@@ -20,11 +20,12 @@ interface FlipState {
 export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
   spread,
   spreadIndex,
-  totalSpreads,
+  totalSpreads: totalSpreadsProp,
   cavityRef,
   zoomLevel = 1,
 }) => {
-  const totalPages = totalSpreads * 2;
+  const totalSpreadsCount = manualSpreads.length || totalSpreadsProp || 4;
+  const totalPages = totalSpreadsCount * 2;
   const isZoomed = zoomLevel > 1;
   const lastIndexRef = useRef(spreadIndex);
   const [flipState, setFlipState] = useState<FlipState | null>(null);
