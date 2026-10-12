@@ -61,6 +61,9 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
     }
   }, [spreadIndex]);
 
+  const getLeftPage = (s?: any) => s?.leftPage || s?.left;
+  const getRightPage = (s?: any) => s?.rightPage || s?.right;
+
   // Determine what spreads are displayed on the base pages
   const baseLeftSpread = flipState
     ? flipState.direction === 'next'
@@ -110,7 +113,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
           style={{ backgroundColor: '#EAE6D8', color: '#111111' }}
         >
           <ManualPageRenderer
-            page={baseLeftSpread.left}
+            page={getLeftPage(baseLeftSpread)}
             isLeftPage={true}
             pageNumber={baseLeftPageNum}
             totalPageCount={totalPages}
@@ -135,7 +138,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
           style={{ backgroundColor: '#EAE6D8', color: '#111111' }}
         >
           <ManualPageRenderer
-            page={baseRightSpread.right}
+            page={getRightPage(baseRightSpread)}
             isLeftPage={false}
             pageNumber={baseRightPageNum}
             totalPageCount={totalPages}
@@ -158,7 +161,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
             {/* Front Face of turning leaf: fromSpread's right page */}
             <div className="leaf-face leaf-face-front border-l border-[#111111]/20 shadow-[0_12px_35px_rgba(0,0,0,0.5)]">
               <ManualPageRenderer
-                page={manualSpreads[flipState.fromIndex].right}
+                page={getRightPage(manualSpreads[flipState.fromIndex])}
                 isLeftPage={false}
                 pageNumber={flipState.fromIndex * 2 + 2}
                 totalPageCount={totalPages}
@@ -173,7 +176,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
             {/* Back Face of turning leaf: toSpread's left page (lands on left side) */}
             <div className="leaf-face leaf-face-back-next border-r border-[#111111]/20 shadow-[0_12px_35px_rgba(0,0,0,0.5)]">
               <ManualPageRenderer
-                page={manualSpreads[flipState.toIndex].left}
+                page={getLeftPage(manualSpreads[flipState.toIndex])}
                 isLeftPage={true}
                 pageNumber={flipState.toIndex * 2 + 1}
                 totalPageCount={totalPages}
@@ -192,7 +195,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
             {/* Front Face of turning leaf: fromSpread's left page */}
             <div className="leaf-face leaf-face-front border-r border-[#111111]/20 shadow-[0_12px_35px_rgba(0,0,0,0.5)]">
               <ManualPageRenderer
-                page={manualSpreads[flipState.fromIndex].left}
+                page={getLeftPage(manualSpreads[flipState.fromIndex])}
                 isLeftPage={true}
                 pageNumber={flipState.fromIndex * 2 + 1}
                 totalPageCount={totalPages}
@@ -207,7 +210,7 @@ export const ManualSpreadViewer: React.FC<ManualSpreadViewerProps> = ({
             {/* Back Face of turning leaf: toSpread's right page (lands on right side) */}
             <div className="leaf-face leaf-face-back-prev border-l border-[#111111]/20 shadow-[0_12px_35px_rgba(0,0,0,0.5)]">
               <ManualPageRenderer
-                page={manualSpreads[flipState.toIndex].right}
+                page={getRightPage(manualSpreads[flipState.toIndex])}
                 isLeftPage={false}
                 pageNumber={flipState.toIndex * 2 + 2}
                 totalPageCount={totalPages}

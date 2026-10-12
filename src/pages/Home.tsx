@@ -217,7 +217,7 @@ export default function Home({ session }: { session: Session | null }) {
       if (e.key === 'ArrowLeft') {
         setActiveSpreadIndex(prev => Math.max(0, prev - 1));
       } else if (e.key === 'ArrowRight') {
-        setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1));
+        setActiveSpreadIndex(prev => (prev < manualSpreads.length - 1 ? prev + 1 : prev));
       } else if (e.key === 'Escape') {
         setIsManualMode(false);
         setManualZoomLevel(1);
@@ -1963,7 +1963,7 @@ export default function Home({ session }: { session: Session | null }) {
                 }
               }}
               onNextPage={() => {
-                setActiveSpreadIndex(prev => Math.min(manualSpreads.length - 1, prev + 1));
+                setActiveSpreadIndex(prev => (prev < manualSpreads.length - 1 ? prev + 1 : prev));
                 if (manualScrollContainerRef.current) {
                   manualScrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
                 }

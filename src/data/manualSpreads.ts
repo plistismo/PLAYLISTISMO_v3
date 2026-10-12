@@ -31,6 +31,8 @@ export interface ManualSpread {
 }
 
 export const spread01 = {
+  id: "cover",
+  menuLabel: "00. UNIT COVER & RATINGS",
   leftPage: {
     header: "PLIST CRT-90 | SEC-DOC-001/A | TESTADO & APROVADO 96",
     title: "[CONTRACAPA INTERNA]",
@@ -92,10 +94,14 @@ export const spread01 = {
     footer: "PLAYLISTISMO CRT-90 MANUAL",
     pageNumber: "02",
     isCover: true
-  }
+  },
+  get left() { return this.leftPage; },
+  get right() { return this.rightPage; }
 };
 
 export const spread02 = {
+  id: "manifesto",
+  menuLabel: "01. BROADCAST MANIFESTO",
   leftPage: {
     header: "PLIST CRT-90 | MANIF-01-A | REGRAS DA CASA 03",
     title: "HACKEANDO O ALGORITMO",
@@ -143,10 +149,14 @@ export const spread02 = {
     `,
     footer: "PLAYLISTISMO CRT-90 MANUAL",
     pageNumber: "04"
-  }
+  },
+  get left() { return this.leftPage; },
+  get right() { return this.rightPage; }
 };
 
 export const spread03 = {
+  id: "controls",
+  menuLabel: "02. ANATOMIA & CONTROLES",
   leftPage: {
     header: "PLIST CRT-90 | CHASSI-SPEC | CONTROLE TÁTICO 05",
     title: "ANATOMIA DO RECEPTOR",
@@ -205,10 +215,14 @@ export const spread03 = {
     `,
     footer: "PLAYLISTISMO CRT-90 MANUAL",
     pageNumber: "06"
-  }
+  },
+  get left() { return this.leftPage; },
+  get right() { return this.rightPage; }
 };
 
 export const spread04 = {
+  id: "colophon",
+  menuLabel: "03. CIDADE & ENCERRAMENTO",
   leftPage: {
     header: "PLIST CRT-90 | TESE-URBANA | SINAL 07",
     title: "A CIDADE E O TUBO",
@@ -262,40 +276,9 @@ export const spread04 = {
     `,
     footer: "PLAYLISTISMO CRT-90 MANUAL",
     pageNumber: "08"
-  }
+  },
+  get left() { return this.leftPage; },
+  get right() { return this.rightPage; }
 };
 
-export const manualSpreads: ManualSpread[] = [
-  {
-    id: "cover",
-    menuLabel: "00. UNIT COVER & RATINGS",
-    left: spread01.leftPage,
-    right: spread01.rightPage,
-    leftPage: spread01.leftPage,
-    rightPage: spread01.rightPage,
-  },
-  {
-    id: "manifesto",
-    menuLabel: "01. BROADCAST MANIFESTO",
-    left: spread02.leftPage,
-    right: spread02.rightPage,
-    leftPage: spread02.leftPage,
-    rightPage: spread02.rightPage,
-  },
-  {
-    id: "controls",
-    menuLabel: "02. ANATOMIA & CONTROLES",
-    left: spread03.leftPage,
-    right: spread03.rightPage,
-    leftPage: spread03.leftPage,
-    rightPage: spread03.rightPage,
-  },
-  {
-    id: "colophon",
-    menuLabel: "03. CIDADE & ENCERRAMENTO",
-    left: spread04.leftPage,
-    right: spread04.rightPage,
-    leftPage: spread04.leftPage,
-    rightPage: spread04.rightPage,
-  },
-];
+export const manualSpreads = [spread01, spread02, spread03, spread04];

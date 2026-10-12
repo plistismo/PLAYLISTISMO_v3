@@ -19,7 +19,18 @@ export const ManualPageRenderer: React.FC<ManualPageRendererProps> = ({
   cavityRef,
   zoomLevel = 1,
 }) => {
-  const isCover = page.type === 'cover';
+  if (!page) {
+    return (
+      <div
+        className={`relative w-full h-full flex flex-col justify-between p-4 sm:p-5 md:p-6 lg:p-7 overflow-hidden select-none font-['Jost',sans-serif] !bg-[#EAE6D8] !text-[#111111] ${
+          isLeftPage ? 'manual-page-left' : 'manual-page-right'
+        }`}
+        style={{ backgroundColor: '#EAE6D8', color: '#111111' }}
+      />
+    );
+  }
+
+  const isCover = page.isCover ?? page.type === 'cover';
   const isInsideCover = page.type === 'cover-inside';
   const isSchematic = page.type === 'schematic';
   const isZoomed = zoomLevel > 1;
