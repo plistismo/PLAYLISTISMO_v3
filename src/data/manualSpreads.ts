@@ -53,7 +53,7 @@ export const spread01 = {
 
       <div class="mt-8 border-t border-gray-400 pt-4">
         <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ ENGENHARIA DE TRANSMISSÃO</h4>
-        <p class="text-sm text-gray-800 font-medium"><strong>Sinal & Curadoria:</strong> Adriano Alves</p>
+        <p class="text-sm text-gray-800 font-medium"><strong>Sinal & Curadoria:</strong> áddri</p>
         <p class="text-sm text-gray-800 font-medium"><strong>Chassi do Sistema:</strong> React, Tailwind, Supabase</p>
         <p class="text-sm text-gray-800 font-medium"><strong>Ano de Lançamento:</strong> 2026</p>
         <p class="text-xs text-gray-600 mt-4 italic font-medium leading-relaxed">Aviso Legal: Isso não é só um site, é um artefato tático para o Mestrado em Cinema e Audiovisual. Um experimento sobre memória, arquivos de guerrilha e o resgate da TV que não pedia licença para existir.</p>
