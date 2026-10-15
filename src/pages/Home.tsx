@@ -73,6 +73,229 @@ const fisherYatesShuffle = (array: any[]) => {
   return array;
 };
 
+// Helper to progressively reveal HTML text safely without breaking tag structure
+export function getVisibleHtmlAtLength(html: string, targetLength: number): string {
+  if (!html) return '';
+  let textCount = 0;
+  let inTag = false;
+  let result = '';
+  const openTags: string[] = [];
+
+  for (let i = 0; i < html.length; i++) {
+    const char = html[i];
+    if (char === '<') {
+      inTag = true;
+      const tagMatch = html.slice(i).match(/^<\/?([a-zA-Z0-9]+)[^>]*>/);
+      if (tagMatch) {
+        const fullTag = tagMatch[0];
+        const tagName = tagMatch[1].toLowerCase();
+        const isClosing = fullTag.startsWith('</');
+        const isSelfClosing = fullTag.endsWith('/>') || ['br', 'hr', 'img'].includes(tagName);
+
+        if (isClosing) {
+          const idx = openTags.lastIndexOf(tagName);
+          if (idx !== -1) openTags.splice(idx, 1);
+        } else if (!isSelfClosing) {
+          openTags.push(tagName);
+        }
+
+        result += fullTag;
+        i += fullTag.length - 1;
+        inTag = false;
+        continue;
+      }
+    }
+
+    if (!inTag) {
+      result += char;
+      textCount++;
+      if (textCount >= targetLength) break;
+    }
+  }
+
+  for (let t = openTags.length - 1; t >= 0; t--) {
+    result += `</${openTags[t]}>`;
+  }
+
+  return result;
+}
+
+export type PlaylistItem = {
+  id?: number;
+  name: string;
+  group_name?: string;
+  descricao?: string;
+  description_pt?: string | null;
+  description_en?: string | null;
+  description_es?: string | null;
+  osd_messages_pt?: string[] | null;
+  osd_messages_en?: string[] | null;
+  osd_messages_es?: string[] | null;
+  marca_dagua_url?: string | null;
+  marca_dagua_escala?: number | null;
+  [key: string]: any;
+};
+
+// ─── Dedicated Black Terminal Screen Component for Channel Guide ───────────
+
+interface TerminalManifestoProps {
+  channel: PlaylistItem | null;
+  activeLang: 'pt' | 'en' | 'es';
+  onLanguageChange: (lang: 'pt' | 'en' | 'es') => void;
+}
+
+function TerminalManifesto({ channel, activeLang, onLanguageChange }: TerminalManifestoProps) {
+  const [visibleChars, setVisibleChars] = useState(0);
+
+  // Extract manifesto matching active language with PT fallback
+  const manifestoRaw = useMemo(() => {
+    if (!channel) return '';
+    if (activeLang === 'en') {
+      return channel.description_en || channel.description_pt || channel.descricao || '';
+    }
+    if (activeLang === 'es') {
+      return channel.description_es || channel.description_pt || channel.descricao || '';
+    }
+    return channel.description_pt || channel.descricao || '';
+  }, [channel, activeLang]);
+
+  // Clean / sanitize HTML
+  const sanitizedFullHtml = useMemo(() => {
+    if (!manifestoRaw || !manifestoRaw.trim()) return '';
+    return sanitizeHTML(manifestoRaw);
+  }, [manifestoRaw]);
+
+  // Total visible text character count
+  const totalTextChars = useMemo(() => {
+    if (!sanitizedFullHtml) return 0;
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = sanitizedFullHtml;
+    return (tempDiv.textContent || tempDiv.innerText || '').length;
+  }, [sanitizedFullHtml]);
+
+  // Fast typewriter effect whenever channel or activeLang changes
+  useEffect(() => {
+    setVisibleChars(0);
+    if (!sanitizedFullHtml || totalTextChars <= 0) return;
+
+    let current = 0;
+    const step = totalTextChars > 250 ? 4 : totalTextChars > 120 ? 2 : 1;
+    const intervalMs = 10;
+
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= totalTextChars) {
+        setVisibleChars(totalTextChars);
+        clearInterval(timer);
+      } else {
+        setVisibleChars(current);
+      }
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [channel?.name, activeLang, sanitizedFullHtml, totalTextChars]);
+
+  const displayedHtml = useMemo(() => {
+    if (!sanitizedFullHtml) return '';
+    if (visibleChars >= totalTextChars) return sanitizedFullHtml;
+    return getVisibleHtmlAtLength(sanitizedFullHtml, visibleChars);
+  }, [sanitizedFullHtml, visibleChars, totalTextChars]);
+
+  const isTyping = visibleChars < totalTextChars && totalTextChars > 0;
+
+  // Count of OSD messages for this channel
+  const osdCount = useMemo(() => {
+    if (!channel) return 0;
+    const arr = activeLang === 'en' ? (channel.osd_messages_en || channel.osd_messages_pt)
+      : activeLang === 'es' ? (channel.osd_messages_es || channel.osd_messages_pt)
+      : channel.osd_messages_pt;
+    return Array.isArray(arr) ? arr.length : 0;
+  }, [channel, activeLang]);
+
+  return (
+    <div className="w-full h-full flex flex-col bg-[#020704] border border-[#00ff88]/40 rounded-xl p-3 sm:p-3.5 shadow-[inset_0_0_30px_rgba(0,255,136,0.1),0_4px_25px_rgba(0,0,0,0.95)] overflow-hidden relative font-jost select-text">
+      {/* Subtle CRT Scanlines */}
+      <div className="terminal-crt-scanlines absolute inset-0 opacity-40 z-10 pointer-events-none" />
+
+      {/* Terminal Header */}
+      <div className="flex items-center justify-between border-b border-[#00ff88]/30 pb-2 mb-2 shrink-0 z-20">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-[#00ff88] animate-ping shrink-0" />
+          <span className="text-xs font-mono font-bold tracking-widest text-[#00ff88] uppercase truncate">
+            TERMINAL // MANIFESTO
+          </span>
+          {channel?.group_name && (
+            <span className="hidden sm:inline-block text-[9px] font-mono px-1.5 py-0.2 bg-[#00ff88]/10 text-[#00ff88] border border-[#00ff88]/30 rounded uppercase tracking-wider">
+              {channel.group_name}
+            </span>
+          )}
+        </div>
+
+        {/* Language Switcher Pills */}
+        <div className="flex items-center gap-1 bg-black/80 border border-[#00ff88]/40 rounded p-0.5 shrink-0">
+          {(['pt', 'en', 'es'] as const).map(l => (
+            <button
+              key={l}
+              onClick={() => onLanguageChange(l)}
+              className={`px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider rounded transition-all ${
+                activeLang === l
+                  ? 'bg-[#00ff88] text-black shadow-[0_0_8px_rgba(0,255,136,0.6)]'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Channel Name banner */}
+      <div className="mb-2 shrink-0 z-20 flex items-center justify-between">
+        <span className="text-sm font-black font-jost uppercase tracking-wider text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] truncate">
+          {channel ? channel.name : 'SELECIONE UM CANAL'}
+        </span>
+        <span className="text-[10px] font-mono text-[#00ff88]/70 shrink-0">
+          {isTyping ? 'DECRYPTING...' : 'ONLINE'}
+        </span>
+      </div>
+
+      {/* Terminal Manifesto Body */}
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar z-20 pr-1 text-xs md:text-sm text-[#d4f8dc] leading-relaxed font-jost">
+        {sanitizedFullHtml ? (
+          <div>
+            <span
+              dangerouslySetInnerHTML={{ __html: displayedHtml }}
+              className="manifesto-content"
+            />
+            {isTyping && (
+              <span className="inline-block text-[#00ff88] ml-0.5 font-mono animate-pulse">▋</span>
+            )}
+          </div>
+        ) : (
+          <div className="py-4 text-center font-mono text-zinc-500 text-xs">
+            <p className="text-[#00ff88]/40 mb-1">&gt; STATUS: NO MANIFESTO REGISTERED</p>
+            <p className="text-[10px] text-zinc-600 uppercase">
+              Abra a MATRIX (Admin) para cadastrar o manifesto deste canal em {activeLang.toUpperCase()}.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Terminal Footer (OSD Chyron Info) */}
+      <div className="pt-2 mt-2 border-t border-[#00ff88]/20 flex items-center justify-between text-[10px] font-mono shrink-0 z-20 text-[#00ff88]/70">
+        <div className="flex items-center gap-1.5 truncate">
+          <span>◈ OSD HIJACK:</span>
+          <span className="text-white font-bold">{osdCount} MENSAGENS</span>
+          <span className="text-zinc-500">({activeLang.toUpperCase()})</span>
+        </div>
+        <span className="text-[9px] text-zinc-500 uppercase tracking-widest hidden sm:inline">
+          7S HIJACK ON AIR
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function Home({ session }: { session: Session | null }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -89,21 +312,6 @@ export default function Home({ session }: { session: Session | null }) {
     setSearchParams(newParams);
   };
 
-  type PlaylistItem = {
-    id?: number;
-    name: string;
-    group_name?: string;
-    descricao?: string;
-    description_pt?: string | null;
-    description_en?: string | null;
-    description_es?: string | null;
-    osd_messages_pt?: string[] | null;
-    osd_messages_en?: string[] | null;
-    osd_messages_es?: string[] | null;
-    marca_dagua_url?: string | null;
-    marca_dagua_escala?: number | null;
-    [key: string]: any;
-  };
   type VideoData = { id?: string | number; video_id: string; artista?: string; musica?: string; album?: string; ano?: string; direcao?: string; playlist?: string; [key: string]: any };
 
   // App State
@@ -141,6 +349,71 @@ export default function Home({ session }: { session: Session | null }) {
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [currentChannelWatermark, setCurrentChannelWatermark] = useState<string | null>(null);
   const [currentChannelWatermarkScale, setCurrentChannelWatermarkScale] = useState<number>(1.0);
+
+  // ── Multi-Language & OSD Signal Hijack State (Part 1 & Part 2) ──
+  const [activeLang, setActiveLang] = useState<'pt' | 'en' | 'es'>('pt');
+  const activeLangRef = useRef<'pt' | 'en' | 'es'>('pt');
+  useEffect(() => { activeLangRef.current = activeLang; }, [activeLang]);
+
+  const [osdActive, setOsdActive] = useState<boolean>(false);
+  const [currentOsdMessage, setCurrentOsdMessage] = useState<string>('');
+  const osdTimeoutRef = useRef<any>(null);
+  const currentTriggerPointsRef = useRef<number[]>([]);
+  const firedTriggersRef = useRef<Set<number>>(new Set());
+
+  const [currentChannelRecord, setCurrentChannelRecord] = useState<PlaylistItem | null>(null);
+  const currentChannelRecordRef = useRef<PlaylistItem | null>(null);
+  useEffect(() => { currentChannelRecordRef.current = currentChannelRecord; }, [currentChannelRecord]);
+
+  const currentChannelNameRef = useRef<string>('');
+  useEffect(() => { currentChannelNameRef.current = currentChannelName; }, [currentChannelName]);
+
+  const playlistsRef = useRef<PlaylistItem[]>([]);
+  useEffect(() => { playlistsRef.current = playlists; }, [playlists]);
+
+  const currentVideoDataRef = useRef<VideoData | null>(null);
+  useEffect(() => { currentVideoDataRef.current = currentVideoData; }, [currentVideoData]);
+
+  // Terminal Guide Hover State
+  const [hoveredChannel, setHoveredChannel] = useState<PlaylistItem | null>(null);
+
+  // Trigger OSD Hijack execution
+  const triggerOsdHijack = useCallback(() => {
+    const ch = currentChannelRecordRef.current || playlistsRef.current.find(p => p.name === currentChannelNameRef.current);
+    const lang = activeLangRef.current;
+
+    let msgs: string[] = [];
+    if (lang === 'en' && Array.isArray(ch?.osd_messages_en) && ch.osd_messages_en.length > 0) {
+      msgs = ch.osd_messages_en;
+    } else if (lang === 'es' && Array.isArray(ch?.osd_messages_es) && ch.osd_messages_es.length > 0) {
+      msgs = ch.osd_messages_es;
+    } else if (Array.isArray(ch?.osd_messages_pt) && ch.osd_messages_pt.length > 0) {
+      msgs = ch.osd_messages_pt;
+    } else if (Array.isArray(ch?.osd_messages_en) && ch.osd_messages_en.length > 0) {
+      msgs = ch.osd_messages_en;
+    } else if (Array.isArray(ch?.osd_messages_es) && ch.osd_messages_es.length > 0) {
+      msgs = ch.osd_messages_es;
+    }
+
+    if (!msgs || msgs.length === 0) {
+      msgs = [
+        'TRANSMISSÃO PIRATA // SINAL LOCAL',
+        'INTERFERÊNCIA NO MONITOR CRT',
+        'SOBREPOSIÇÃO DE SINAL // PLAYLISTISMO',
+        'SINAL HIJACK ATIVO // NÃO MUDE DE CANAL'
+      ];
+    }
+
+    const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
+    setCurrentOsdMessage(randomMsg);
+    setOsdActive(true);
+
+    if (osdTimeoutRef.current) clearTimeout(osdTimeoutRef.current);
+    osdTimeoutRef.current = setTimeout(() => {
+      setOsdActive(false);
+      setCurrentOsdMessage('');
+    }, 7000);
+  }, []);
 
   // OWNER'S MANUAL & MASTER AUDIO GAIN STATE
   const [isManualMode, setIsManualMode] = useState<boolean>(() => {
@@ -356,6 +629,57 @@ export default function Home({ session }: { session: Session | null }) {
     }
   };
 
+  // ── OSD Signal Hijack Safe Zone & Playback Timing Logic ──
+  const checkPlaybackTriggers = useCallback((cur: number, dur: number) => {
+    if (dur <= 0) return;
+
+    // Credits & Playlist Label (MTV style overlay)
+    setShowCredits((cur >= 10 && cur < 20) || (dur > 30 && cur >= (dur - 20) && cur < (dur - 10)));
+    setShowPlaylistLabel(cur >= 1.5 && cur < dur);
+
+    // Track video changes to reset trigger points and fired state
+    const vidId = String(currentVideoDataRef.current?.video_id || currentVideoDataRef.current?.id || '');
+    if (lastVideoIdRef.current !== vidId) {
+      lastVideoIdRef.current = vidId;
+      firedTriggersRef.current.clear();
+      currentTriggerPointsRef.current = [];
+      if (osdTimeoutRef.current) clearTimeout(osdTimeoutRef.current);
+      setOsdActive(false);
+      setCurrentOsdMessage('');
+    }
+
+    // Timing Logic (Safe Zone): Ignore first 20s and last 20s, distribute 2 to 4 trigger points
+    if (currentTriggerPointsRef.current.length === 0 && dur > 0) {
+      if (dur >= 50) {
+        const start = 20;
+        const end = Math.max(start, dur - 20);
+        const safeZone = end - start;
+        // Distribute 2 to 4 trigger points evenly based on safe zone duration
+        const numTriggers = safeZone >= 200 ? 4 : safeZone >= 120 ? 3 : 2;
+        const pts: number[] = [];
+        const step = safeZone / (numTriggers + 1);
+        for (let i = 1; i <= numTriggers; i++) {
+          pts.push(Math.round(start + step * i));
+        }
+        currentTriggerPointsRef.current = pts;
+        console.log(`[OSD Hijack Engine] Video Duration: ${dur}s. Safe Zone: 20s-${end}s. Trigger Points:`, pts);
+      } else if (dur > 20) {
+        currentTriggerPointsRef.current = [Math.round(dur / 2)];
+      }
+    }
+
+    // Trigger Execution: when currentTime hits a trigger point
+    if (currentTriggerPointsRef.current.length > 0) {
+      for (const pt of currentTriggerPointsRef.current) {
+        if (!firedTriggersRef.current.has(pt) && cur >= pt && cur <= pt + 3) {
+          firedTriggersRef.current.add(pt);
+          triggerOsdHijack();
+          break;
+        }
+      }
+    }
+  }, [triggerOsdHijack]);
+
   // Inicializa o player Vimeo (chamado após o script já estar carregado)
   function initVimeoPlayer() {
     if (!window.Vimeo || vimeoPlayerRef.current) return;
@@ -394,11 +718,7 @@ export default function Home({ session }: { session: Session | null }) {
       setIsPlaying(false);
     });
     vimeoPlayerRef.current.on('timeupdate', (data: { seconds: number; duration: number }) => {
-      const cur = data.seconds;
-      const dur = data.duration;
-      if (dur <= 0) return;
-      setShowCredits((cur >= 10 && cur < 20) || (dur > 30 && cur >= (dur - 20) && cur < (dur - 10)));
-      setShowPlaylistLabel(cur >= 1.5 && cur < dur);
+      checkPlaybackTriggers(data.seconds, data.duration);
     });
   };
 
@@ -510,6 +830,7 @@ export default function Home({ session }: { session: Session | null }) {
 
       setShowCredits((cur >= 10 && cur < 20) || (dur > 30 && cur >= (dur - 20) && cur < (dur - 10)));
       setShowPlaylistLabel(cur >= 1.5 && cur < dur);
+      checkPlaybackTriggers(cur, dur);
     }, 1000);
   };
 
@@ -517,6 +838,7 @@ export default function Home({ session }: { session: Session | null }) {
     const { data } = await supabase.from('playlists').select('*').order('name');
     if (data) {
       setPlaylists(data);
+      playlistsRef.current = data;
       const grouped = data.reduce((acc: any, curr: any) => {
         const g = (curr.group_name && curr.group_name.trim()) ? curr.group_name.trim().toUpperCase() : 'OTHERS';
         if (!acc[g]) acc[g] = [];
@@ -524,6 +846,12 @@ export default function Home({ session }: { session: Session | null }) {
         return acc;
       }, {});
       setChannelsByCategory(grouped);
+      if (currentChannelName) {
+        const matched = data.find((p: any) => p.name === currentChannelName);
+        if (matched) {
+          setCurrentChannelRecord(matched);
+        }
+      }
     }
   };
 
@@ -536,21 +864,29 @@ export default function Home({ session }: { session: Session | null }) {
     return num;
   };
 
-  // MATRIX: fetch watermark URL and scale whenever the active channel changes
+  // MATRIX: fetch channel data, watermark URL and scale whenever the active channel changes
   useEffect(() => {
     if (!currentChannelName) {
       setCurrentChannelWatermark(null);
       setCurrentChannelWatermarkScale(1.0);
+      setCurrentChannelRecord(null);
       return;
     }
     supabase
       .from('playlists')
-      .select('marca_dagua_url, marca_dagua_escala')
+      .select('*')
       .eq('name', currentChannelName)
       .maybeSingle()
       .then(({ data }) => {
-        setCurrentChannelWatermark(data?.marca_dagua_url || null);
-        setCurrentChannelWatermarkScale(parseScale(data?.marca_dagua_escala));
+        if (data) {
+          setCurrentChannelRecord(data);
+          setCurrentChannelWatermark(data.marca_dagua_url || null);
+          setCurrentChannelWatermarkScale(parseScale(data.marca_dagua_escala));
+        } else {
+          setCurrentChannelRecord(null);
+          setCurrentChannelWatermark(null);
+          setCurrentChannelWatermarkScale(1.0);
+        }
       });
   }, [currentChannelName]);
 
@@ -1570,8 +1906,26 @@ export default function Home({ session }: { session: Session | null }) {
                     {showStatic && <div className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-100 bg-repeat active"></div>}
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
-                      {/* Watermark replaces channel OSD label when available */}
-                      {currentChannelWatermark ? (
+                      {/* Watermark UI Swap: Dynamic OSD Signal Hijack vs Static Watermark */}
+                      {osdActive && currentOsdMessage ? (
+                        <div
+                          className="osd-signal-hijack pointer-events-none z-[75] absolute top-[3.5%] right-[3.5%] max-w-[280px] sm:max-w-[380px] bg-black border-2 border-emerald-500/90 p-2.5 sm:p-3 shadow-[0_0_30px_rgba(16,185,129,0.5),inset_0_0_15px_rgba(0,0,0,0.9)] rounded font-mono-tech"
+                          style={{
+                            transformOrigin: 'top right',
+                          }}
+                        >
+                          <div className="flex items-center justify-between gap-2 border-b border-emerald-500/40 pb-1 mb-1.5 text-[9px] uppercase tracking-wider text-emerald-400 font-bold">
+                            <span className="flex items-center gap-1.5">
+                              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                              SIGNAL HIJACK // OSD
+                            </span>
+                            <span className="text-[8px] text-emerald-500/80">{currentChannelName || 'SYS.BRDCST'}</span>
+                          </div>
+                          <div className="text-emerald-400 text-xs sm:text-sm font-bold tracking-wide leading-tight break-words osd-typewriter-text drop-shadow-[0_0_8px_rgba(16,185,129,0.9)]">
+                            {currentOsdMessage}
+                          </div>
+                        </div>
+                      ) : currentChannelWatermark ? (
                         <div
                           className="watermark-container"
                           style={{
@@ -2107,16 +2461,15 @@ export default function Home({ session }: { session: Session | null }) {
         </button>
       )}
 
-      {/* ── GAVETA INFERIOR MECÂNICA (P100 GUIDE) ── */}
       <div
           id="tv-drawer-guide"
           className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-['Jost',sans-serif] font-jost ${
             isSearchOpen
-              ? 'max-h-[38vh] opacity-100 mt-2 md:mt-3 translate-y-0'
+              ? 'max-h-[48vh] md:max-h-[50vh] opacity-100 mt-2 md:mt-3 translate-y-0'
               : 'max-h-0 opacity-0 mt-0 translate-y-6 pointer-events-none'
           }`}
         >
-              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-2.5 md:p-4 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-['Jost',sans-serif] font-jost max-h-[38vh] flex flex-col overflow-hidden">
+              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-2.5 md:p-4 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-['Jost',sans-serif] font-jost max-h-[48vh] md:max-h-[50vh] flex flex-col overflow-hidden">
                 
                 {/* Header do Guia */}
                 <div className="flex items-center justify-between border-b border-[#2b3038] pb-2 mb-2 shrink-0">
@@ -2185,45 +2538,74 @@ export default function Home({ session }: { session: Session | null }) {
                   })}
                 </div>
 
-                {/* Visor de Canais (Grid): Sunken Black Background with shadow-inner */}
-                <div className="bg-black rounded-b-xl rounded-tr-xl border-2 border-[#24272c] p-2.5 md:p-3 shadow-[inset_0_5px_22px_rgba(0,0,0,0.95)] flex-1 min-h-0 overflow-y-auto custom-scrollbar font-jost">
-                  {filteredPlaylists.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                      {filteredPlaylists.map((pl, idx) => {
-                        const isChannelActive = pl.name === currentChannelName;
-                        return (
-                          <button
-                            key={pl.name}
-                            onClick={() => {
-                              loadChannelContent(pl.name);
-                            }}
-                            className={`w-full text-left p-2.5 px-3 uppercase text-xs md:text-sm font-bold transition-all border rounded-lg flex items-center justify-between group relative font-jost ${
-                              isChannelActive
-                                ? 'bg-[#ffff00] text-[#0000aa] font-black border-yellow-300 shadow-[0_0_12px_rgba(255,255,0,0.4)] translate-y-0.5'
-                                : 'bg-[#121417] hover:bg-[#1c1f24] text-zinc-300 hover:text-white border-[#272b33] hover:border-yellow-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_3px_6px_rgba(0,0,0,0.8)] active:translate-y-0.5'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className={`text-[10px] font-mono shrink-0 ${isChannelActive ? 'text-[#0000aa]/70 font-bold' : 'text-zinc-500'}`}>
-                                {String(idx + 1).padStart(2, '0')}
-                              </span>
-                              <span className="truncate tracking-wider font-jost">{pl.name}</span>
-                            </div>
-                            {isChannelActive && (
-                              <span className="text-[9px] font-black ml-2 shrink-0 flex items-center gap-1 bg-[#0000aa] text-yellow-300 px-1.5 py-0.5 rounded shadow font-jost">
-                                <span className="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-ping"></span>
-                                ON AIR
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
+                {/* Visor do Guia (Split: Canais à esquerda + Terminal Manifesto à direita) */}
+                <div className="bg-black rounded-b-xl rounded-tr-xl border-2 border-[#24272c] p-2 md:p-3 shadow-[inset_0_5px_22px_rgba(0,0,0,0.95)] flex-1 min-h-0 overflow-hidden font-jost">
+                  <div className="flex flex-col lg:flex-row gap-2.5 md:gap-3 h-full min-h-0">
+                    {/* Coluna Esquerda: Lista de Canais */}
+                    <div className="w-full lg:w-7/12 h-full min-h-0 overflow-y-auto custom-scrollbar pr-1">
+                      {filteredPlaylists.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {filteredPlaylists.map((pl, idx) => {
+                            const isChannelActive = pl.name === currentChannelName;
+                            const isHovered = (hoveredChannel?.name === pl.name) || (!hoveredChannel && isChannelActive);
+                            return (
+                              <button
+                                key={pl.name}
+                                onClick={() => {
+                                  loadChannelContent(pl.name);
+                                }}
+                                onMouseEnter={() => setHoveredChannel(pl)}
+                                onFocus={() => setHoveredChannel(pl)}
+                                className={`w-full text-left p-2.5 px-3 uppercase text-xs md:text-sm font-bold transition-all border rounded-lg flex items-center justify-between group relative font-jost ${
+                                  isChannelActive
+                                    ? 'bg-[#ffff00] text-[#0000aa] font-black border-yellow-300 shadow-[0_0_12px_rgba(255,255,0,0.4)] translate-y-0.5'
+                                    : isHovered
+                                    ? 'bg-[#181d24] text-white border-emerald-400/70 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
+                                    : 'bg-[#121417] hover:bg-[#1c1f24] text-zinc-300 hover:text-white border-[#272b33] hover:border-yellow-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_3px_6px_rgba(0,0,0,0.8)] active:translate-y-0.5'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <span className={`text-[10px] font-mono shrink-0 ${isChannelActive ? 'text-[#0000aa]/70 font-bold' : isHovered ? 'text-emerald-400 font-bold' : 'text-zinc-500'}`}>
+                                    {String(idx + 1).padStart(2, '0')}
+                                  </span>
+                                  <span className="truncate tracking-wider font-jost">{pl.name}</span>
+                                </div>
+                                {isChannelActive ? (
+                                  <span className="text-[9px] font-black ml-2 shrink-0 flex items-center gap-1 bg-[#0000aa] text-yellow-300 px-1.5 py-0.5 rounded shadow font-jost">
+                                    <span className="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-ping"></span>
+                                    ON AIR
+                                  </span>
+                                ) : (
+                                  <span className={`text-[9px] font-mono tracking-wider ml-1 transition-opacity ${isHovered ? 'opacity-100 text-emerald-400' : 'opacity-0 group-hover:opacity-100 text-zinc-500'}`}>
+                                    INFO ▶
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center text-zinc-600 uppercase tracking-widest text-xs font-bold font-jost">
+                          {searchTerm ? 'NENHUM CANAL ENCONTRADO PARA ESTA BUSCA' : 'NENHUM CANAL NESTE GRUPO'}
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="py-8 text-center text-zinc-600 uppercase tracking-widest text-xs font-bold font-jost">
-                      {searchTerm ? 'NENHUM CANAL ENCONTRADO PARA ESTA BUSCA' : 'NENHUM CANAL NESTE GRUPO'}
+
+                    {/* Coluna Direita: Dedicated Black Terminal Screen */}
+                    <div className="w-full lg:w-5/12 h-64 lg:h-full min-h-0 shrink-0">
+                      <TerminalManifesto
+                        channel={
+                          hoveredChannel ||
+                          filteredPlaylists.find(p => p.name === currentChannelName) ||
+                          currentChannelRecord ||
+                          filteredPlaylists[0] ||
+                          null
+                        }
+                        activeLang={activeLang}
+                        onLanguageChange={setActiveLang}
+                      />
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>

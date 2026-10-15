@@ -215,3 +215,51 @@ html, body, #root {
         aspect-ratio: 1.52 / 1;
     }
 }
+
+/* ============================================================
+   OSD SIGNAL HIJACK — BRUTALIST TV OVERRIDE & TERMINAL MANIFESTO
+   ============================================================ */
+
+@keyframes osd-glitch-flicker {
+    0% { transform: translate(0, 0); opacity: 1; text-shadow: 0 0 6px #00ff88; }
+    15% { transform: translate(-1.5px, 0.5px); opacity: 0.92; text-shadow: -2px 0 #00ffff, 2px 0 #ff0055; }
+    30% { transform: translate(1px, -1px); opacity: 1; text-shadow: 0 0 10px #00ff88; }
+    50% { transform: translate(-0.5px, -0.5px); opacity: 0.95; text-shadow: 2px 0 #00ff88; }
+    70% { transform: translate(1.5px, 0.5px); opacity: 0.88; text-shadow: -2px 0 #00ffff, 1px 0 #ffaa00; }
+    85% { transform: translate(-1px, 0); opacity: 1; text-shadow: 0 0 8px #00ff88; }
+    100% { transform: translate(0, 0); opacity: 1; text-shadow: 0 0 6px #00ff88; }
+}
+
+@keyframes osd-cursor-blink {
+    0%, 49% { border-right-color: #00ff88; }
+    50%, 100% { border-right-color: transparent; }
+}
+
+.osd-signal-hijack {
+    background-color: #000000 !important;
+    border: 2px solid #00ff88 !important;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), inset 0 0 10px rgba(0, 255, 136, 0.25) !important;
+    animation: osd-glitch-flicker 2s infinite ease-in-out;
+}
+
+.osd-typewriter-text {
+    display: inline-block;
+    border-right: 2px solid #00ff88;
+    animation: osd-cursor-blink 0.65s infinite;
+    padding-right: 4px;
+    font-family: 'Space Mono', 'VT323', monospace;
+    letter-spacing: 0.08em;
+}
+
+/* CRT Scanline effect inside Guide Terminal Screen */
+.terminal-crt-scanlines {
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0) 50%,
+        rgba(0, 0, 0, 0.35) 50%,
+        rgba(0, 0, 0, 0.35)
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+}
