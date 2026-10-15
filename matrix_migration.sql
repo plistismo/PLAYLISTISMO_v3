@@ -26,3 +26,19 @@ ON storage.objects
 FOR SELECT
 TO public
 USING (bucket_id = 'marca-dagua');
+
+-- 4. Multi-Language Manifestos & OSD Chyron (PT / EN / ES)
+-- Adiciona colunas de texto para o Manifesto do Canal e colunas de array/JSONB para mensagens OSD
+ALTER TABLE playlists
+  ADD COLUMN IF NOT EXISTS description_pt TEXT,
+  ADD COLUMN IF NOT EXISTS description_en TEXT,
+  ADD COLUMN IF NOT EXISTS description_es TEXT,
+  ADD COLUMN IF NOT EXISTS osd_messages_pt JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS osd_messages_en JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS osd_messages_es JSONB DEFAULT '[]'::jsonb;
+
+-- Migração segura de descrições existentes legadas para description_pt
+UPDATE playlists
+  SET description_pt = descricao
+  WHERE (description_pt IS NULL OR description_pt = '')
+    AND (descricao IS NOT NULL AND descricao != '');

@@ -89,7 +89,21 @@ export default function Home({ session }: { session: Session | null }) {
     setSearchParams(newParams);
   };
 
-  type PlaylistItem = { name: string; group_name?: string; [key: string]: any };
+  type PlaylistItem = {
+    id?: number;
+    name: string;
+    group_name?: string;
+    descricao?: string;
+    description_pt?: string | null;
+    description_en?: string | null;
+    description_es?: string | null;
+    osd_messages_pt?: string[] | null;
+    osd_messages_en?: string[] | null;
+    osd_messages_es?: string[] | null;
+    marca_dagua_url?: string | null;
+    marca_dagua_escala?: number | null;
+    [key: string]: any;
+  };
   type VideoData = { id?: string | number; video_id: string; artista?: string; musica?: string; album?: string; ano?: string; direcao?: string; playlist?: string; [key: string]: any };
 
   // App State

@@ -210,8 +210,13 @@ export default function AdminPanel({
         groupName: groupName,
         group: groupName,
         logoUrl: logoUrl,
-        marca_dagua_url: logoUrl,
         totalClips: clips.length,
+        description_pt: channelMeta?.description_pt || channelMeta?.descricao || null,
+        description_en: channelMeta?.description_en || null,
+        description_es: channelMeta?.description_es || null,
+        osd_messages_pt: channelMeta?.osd_messages_pt || null,
+        osd_messages_en: channelMeta?.osd_messages_en || null,
+        osd_messages_es: channelMeta?.osd_messages_es || null,
         generatedAt: new Date().toISOString(),
         clips: clips
       };

@@ -77,13 +77,55 @@ export const filtrarCanais = (termo: string, listaCanais: ChannelEntry[] = []): 
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-type ChannelEntry = {
+export type ChannelEntry = {
   id: number;
   name: string;
   group_name?: string;
-  descricao?: string;
+  descricao?: string; // Legacy fallback
+  description_pt?: string | null;
+  description_en?: string | null;
+  description_es?: string | null;
+  osd_messages_pt?: string[] | null;
+  osd_messages_en?: string[] | null;
+  osd_messages_es?: string[] | null;
   marca_dagua_url?: string;
   marca_dagua_escala?: number;
+};
+
+// ─── OSD Helpers (Parse linebreaks and format) ─────────────────────────────
+
+export const parseOsdMessages = (rawText: string): string[] => {
+  if (!rawText) return [];
+  return rawText
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+};
+
+export const formatOsdForTextarea = (val: any): string => {
+  if (!val) return '';
+  if (Array.isArray(val)) {
+    return val.filter(Boolean).map(s => String(s).trim()).filter(Boolean).join('\n');
+  }
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(Boolean).map(s => String(s).trim()).filter(Boolean).join('\n');
+        }
+      } catch {
+        // Fallthrough to plain string
+      }
+    }
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      const items = trimmed.slice(1, -1).split(',').map(s => s.replace(/^"|"$/g, '').trim());
+      return items.filter(Boolean).join('\n');
+    }
+    return trimmed;
+  }
+  return '';
 };
 
 type VideoEntry = {
@@ -99,75 +141,6 @@ type VideoEntry = {
 };
 
 const FIXED_GROUPS = ['UPLOADS', 'GENRES', 'ZONES', 'ERAS', 'OTHERS'];
-
-// ─── Rich Description Editor (inline, no external dep) ─────────────────────
-
-interface DescEditorProps {
-  value: string;
-  onChange: (v: string) => void;
-}
-
-function DescriptionEditor({ value, onChange }: DescEditorProps) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (ref.current && ref.current.innerHTML !== value) {
-      ref.current.innerHTML = value || '';
-    }
-  }, [value]);
-
-  const exec = (cmd: string, arg?: string) => {
-    document.execCommand(cmd, false, arg);
-    if (ref.current) onChange(ref.current.innerHTML);
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
-    if (ref.current) onChange(ref.current.innerHTML);
-  };
-
-  return (
-    <div className="group relative">
-      <div className="flex justify-between items-end mb-1">
-        <label className="text-xs text-matrix-label uppercase font-bold tracking-wider">DESCRIÇÃO</label>
-        {/* Toolbar idêntica ao RichTextInput */}
-        <div className="flex gap-1 bg-black border border-matrix-border/30 rounded-t px-1 py-0.5 opacity-40 group-focus-within:opacity-100 transition-opacity">
-          <button type="button" onMouseDown={e => { e.preventDefault(); exec('bold'); }}
-            className="w-5 h-5 flex items-center justify-center text-[10px] font-bold hover:bg-matrix-accent hover:text-black rounded transition-colors text-matrix-accent"
-            title="Bold">B</button>
-          <button type="button" onMouseDown={e => { e.preventDefault(); exec('italic'); }}
-            className="w-5 h-5 flex items-center justify-center text-[10px] italic hover:bg-matrix-accent hover:text-black rounded transition-colors text-matrix-accent"
-            title="Italic">I</button>
-          <button type="button" onMouseDown={e => { e.preventDefault(); exec('underline'); }}
-            className="w-5 h-5 flex items-center justify-center text-[10px] underline hover:bg-matrix-accent hover:text-black rounded transition-colors text-matrix-accent"
-            title="Underline">U</button>
-          <button type="button" onMouseDown={e => {
-            e.preventDefault();
-            const sel = window.getSelection();
-            if (!sel?.rangeCount) return;
-            const range = sel.getRangeAt(0);
-            const sym = document.createTextNode('「」');
-            range.deleteContents(); range.insertNode(sym);
-            range.setStart(sym, 1); range.setEnd(sym, 1);
-            sel.removeAllRanges(); sel.addRange(range);
-            if (ref.current) onChange(ref.current.innerHTML);
-          }}
-            className="px-1 h-5 flex items-center justify-center text-[10px] hover:bg-matrix-accent hover:text-black rounded transition-colors text-matrix-accent"
-            title="Version brackets">「」</button>
-        </div>
-      </div>
-      <div
-        ref={ref}
-        contentEditable
-        onInput={() => ref.current && onChange(ref.current.innerHTML)}
-        onPaste={handlePaste}
-        className="matrix-desc-editor w-full p-2 bg-black border border-matrix-border/40 outline-none focus:border-matrix-accent text-base min-h-[80px] break-words text-white/80 font-jost"
-        data-placeholder="Descrição do canal..."
-      />
-    </div>
-  );
-}
 
 // ─── Watermark Preview ──────────────────────────────────────────────────────
 
@@ -207,7 +180,17 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
   const [formTitle, setFormTitle] = useState('');
   const [formGroup, setFormGroup] = useState('');
   const [formGroupCustom, setFormGroupCustom] = useState('');
-  const [formDesc, setFormDesc] = useState('');
+  
+  // ── Multi-Language Manifestos & OSD state ──
+  const [activeLangTab, setActiveLangTab] = useState<'pt' | 'en' | 'es'>('pt');
+  const [langViewMode, setLangViewMode] = useState<'tabs' | 'columns'>('tabs');
+  const [formDescPt, setFormDescPt] = useState('');
+  const [formDescEn, setFormDescEn] = useState('');
+  const [formDescEs, setFormDescEs] = useState('');
+  const [formOsdPt, setFormOsdPt] = useState('');
+  const [formOsdEn, setFormOsdEn] = useState('');
+  const [formOsdEs, setFormOsdEs] = useState('');
+
   const [watermarkFile, setWatermarkFile] = useState<File | null>(null);
   const [currentWatermarkUrl, setCurrentWatermarkUrl] = useState('');
   const [watermarkScale, setWatermarkScale] = useState<number>(1.0);
@@ -293,7 +276,17 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     setFormTitle(ch.name);
     setFormGroup(ch.group_name || '');
     setFormGroupCustom('');
-    setFormDesc(ch.descricao || '');
+    
+    // Manifestos (Safe fallback: if description_pt is null/empty, fallback to legacy descricao)
+    setFormDescPt(ch.description_pt ?? ch.descricao ?? '');
+    setFormDescEn(ch.description_en ?? '');
+    setFormDescEs(ch.description_es ?? '');
+
+    // Invasive OSD Messages (Formata array/json para texto linha a linha)
+    setFormOsdPt(formatOsdForTextarea(ch.osd_messages_pt));
+    setFormOsdEn(formatOsdForTextarea(ch.osd_messages_en));
+    setFormOsdEs(formatOsdForTextarea(ch.osd_messages_es));
+
     setCurrentWatermarkUrl(ch.marca_dagua_url || '');
     setWatermarkScale(parseChannelScale(ch.marca_dagua_escala));
     setWatermarkFile(null);
@@ -313,7 +306,12 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     setFormTitle('');
     setFormGroup('UPLOADS');
     setFormGroupCustom('');
-    setFormDesc('');
+    setFormDescPt('');
+    setFormDescEn('');
+    setFormDescEs('');
+    setFormOsdPt('');
+    setFormOsdEn('');
+    setFormOsdEs('');
     setCurrentWatermarkUrl('');
     setWatermarkScale(1.0);
     setWatermarkFile(null);
@@ -447,10 +445,20 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
       watermarkUrl = uploaded;
     }
 
+    const osdPtArray = parseOsdMessages(formOsdPt);
+    const osdEnArray = parseOsdMessages(formOsdEn);
+    const osdEsArray = parseOsdMessages(formOsdEs);
+
     const payload = {
       name: formTitle.trim(),
       group_name: finalGroup,
-      descricao: formDesc || null,
+      descricao: formDescPt.trim() || null, // Mantém compatibilidade com campo legado
+      description_pt: formDescPt.trim() || null,
+      description_en: formDescEn.trim() || null,
+      description_es: formDescEs.trim() || null,
+      osd_messages_pt: osdPtArray,
+      osd_messages_en: osdEnArray,
+      osd_messages_es: osdEsArray,
       marca_dagua_url: watermarkUrl || null,
       marca_dagua_escala: Number(watermarkScale) || 1.0,
     };
@@ -458,7 +466,11 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     if (isNewChannel) {
       const { data, error } = await supabase.from('playlists').insert([payload]).select().single();
       if (error) {
-        showChannelMsg(`ERRO: ${error.message}`, true);
+        if (error.message?.includes('column') && (error.message.includes('description_') || error.message.includes('osd_messages_'))) {
+          showChannelMsg(`ERRO: Execute a migration SQL no Supabase para criar as novas colunas! (${error.message})`, true);
+        } else {
+          showChannelMsg(`ERRO: ${error.message}`, true);
+        }
       } else {
         showChannelMsg(`CANAL "${payload.name}" CRIADO!`);
         setChannelSearch('');
@@ -479,7 +491,11 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
         .eq('id', canalAtualId);
 
       if (error) {
-        showChannelMsg(`ERRO: ${error.message}`, true);
+        if (error.message?.includes('column') && (error.message.includes('description_') || error.message.includes('osd_messages_'))) {
+          showChannelMsg(`ERRO: Execute a migration SQL no Supabase para criar as novas colunas! (${error.message})`, true);
+        } else {
+          showChannelMsg(`ERRO: ${error.message}`, true);
+        }
       } else {
         // Se o título/nome do canal mudou, atualiza as referências na tabela de clipes
         if (oldName !== newName) {
@@ -493,7 +509,13 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
           ...selectedChannel,
           name: newName,
           group_name: finalGroup,
-          descricao: formDesc || undefined,
+          descricao: formDescPt.trim() || undefined,
+          description_pt: formDescPt.trim() || undefined,
+          description_en: formDescEn.trim() || undefined,
+          description_es: formDescEs.trim() || undefined,
+          osd_messages_pt: osdPtArray,
+          osd_messages_en: osdEnArray,
+          osd_messages_es: osdEsArray,
           marca_dagua_url: watermarkUrl || undefined,
           marca_dagua_escala: Number(watermarkScale) || 1.0,
         };
@@ -602,7 +624,9 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
       {/* ══════════════════════════════════════════════════════════
           SIDEBAR ESQUERDA — CHANNEL EDITOR
       ══════════════════════════════════════════════════════════ */}
-      <aside className="matrix-sidebar-left w-[380px] flex-shrink-0 h-full flex flex-col bg-[#010d06] border-r border-matrix-border/30 overflow-hidden">
+      <aside className={`matrix-sidebar-left flex-shrink-0 h-full flex flex-col bg-[#010d06] border-r border-matrix-border/30 overflow-hidden transition-all duration-300 ${
+        langViewMode === 'columns' ? 'w-[720px] max-w-[85vw]' : 'w-[420px]'
+      }`}>
 
         {/* Header */}
         <div className="shrink-0 px-5 py-4 border-b border-matrix-border/30 flex items-center justify-between">
@@ -747,8 +771,320 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
                 )}
               </div>
 
-              {/* Descrição (RichText) */}
-              <DescriptionEditor value={formDesc} onChange={setFormDesc} />
+              {/* ── Multi-Language Manifestos & Invasive OSD Deck ── */}
+              <div className="border border-matrix-border/40 bg-black/60 p-3 rounded-sm space-y-3">
+                {/* Header with Mode Toggle (Abas / Colunas) */}
+                <div className="flex items-center justify-between border-b border-matrix-border/20 pb-2">
+                  <div>
+                    <span className="text-[10px] font-bold text-matrix-accent tracking-widest uppercase block">
+                      🌐 MANIFESTO & OSD CHYRON
+                    </span>
+                    <span className="text-[9px] text-matrix-label/50 tracking-wider">
+                      Multi-Language Broadcast System
+                    </span>
+                  </div>
+
+                  <div className="flex items-center bg-black border border-matrix-border/40 rounded p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setLangViewMode('tabs')}
+                      className={`px-2 py-0.5 text-[9px] font-mono uppercase font-bold tracking-wider rounded-sm transition-all ${
+                        langViewMode === 'tabs'
+                          ? 'bg-matrix-accent text-black shadow-[0_0_6px_rgba(0,255,136,0.4)]'
+                          : 'text-matrix-label/60 hover:text-white'
+                      }`}
+                      title="Visualizar por Abas (PT / EN / ES)"
+                    >
+                      ABAS
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLangViewMode('columns')}
+                      className={`px-2 py-0.5 text-[9px] font-mono uppercase font-bold tracking-wider rounded-sm transition-all ${
+                        langViewMode === 'columns'
+                          ? 'bg-matrix-accent text-black shadow-[0_0_6px_rgba(0,255,136,0.4)]'
+                          : 'text-matrix-label/60 hover:text-white'
+                      }`}
+                      title="Visualizar em Colunas Lado a Lado"
+                    >
+                      COLUNAS
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tabs Selector (Visible in Tabbed mode) */}
+                {langViewMode === 'tabs' && (
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { code: 'pt' as const, label: 'PT 🇧🇷', hasManifesto: Boolean(formDescPt), osdCount: parseOsdMessages(formOsdPt).length },
+                      { code: 'en' as const, label: 'EN 🇺🇸', hasManifesto: Boolean(formDescEn), osdCount: parseOsdMessages(formOsdEn).length },
+                      { code: 'es' as const, label: 'ES 🇪🇸', hasManifesto: Boolean(formDescEs), osdCount: parseOsdMessages(formOsdEs).length },
+                    ].map(item => {
+                      const isActive = activeLangTab === item.code;
+                      return (
+                        <button
+                          key={item.code}
+                          type="button"
+                          onClick={() => setActiveLangTab(item.code)}
+                          className={`py-1.5 px-2 text-[11px] font-mono font-bold tracking-wider uppercase border transition-all flex items-center justify-between ${
+                            isActive
+                              ? 'bg-matrix-accent/15 border-matrix-accent text-matrix-accent shadow-[0_0_8px_rgba(0,255,136,0.25)]'
+                              : 'bg-black/40 border-matrix-border/30 text-white/50 hover:border-matrix-border hover:text-white/80'
+                          }`}
+                        >
+                          <span>{item.label}</span>
+                          {(item.hasManifesto || item.osdCount > 0) && (
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-matrix-accent animate-pulse' : 'bg-matrix-accent/50'}`}
+                              title={`Conteúdo ativo (${item.osdCount} OSD)`}
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Tabbed View Fields */}
+                {langViewMode === 'tabs' ? (
+                  <div className="space-y-3 pt-1">
+                    {/* PT Section */}
+                    {activeLangTab === 'pt' && (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] text-matrix-label uppercase font-bold tracking-wider">
+                              [MANIFESTO DO CANAL - PT]
+                            </label>
+                            <span className="text-[9px] font-mono text-matrix-label/40">
+                              {formDescPt.length} chars
+                            </span>
+                          </div>
+                          <textarea
+                            value={formDescPt}
+                            onChange={e => setFormDescPt(e.target.value)}
+                            rows={4}
+                            placeholder="Manifesto conceitual do canal em português (exibido no Guia de Programação)..."
+                            className="matrix-input w-full p-2.5 text-xs font-jost text-white/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y leading-relaxed"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] text-matrix-label uppercase font-bold tracking-wider">
+                              [MENSAGENS OSD INVASORAS - PT (Uma por linha)]
+                            </label>
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-matrix-accent/10 border border-matrix-accent/30 text-matrix-accent rounded">
+                              {parseOsdMessages(formOsdPt).length} msg
+                            </span>
+                          </div>
+                          <textarea
+                            value={formOsdPt}
+                            onChange={e => setFormOsdPt(e.target.value)}
+                            rows={4}
+                            placeholder={"TRANSMISSÃO PIRATA // SINAL LOCAL\nNÃO MUDE DE CANAL\nINTERFERÊNCIA NO SINAL CRT\nPLAYLISTISMO CONTROLA SEU RECEPTOR"}
+                            className="matrix-input w-full p-2.5 text-xs font-mono text-matrix-accent/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y leading-relaxed"
+                          />
+                          <p className="text-[9px] text-matrix-label/40 font-mono mt-1">
+                            * Linhas vazias são filtradas automaticamente ao salvar como array.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* EN Section */}
+                    {activeLangTab === 'en' && (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] text-matrix-label uppercase font-bold tracking-wider">
+                              [CHANNEL MANIFESTO - EN]
+                            </label>
+                            <span className="text-[9px] font-mono text-matrix-label/40">
+                              {formDescEn.length} chars
+                            </span>
+                          </div>
+                          <textarea
+                            value={formDescEn}
+                            onChange={e => setFormDescEn(e.target.value)}
+                            rows={4}
+                            placeholder="Conceptual channel manifesto in English (displayed on the Guide UI)..."
+                            className="matrix-input w-full p-2.5 text-xs font-jost text-white/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y leading-relaxed"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] text-matrix-label uppercase font-bold tracking-wider">
+                              [INVASIVE OSD MESSAGES - EN (One per line)]
+                            </label>
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-matrix-accent/10 border border-matrix-accent/30 text-matrix-accent rounded">
+                              {parseOsdMessages(formOsdEn).length} msg
+                            </span>
+                          </div>
+                          <textarea
+                            value={formOsdEn}
+                            onChange={e => setFormOsdEn(e.target.value)}
+                            rows={4}
+                            placeholder={"PIRATE TRANSMISSION // OVERRIDE\nDO NOT ADJUST YOUR TELEVISION SET\nANALOG STATIC INTERFERENCE\nPLAYLISTISMO BROADCAST HIJACK"}
+                            className="matrix-input w-full p-2.5 text-xs font-mono text-matrix-accent/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y leading-relaxed"
+                          />
+                          <p className="text-[9px] text-matrix-label/40 font-mono mt-1">
+                            * Empty lines are automatically filtered out when saving as an array.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ES Section */}
+                    {activeLangTab === 'es' && (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] text-matrix-label uppercase font-bold tracking-wider">
+                              [MANIFIESTO DEL CANAL - ES]
+                            </label>
+                            <span className="text-[9px] font-mono text-matrix-label/40">
+                              {formDescEs.length} chars
+                            </span>
+                          </div>
+                          <textarea
+                            value={formDescEs}
+                            onChange={e => setFormDescEs(e.target.value)}
+                            rows={4}
+                            placeholder="Manifiesto conceptual del canal en español (mostrado en la Guía)..."
+                            className="matrix-input w-full p-2.5 text-xs font-jost text-white/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y leading-relaxed"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] text-matrix-label uppercase font-bold tracking-wider">
+                              [MENSAJES OSD INVASORES - ES (Uno por línea)]
+                            </label>
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-matrix-accent/10 border border-matrix-accent/30 text-matrix-accent rounded">
+                              {parseOsdMessages(formOsdEs).length} msg
+                            </span>
+                          </div>
+                          <textarea
+                            value={formOsdEs}
+                            onChange={e => setFormOsdEs(e.target.value)}
+                            rows={4}
+                            placeholder={"SEÑAL PIRATA // TRANSMISIÓN PIRATA\nNO CAMBIE DE CANAL\nINTERFERENCIA ESTÁTICA CRT\nPLAYLISTISMO EN CONTROL"}
+                            className="matrix-input w-full p-2.5 text-xs font-mono text-matrix-accent/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y leading-relaxed"
+                          />
+                          <p className="text-[9px] text-matrix-label/40 font-mono mt-1">
+                            * Las líneas vacías se filtran automáticamente al guardar como array.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Split Columns View (PT / EN / ES) */
+                  <div className="space-y-3 pt-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Coluna 1: PT */}
+                      <div className="space-y-3 bg-black/50 p-2.5 border border-matrix-border/30 rounded-sm">
+                        <div className="flex items-center justify-between border-b border-matrix-border/20 pb-1">
+                          <span className="text-[10px] font-bold font-mono text-matrix-accent">PORTUGUÊS (PT 🇧🇷)</span>
+                          <span className="text-[9px] font-mono text-matrix-label/40">{parseOsdMessages(formOsdPt).length} OSD</span>
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-matrix-label uppercase mb-1 font-bold tracking-wider">
+                            [MANIFESTO DO CANAL - PT]
+                          </label>
+                          <textarea
+                            value={formDescPt}
+                            onChange={e => setFormDescPt(e.target.value)}
+                            rows={4}
+                            placeholder="Manifesto conceitual em português..."
+                            className="matrix-input w-full p-2 text-xs font-jost text-white/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-matrix-label uppercase mb-1 font-bold tracking-wider">
+                            [MENSAGENS OSD INVASORAS - PT (Uma por linha)]
+                          </label>
+                          <textarea
+                            value={formOsdPt}
+                            onChange={e => setFormOsdPt(e.target.value)}
+                            rows={4}
+                            placeholder={"MENSAGEM 1\nMENSAGEM 2"}
+                            className="matrix-input w-full p-2 text-xs font-mono text-matrix-accent/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Coluna 2: EN */}
+                      <div className="space-y-3 bg-black/50 p-2.5 border border-matrix-border/30 rounded-sm">
+                        <div className="flex items-center justify-between border-b border-matrix-border/20 pb-1">
+                          <span className="text-[10px] font-bold font-mono text-matrix-accent">ENGLISH (EN 🇺🇸)</span>
+                          <span className="text-[9px] font-mono text-matrix-label/40">{parseOsdMessages(formOsdEn).length} OSD</span>
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-matrix-label uppercase mb-1 font-bold tracking-wider">
+                            [CHANNEL MANIFESTO - EN]
+                          </label>
+                          <textarea
+                            value={formDescEn}
+                            onChange={e => setFormDescEn(e.target.value)}
+                            rows={4}
+                            placeholder="Conceptual manifesto in English..."
+                            className="matrix-input w-full p-2 text-xs font-jost text-white/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-matrix-label uppercase mb-1 font-bold tracking-wider">
+                            [INVASIVE OSD MESSAGES - EN (One per line)]
+                          </label>
+                          <textarea
+                            value={formOsdEn}
+                            onChange={e => setFormOsdEn(e.target.value)}
+                            rows={4}
+                            placeholder={"MESSAGE 1\nMESSAGE 2"}
+                            className="matrix-input w-full p-2 text-xs font-mono text-matrix-accent/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Coluna 3 / Bloco ES (Colapsável ou direto) */}
+                    <details className="bg-black/40 border border-matrix-border/30 rounded-sm p-2 text-xs group">
+                      <summary className="cursor-pointer text-[10px] font-mono font-bold text-matrix-accent/80 hover:text-matrix-accent flex items-center justify-between select-none">
+                        <span>ESPAÑOL (ES 🇪🇸) // OPICIONAL</span>
+                        <span className="text-[9px] text-matrix-label/40 group-open:rotate-180 transition-transform">▼</span>
+                      </summary>
+                      <div className="space-y-2 pt-2 mt-2 border-t border-matrix-border/20">
+                        <div>
+                          <label className="block text-[9px] text-matrix-label uppercase mb-1 font-bold tracking-wider">
+                            [MANIFIESTO DEL CANAL - ES]
+                          </label>
+                          <textarea
+                            value={formDescEs}
+                            onChange={e => setFormDescEs(e.target.value)}
+                            rows={3}
+                            placeholder="Manifiesto conceptual en español..."
+                            className="matrix-input w-full p-2 text-xs font-jost text-white/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-matrix-label uppercase mb-1 font-bold tracking-wider">
+                            [MENSAJES OSD INVASORES - ES (Uno por línea)]
+                          </label>
+                          <textarea
+                            value={formOsdEs}
+                            onChange={e => setFormOsdEs(e.target.value)}
+                            rows={3}
+                            placeholder={"MENSAJE 1\nMENSAJE 2"}
+                            className="matrix-input w-full p-2 text-xs font-mono text-matrix-accent/90 bg-black/80 border border-matrix-border/40 focus:border-matrix-accent focus:outline-none resize-y"
+                          />
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                )}
+              </div>
 
               {/* Upload Marca D'água */}
               <div>
