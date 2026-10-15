@@ -309,8 +309,10 @@
     /* ─── Coluna 1: Posição/ID (Far left, vertically centered, Josefin Sans, Bold, Âmbar) ─── */
     .clip-col-pos {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 4px;
     }
 
     .pos-number {
@@ -318,9 +320,34 @@
       font-size: 30px;
       font-weight: 700;
       color: var(--color-pos);
-      letter-spacing: -0.5px;
       line-height: 1;
-      user-select: none;
+    }
+
+    .btn-open-original-signal {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 4px;
+      padding: 2.5px 6px;
+      background: #facc15;
+      color: #000000 !important;
+      font-family: 'Space Mono', monospace;
+      font-weight: 900;
+      font-size: 7.5px;
+      letter-spacing: 0.05em;
+      border-radius: 2px;
+      text-decoration: none !important;
+      border: 1px solid #eab308;
+      box-shadow: 0 0 6px rgba(250, 204, 21, 0.35);
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .btn-open-original-signal:hover {
+      background: #fef08a;
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.7);
+      transform: translateY(-1px);
     }
 
     /* ─── Coluna 2: Detalhes Empilhados Verticalmente (Jost, Bold por padrão) ─── */
@@ -478,7 +505,8 @@
        MEDIA PRINT & REGRAS ESPECÍFICAS PARA PDF
        ========================================================================== */
     @media print {
-      .no-print {
+      .no-print,
+      .btn-open-original-signal {
         display: none !important;
       }
 
@@ -920,7 +948,8 @@
             views: Number(clip.views || clip.view_count) || 0,
             duration: sanitizeAndStripHTML(clip.duration) || '00:00',
             dateAdded: clip.dateAdded || clip.date_creation || clip.published_at || '',
-            tags: tags.map(t => sanitizeAndStripHTML(t)).filter(Boolean)
+            tags: tags.map(t => sanitizeAndStripHTML(t)).filter(Boolean),
+            videoId: clip.videoId || clip.video_id || ''
           };
         });
 
@@ -1025,6 +1054,11 @@
               <!-- Coluna 1: Posição/ID (Far left, vertically centered, Josefin Sans, Bold, Âmbar) -->
               <div class="clip-col-pos">
                 <span class="pos-number">${formatPosition(clip.originalIndex)}</span>
+                ${clip.videoId ? `
+                  <a href="${/^\d+$/.test(clip.videoId) ? `https://vimeo.com/${clip.videoId}` : `https://www.youtube.com/watch?v=${clip.videoId}`}" target="_blank" rel="noopener noreferrer" class="btn-open-original-signal" title="Abrir sinal original (YouTube / Vimeo)">
+                    ↗ [SINAL]
+                  </a>
+                ` : ''}
               </div>
 
               <!-- Coluna 2: Detalhes Empilhados Verticalmente (Jost, Bold por padrão) -->

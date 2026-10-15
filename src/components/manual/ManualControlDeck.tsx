@@ -11,6 +11,8 @@ interface ManualControlDeckProps {
   onClose?: () => void;
   zoomLevel?: number; // 1 | 1.25 | 1.5
   onCycleZoom?: () => void;
+  isPlaying?: boolean;
+  onTogglePlayPause?: () => void;
 }
 
 export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
@@ -23,6 +25,8 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
   onClose,
   zoomLevel = 1,
   onCycleZoom,
+  isPlaying = false,
+  onTogglePlayPause,
 }) => {
   const totalSpreadsCount = manualSpreads.length || totalSpreadsProp || 4;
   const currentLeftPage = currentSpreadIndex * 2 + 1;
@@ -106,6 +110,23 @@ export const ManualControlDeck: React.FC<ManualControlDeckProps> = ({
                 {String(volume).padStart(3, ' ')}%
               </span>
             </div>
+
+            {/* Play/Pause Button on Manual Control Deck */}
+            {onTogglePlayPause && (
+              <button
+                type="button"
+                id="btn-manual-play-pause"
+                onClick={onTogglePlayPause}
+                className={`ml-1 px-2 py-1 rounded-sm border font-mono-tech text-[9px] sm:text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer active:translate-y-0.5 ${
+                  isPlaying
+                    ? 'bg-amber-400/20 text-amber-300 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
+                    : 'bg-[#181a1e] text-zinc-400 hover:text-white border-zinc-700'
+                }`}
+                title={isPlaying ? "Pausar Vídeo (Space)" : "Reproduzir Vídeo (Space)"}
+              >
+                <span>{isPlaying ? '⏸ PAUSE' : '▶ PLAY'}</span>
+              </button>
+            )}
           </div>
 
           {/* Master Gain Horizontal Slider */}

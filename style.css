@@ -338,10 +338,20 @@ body {
 
 .screen-container iframe,
 .screen-container #yt-player,
+.screen-container #yt-player-wrapper,
 .screen-container #vimeo-parent-container {
     isolation: isolate;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+}
+
+/* ─── YOUTUBE UI HOVER BUG VISUAL SHIELD ─── */
+#yt-player-wrapper,
+#yt-player-wrapper iframe,
+#yt-player,
+#yt-player iframe,
+iframe#yt-player {
+    pointer-events: none !important;
 }
 
 /* ─── Y2K BLUE: IMAC G3 TRANSLUCENT POLYCARBONATE ─── */

@@ -293,12 +293,16 @@ export default function Home({ session }: { session: Session | null }) {
   function syncPlayerVisibility(platform: 'youtube' | 'vimeo') {
     activePlatformRef.current = platform;
     const ytContainer = document.getElementById('yt-player');
+    const ytWrapper = document.getElementById('yt-player-wrapper');
     const vimeoContainer = document.getElementById('vimeo-parent-container');
     const vimeoPlayer = document.getElementById('vimeo-player');
 
     if (platform === 'vimeo') {
       // 1. YouTube obrigatoriamente pausado e oculto
       playerRef.current?.pauseVideo();
+      if (ytWrapper) {
+        ytWrapper.style.display = 'none';
+      }
       if (ytContainer) {
         ytContainer.style.display = 'none';
       }
@@ -325,6 +329,11 @@ export default function Home({ session }: { session: Session | null }) {
       }
 
       // 2. YouTube exibido normalmente com 100% de largura e altura
+      if (ytWrapper) {
+        ytWrapper.style.display = 'block';
+        ytWrapper.style.width = '100%';
+        ytWrapper.style.height = '100%';
+      }
       if (ytContainer) {
         ytContainer.style.display = 'block';
         ytContainer.style.width = '100%';
@@ -616,7 +625,7 @@ export default function Home({ session }: { session: Session | null }) {
           return;
         }
         e.preventDefault();
-        togglePower();
+        togglePlayPause();
       }
     };
 
@@ -1003,6 +1012,25 @@ export default function Home({ session }: { session: Session | null }) {
                     </span>
                   </div>
                   <div className="flex items-center gap-2.5">
+                    {/* Bypass Button: Abrir Sinal Original */}
+                    {currentVideoData?.video_id && (
+                      <button
+                        type="button"
+                        id="btn-open-original-signal-topbar"
+                        onClick={() => {
+                          const vid = currentVideoData.video_id;
+                          const isVimeo = currentVideoData.plataforma === 'vimeo' || /^\d+$/.test(vid);
+                          const url = isVimeo ? `https://vimeo.com/${vid}` : `https://www.youtube.com/watch?v=${vid}`;
+                          window.open(url, '_blank');
+                        }}
+                        className="bg-yellow-400 hover:bg-yellow-300 text-black border border-yellow-300 px-2.5 py-1 rounded-sm font-mono-tech font-black text-[9px] md:text-[10px] uppercase tracking-wider shadow-[0_0_10px_rgba(250,204,21,0.4)] hover:shadow-[0_0_14px_rgba(250,204,21,0.6)] active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                        title="Abrir sinal original na plataforma externa (YouTube / Vimeo) para extração de metadados"
+                      >
+                        <span className="text-[10px]">↗</span>
+                        <span>[ABRIR SINAL ORIGINAL]</span>
+                      </button>
+                    )}
+
                     {/* Auto-Fetch Metadata Toggle */}
                     <div className="flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded border border-amber-900/40 font-jost">
                       <label htmlFor="toggle-autofetch-drawer" className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
@@ -1070,6 +1098,7 @@ export default function Home({ session }: { session: Session | null }) {
                   <AdminPanel
                     session={session}
                     editId={adminEditId}
+                    playingId={currentVideoData?.video_id || (currentVideoData?.id ? String(currentVideoData.id) : null)}
                     displayMode="drawer"
                     autoFetchMetadata={autoFetchMetadata}
                     onAutoFetchMetadataChange={setAutoFetchMetadata}
@@ -1430,18 +1459,39 @@ export default function Home({ session }: { session: Session | null }) {
                   <div className={`relative w-full h-full overflow-hidden bg-black ${
                     isManualMode ? 'rounded-xl' : 'rounded-[16px] md:rounded-[40px]'
                   } ${isOn ? 'crt-turn-on' : ''}`}>
-                    {/* YouTube Player */}
+                    {/* YouTube Player Wrapper (Visual Shield: pointer-events-none completely blocks iframe hover bug) */}
                     <div
-                      id="yt-player"
-                      className="w-full h-full"
+                      id="yt-player-wrapper"
+                      className="w-full h-full pointer-events-none select-none"
                       style={{
                         position: 'relative',
                         width: '100%',
                         height: '100%',
                         zIndex: 1,
                         display: activePlatform === 'youtube' ? 'block' : 'none',
+                        pointerEvents: 'none',
                       }}
-                    ></div>
+                    >
+                      <style>{`
+                        #yt-player-wrapper,
+                        #yt-player-wrapper iframe,
+                        #yt-player,
+                        #yt-player iframe,
+                        iframe#yt-player {
+                          pointer-events: none !important;
+                        }
+                      `}</style>
+                      <div
+                        id="yt-player"
+                        className="w-full h-full pointer-events-none"
+                        style={{
+                          position: 'relative',
+                          width: '100%',
+                          height: '100%',
+                          pointerEvents: 'none',
+                        }}
+                      ></div>
+                    </div>
 
                     {/* Contêiner Pai do Vimeo Player */}
                     <div
@@ -1487,7 +1537,7 @@ export default function Home({ session }: { session: Session | null }) {
                       className="absolute inset-0 cursor-pointer"
                       style={{
                         zIndex: 25,
-                        pointerEvents: (isAdmin && !isPlaying) ? 'none' : 'auto',
+                        pointerEvents: 'auto',
                       }}
                       onClick={togglePlayPause}
                     />
@@ -1784,6 +1834,50 @@ export default function Home({ session }: { session: Session | null }) {
                       </button>
                     </div>
 
+                    {/* PLAY / PAUSE Button (Tactile Deck Control) */}
+                    <div className="flex flex-col items-center">
+                      <span className={`text-[6px] font-bold tracking-widest uppercase ${
+                        activeSkin === 'future' ? 'text-sky-300 drop-shadow-[0_0_4px_#38bdf8]' : activeSkin === 'y2k' ? 'text-sky-900 font-extrabold' : 'text-gray-500'
+                      }`}>
+                        {isPlaying ? 'Pause' : 'Play'}
+                      </span>
+                      <button
+                        id="btn-tv-play-pause"
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
+                        className={`${
+                          activeSkin === 'y2k'
+                            ? `btn-y2k-bubble w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isPlaying ? 'ring-2 ring-cyan-200' : 'ring-1 ring-white/50'}`
+                            : activeSkin === 'future'
+                            ? `btn-future-chrome w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 flex items-center justify-center ${isPlaying ? 'ring-2 ring-cyan-400 shadow-[0_0_15px_#00e5ff]' : ''}`
+                            : `btn-retro-push w-8 h-7 sm:w-10 sm:h-8 md:w-12 md:h-10 rounded-sm flex items-center justify-center group relative transition-all ${isPlaying ? 'border-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]' : ''}`
+                        }`}
+                        title={isPlaying ? "Pausar Reprodução (Space / Clique na Tela)" : "Continuar Reprodução (Space / Clique na Tela)"}
+                      >
+                        {isPlaying ? (
+                          <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors ${
+                            activeSkin === 'future'
+                              ? 'text-cyan-300 drop-shadow-[0_0_6px_#00e5ff]'
+                              : activeSkin === 'y2k'
+                              ? 'text-white drop-shadow-[0_1px_2px_rgba(3,105,161,0.8)]'
+                              : 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]'
+                          }`} fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                          </svg>
+                        ) : (
+                          <svg className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors ${
+                            activeSkin === 'future'
+                              ? 'text-cyan-300 drop-shadow-[0_0_6px_#00e5ff]'
+                              : activeSkin === 'y2k'
+                              ? 'text-white drop-shadow-[0_1px_2px_rgba(3,105,161,0.8)]'
+                              : 'text-gray-400 group-hover:text-white'
+                          }`} fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+
                     {/* SKIN Button */}
                     <div className="flex flex-col items-center">
                       <span className={`text-[6px] font-bold tracking-widest uppercase ${
@@ -1956,6 +2050,8 @@ export default function Home({ session }: { session: Session | null }) {
             <ManualControlDeck
               currentSpreadIndex={activeSpreadIndex}
               totalSpreads={manualSpreads.length}
+              isPlaying={isPlaying}
+              onTogglePlayPause={togglePlayPause}
               onPrevPage={() => {
                 setActiveSpreadIndex(prev => Math.max(0, prev - 1));
                 if (manualScrollContainerRef.current) {
@@ -2142,7 +2238,7 @@ export default function Home({ session }: { session: Session | null }) {
                   setIsEditDrawerOpen(true);
                 }}
                 onClose={() => setIsAdminSidebarOpen(false)}
-                playingId={currentVideoData?.id ? String(currentVideoData.id) : null}
+                playingId={currentVideoData?.video_id || (currentVideoData?.id ? String(currentVideoData.id) : null)}
                 initialPlaylist={currentChannelName}
                 onSave={(newData) => {
                   fetchGuideData();

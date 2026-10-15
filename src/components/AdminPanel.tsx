@@ -244,6 +244,18 @@ export default function AdminPanel({
     return trimmed;
   };
 
+  const handleOpenOriginalSignal = (customId?: string) => {
+    const rawId = (customId || formData.video_id || playingId || '').trim();
+    if (!rawId) {
+      showMessage('NENHUM VÍDEO SELECIONADO OU SINTONIZADO', true);
+      return;
+    }
+    const cleanId = extractVideoId(rawId);
+    const isVimeo = /^\d+$/.test(cleanId);
+    const url = isVimeo ? `https://vimeo.com/${cleanId}` : `https://www.youtube.com/watch?v=${cleanId}`;
+    window.open(url, '_blank');
+  };
+
   const triggerMetadataSync = async (cleanId: string) => {
     if (!cleanId) return;
     setIsSyncingMetadata(true);
@@ -916,6 +928,16 @@ export default function AdminPanel({
                       <span className="text-[10px] font-bold font-jost tracking-wider">PREVIEW</span>
                     </button>
                   )}
+                  <button
+                    type="button"
+                    id="btn-open-original-signal-drawer"
+                    onClick={() => handleOpenOriginalSignal()}
+                    className="bg-yellow-400 hover:bg-yellow-300 text-black border border-yellow-300 px-2.5 hover:shadow-[0_0_12px_rgba(250,204,21,0.6)] active:translate-y-0.5 transition-all flex items-center gap-1.5 rounded-sm font-mono-tech font-black shrink-0 min-h-[34px] text-[10px] md:text-xs uppercase tracking-wider cursor-pointer"
+                    title="Abrir sinal original na plataforma externa (YouTube / Vimeo) para extração de metadados"
+                  >
+                    <span className="text-xs">↗</span>
+                    <span>[ABRIR SINAL ORIGINAL]</span>
+                  </button>
                 </div>
               </div>
 
@@ -1310,6 +1332,16 @@ export default function AdminPanel({
                         <span className="text-[10px] font-bold group-hover:block hidden font-jost">PREVIEW</span>
                       </button>
                     )}
+                    <button
+                      type="button"
+                      id="btn-open-original-signal-full"
+                      onClick={() => handleOpenOriginalSignal()}
+                      className="bg-yellow-400 hover:bg-yellow-300 text-black border border-yellow-300 px-3 hover:shadow-[0_0_14px_rgba(250,204,21,0.6)] active:translate-y-0.5 transition-all flex items-center gap-1.5 rounded-sm font-mono-tech font-black shrink-0 text-xs uppercase tracking-wider cursor-pointer"
+                      title="Abrir sinal original na plataforma externa (YouTube / Vimeo) para extração de metadados"
+                    >
+                      <span className="text-xs">↗</span>
+                      <span>[ABRIR SINAL ORIGINAL]</span>
+                    </button>
                   </div>
                   {/* Badge de detecção automática de plataforma */}
                   {formData.video_id.trim() && (
@@ -1523,7 +1555,20 @@ export default function AdminPanel({
                                   )}
                                 </div>
                               </div>
-                              <div className="p-3 w-24 text-center flex-shrink-0">
+                              <div className="p-3 w-32 text-center flex-shrink-0 flex items-center justify-center gap-1.5">
+                                {item.video_id && (
+                                  <button 
+                                    type="button" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenOriginalSignal(item.video_id);
+                                    }}
+                                    className="bg-yellow-400/90 hover:bg-yellow-300 text-black border border-yellow-400 p-2 font-mono-tech font-black transition-all uppercase text-[10px] flex items-center justify-center rounded-sm shadow-[0_0_6px_rgba(250,204,21,0.3)] hover:shadow-[0_0_10px_rgba(250,204,21,0.6)] cursor-pointer"
+                                    title="Abrir sinal original no YouTube/Vimeo"
+                                  >
+                                    ↗
+                                  </button>
+                                )}
                                 <button onClick={() => {
                                   setFormData({
                                     id: String(item.id),
@@ -1536,7 +1581,7 @@ export default function AdminPanel({
                                   });
                                   setIsEditing(true);
                                   if (onEdit) onEdit(String(item.id));
-                                }} className="text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/50 p-2 font-bold transition-all uppercase text-xs flex items-center justify-center mx-auto rounded-sm group/btn" title="EDIT RECORD">
+                                }} className="text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/50 p-2 font-bold transition-all uppercase text-xs flex items-center justify-center rounded-sm group/btn" title="EDIT RECORD">
                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70 group-hover/btn:opacity-100"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 </button>
                               </div>
