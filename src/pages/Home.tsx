@@ -428,7 +428,6 @@ export default function Home({ session }: { session: Session | null }) {
   const [isOn, setIsOn] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
-  const [activeGuideGroup, setActiveGuideGroup] = useState<string>('UPLOADS');
   const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
   const [channelsByCategory, setChannelsByCategory] = useState<Record<string, PlaylistItem[]>>({});
   const [currentChannelList, setCurrentChannelList] = useState<VideoData[]>([]);
@@ -685,24 +684,23 @@ export default function Home({ session }: { session: Session | null }) {
 
   // Grupos únicos extraídos dinamicamente do estado global de playlists
   const uniqueGroups = useMemo(() => extractUniqueGroups(playlists), [playlists]);
+  const [activePlanet, setActivePlanet] = useState<string>(uniqueGroups[0]);
 
   useEffect(() => {
-    if (uniqueGroups.length > 0 && !uniqueGroups.includes(activeGuideGroup)) {
-      setActiveGuideGroup(uniqueGroups[0]);
+    if (uniqueGroups.length > 0 && (!activePlanet || !uniqueGroups.includes(activePlanet))) {
+      setActivePlanet(uniqueGroups[0]);
     }
-  }, [uniqueGroups, activeGuideGroup]);
+  }, [uniqueGroups, activePlanet]);
 
   const filteredPlaylists = useMemo(() => {
+    const planetChannels = channelsByCategory[activePlanet] || 
+      (playlists || []).filter(pl => ((pl.group_name && pl.group_name.trim()) ? pl.group_name.trim().toUpperCase() : 'OTHERS') === activePlanet);
     if (!searchTerm.trim()) {
-      return channelsByCategory[activeGuideGroup] || [];
+      return planetChannels;
     }
     const term = searchTerm.toUpperCase();
-    const inActive = (channelsByCategory[activeGuideGroup] || []).filter(pl =>
-      pl.name.toUpperCase().includes(term)
-    );
-    if (inActive.length > 0) return inActive;
-    return (playlists || []).filter(pl => pl.name.toUpperCase().includes(term));
-  }, [searchTerm, channelsByCategory, activeGuideGroup, playlists]);
+    return planetChannels.filter(pl => pl.name.toUpperCase().includes(term));
+  }, [searchTerm, channelsByCategory, activePlanet, playlists]);
 
   // Sincroniza as refs com o estado do React
   useEffect(() => {
@@ -1172,7 +1170,7 @@ export default function Home({ session }: { session: Session | null }) {
     if (cat) {
       setCurrentGroupIndex(uniqueGroups.indexOf(cat));
       setExpandedGroup(cat);
-      setActiveGuideGroup(cat);
+      setActivePlanet(cat);
     }
 
     const { data } = await supabase.from('musicas_backup').select('*').eq('playlist', playlistName).order('id', { ascending: false });
@@ -1359,7 +1357,7 @@ export default function Home({ session }: { session: Session | null }) {
     const groupName = uniqueGroups[nextGroupIdx];
     setStatus(`GROUP: ${groupName}`);
     setExpandedGroup(groupName);
-    setActiveGuideGroup(groupName);
+    setActivePlanet(groupName);
     const channelPlaylists = channelsByCategory[groupName];
     if (channelPlaylists?.length) loadChannelContent(channelPlaylists[0].name);
   };
@@ -2634,35 +2632,36 @@ export default function Home({ session }: { session: Session | null }) {
           id="tv-drawer-guide"
           className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-['Jost',sans-serif] font-jost ${
             isSearchOpen
-              ? 'max-h-[48vh] md:max-h-[50vh] opacity-100 mt-2 md:mt-3 translate-y-0'
+              ? 'max-h-[50vh] md:max-h-[54vh] opacity-100 mt-2 md:mt-3 translate-y-0'
               : 'max-h-0 opacity-0 mt-0 translate-y-6 pointer-events-none'
           }`}
         >
-              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-2.5 md:p-4 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-['Jost',sans-serif] font-jost max-h-[48vh] md:max-h-[50vh] flex flex-col overflow-hidden">
+              <div className="orbital-telemetry-container rounded-2xl p-2.5 md:p-3.5 relative font-['Jost',sans-serif] font-jost h-[50vh] md:h-[54vh] max-h-[50vh] md:max-h-[54vh] flex flex-col overflow-hidden">
                 
-                {/* Header do Guia */}
-                <div className="flex items-center justify-between border-b border-[#2b3038] pb-2 mb-2 shrink-0">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl md:text-2xl font-bold tracking-widest text-white drop-shadow-[2px_2px_0_#000] font-jost">
-                      <span className="text-[#ffff00]">P</span><span className="text-[#00ff00]">100</span> GUIDE
+                {/* Header do Guia: Orbital Telemetry System */}
+                <div className="flex items-center justify-between border-b border-[#00ff88]/30 pb-2 mb-2 shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#00ff88] animate-ping shrink-0" />
+                    <span className="text-base sm:text-lg md:text-xl font-bold tracking-widest text-white drop-shadow-[0_0_8px_rgba(0,255,136,0.6)] font-mono truncate">
+                      <span className="text-[#00ff88]">P100</span> TELEMETRY MAP
                     </span>
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-[0.2em] font-bold hidden sm:inline font-jost">
-                      MECHANICAL MATRIX SELECTOR
+                    <span className="text-[10px] text-[#00ff88]/70 uppercase tracking-[0.2em] font-mono hidden md:inline truncate">
+                      // ORBITAL MATRIX SELECTOR
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     {/* Search box */}
-                    <div className="relative bg-black/70 border border-[#3a3f47] rounded px-2.5 py-1 flex items-center shadow-inner">
+                    <div className="relative bg-black/80 border border-[#00ff88]/40 rounded px-2.5 py-1 flex items-center shadow-inner">
                       <input
                         type="text"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="bg-transparent text-white text-xs uppercase outline-none placeholder-zinc-500 w-24 sm:w-36 font-jost"
-                        placeholder="BUSCAR..."
+                        className="bg-transparent text-[#00ff88] text-xs uppercase outline-none placeholder-[#00ff88]/40 w-24 sm:w-36 font-mono"
+                        placeholder="BUSCAR SAT..."
                       />
                       {searchTerm && (
-                        <button onClick={() => setSearchTerm('')} className="text-zinc-500 hover:text-white text-xs ml-1 font-jost">
+                        <button onClick={() => setSearchTerm('')} className="text-[#00ff88]/60 hover:text-[#00ff88] text-xs ml-1 font-mono">
                           ✕
                         </button>
                       )}
@@ -2670,7 +2669,7 @@ export default function Home({ session }: { session: Session | null }) {
 
                     <button
                       onClick={() => setIsSearchOpen(false)}
-                      className="text-zinc-400 hover:text-white text-sm font-bold w-7 h-7 flex items-center justify-center rounded bg-black/50 hover:bg-red-900/80 border border-white/10 transition-colors font-jost"
+                      className="text-[#00ff88] hover:text-white text-sm font-bold w-7 h-7 flex items-center justify-center rounded bg-black/60 hover:bg-red-950/80 border border-[#00ff88]/40 hover:border-red-500/80 transition-colors font-mono"
                       title="Fechar Guia"
                     >
                       ✕
@@ -2678,112 +2677,169 @@ export default function Home({ session }: { session: Session | null }) {
                   </div>
                 </div>
 
-                {/* Tabs Horizontais (Grupos): Lead-gray, chamfered physical tabs */}
-                <div className="flex items-end gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-zinc-700 select-none font-jost">
-                  {uniqueGroups.map(cat => {
-                    const isActive = activeGuideGroup === cat;
-                    const count = (channelsByCategory[cat] || []).length;
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => {
-                          setActiveGuideGroup(cat);
-                          setExpandedGroup(cat);
-                        }}
-                        className={`shrink-0 px-3.5 py-2 font-jost uppercase tracking-wider text-xs md:text-sm font-bold flex items-center gap-2 transition-all duration-150 relative ${
-                          isActive
-                            ? 'bg-gradient-to-b from-[#3d424b] to-[#1e2024] text-yellow-400 border-t-2 border-l border-r border-yellow-400/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),0_-2px_6px_rgba(0,0,0,0.4)] rounded-t-md translate-y-[2px] z-10'
-                            : 'bg-gradient-to-b from-[#2d3036] to-[#202226] text-zinc-300 hover:text-white hover:from-[#353940] hover:to-[#26282d] border-t border-l border-r border-white/10 shadow-[0_-2px_4px_rgba(0,0,0,0.3)] rounded-t-md'
-                        }`}
-                        style={{
-                          clipPath: 'polygon(8px 0%, calc(100% - 8px) 0%, 100% 100%, 0% 100%)'
-                        }}
-                      >
-                        <span className="text-sm shrink-0 drop-shadow-[1px_1px_0_#000]">{getGroupIcon(cat)}</span>
-                        <span>{cat}</span>
-                        <span className="text-[10px] opacity-60 font-mono">({count})</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* 3-Column Orbital Telemetry Architecture */}
+                <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-2.5 md:gap-3 overflow-hidden">
+                  
+                  {/* Column 1 (Left - Fixed): PLANETAS / ROTAS */}
+                  <div className="w-full lg:w-56 xl:w-64 h-36 sm:h-44 lg:h-full min-h-0 shrink-0 flex flex-col bg-black/60 border border-[#00ff88]/30 rounded-xl p-2.5 shadow-[inset_0_0_15px_rgba(0,255,136,0.04)]">
+                    <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-[#00ff88]/30 shrink-0 select-none">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-[#00ff88] uppercase truncate">
+                          ◈ PLANETAS / ROTAS
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono text-[#00ff88]/70 px-1 py-0.2 bg-[#00ff88]/10 rounded border border-[#00ff88]/20 shrink-0">
+                        {uniqueGroups.length}
+                      </span>
+                    </div>
 
-                {/* Visor do Guia (Split: Canais à esquerda + Terminal Manifesto à direita) */}
-                <div className="bg-black rounded-b-xl rounded-tr-xl border-2 border-[#24272c] p-2 md:p-3 shadow-[inset_0_5px_22px_rgba(0,0,0,0.95)] flex-1 min-h-0 overflow-hidden font-jost">
-                  <div className="flex flex-col lg:flex-row gap-2.5 md:gap-3 h-full min-h-0">
-                    {/* Coluna Esquerda: Lista de Canais */}
-                    <div className="w-full lg:w-7/12 h-full min-h-0 overflow-y-auto custom-scrollbar pr-1">
+                    <div className="flex-1 min-h-0 overflow-y-auto orbital-telemetry-scrollbar space-y-1 pr-1 font-mono">
+                      {uniqueGroups.map(grp => {
+                        const isSelected = activePlanet === grp;
+                        const count = (channelsByCategory[grp] || []).length;
+                        return (
+                          <button
+                            key={grp}
+                            onClick={() => {
+                              setActivePlanet(grp);
+                              const planetChs = channelsByCategory[grp] || [];
+                              if (planetChs.length > 0) {
+                                const playingInPlanet = planetChs.find(p => p.name === currentChannelName);
+                                setHoveredChannel(playingInPlanet || planetChs[0]);
+                              }
+                            }}
+                            className={`w-full text-left px-2 py-1.5 text-xs font-mono font-bold uppercase transition-all rounded flex items-center justify-between group ${
+                              isSelected
+                                ? 'bg-[#00ff88] text-black shadow-[0_0_12px_rgba(0,255,136,0.7)] font-black border border-[#00ff88]'
+                                : 'bg-black/50 hover:bg-[#00ff88]/10 text-zinc-300 hover:text-[#00ff88] border border-[#00ff88]/20 hover:border-[#00ff88]/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0 truncate">
+                              <span className={`text-[10px] font-mono shrink-0 ${isSelected ? 'text-black font-black' : 'text-[#00ff88]'}`}>
+                                {isSelected ? '[X]' : '[ ]'}
+                              </span>
+                              <span className="text-sm shrink-0 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                                {getGroupIcon(grp)}
+                              </span>
+                              <span className="truncate tracking-wider text-xs">
+                                {grp}
+                              </span>
+                            </div>
+                            <span className={`text-[10px] font-mono shrink-0 ml-1 ${isSelected ? 'text-black/80 font-black' : 'text-zinc-500 group-hover:text-[#00ff88]/80'}`}>
+                              ({count})
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Column 2 (Center - Scrollable): SATÉLITES / CANAIS */}
+                  <div className="flex-1 min-w-0 h-60 sm:h-72 lg:h-full min-h-0 flex flex-col bg-black/60 border border-[#00ff88]/30 rounded-xl p-2.5 shadow-[inset_0_0_15px_rgba(0,255,136,0.04)]">
+                    <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-[#00ff88]/30 shrink-0 select-none">
+                      <div className="flex items-center gap-2 truncate min-w-0">
+                        <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-widest text-[#00ff88] uppercase truncate">
+                          ◎ SATÉLITES / CANAIS
+                        </span>
+                        <span className="text-[9px] font-mono px-1.5 py-0.2 bg-[#00ff88]/15 text-[#00ff88] border border-[#00ff88]/30 rounded uppercase tracking-wider shrink-0">
+                          {activePlanet}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono text-[#00ff88]/70 px-1 py-0.2 bg-[#00ff88]/10 rounded border border-[#00ff88]/20 shrink-0">
+                        {filteredPlaylists.length} SATS
+                      </span>
+                    </div>
+
+                    <div className="flex-1 min-h-0 overflow-y-auto orbital-telemetry-scrollbar pr-1 space-y-1 font-mono">
                       {filteredPlaylists.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {filteredPlaylists.map((pl, idx) => {
-                            const isChannelActive = pl.name === currentChannelName;
-                            const isHovered = (hoveredChannel?.name === pl.name) || (!hoveredChannel && isChannelActive);
-                            return (
-                              <button
-                                key={pl.name}
-                                onClick={() => {
-                                  loadChannelContent(pl.name);
-                                }}
-                                onMouseEnter={() => setHoveredChannel(pl)}
-                                onFocus={() => setHoveredChannel(pl)}
-                                className={`w-full text-left p-2.5 px-3 uppercase text-xs md:text-sm font-bold transition-all border rounded-lg flex items-center justify-between group relative font-jost ${
+                        filteredPlaylists.map((pl, idx) => {
+                          const isLast = idx === filteredPlaylists.length - 1;
+                          const branch = isLast ? '└──' : '├──';
+                          const channelNum = String(idx + 1).padStart(2, '0');
+                          const isChannelActive = pl.name === currentChannelName;
+                          const isHovered = (hoveredChannel?.name === pl.name) || (!hoveredChannel && isChannelActive);
+
+                          return (
+                            <button
+                              key={pl.name}
+                              onClick={() => {
+                                loadChannelContent(pl.name);
+                              }}
+                              onMouseEnter={() => setHoveredChannel(pl)}
+                              onFocus={() => setHoveredChannel(pl)}
+                              className={`w-full text-left px-2 py-1.5 rounded transition-all flex items-center justify-between group font-mono text-xs md:text-sm border ${
+                                isChannelActive
+                                  ? 'bg-[#00ff88]/20 text-[#00ff88] border-[#00ff88] shadow-[0_0_12px_rgba(0,255,136,0.35)] font-bold'
+                                  : isHovered
+                                  ? 'bg-[#00ff88]/10 text-white border-[#00ff88]/60 shadow-[0_0_8px_rgba(0,255,136,0.2)]'
+                                  : 'bg-black/40 hover:bg-black/70 text-zinc-300 hover:text-white border-transparent hover:border-[#00ff88]/30'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
+                                <span className={`ascii-branch select-none shrink-0 text-sm ${isChannelActive ? 'text-[#00ff88] font-bold' : isHovered ? 'text-[#00ff88]' : 'text-zinc-600'}`}>
+                                  {branch}
+                                </span>
+                                <span className={`text-[10px] sm:text-[11px] font-mono shrink-0 px-1 py-0.5 rounded ${
                                   isChannelActive
-                                    ? 'bg-[#ffff00] text-[#0000aa] font-black border-yellow-300 shadow-[0_0_12px_rgba(255,255,0,0.4)] translate-y-0.5'
+                                    ? 'bg-[#00ff88] text-black font-black'
                                     : isHovered
-                                    ? 'bg-[#181d24] text-white border-emerald-400/70 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                                    : 'bg-[#121417] hover:bg-[#1c1f24] text-zinc-300 hover:text-white border-[#272b33] hover:border-yellow-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_3px_6px_rgba(0,0,0,0.8)] active:translate-y-0.5'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                  <span className={`text-[10px] font-mono shrink-0 ${isChannelActive ? 'text-[#0000aa]/70 font-bold' : isHovered ? 'text-emerald-400 font-bold' : 'text-zinc-500'}`}>
-                                    {String(idx + 1).padStart(2, '0')}
-                                  </span>
-                                  <span className="truncate tracking-wider font-jost">{pl.name}</span>
-                                </div>
-                                {isChannelActive ? (
-                                  <span className="text-[9px] font-black ml-2 shrink-0 flex items-center gap-1 bg-[#0000aa] text-yellow-300 px-1.5 py-0.5 rounded shadow font-jost">
-                                    <span className="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-ping"></span>
-                                    ON AIR
-                                  </span>
-                                ) : (
-                                  <span className={`text-[9px] font-mono tracking-wider ml-1 transition-opacity ${isHovered ? 'opacity-100 text-emerald-400' : 'opacity-0 group-hover:opacity-100 text-zinc-500'}`}>
-                                    INFO ▶
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
+                                    ? 'bg-[#00ff88]/20 text-[#00ff88] font-bold'
+                                    : 'text-zinc-500'
+                                }`}>
+                                  [ CH {channelNum} ]
+                                </span>
+                                <span className="truncate tracking-wide font-jost text-xs md:text-sm font-semibold uppercase">
+                                  {pl.name}
+                                </span>
+                              </div>
+
+                              {isChannelActive ? (
+                                <span className="text-[9px] font-mono font-black ml-2 shrink-0 flex items-center gap-1 bg-[#00ff88] text-black px-1.5 py-0.5 rounded shadow">
+                                  <span className="w-1.5 h-1.5 bg-black rounded-full animate-ping" />
+                                  ON AIR
+                                </span>
+                              ) : (
+                                <span className={`text-[9px] font-mono tracking-wider ml-1 transition-opacity ${
+                                  isHovered ? 'opacity-100 text-[#00ff88]' : 'opacity-0 group-hover:opacity-100 text-zinc-500'
+                                }`}>
+                                  TUNE ↵
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })
                       ) : (
-                        <div className="py-8 text-center text-zinc-600 uppercase tracking-widest text-xs font-bold font-jost">
-                          {searchTerm ? 'NENHUM CANAL ENCONTRADO PARA ESTA BUSCA' : 'NENHUM CANAL NESTE GRUPO'}
+                        <div className="py-8 text-center text-zinc-500 uppercase font-mono text-xs">
+                          {searchTerm ? '> NENHUM SATÉLITE ENCONTRADO PARA ESTA BUSCA' : '> NENHUM CANAL NESTE PLANETA'}
                         </div>
                       )}
                     </div>
-
-                    {/* Coluna Direita: Dedicated Black Terminal Screen */}
-                    <div className="w-full lg:w-5/12 h-64 lg:h-full min-h-0 shrink-0">
-                      <TerminalManifesto
-                        hoveredChannel={
-                          hoveredChannel ||
-                          filteredPlaylists.find(p => p.name === currentChannelName) ||
-                          currentChannelRecord ||
-                          filteredPlaylists[0] ||
-                          null
-                        }
-                        channel={
-                          hoveredChannel ||
-                          filteredPlaylists.find(p => p.name === currentChannelName) ||
-                          currentChannelRecord ||
-                          filteredPlaylists[0] ||
-                          null
-                        }
-                        videos={currentChannelList}
-                        currentChannelName={currentChannelName}
-                        activeLang={activeLang}
-                        onLanguageChange={setActiveLang}
-                      />
-                    </div>
                   </div>
+
+                  {/* Column 3 (Right - Fixed): Dedicated Terminal Screen */}
+                  <div className="w-full lg:w-[380px] xl:w-[440px] h-72 sm:h-80 lg:h-full min-h-0 shrink-0">
+                    <TerminalManifesto
+                      hoveredChannel={
+                        hoveredChannel ||
+                        filteredPlaylists.find(p => p.name === currentChannelName) ||
+                        currentChannelRecord ||
+                        filteredPlaylists[0] ||
+                        null
+                      }
+                      channel={
+                        hoveredChannel ||
+                        filteredPlaylists.find(p => p.name === currentChannelName) ||
+                        currentChannelRecord ||
+                        filteredPlaylists[0] ||
+                        null
+                      }
+                      videos={currentChannelList}
+                      currentChannelName={currentChannelName}
+                      activeLang={activeLang}
+                      onLanguageChange={setActiveLang}
+                    />
+                  </div>
+
                 </div>
               </div>
             </div>

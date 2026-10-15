@@ -377,3 +377,38 @@ html, body, #root {
     background-size: 100% 4px;
     pointer-events: none;
 }
+
+/* ============================================================
+   ORBITAL TELEMETRY MAP — 3-COLUMN GUIDE SYSTEM
+   ============================================================ */
+
+.orbital-telemetry-container {
+    background: #020704;
+    border: 2px solid rgba(0, 255, 136, 0.4);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95), inset 0 0 35px rgba(0, 255, 136, 0.08);
+}
+
+.orbital-telemetry-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.orbital-telemetry-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.6);
+    border-left: 1px solid rgba(0, 255, 136, 0.15);
+}
+
+.orbital-telemetry-scrollbar::-webkit-scrollbar-thumb {
+    background: #00ff88;
+    border-radius: 1px;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+}
+
+.orbital-telemetry-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #66ffaa;
+}
+
+.ascii-branch {
+    font-family: 'Space Mono', 'Courier New', monospace;
+    user-select: none;
+    letter-spacing: -0.05em;
+}
