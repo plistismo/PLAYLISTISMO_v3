@@ -242,6 +242,110 @@ html, body, #root {
     animation: osd-glitch-flicker 2s infinite ease-in-out;
 }
 
+/* ============================================================
+   MORPHOLOGICAL UNIFIED CONTAINER: WATERMARK <-> SIGNAL HIJACK
+   ============================================================ */
+
+.watermark-osd-container {
+    position: absolute;
+    top: 3.5%;
+    right: 3.5%;
+    z-index: 70;
+    pointer-events: none;
+    transform-origin: top right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    background-color: transparent;
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    padding: 0;
+    max-width: 140px;
+    width: auto;
+    height: auto;
+    min-height: 40px;
+    box-sizing: border-box;
+    box-shadow: none;
+    overflow: hidden;
+    transition: max-width 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 0.45s ease,
+                border-color 0.45s ease,
+                box-shadow 0.6s ease,
+                padding 0.45s ease,
+                border-radius 0.45s ease;
+}
+
+/* Morph State: Hijacked into brutalist expanding terminal box */
+.watermark-osd-container.is-hijacked {
+    max-width: min(580px, 88%) !important;
+    background-color: #000000 !important;
+    border: 2px solid #00ff88 !important;
+    border-radius: 6px;
+    padding: 10px 14px !important;
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.55), inset 0 0 15px rgba(0, 0, 0, 0.95) !important;
+    animation: osd-glitch-flicker 2.5s infinite ease-in-out;
+}
+
+/* Watermark element within unified container */
+.watermark-osd-container .watermark-inner {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    height: 100%;
+    max-height: 65px;
+    opacity: 1;
+    transform: scale(1);
+    transform-origin: top right;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.watermark-osd-container.is-hijacked .watermark-inner {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transform: scale(0.75);
+}
+
+/* OSD Hijack Content within unified container */
+.watermark-osd-container .osd-content-inner {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    opacity: 0;
+    transform: scale(0.96);
+    pointer-events: none;
+    transition: opacity 0.4s ease 0.15s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+
+.watermark-osd-container.is-hijacked .osd-content-inner {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+/* Visual cue warning banner during initial 1.5s expansion */
+.osd-cue-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Space Mono', 'VT323', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #00ff88;
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.8);
+}
+
+.osd-cue-beacon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #00ff88;
+    box-shadow: 0 0 10px #00ff88;
+    animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
 .osd-typewriter-text {
     display: inline-block;
     border-right: 2px solid #00ff88;

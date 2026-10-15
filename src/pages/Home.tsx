@@ -356,10 +356,20 @@ export default function Home({ session }: { session: Session | null }) {
   useEffect(() => { activeLangRef.current = activeLang; }, [activeLang]);
 
   const [osdActive, setOsdActive] = useState<boolean>(false);
+  const [osdPhase, setOsdPhase] = useState<'idle' | 'cue' | 'typewriter'>('idle');
   const [currentOsdMessage, setCurrentOsdMessage] = useState<string>('');
   const osdTimeoutRef = useRef<any>(null);
+  const osdCueTimeoutRef = useRef<any>(null);
   const currentTriggerPointsRef = useRef<number[]>([]);
   const firedTriggersRef = useRef<Set<number>>(new Set());
+
+  // Global Clip Pacing session tracking
+  const channelVideoCount = useRef<number>(0);
+  const osdVideoPacingRef = useRef<{ videoId: string; eligible: boolean; triggerSet: boolean }>({
+    videoId: '',
+    eligible: false,
+    triggerSet: false,
+  });
 
   const [currentChannelRecord, setCurrentChannelRecord] = useState<PlaylistItem | null>(null);
   const currentChannelRecordRef = useRef<PlaylistItem | null>(null);
@@ -377,7 +387,7 @@ export default function Home({ session }: { session: Session | null }) {
   // Terminal Guide Hover State
   const [hoveredChannel, setHoveredChannel] = useState<PlaylistItem | null>(null);
 
-  // Trigger OSD Hijack execution
+  // Trigger OSD Hijack execution with Morphological Sequence (1.5s Cue -> Typewriter -> 14s total duration)
   const triggerOsdHijack = useCallback(() => {
     const ch = currentChannelRecordRef.current || playlistsRef.current.find(p => p.name === currentChannelNameRef.current);
     const lang = activeLangRef.current;
@@ -407,12 +417,24 @@ export default function Home({ session }: { session: Session | null }) {
     const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
     setCurrentOsdMessage(randomMsg);
     setOsdActive(true);
+    setOsdPhase('cue'); // Step 1: Visual cue [ SIGNAL OVERRIDE ] while box expands
 
+    if (osdCueTimeoutRef.current) clearTimeout(osdCueTimeoutRef.current);
     if (osdTimeoutRef.current) clearTimeout(osdTimeoutRef.current);
+
+    // Step 2: Visual Cue delay for 1.5s, then start typewriter text
+    osdCueTimeoutRef.current = setTimeout(() => {
+      setOsdPhase('typewriter');
+    }, 1500);
+
+    // Step 3: Total duration of 14 seconds
     osdTimeoutRef.current = setTimeout(() => {
-      setOsdActive(false);
-      setCurrentOsdMessage('');
-    }, 7000);
+      setOsdActive(false); // removes .is-hijacked to smoothly morph back
+      setTimeout(() => {
+        setOsdPhase('idle');
+        setCurrentOsdMessage('');
+      }, 700);
+    }, 14000);
   }, []);
 
   // OWNER'S MANUAL & MASTER AUDIO GAIN STATE
@@ -629,7 +651,7 @@ export default function Home({ session }: { session: Session | null }) {
     }
   };
 
-  // ── OSD Signal Hijack Safe Zone & Playback Timing Logic ──
+  // ── OSD Signal Hijack Safe Zone & Subliminal Pacing Engine ──
   const checkPlaybackTriggers = useCallback((cur: number, dur: number) => {
     if (dur <= 0) return;
 
@@ -637,38 +659,38 @@ export default function Home({ session }: { session: Session | null }) {
     setShowCredits((cur >= 10 && cur < 20) || (dur > 30 && cur >= (dur - 20) && cur < (dur - 10)));
     setShowPlaylistLabel(cur >= 1.5 && cur < dur);
 
-    // Track video changes to reset trigger points and fired state
+    // Track video changes for Global Clip Pacing
     const vidId = String(currentVideoDataRef.current?.video_id || currentVideoDataRef.current?.id || '');
-    if (lastVideoIdRef.current !== vidId) {
-      lastVideoIdRef.current = vidId;
+    if (vidId && osdVideoPacingRef.current.videoId !== vidId) {
+      osdVideoPacingRef.current.videoId = vidId;
+      channelVideoCount.current += 1;
+      const count = channelVideoCount.current;
+
+      // Pacing Rule: Trigger on count === 1 (first video) OR count % 3 === 0 (every third video)
+      const isEligible = count === 1 || count % 3 === 0;
+      osdVideoPacingRef.current.eligible = isEligible;
+      osdVideoPacingRef.current.triggerSet = false;
+
       firedTriggersRef.current.clear();
       currentTriggerPointsRef.current = [];
       if (osdTimeoutRef.current) clearTimeout(osdTimeoutRef.current);
+      if (osdCueTimeoutRef.current) clearTimeout(osdCueTimeoutRef.current);
       setOsdActive(false);
+      setOsdPhase('idle');
       setCurrentOsdMessage('');
+
+      console.log(`[OSD Pacing Engine] Channel Video #${count} ('${vidId}') detected. Eligible for OSD: ${isEligible}`);
     }
 
-    // Timing Logic (Safe Zone): Ignore first 20s and last 20s, distribute 2 to 4 trigger points
-    if (currentTriggerPointsRef.current.length === 0 && dur > 0) {
-      if (dur >= 50) {
-        const start = 20;
-        const end = Math.max(start, dur - 20);
-        const safeZone = end - start;
-        // Distribute 2 to 4 trigger points evenly based on safe zone duration
-        const numTriggers = safeZone >= 200 ? 4 : safeZone >= 120 ? 3 : 2;
-        const pts: number[] = [];
-        const step = safeZone / (numTriggers + 1);
-        for (let i = 1; i <= numTriggers; i++) {
-          pts.push(Math.round(start + step * i));
-        }
-        currentTriggerPointsRef.current = pts;
-        console.log(`[OSD Hijack Engine] Video Duration: ${dur}s. Safe Zone: 20s-${end}s. Trigger Points:`, pts);
-      } else if (dur > 20) {
-        currentTriggerPointsRef.current = [Math.round(dur / 2)];
-      }
+    // Set trigger point at exact middle of Safe Zone (duration / 2) if eligible
+    if (dur > 0 && osdVideoPacingRef.current.eligible && !osdVideoPacingRef.current.triggerSet) {
+      const midPoint = Math.round(dur / 2);
+      currentTriggerPointsRef.current = [midPoint];
+      osdVideoPacingRef.current.triggerSet = true;
+      console.log(`[OSD Pacing Engine] Video #${channelVideoCount.current} trigger locked at exact middle: ${midPoint}s (dur: ${dur}s).`);
     }
 
-    // Trigger Execution: when currentTime hits a trigger point
+    // Trigger Execution: when currentTime hits the trigger point
     if (currentTriggerPointsRef.current.length > 0) {
       for (const pt of currentTriggerPointsRef.current) {
         if (!firedTriggersRef.current.has(pt) && cur >= pt && cur <= pt + 3) {
@@ -866,6 +888,17 @@ export default function Home({ session }: { session: Session | null }) {
 
   // MATRIX: fetch channel data, watermark URL and scale whenever the active channel changes
   useEffect(() => {
+    // Reset OSD pacing and session counter on channel change
+    channelVideoCount.current = 0;
+    osdVideoPacingRef.current = { videoId: '', eligible: false, triggerSet: false };
+    firedTriggersRef.current.clear();
+    currentTriggerPointsRef.current = [];
+    if (osdTimeoutRef.current) clearTimeout(osdTimeoutRef.current);
+    if (osdCueTimeoutRef.current) clearTimeout(osdCueTimeoutRef.current);
+    setOsdActive(false);
+    setOsdPhase('idle');
+    setCurrentOsdMessage('');
+
     if (!currentChannelName) {
       setCurrentChannelWatermark(null);
       setCurrentChannelWatermarkScale(1.0);
@@ -1906,90 +1939,88 @@ export default function Home({ session }: { session: Session | null }) {
                     {showStatic && <div className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-100 bg-repeat active"></div>}
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
-                      {/* Watermark UI Swap: Dynamic OSD Signal Hijack vs Static Watermark */}
-                      {osdActive && currentOsdMessage ? (
-                        <div
-                          className="osd-signal-hijack pointer-events-none z-[75] absolute top-[3.5%] right-[3.5%] max-w-[280px] sm:max-w-[380px] bg-black border-2 border-emerald-500/90 p-2.5 sm:p-3 shadow-[0_0_30px_rgba(16,185,129,0.5),inset_0_0_15px_rgba(0,0,0,0.9)] rounded font-mono-tech"
-                          style={{
-                            transformOrigin: 'top right',
-                          }}
-                        >
-                          <div className="flex items-center justify-between gap-2 border-b border-emerald-500/40 pb-1 mb-1.5 text-[9px] uppercase tracking-wider text-emerald-400 font-bold">
-                            <span className="flex items-center gap-1.5">
-                              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                              SIGNAL HIJACK // OSD
-                            </span>
-                            <span className="text-[8px] text-emerald-500/80">{currentChannelName || 'SYS.BRDCST'}</span>
+                      {/* Unified Morphological Container: Watermark <-> OSD Signal Hijack */}
+                      <div className={`watermark-osd-container ${osdActive ? 'is-hijacked' : ''}`}>
+                        {/* Static Watermark (smoothly shrinks and fades when hijacked) */}
+                        {currentChannelWatermark && (
+                          <div
+                            className="watermark-inner"
+                            style={{
+                              transform: `scale(${currentChannelWatermarkScale || 1.0})`,
+                            }}
+                          >
+                            {currentChannelWatermark.toLowerCase().endsWith('.mp4') ||
+                            currentChannelWatermark.toLowerCase().endsWith('.webm') ||
+                            currentChannelWatermark.toLowerCase().endsWith('.mov') ||
+                            currentChannelWatermark.toLowerCase().endsWith('.ogg') ||
+                            /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(currentChannelWatermark) ? (
+                              <video
+                                key={currentChannelWatermark}
+                                src={currentChannelWatermark}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                className="watermark-overlay"
+                                style={{
+                                  maxWidth: '100%',
+                                  maxHeight: '65px',
+                                  width: 'auto',
+                                  height: 'auto',
+                                  objectFit: 'contain',
+                                  opacity: 0.82,
+                                  pointerEvents: 'none',
+                                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
+                                }}
+                              />
+                            ) : (
+                              <img
+                                key={currentChannelWatermark}
+                                src={currentChannelWatermark}
+                                alt="marca d'água"
+                                className="watermark-overlay"
+                                style={{
+                                  maxWidth: '100%',
+                                  maxHeight: '65px',
+                                  width: 'auto',
+                                  height: 'auto',
+                                  objectFit: 'contain',
+                                  opacity: 0.82,
+                                  pointerEvents: 'none',
+                                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
+                                }}
+                              />
+                            )}
                           </div>
-                          <div className="text-emerald-400 text-xs sm:text-sm font-bold tracking-wide leading-tight break-words osd-typewriter-text drop-shadow-[0_0_8px_rgba(16,185,129,0.9)]">
-                            {currentOsdMessage}
-                          </div>
-                        </div>
-                      ) : currentChannelWatermark ? (
-                        <div
-                          className="watermark-container"
-                          style={{
-                            position: 'absolute',
-                            top: '3.5%',
-                            right: '3.5%',
-                            width: '13%',
-                            maxWidth: '150px',
-                            minWidth: '60px',
-                            height: 'clamp(32px, 6vw, 65px)',
-                            maxHeight: '65px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            pointerEvents: 'none',
-                            zIndex: 65,
-                            transform: `scale(${currentChannelWatermarkScale || 1.0})`,
-                            transformOrigin: 'top right',
-                          }}
-                        >
-                          {currentChannelWatermark.toLowerCase().endsWith('.mp4') ||
-                          currentChannelWatermark.toLowerCase().endsWith('.webm') ||
-                          currentChannelWatermark.toLowerCase().endsWith('.mov') ||
-                          currentChannelWatermark.toLowerCase().endsWith('.ogg') ||
-                          /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(currentChannelWatermark) ? (
-                            <video
-                              key={currentChannelWatermark}
-                              src={currentChannelWatermark}
-                              autoPlay
-                              loop
-                              muted
-                              playsInline
-                              className="watermark-overlay"
-                              style={{
-                                maxWidth: '100%',
-                                maxHeight: '100%',
-                                width: 'auto',
-                                height: 'auto',
-                                objectFit: 'contain',
-                                opacity: 0.82,
-                                pointerEvents: 'none',
-                                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
-                              }}
-                            />
+                        )}
+
+                        {/* OSD Signal Hijack Content (smoothly fades & expands in when hijacked) */}
+                        <div className="osd-content-inner font-mono-tech">
+                          {osdPhase === 'cue' ? (
+                            <div className="osd-cue-banner py-1 select-none">
+                              <span className="osd-cue-beacon shrink-0" />
+                              <span className="tracking-widest uppercase font-mono-tech">[ SIGNAL OVERRIDE // DECRYPTING ]</span>
+                              <span className="animate-pulse font-mono text-[#00ff88]">▋</span>
+                            </div>
                           ) : (
-                            <img
-                              key={currentChannelWatermark}
-                              src={currentChannelWatermark}
-                              alt="marca d'água"
-                              className="watermark-overlay"
-                              style={{
-                                maxWidth: '100%',
-                                maxHeight: '100%',
-                                width: 'auto',
-                                height: 'auto',
-                                objectFit: 'contain',
-                                opacity: 0.82,
-                                pointerEvents: 'none',
-                                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
-                              }}
-                            />
+                            <div className="flex flex-col w-full">
+                              <div className="flex items-center justify-between gap-3 border-b border-emerald-500/40 pb-1 mb-1.5 text-[9px] uppercase tracking-wider text-emerald-400 font-bold select-none">
+                                <span className="flex items-center gap-1.5">
+                                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                                  SIGNAL HIJACK // OSD
+                                </span>
+                                <span className="text-[8px] text-emerald-500/80 font-mono">{currentChannelName || 'SYS.BRDCST'}</span>
+                              </div>
+                              <div className="text-emerald-400 text-xs sm:text-sm font-bold tracking-wide leading-tight break-words osd-typewriter-text drop-shadow-[0_0_8px_rgba(16,185,129,0.9)]">
+                                {currentOsdMessage}
+                              </div>
+                            </div>
                           )}
                         </div>
-                      ) : currentChannelName ? (
+                      </div>
+
+                      {/* Fallback channel name label when NO watermark is configured and NOT hijacked */}
+                      {!currentChannelWatermark && !osdActive && currentChannelName ? (
                         <div className="absolute top-4 right-6 text-right font-['Jost',sans-serif] pointer-events-none z-[65]">
                           <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''} font-['Jost',sans-serif]`}>
                             {playlistParts.length > 1 ? (
