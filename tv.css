@@ -250,8 +250,8 @@ html, body, #root {
     position: absolute;
     top: 3.5%;
     right: 3.5%;
-    z-index: 70;
-    pointer-events: none;
+    z-index: 100 !important;
+    pointer-events: none !important;
     transform-origin: top right;
     display: flex;
     align-items: center;
@@ -275,8 +275,18 @@ html, body, #root {
                 border-radius 0.45s ease;
 }
 
+/* Ensure all children never trap mouse events or block YT skin hiding */
+.watermark-osd-container,
+.watermark-osd-container *,
+.watermark-osd-container.is-hijacked,
+.watermark-osd-container.is-hijacked * {
+    pointer-events: none !important;
+}
+
 /* Morph State: Hijacked into brutalist expanding terminal box */
 .watermark-osd-container.is-hijacked {
+    width: max-content !important;
+    min-width: 260px !important;
     max-width: min(580px, 88%) !important;
     background-color: #000000 !important;
     border: 2px solid #00ff88 !important;
@@ -302,7 +312,7 @@ html, body, #root {
 
 .watermark-osd-container.is-hijacked .watermark-inner {
     opacity: 0;
-    pointer-events: none;
+    pointer-events: none !important;
     position: absolute;
     transform: scale(0.75);
 }
@@ -314,14 +324,14 @@ html, body, #root {
     width: 100%;
     opacity: 0;
     transform: scale(0.96);
-    pointer-events: none;
+    pointer-events: none !important;
     transition: opacity 0.4s ease 0.15s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
 }
 
 .watermark-osd-container.is-hijacked .osd-content-inner {
     opacity: 1;
     transform: scale(1);
-    pointer-events: auto;
+    pointer-events: none !important;
 }
 
 /* Visual cue warning banner during initial 1.5s expansion */

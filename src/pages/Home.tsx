@@ -365,10 +365,18 @@ export default function Home({ session }: { session: Session | null }) {
 
   // Global Clip Pacing session tracking
   const channelVideoCount = useRef<number>(0);
-  const osdVideoPacingRef = useRef<{ videoId: string; eligible: boolean; triggerSet: boolean }>({
+  const osdVideoPacingRef = useRef<{
+    videoId: string;
+    eligible: boolean;
+    triggerSet: boolean;
+    triggerTime: number;
+    hasFired: boolean;
+  }>({
     videoId: '',
     eligible: false,
     triggerSet: false,
+    triggerTime: 0,
+    hasFired: false,
   });
 
   const [currentChannelRecord, setCurrentChannelRecord] = useState<PlaylistItem | null>(null);
@@ -390,31 +398,42 @@ export default function Home({ session }: { session: Session | null }) {
   // Trigger OSD Hijack execution with Morphological Sequence (1.5s Cue -> Typewriter -> 14s total duration)
   const triggerOsdHijack = useCallback(() => {
     const ch = currentChannelRecordRef.current || playlistsRef.current.find(p => p.name === currentChannelNameRef.current);
+    if (!ch) return;
+
     const lang = activeLangRef.current;
 
-    let msgs: string[] = [];
-    if (lang === 'en' && Array.isArray(ch?.osd_messages_en) && ch.osd_messages_en.length > 0) {
-      msgs = ch.osd_messages_en;
-    } else if (lang === 'es' && Array.isArray(ch?.osd_messages_es) && ch.osd_messages_es.length > 0) {
-      msgs = ch.osd_messages_es;
-    } else if (Array.isArray(ch?.osd_messages_pt) && ch.osd_messages_pt.length > 0) {
-      msgs = ch.osd_messages_pt;
-    } else if (Array.isArray(ch?.osd_messages_en) && ch.osd_messages_en.length > 0) {
-      msgs = ch.osd_messages_en;
-    } else if (Array.isArray(ch?.osd_messages_es) && ch.osd_messages_es.length > 0) {
-      msgs = ch.osd_messages_es;
+    // Safely parse OSD message array for active language, with fallback to PT or other available languages
+    let rawMsgs: any = lang === 'en' ? ch.osd_messages_en : lang === 'es' ? ch.osd_messages_es : ch.osd_messages_pt;
+    if (!rawMsgs || (Array.isArray(rawMsgs) && rawMsgs.length === 0)) {
+      rawMsgs = ch.osd_messages_pt;
+    }
+    if (!rawMsgs || (Array.isArray(rawMsgs) && rawMsgs.length === 0)) {
+      rawMsgs = ch.osd_messages_en || ch.osd_messages_es;
     }
 
+    let msgs: string[] = [];
+    if (typeof rawMsgs === 'string') {
+      try {
+        const parsed = JSON.parse(rawMsgs);
+        if (Array.isArray(parsed)) msgs = parsed;
+      } catch {
+        msgs = [rawMsgs];
+      }
+    } else if (Array.isArray(rawMsgs)) {
+      msgs = rawMsgs;
+    }
+
+    msgs = msgs.map(m => String(m || '').trim()).filter(Boolean);
+
+    // Data Bail-out: If empty or undefined, return early and do NOT activate hijack!
     if (!msgs || msgs.length === 0) {
-      msgs = [
-        'TRANSMISSÃO PIRATA // SINAL LOCAL',
-        'INTERFERÊNCIA NO MONITOR CRT',
-        'SOBREPOSIÇÃO DE SINAL // PLAYLISTISMO',
-        'SINAL HIJACK ATIVO // NÃO MUDE DE CANAL'
-      ];
+      console.log('[OSD] Bail-out: No OSD messages defined for channel:', ch.name);
+      return;
     }
 
     const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
+    console.log('[OSD] Firing hijack, message:', randomMsg);
+
     setCurrentOsdMessage(randomMsg);
     setOsdActive(true);
     setOsdPhase('cue'); // Step 1: Visual cue [ SIGNAL OVERRIDE ] while box expands
@@ -685,20 +704,21 @@ export default function Home({ session }: { session: Session | null }) {
     // Set trigger point at exact middle of Safe Zone (duration / 2) if eligible
     if (dur > 0 && osdVideoPacingRef.current.eligible && !osdVideoPacingRef.current.triggerSet) {
       const midPoint = Math.round(dur / 2);
-      currentTriggerPointsRef.current = [midPoint];
+      osdVideoPacingRef.current.triggerTime = midPoint;
       osdVideoPacingRef.current.triggerSet = true;
       console.log(`[OSD Pacing Engine] Video #${channelVideoCount.current} trigger locked at exact middle: ${midPoint}s (dur: ${dur}s).`);
     }
 
-    // Trigger Execution: when currentTime hits the trigger point
-    if (currentTriggerPointsRef.current.length > 0) {
-      for (const pt of currentTriggerPointsRef.current) {
-        if (!firedTriggersRef.current.has(pt) && cur >= pt && cur <= pt + 3) {
-          firedTriggersRef.current.add(pt);
-          triggerOsdHijack();
-          break;
-        }
-      }
+    // Threshold Trigger Execution: currentTime >= triggerTime && !osdVideoPacingRef.current.hasFired
+    if (
+      osdVideoPacingRef.current.eligible &&
+      osdVideoPacingRef.current.triggerSet &&
+      !osdVideoPacingRef.current.hasFired &&
+      osdVideoPacingRef.current.triggerTime > 0 &&
+      cur >= osdVideoPacingRef.current.triggerTime
+    ) {
+      osdVideoPacingRef.current.hasFired = true;
+      triggerOsdHijack();
     }
   }, [triggerOsdHijack]);
 
@@ -890,7 +910,7 @@ export default function Home({ session }: { session: Session | null }) {
   useEffect(() => {
     // Reset OSD pacing and session counter on channel change
     channelVideoCount.current = 0;
-    osdVideoPacingRef.current = { videoId: '', eligible: false, triggerSet: false };
+    osdVideoPacingRef.current = { videoId: '', eligible: false, triggerSet: false, triggerTime: 0, hasFired: false };
     firedTriggersRef.current.clear();
     currentTriggerPointsRef.current = [];
     if (osdTimeoutRef.current) clearTimeout(osdTimeoutRef.current);
@@ -1119,6 +1139,13 @@ export default function Home({ session }: { session: Session | null }) {
   // Suporta plataformas YouTube e Vimeo
   useEffect(() => {
     if (!currentVideoData?.video_id) return;
+
+    // Force State Reset on Video Change: prevent state leaks across clips
+    setOsdActive(false);
+    setOsdPhase('idle');
+    if (osdTimeoutRef.current) clearTimeout(osdTimeoutRef.current);
+    if (osdCueTimeoutRef.current) clearTimeout(osdCueTimeoutRef.current);
+    osdVideoPacingRef.current.hasFired = false;
 
     const videoId = String(currentVideoData.video_id);
     const platform: 'youtube' | 'vimeo' =
@@ -1940,11 +1967,11 @@ export default function Home({ session }: { session: Session | null }) {
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
                       {/* Unified Morphological Container: Watermark <-> OSD Signal Hijack */}
-                      <div className={`watermark-osd-container ${osdActive ? 'is-hijacked' : ''}`}>
+                      <div className={`watermark-osd-container pointer-events-none select-none ${osdActive ? 'is-hijacked' : ''}`}>
                         {/* Static Watermark (smoothly shrinks and fades when hijacked) */}
                         {currentChannelWatermark && (
                           <div
-                            className="watermark-inner"
+                            className="watermark-inner pointer-events-none select-none"
                             style={{
                               transform: `scale(${currentChannelWatermarkScale || 1.0})`,
                             }}
@@ -1961,7 +1988,7 @@ export default function Home({ session }: { session: Session | null }) {
                                 loop
                                 muted
                                 playsInline
-                                className="watermark-overlay"
+                                className="watermark-overlay pointer-events-none"
                                 style={{
                                   maxWidth: '100%',
                                   maxHeight: '65px',
@@ -1978,7 +2005,7 @@ export default function Home({ session }: { session: Session | null }) {
                                 key={currentChannelWatermark}
                                 src={currentChannelWatermark}
                                 alt="marca d'água"
-                                className="watermark-overlay"
+                                className="watermark-overlay pointer-events-none"
                                 style={{
                                   maxWidth: '100%',
                                   maxHeight: '65px',
@@ -1995,23 +2022,23 @@ export default function Home({ session }: { session: Session | null }) {
                         )}
 
                         {/* OSD Signal Hijack Content (smoothly fades & expands in when hijacked) */}
-                        <div className="osd-content-inner font-mono-tech">
+                        <div className="osd-content-inner font-mono-tech pointer-events-none select-none">
                           {osdPhase === 'cue' ? (
-                            <div className="osd-cue-banner py-1 select-none">
+                            <div className="osd-cue-banner py-1 select-none pointer-events-none">
                               <span className="osd-cue-beacon shrink-0" />
                               <span className="tracking-widest uppercase font-mono-tech">[ SIGNAL OVERRIDE // DECRYPTING ]</span>
                               <span className="animate-pulse font-mono text-[#00ff88]">▋</span>
                             </div>
                           ) : (
-                            <div className="flex flex-col w-full">
-                              <div className="flex items-center justify-between gap-3 border-b border-emerald-500/40 pb-1 mb-1.5 text-[9px] uppercase tracking-wider text-emerald-400 font-bold select-none">
-                                <span className="flex items-center gap-1.5">
+                            <div className="flex flex-col w-full pointer-events-none select-none">
+                              <div className="flex items-center justify-between gap-3 border-b border-emerald-500/40 pb-1 mb-1.5 text-[9px] uppercase tracking-wider text-emerald-400 font-bold select-none pointer-events-none">
+                                <span className="flex items-center gap-1.5 pointer-events-none">
                                   <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                                   SIGNAL HIJACK // OSD
                                 </span>
-                                <span className="text-[8px] text-emerald-500/80 font-mono">{currentChannelName || 'SYS.BRDCST'}</span>
+                                <span className="text-[8px] text-emerald-500/80 font-mono pointer-events-none">{currentChannelName || 'SYS.BRDCST'}</span>
                               </div>
-                              <div className="text-emerald-400 text-xs sm:text-sm font-bold tracking-wide leading-tight break-words osd-typewriter-text drop-shadow-[0_0_8px_rgba(16,185,129,0.9)]">
+                              <div className="text-emerald-400 text-xs sm:text-sm font-bold tracking-wide leading-tight break-words osd-typewriter-text drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] pointer-events-none">
                                 {currentOsdMessage}
                               </div>
                             </div>
