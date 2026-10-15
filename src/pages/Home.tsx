@@ -133,19 +133,68 @@ export type PlaylistItem = {
   osd_messages_es?: string[] | null;
   marca_dagua_url?: string | null;
   marca_dagua_escala?: number | null;
+  videos?: any[];
   [key: string]: any;
 };
+
+// ─── Intercepted Signals (Artist Radar) Helper & Cache ───────────────────────
+
+const channelVideosCache = new Map<string, any[]>();
+
+export function generateInterceptedSignals(videos: any[] | null | undefined): string[] {
+  if (!videos || !Array.isArray(videos) || videos.length === 0) return [];
+
+  // Filter Logic: Discard any artist string containing (case-insensitive): ft., feat, feat., &, vs, vs.,  x , +
+  const filterTokens = ['ft.', 'feat', 'feat.', '&', 'vs', 'vs.', ' x ', '+'];
+  const uniqueArtists: string[] = [];
+  const seen = new Set<string>();
+
+  for (const v of videos) {
+    const raw = typeof v === 'string' ? v : (v?.artista || v?.artist || '');
+    if (!raw) continue;
+    const cleaned = raw.replace(/<[^>]*>/g, '').replace(/&amp;/gi, '&').replace(/\s+/g, ' ').trim();
+    if (!cleaned) continue;
+
+    const lowerCleaned = cleaned.toLowerCase();
+    const lowerRaw = raw.toLowerCase();
+    const isDiscarded = filterTokens.some(token => lowerCleaned.includes(token) || lowerRaw.includes(token));
+    if (isDiscarded) continue;
+
+    const dedupeKey = cleaned.toUpperCase();
+    if (!seen.has(dedupeKey)) {
+      seen.add(dedupeKey);
+      uniqueArtists.push(cleaned);
+    }
+  }
+
+  // Deduplicate the array (unique artists only). Randomly shuffle the array. Slice the first 4 artists.
+  const shuffled = fisherYatesShuffle([...uniqueArtists]);
+  return shuffled.slice(0, 4);
+}
 
 // ─── Dedicated Black Terminal Screen Component for Channel Guide ───────────
 
 interface TerminalManifestoProps {
-  channel: PlaylistItem | null;
+  channel?: PlaylistItem | null;
+  hoveredChannel?: PlaylistItem | null;
   activeLang: 'pt' | 'en' | 'es';
   onLanguageChange: (lang: 'pt' | 'en' | 'es') => void;
+  videos?: any[];
+  currentChannelName?: string;
 }
 
-function TerminalManifesto({ channel, activeLang, onLanguageChange }: TerminalManifestoProps) {
+function TerminalManifesto({
+  channel: propChannel,
+  hoveredChannel: propHoveredChannel,
+  activeLang,
+  onLanguageChange,
+  videos,
+  currentChannelName,
+}: TerminalManifestoProps) {
+  const hoveredChannel = propHoveredChannel !== undefined ? propHoveredChannel : (propChannel ?? null);
+  const channel = hoveredChannel;
   const [visibleChars, setVisibleChars] = useState(0);
+  const [interceptedSignals, setInterceptedSignals] = useState<string[]>([]);
 
   // Extract manifesto matching active language with PT fallback
   const manifestoRaw = useMemo(() => {
@@ -194,6 +243,56 @@ function TerminalManifesto({ channel, activeLang, onLanguageChange }: TerminalMa
 
     return () => clearInterval(timer);
   }, [channel?.name, activeLang, sanitizedFullHtml, totalTextChars]);
+
+  // Intercepted Signals: live artist radar updated when hoveredChannel changes
+  useEffect(() => {
+    if (!hoveredChannel || !hoveredChannel.name) {
+      setInterceptedSignals([]);
+      return;
+    }
+
+    const channelName = hoveredChannel.name;
+
+    // 1. Channel already has embedded videos
+    if (hoveredChannel.videos && Array.isArray(hoveredChannel.videos) && hoveredChannel.videos.length > 0) {
+      setInterceptedSignals(generateInterceptedSignals(hoveredChannel.videos));
+      return;
+    }
+
+    // 2. Hovered channel is currently playing channel and videos prop is present
+    if (videos && videos.length > 0 && (channelName === currentChannelName || channelName === videos[0]?.playlist)) {
+      channelVideosCache.set(channelName, videos);
+      setInterceptedSignals(generateInterceptedSignals(videos));
+      return;
+    }
+
+    // 3. Module cache hit
+    if (channelVideosCache.has(channelName)) {
+      const cached = channelVideosCache.get(channelName)!;
+      setInterceptedSignals(generateInterceptedSignals(cached));
+      return;
+    }
+
+    // 4. Query Supabase for channel artist names
+    let isCancelled = false;
+    supabase
+      .from('musicas_backup')
+      .select('artista')
+      .eq('playlist', channelName)
+      .then(({ data, error }) => {
+        if (isCancelled) return;
+        if (!error && data && data.length > 0) {
+          channelVideosCache.set(channelName, data);
+          setInterceptedSignals(generateInterceptedSignals(data));
+        } else {
+          setInterceptedSignals([]);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [hoveredChannel, videos, currentChannelName]);
 
   const displayedHtml = useMemo(() => {
     if (!sanitizedFullHtml) return '';
@@ -277,6 +376,17 @@ function TerminalManifesto({ channel, activeLang, onLanguageChange }: TerminalMa
             <p className="text-[10px] text-zinc-600 uppercase">
               Abra a MATRIX (Admin) para cadastrar o manifesto deste canal em {activeLang.toUpperCase()}.
             </p>
+          </div>
+        )}
+
+        {/* Intercepted Signals (Artist Radar) */}
+        {interceptedSignals.length > 0 && (
+          <div className="mt-4 pt-2.5 border-t border-[#00ff88]/20 select-text">
+            <div className="text-[10px] sm:text-[11px] font-mono tracking-wider uppercase text-[#00ff88] leading-relaxed drop-shadow-[0_0_6px_rgba(0,255,136,0.6)]">
+              <span className="osd-typewriter-text inline-block max-w-full break-words">
+                &gt; SINAIS INTERCEPTADOS: {interceptedSignals.map(s => s.toUpperCase()).join(' // ')}
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -1067,6 +1177,7 @@ export default function Home({ session }: { session: Session | null }) {
 
     const { data } = await supabase.from('musicas_backup').select('*').eq('playlist', playlistName).order('id', { ascending: false });
     if (!data?.length) return;
+    channelVideosCache.set(playlistName, data);
 
     const list = targetId ? data : fisherYatesShuffle([...data]);
     let idx = targetId ? list.findIndex(v => v.video_id === targetId) : Math.floor(Math.random() * list.length);
@@ -2652,6 +2763,13 @@ export default function Home({ session }: { session: Session | null }) {
                     {/* Coluna Direita: Dedicated Black Terminal Screen */}
                     <div className="w-full lg:w-5/12 h-64 lg:h-full min-h-0 shrink-0">
                       <TerminalManifesto
+                        hoveredChannel={
+                          hoveredChannel ||
+                          filteredPlaylists.find(p => p.name === currentChannelName) ||
+                          currentChannelRecord ||
+                          filteredPlaylists[0] ||
+                          null
+                        }
                         channel={
                           hoveredChannel ||
                           filteredPlaylists.find(p => p.name === currentChannelName) ||
@@ -2659,6 +2777,8 @@ export default function Home({ session }: { session: Session | null }) {
                           filteredPlaylists[0] ||
                           null
                         }
+                        videos={currentChannelList}
+                        currentChannelName={currentChannelName}
                         activeLang={activeLang}
                         onLanguageChange={setActiveLang}
                       />
