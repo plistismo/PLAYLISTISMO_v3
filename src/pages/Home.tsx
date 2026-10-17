@@ -2301,11 +2301,37 @@ export default function Home({ session }: { session: Session | null }) {
                       </div>
                     )}
 
-                    {/* Full-Screen Video Transition Bumper */}
+                    {/* Full-Screen Video Transition Bumper (Generative Motion Graphics Engine) */}
                     {transitionGlitch && (
-                      <div className="transition-glitch-bumper absolute inset-0 z-[60] flex flex-col items-center justify-center bg-black/90 p-8 text-center pointer-events-none select-none">
-                        <div className="text-yellow-400 font-mono text-2xl md:text-4xl drop-shadow-[0_0_8px_rgba(255,255,0,0.8)] animate-pulse whitespace-pre-wrap">
-                          {`[ ${activeChannel?.name?.toUpperCase()} ]\n\n${transitionGlitch}`}
+                      <div className="transition-bumper-wrapper absolute inset-0 z-[60] overflow-hidden bg-black flex flex-col items-center justify-center pointer-events-none select-none">
+                        {/* 1. Generative Background Layer */}
+                        <div className="bumper-generative-bg absolute inset-0 opacity-40 mix-blend-screen">
+                          <div className="bumper-barcode-slide"></div>
+                          <div className="bumper-scanline-fast"></div>
+                          <div className="bumper-telemetry-grid"></div>
+                        </div>
+
+                        {/* 2. Real-time SVG Glitch Filter Engine */}
+                        <svg className="absolute w-0 h-0">
+                          <filter id="generative-glitch">
+                            <feTurbulence type="fractalNoise" baseFrequency="0.05 0.95" numOctaves="1" result="noise">
+                              <animate attributeName="baseFrequency" values="0.05 0.95; 0.85 0.15; 0.05 0.95" dur="0.15s" repeatCount="indefinite" />
+                            </feTurbulence>
+                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
+                          </filter>
+                        </svg>
+
+                        {/* 3. Text & Typography Layer */}
+                        <div className="bumper-text-content relative z-10 text-center flex flex-col items-center justify-center p-8 w-full" style={{ filter: 'url(#generative-glitch)' }}>
+                          <h2 className="text-yellow-400 font-mono text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-4 mix-blend-difference">
+                            {activeChannel?.name}
+                          </h2>
+                          <p className="text-white font-mono text-sm md:text-lg bg-black px-4 py-1 border border-white/30 tracking-widest whitespace-pre-wrap">
+                            {transitionGlitch}
+                          </p>
+                          <div className="text-xs text-yellow-400/50 mt-8 font-mono animate-pulse">
+                            SYSTEM_SYNC // BUFFERING_SIGNAL
+                          </div>
                         </div>
                       </div>
                     )}
