@@ -439,6 +439,7 @@ export default function Home({ session }: { session: Session | null }) {
   // UI State
   const [isBumping, setIsBumping] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [osdGlitch, setOsdGlitch] = useState<string | null>(null);
   const [showCredits, setShowCredits] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlaylistLabel, setShowPlaylistLabel] = useState(false);
@@ -491,6 +492,10 @@ export default function Home({ session }: { session: Session | null }) {
   const [currentChannelRecord, setCurrentChannelRecord] = useState<PlaylistItem | null>(null);
   const currentChannelRecordRef = useRef<PlaylistItem | null>(null);
   useEffect(() => { currentChannelRecordRef.current = currentChannelRecord; }, [currentChannelRecord]);
+
+  const activeChannel = useMemo(() => {
+    return currentChannelRecord || playlists.find(p => p.name === currentChannelName) || null;
+  }, [currentChannelRecord, playlists, currentChannelName]);
 
   const currentChannelNameRef = useRef<string>('');
   useEffect(() => { currentChannelNameRef.current = currentChannelName; }, [currentChannelName]);
@@ -726,6 +731,78 @@ export default function Home({ session }: { session: Session | null }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Dynamic Matrix OSD Glitch Lifecycle (Channel-Specific MTV Signal)
+  useEffect(() => {
+    // Clear glitch message immediately when channel changes or TV powers off
+    setOsdGlitch(null);
+
+    if (!isOn || !activeChannel) {
+      return;
+    }
+
+    // Read glitch messages directly from the active channel's object (Matrix database data)
+    let rawMsgs: any = activeChannel.osd_messages_pt;
+    if (!rawMsgs || (Array.isArray(rawMsgs) && rawMsgs.length === 0)) {
+      rawMsgs = activeLang === 'en' ? (activeChannel.osd_messages_en || activeChannel.osd_messages_pt)
+        : activeLang === 'es' ? (activeChannel.osd_messages_es || activeChannel.osd_messages_pt)
+        : activeChannel.osd_messages_pt;
+    }
+
+    let msgs: string[] = [];
+    if (Array.isArray(rawMsgs)) {
+      msgs = rawMsgs;
+    } else if (typeof rawMsgs === 'string') {
+      const trimmed = rawMsgs.trim();
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) msgs = parsed;
+        } catch {
+          msgs = trimmed.split('\n');
+        }
+      } else if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        msgs = trimmed.slice(1, -1).split(',').map(s => s.replace(/^"|"$/g, '').trim());
+      } else {
+        msgs = trimmed.split('\n');
+      }
+    }
+
+    const validMsgs = msgs.map(m => String(m || '').trim()).filter(Boolean);
+
+    // ONLY set an interval if the active channel has a valid array of OSD messages
+    if (!validMsgs || validMsgs.length === 0) {
+      return;
+    }
+
+    let hideTimeoutId: any = null;
+    let nextTriggerTimeoutId: any = null;
+
+    const scheduleNextGlitch = () => {
+      // Set a randomized interval triggering between every 30 to 60 seconds
+      const randomInterval = Math.floor(Math.random() * (60000 - 30000 + 1)) + 30000;
+      nextTriggerTimeoutId = setTimeout(() => {
+        // Pick a random message from that specific channel's array
+        const randomMsg = validMsgs[Math.floor(Math.random() * validMsgs.length)];
+        setOsdGlitch(randomMsg);
+
+        // Clear the message automatically after 2 to 4 seconds
+        const displayDuration = Math.floor(Math.random() * (4000 - 2000 + 1)) + 2000;
+        hideTimeoutId = setTimeout(() => {
+          setOsdGlitch(null);
+          scheduleNextGlitch();
+        }, displayDuration);
+      }, randomInterval);
+    };
+
+    scheduleNextGlitch();
+
+    return () => {
+      if (nextTriggerTimeoutId) clearTimeout(nextTriggerTimeoutId);
+      if (hideTimeoutId) clearTimeout(hideTimeoutId);
+      setOsdGlitch(null);
+    };
+  }, [isOn, activeChannel, activeLang]);
+
   // Controle explícito de visibilidade entre os players via element.style
   function syncPlayerVisibility(platform: 'youtube' | 'vimeo') {
     activePlatformRef.current = platform;
@@ -899,12 +976,13 @@ export default function Home({ session }: { session: Session | null }) {
         height: '100%', width: '100%',
         playerVars: {
           controls: 0,
+          disablekb: 1,
           modestbranding: 1,
           rel: 0,
           iv_load_policy: 3,
+          playsinline: 1,
           enablejsapi: 1,
           showinfo: 0,
-          disablekb: 1,
           fs: 0,
           autoplay: 1,
           origin: window.location.origin
@@ -2256,6 +2334,13 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                     </div>
+
+                    {/* Global OSD Glitch Injection (Unstable Signal Override) */}
+                    {osdGlitch && (
+                      <div className="osd-glitch-text pointer-events-none select-none">
+                        {osdGlitch}
+                      </div>
+                    )}
 
                     <div 
                       className={`credits-overlay ${isOn && currentVideoData && (!isPlaying || showCredits) ? 'visible' : ''} absolute bottom-6 left-6 md:bottom-8 md:left-8 z-50 space-y-1 md:space-y-1.5 ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"} drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] select-none`}
