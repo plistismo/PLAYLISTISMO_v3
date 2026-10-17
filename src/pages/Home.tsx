@@ -517,29 +517,33 @@ export default function Home({ session }: { session: Session | null }) {
     const lang = activeLangRef.current;
 
     // Safely parse OSD message array for active language, with fallback to PT or other available languages
-    let rawMsgs: any = lang === 'en' ? ch.osd_messages_en : lang === 'es' ? ch.osd_messages_es : ch.osd_messages_pt;
-    if (!rawMsgs || (Array.isArray(rawMsgs) && rawMsgs.length === 0)) {
-      rawMsgs = ch.osd_messages_pt;
-    }
-    if (!rawMsgs || (Array.isArray(rawMsgs) && rawMsgs.length === 0)) {
-      rawMsgs = ch.osd_messages_en || ch.osd_messages_es;
-    }
+    // Aggressive Parsing Logic: Grab raw data with active language & PT fallback
+    const rawData = lang === 'en' ? (ch.osd_messages_en || ch.osd_messages_pt)
+      : lang === 'es' ? (ch.osd_messages_es || ch.osd_messages_pt)
+      : (ch.osd_messages_pt || ch.osd_messages_en || ch.osd_messages_es);
 
-    let msgs: string[] = [];
-    if (typeof rawMsgs === 'string') {
-      try {
-        const parsed = JSON.parse(rawMsgs);
-        if (Array.isArray(parsed)) msgs = parsed;
-      } catch {
-        msgs = [rawMsgs];
+    let parsedMsgs: any[] = [];
+    if (Array.isArray(rawData)) {
+      parsedMsgs = rawData;
+    } else if (typeof rawData === 'string') {
+      const trimmed = rawData.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        parsedMsgs = trimmed.slice(1, -1).split(',').map(s => s.replace(/^"|"$/g, '').trim());
+      } else {
+        try {
+          const parsed = JSON.parse(trimmed);
+          parsedMsgs = Array.isArray(parsed) ? parsed : [String(parsed)];
+        } catch (e) {
+          parsedMsgs = trimmed.split('\n').filter(msg => msg.trim() !== '');
+        }
       }
-    } else if (Array.isArray(rawMsgs)) {
-      msgs = rawMsgs;
     }
 
-    msgs = msgs.map(m => String(m || '').trim()).filter(Boolean);
+    const msgs = (Array.isArray(parsedMsgs) ? parsedMsgs : [])
+      .map(msg => (typeof msg === 'string' ? msg.trim() : String(msg || '').trim()))
+      .filter(msg => msg !== '');
 
-    // Data Bail-out: If empty or undefined, return early and do NOT activate hijack!
+    // Data Bail-out: ONLY check if empty after aggressive parsing
     if (!msgs || msgs.length === 0) {
       console.log('[OSD] Bail-out: No OSD messages defined for channel:', ch.name);
       return;
@@ -740,36 +744,36 @@ export default function Home({ session }: { session: Session | null }) {
       return;
     }
 
-    // Read glitch messages directly from the active channel's object (Matrix database data)
-    let rawMsgs: any = activeChannel.osd_messages_pt;
-    if (!rawMsgs || (Array.isArray(rawMsgs) && rawMsgs.length === 0)) {
-      rawMsgs = activeLang === 'en' ? (activeChannel.osd_messages_en || activeChannel.osd_messages_pt)
-        : activeLang === 'es' ? (activeChannel.osd_messages_es || activeChannel.osd_messages_pt)
-        : activeChannel.osd_messages_pt;
-    }
+    // Grab raw data directly from the active channel's object (Matrix database data)
+    const rawData = (activeLang === 'en' && activeChannel.osd_messages_en)
+      ? activeChannel.osd_messages_en
+      : (activeLang === 'es' && activeChannel.osd_messages_es)
+      ? activeChannel.osd_messages_es
+      : (activeChannel.osd_messages_pt || activeChannel.osd_messages_en || activeChannel.osd_messages_es);
 
-    let msgs: string[] = [];
-    if (Array.isArray(rawMsgs)) {
-      msgs = rawMsgs;
-    } else if (typeof rawMsgs === 'string') {
-      const trimmed = rawMsgs.trim();
-      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    // Aggressive Parsing Logic: Handle Array, stringified JSON, newline splits, or Postgres literals
+    let parsedMsgs: any[] = [];
+    if (Array.isArray(rawData)) {
+      parsedMsgs = rawData;
+    } else if (typeof rawData === 'string') {
+      const trimmed = rawData.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        parsedMsgs = trimmed.slice(1, -1).split(',').map(s => s.replace(/^"|"$/g, '').trim());
+      } else {
         try {
           const parsed = JSON.parse(trimmed);
-          if (Array.isArray(parsed)) msgs = parsed;
-        } catch {
-          msgs = trimmed.split('\n');
+          parsedMsgs = Array.isArray(parsed) ? parsed : [String(parsed)];
+        } catch (e) {
+          parsedMsgs = trimmed.split('\n').filter(msg => msg.trim() !== '');
         }
-      } else if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-        msgs = trimmed.slice(1, -1).split(',').map(s => s.replace(/^"|"$/g, '').trim());
-      } else {
-        msgs = trimmed.split('\n');
       }
     }
 
-    const validMsgs = msgs.map(m => String(m || '').trim()).filter(Boolean);
+    const validMsgs = (Array.isArray(parsedMsgs) ? parsedMsgs : [])
+      .map(msg => (typeof msg === 'string' ? msg.trim() : String(msg || '').trim()))
+      .filter(msg => msg !== '');
 
-    // ONLY set an interval if the active channel has a valid array of OSD messages
+    // Bail-out condition ONLY checks AFTER aggressive parsing
     if (!validMsgs || validMsgs.length === 0) {
       return;
     }
