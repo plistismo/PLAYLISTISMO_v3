@@ -865,13 +865,11 @@ export default function Home({ session }: { session: Session | null }) {
       .map(msg => (typeof msg === 'string' ? msg.trim() : String(msg || '').trim()))
       .filter(msg => msg !== '');
 
-    if (!validMsgs || validMsgs.length === 0) {
-      setTransitionGlitch(null);
-      return;
-    }
+    const messageToDisplay = (validMsgs && validMsgs.length > 0)
+      ? validMsgs[Math.floor(Math.random() * validMsgs.length)]
+      : "AUTO-SYNC // NO BROADCAST DATA";
 
-    const randomMsg = validMsgs[Math.floor(Math.random() * validMsgs.length)];
-    setTransitionGlitch(randomMsg);
+    setTransitionGlitch(messageToDisplay);
 
     const timeoutId = setTimeout(() => {
       setTransitionGlitch(null);
