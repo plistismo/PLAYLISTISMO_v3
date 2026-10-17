@@ -847,7 +847,7 @@ iframe#yt-player {
 .bumper-generative-bg {
   background-image: 
     linear-gradient(transparent 50%, rgba(255, 255, 255, 0.1) 50%),
-    linear-gradient(90deg, rgba(255, 255, 0, 0.1) 1px, transparent 1px);
+    linear-gradient(90deg, hsla(var(--theme-hue, 60), var(--theme-sat, 100%), 50%, 0.1) 1px, transparent 1px);
   background-size: 100% 4px, 20px 100%;
 }
 
@@ -859,8 +859,8 @@ iframe#yt-player {
     90deg,
     transparent,
     transparent 10px,
-    rgba(255, 255, 0, 0.8) 10px,
-    rgba(255, 255, 0, 0.8) 20px
+    hsla(var(--theme-hue, 60), var(--theme-sat, 100%), 50%, 0.8) 10px,
+    hsla(var(--theme-hue, 60), var(--theme-sat, 100%), 50%, 0.8) 20px
   );
   animation: barcodeSweep 1.5s cubic-bezier(0.77, 0, 0.175, 1) infinite;
   mix-blend-mode: overlay;

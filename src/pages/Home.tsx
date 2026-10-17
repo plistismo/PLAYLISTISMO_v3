@@ -406,6 +406,27 @@ function TerminalManifesto({
   );
 }
 
+function getChannelTheme(channelName: string = '') {
+  // 1. Bespoke Overrides for Flagship Channels
+  const name = channelName.trim();
+  if (name === 'RIFFTRONICA') return { hue: 60, sat: 100, scale: 15, dur: '0.15s', case: 'uppercase' }; // Neon Yellow, violent
+  if (name === '_sub_signal_shift') return { hue: 210, sat: 100, scale: 3, dur: '4s', case: 'lowercase' }; // Blue, slow liquid/ambient
+  if (name === 'RHYMES REWIND') return { hue: 0, sat: 100, scale: 25, dur: '0.08s', case: 'uppercase' }; // Red, fast aggressive VHS
+  if (name === 'OFFSTAGE') return { hue: 0, sat: 0, scale: 8, dur: '0.8s', case: 'uppercase' }; // Grayscale, CCTV static
+
+  // 2. Procedural Hash for the other 300+ channels
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  const hue = Math.abs(hash % 360); // 0-360 color spectrum
+  const scale = 5 + Math.abs(hash % 20); // 5 to 25 distortion scale
+  const speed = 0.1 + (Math.abs(hash % 15) / 10); // 0.1s to 1.6s loop duration
+  
+  return { hue, sat: 100, scale, dur: `${speed}s`, case: 'uppercase' };
+}
+
 export default function Home({ session }: { session: Session | null }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -497,6 +518,8 @@ export default function Home({ session }: { session: Session | null }) {
   const activeChannel = useMemo(() => {
     return currentChannelRecord || playlists.find(p => p.name === currentChannelName) || null;
   }, [currentChannelRecord, playlists, currentChannelName]);
+
+  const transitionTheme = useMemo(() => getChannelTheme(activeChannel?.name), [activeChannel?.name]);
 
   const currentChannelNameRef = useRef<string>('');
   useEffect(() => { currentChannelNameRef.current = currentChannelName; }, [currentChannelName]);
@@ -2301,9 +2324,15 @@ export default function Home({ session }: { session: Session | null }) {
                       </div>
                     )}
 
-                    {/* Full-Screen Video Transition Bumper (Generative Motion Graphics Engine) */}
+                    {/* Full-Screen Video Transition Bumper (Procedural Generative Motion Graphics) */}
                     {transitionGlitch && (
-                      <div className="transition-bumper-wrapper absolute inset-0 z-[60] overflow-hidden bg-black flex flex-col items-center justify-center pointer-events-none select-none">
+                      <div
+                        className="transition-bumper-wrapper absolute inset-0 z-[60] overflow-hidden bg-black flex flex-col items-center justify-center pointer-events-none select-none"
+                        style={{
+                          '--theme-hue': transitionTheme.hue,
+                          '--theme-sat': `${transitionTheme.sat}%`
+                        } as React.CSSProperties}
+                      >
                         {/* 1. Generative Background Layer */}
                         <div className="bumper-generative-bg absolute inset-0 opacity-40 mix-blend-screen">
                           <div className="bumper-barcode-slide"></div>
@@ -2315,21 +2344,27 @@ export default function Home({ session }: { session: Session | null }) {
                         <svg className="absolute w-0 h-0">
                           <filter id="generative-glitch">
                             <feTurbulence type="fractalNoise" baseFrequency="0.05 0.95" numOctaves="1" result="noise">
-                              <animate attributeName="baseFrequency" values="0.05 0.95; 0.85 0.15; 0.05 0.95" dur="0.15s" repeatCount="indefinite" />
+                              <animate attributeName="baseFrequency" values="0.05 0.95; 0.85 0.15; 0.05 0.95" dur={transitionTheme.dur} repeatCount="indefinite" />
                             </feTurbulence>
-                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
+                            <feDisplacementMap in="SourceGraphic" in2="noise" scale={transitionTheme.scale} xChannelSelector="R" yChannelSelector="G" />
                           </filter>
                         </svg>
 
                         {/* 3. Text & Typography Layer */}
                         <div className="bumper-text-content relative z-10 text-center flex flex-col items-center justify-center p-8 w-full" style={{ filter: 'url(#generative-glitch)' }}>
-                          <h2 className="text-yellow-400 font-mono text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-4 mix-blend-difference">
+                          <h2
+                            className="font-mono text-5xl md:text-7xl font-black tracking-tighter leading-none mb-4 mix-blend-difference"
+                            style={{ color: `hsl(var(--theme-hue), var(--theme-sat), 50%)`, textTransform: transitionTheme.case as any }}
+                          >
                             {activeChannel?.name}
                           </h2>
                           <p className="text-white font-mono text-sm md:text-lg bg-black px-4 py-1 border border-white/30 tracking-widest whitespace-pre-wrap">
                             {transitionGlitch}
                           </p>
-                          <div className="text-xs text-yellow-400/50 mt-8 font-mono animate-pulse">
+                          <div
+                            className="text-xs mt-8 font-mono animate-pulse"
+                            style={{ color: `hsla(var(--theme-hue), var(--theme-sat), 50%, 0.5)` }}
+                          >
                             SYSTEM_SYNC // BUFFERING_SIGNAL
                           </div>
                         </div>
