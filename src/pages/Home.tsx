@@ -440,6 +440,7 @@ export default function Home({ session }: { session: Session | null }) {
   const [isBumping, setIsBumping] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [osdGlitch, setOsdGlitch] = useState<string | null>(null);
+  const [transitionGlitch, setTransitionGlitch] = useState<string | null>(null);
   const [showCredits, setShowCredits] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlaylistLabel, setShowPlaylistLabel] = useState(false);
@@ -806,6 +807,57 @@ export default function Home({ session }: { session: Session | null }) {
       setOsdGlitch(null);
     };
   }, [isOn, activeChannel, activeLang]);
+
+  // Full-Screen Video Transition Bumper Lifecycle
+  useEffect(() => {
+    if (!isOn || !currentVideoData?.video_id) {
+      setTransitionGlitch(null);
+      return;
+    }
+
+    const rawData = (activeLang === 'en' && activeChannel?.osd_messages_en)
+      ? activeChannel.osd_messages_en
+      : (activeLang === 'es' && activeChannel?.osd_messages_es)
+      ? activeChannel.osd_messages_es
+      : (activeChannel?.osd_messages_pt || activeChannel?.osd_messages_en || activeChannel?.osd_messages_es);
+
+    let parsedMsgs: any[] = [];
+    if (Array.isArray(rawData)) {
+      parsedMsgs = rawData;
+    } else if (typeof rawData === 'string') {
+      const trimmed = rawData.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        parsedMsgs = trimmed.slice(1, -1).split(',').map(s => s.replace(/^"|"$/g, '').trim());
+      } else {
+        try {
+          const parsed = JSON.parse(trimmed);
+          parsedMsgs = Array.isArray(parsed) ? parsed : [String(parsed)];
+        } catch (e) {
+          parsedMsgs = trimmed.split('\n').filter(msg => msg.trim() !== '');
+        }
+      }
+    }
+
+    const validMsgs = (Array.isArray(parsedMsgs) ? parsedMsgs : [])
+      .map(msg => (typeof msg === 'string' ? msg.trim() : String(msg || '').trim()))
+      .filter(msg => msg !== '');
+
+    if (!validMsgs || validMsgs.length === 0) {
+      setTransitionGlitch(null);
+      return;
+    }
+
+    const randomMsg = validMsgs[Math.floor(Math.random() * validMsgs.length)];
+    setTransitionGlitch(randomMsg);
+
+    const timeoutId = setTimeout(() => {
+      setTransitionGlitch(null);
+    }, 3000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [currentVideoData?.video_id, currentIndex, isOn, activeChannel, activeLang]);
 
   // Controle explícito de visibilidade entre os players via element.style
   function syncPlayerVisibility(platform: 'youtube' | 'vimeo') {
@@ -2246,6 +2298,15 @@ export default function Home({ session }: { session: Session | null }) {
                         <div className="vhs-noise opacity-90 pointer-events-none" />
                         <div className="vhs-tracking pointer-events-none" />
                         <div className="absolute inset-0 scanlines opacity-60 pointer-events-none" />
+                      </div>
+                    )}
+
+                    {/* Full-Screen Video Transition Bumper */}
+                    {transitionGlitch && (
+                      <div className="transition-glitch-bumper absolute inset-0 z-[60] flex flex-col items-center justify-center bg-black/90 p-8 text-center pointer-events-none select-none">
+                        <div className="text-yellow-400 font-mono text-2xl md:text-4xl drop-shadow-[0_0_8px_rgba(255,255,0,0.8)] animate-pulse whitespace-pre-wrap">
+                          {`[ ${activeChannel?.name?.toUpperCase()} ]\n\n${transitionGlitch}`}
+                        </div>
                       </div>
                     )}
 
