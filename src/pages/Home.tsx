@@ -2251,87 +2251,95 @@ export default function Home({ session }: { session: Session | null }) {
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
                       {/* Unified Morphological Container: Watermark <-> OSD Signal Hijack */}
-                      <div className={`watermark-osd-container pointer-events-none select-none ${osdActive ? 'is-hijacked' : ''}`}>
-                        {/* Static Watermark (smoothly shrinks and fades when hijacked) */}
-                        {currentChannelWatermark && (
-                          <div
-                            className="watermark-inner pointer-events-none select-none"
-                            style={{
-                              transform: `scale(${currentChannelWatermarkScale || 1.0})`,
-                            }}
-                          >
-                            {currentChannelWatermark.toLowerCase().endsWith('.mp4') ||
-                            currentChannelWatermark.toLowerCase().endsWith('.webm') ||
-                            currentChannelWatermark.toLowerCase().endsWith('.mov') ||
-                            currentChannelWatermark.toLowerCase().endsWith('.ogg') ||
-                            /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(currentChannelWatermark) ? (
-                              <video
-                                key={currentChannelWatermark}
-                                src={currentChannelWatermark}
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
-                                className="watermark-overlay pointer-events-none"
-                                style={{
-                                  maxWidth: '100%',
-                                  maxHeight: '65px',
-                                  width: 'auto',
-                                  height: 'auto',
-                                  objectFit: 'contain',
-                                  opacity: 0.82,
-                                  pointerEvents: 'none',
-                                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
-                                }}
-                              />
-                            ) : (
-                              <img
-                                key={currentChannelWatermark}
-                                src={currentChannelWatermark}
-                                alt="marca d'água"
-                                className="watermark-overlay pointer-events-none"
-                                style={{
-                                  maxWidth: '100%',
-                                  maxHeight: '65px',
-                                  width: 'auto',
-                                  height: 'auto',
-                                  objectFit: 'contain',
-                                  opacity: 0.82,
-                                  pointerEvents: 'none',
-                                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
-                                }}
-                              />
-                            )}
+                      <div className={`watermark-osd-container pointer-events-none select-none ${osdActive ? 'is-hijacked' : ''} ${osdGlitch ? 'has-glitch' : ''}`}>
+                        {osdGlitch ? (
+                          <div className="osd-glitch-text pointer-events-none select-none">
+                            {osdGlitch}
                           </div>
-                        )}
+                        ) : (
+                          <>
+                            {/* Static Watermark (smoothly shrinks and fades when hijacked) */}
+                            {currentChannelWatermark && (
+                              <div
+                                className="watermark-inner pointer-events-none select-none"
+                                style={{
+                                  transform: `scale(${currentChannelWatermarkScale || 1.0})`,
+                                }}
+                              >
+                                {currentChannelWatermark.toLowerCase().endsWith('.mp4') ||
+                                currentChannelWatermark.toLowerCase().endsWith('.webm') ||
+                                currentChannelWatermark.toLowerCase().endsWith('.mov') ||
+                                currentChannelWatermark.toLowerCase().endsWith('.ogg') ||
+                                /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(currentChannelWatermark) ? (
+                                  <video
+                                    key={currentChannelWatermark}
+                                    src={currentChannelWatermark}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    className="watermark-overlay pointer-events-none"
+                                    style={{
+                                      maxWidth: '100%',
+                                      maxHeight: '65px',
+                                      width: 'auto',
+                                      height: 'auto',
+                                      objectFit: 'contain',
+                                      opacity: 0.82,
+                                      pointerEvents: 'none',
+                                      filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
+                                    }}
+                                  />
+                                ) : (
+                                  <img
+                                    key={currentChannelWatermark}
+                                    src={currentChannelWatermark}
+                                    alt="marca d'água"
+                                    className="watermark-overlay pointer-events-none"
+                                    style={{
+                                      maxWidth: '100%',
+                                      maxHeight: '65px',
+                                      width: 'auto',
+                                      height: 'auto',
+                                      objectFit: 'contain',
+                                      opacity: 0.82,
+                                      pointerEvents: 'none',
+                                      filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            )}
 
-                        {/* OSD Signal Hijack Content (smoothly fades & expands in when hijacked) */}
-                        <div className="osd-content-inner font-mono-tech pointer-events-none select-none">
-                          {osdPhase === 'cue' ? (
-                            <div className="osd-cue-banner py-1 select-none pointer-events-none">
-                              <span className="osd-cue-beacon shrink-0" />
-                              <span className="tracking-widest uppercase font-mono-tech">[ SIGNAL OVERRIDE // DECRYPTING ]</span>
-                              <span className="animate-pulse font-mono text-[#00ff88]">▋</span>
+                            {/* OSD Signal Hijack Content (smoothly fades & expands in when hijacked) */}
+                            <div className="osd-content-inner font-mono-tech pointer-events-none select-none">
+                              {osdPhase === 'cue' ? (
+                                <div className="osd-cue-banner py-1 select-none pointer-events-none">
+                                  <span className="osd-cue-beacon shrink-0" />
+                                  <span className="tracking-widest uppercase font-mono-tech">[ SIGNAL OVERRIDE // DECRYPTING ]</span>
+                                  <span className="animate-pulse font-mono text-[#00ff88]">▋</span>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col w-full pointer-events-none select-none">
+                                  <div className="flex items-center justify-between gap-3 border-b border-emerald-500/40 pb-1 mb-1.5 text-[9px] uppercase tracking-wider text-emerald-400 font-bold select-none pointer-events-none">
+                                    <span className="flex items-center gap-1.5 pointer-events-none">
+                                      <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                                      SIGNAL HIJACK // OSD
+                                    </span>
+                                    <span className="text-[8px] text-emerald-500/80 font-mono pointer-events-none">{currentChannelName || 'SYS.BRDCST'}</span>
+                                  </div>
+                                  <div className="text-emerald-400 text-xs sm:text-sm font-bold tracking-wide leading-tight break-words osd-typewriter-text drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] pointer-events-none">
+                                    {currentOsdMessage}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          ) : (
-                            <div className="flex flex-col w-full pointer-events-none select-none">
-                              <div className="flex items-center justify-between gap-3 border-b border-emerald-500/40 pb-1 mb-1.5 text-[9px] uppercase tracking-wider text-emerald-400 font-bold select-none pointer-events-none">
-                                <span className="flex items-center gap-1.5 pointer-events-none">
-                                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                                  SIGNAL HIJACK // OSD
-                                </span>
-                                <span className="text-[8px] text-emerald-500/80 font-mono pointer-events-none">{currentChannelName || 'SYS.BRDCST'}</span>
-                              </div>
-                              <div className="text-emerald-400 text-xs sm:text-sm font-bold tracking-wide leading-tight break-words osd-typewriter-text drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] pointer-events-none">
-                                {currentOsdMessage}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                          </>
+                        )}
                       </div>
 
                       {/* Fallback channel name label when NO watermark is configured and NOT hijacked */}
-                      {!currentChannelWatermark && !osdActive && currentChannelName ? (
+                      {!currentChannelWatermark && !osdActive && !osdGlitch && currentChannelName ? (
                         <div className="absolute top-4 right-6 text-right font-['Jost',sans-serif] pointer-events-none z-[65]">
                           <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''} font-['Jost',sans-serif]`}>
                             {playlistParts.length > 1 ? (
@@ -2348,13 +2356,6 @@ export default function Home({ session }: { session: Session | null }) {
                         </div>
                       )}
                     </div>
-
-                    {/* Global OSD Glitch Injection (Unstable Signal Override) */}
-                    {osdGlitch && (
-                      <div className="osd-glitch-text pointer-events-none select-none">
-                        {osdGlitch}
-                      </div>
-                    )}
 
                     <div 
                       className={`credits-overlay ${isOn && currentVideoData && (!isPlaying || showCredits) ? 'visible' : ''} absolute bottom-6 left-6 md:bottom-8 md:left-8 z-50 space-y-1 md:space-y-1.5 ${useJosefinFont ? "!font-['Josefin_Sans',sans-serif]" : "!font-['Jost',sans-serif]"} drop-shadow-[0_2px_2px_rgba(0,0,0,1)] [text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000,2px_2px_0_#000_!important] select-none`}

@@ -788,30 +788,31 @@ iframe#yt-player {
 /* ============================================================
    GLOBAL OSD GLITCH INJECTION SYSTEM (MTV LAB SIGNAL)
    ============================================================ */
+.watermark-osd-container.has-glitch {
+  max-width: min(340px, 80%) !important;
+  width: auto !important;
+  overflow: visible !important;
+}
+
 .osd-glitch-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 65;
   font-family: 'Share Tech Mono', 'Space Mono', monospace, 'Courier New';
   font-weight: 700;
-  font-size: clamp(0.75rem, 2.2vmin, 1.35rem);
-  line-height: 1.4;
-  letter-spacing: 0.05em;
-  text-align: center;
+  font-size: clamp(0.6rem, 1.4vmin, 0.85rem);
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  text-align: right;
   white-space: pre-wrap;
   color: #FFFF00;
-  background-color: rgba(0, 0, 0, 0.88);
-  border: 2px solid #FFFF00;
+  background-color: rgba(0, 0, 0, 0.85);
+  border: 1.5px solid #FFFF00;
   border-radius: 4px;
-  padding: 0.75rem 1.25rem;
-  max-width: 85%;
+  padding: 0.35rem 0.65rem;
+  max-width: 100%;
   word-break: break-word;
   pointer-events: none !important;
   user-select: none;
-  box-shadow: 0 0 20px rgba(255, 255, 0, 0.45), inset 0 0 12px rgba(255, 255, 0, 0.25);
-  text-shadow: 0 0 8px #FFFF00, 0 0 16px rgba(255, 255, 0, 0.8), 0 0 24px rgba(255, 255, 0, 0.5);
+  box-shadow: 0 0 12px rgba(255, 255, 0, 0.4), inset 0 0 8px rgba(255, 255, 0, 0.2);
+  text-shadow: 0 0 6px #FFFF00, 0 0 12px rgba(255, 255, 0, 0.8);
   animation: osdGlitchFlicker 0.16s infinite alternate;
 }
 
