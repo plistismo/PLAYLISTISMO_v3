@@ -468,8 +468,15 @@ function onPlayerReady(event) {
 
 function onPlayerError(event) {
     console.log("YouTube Player Error:", event.data);
-    if (event.data === 150 || event.data === 101) {
-        player.nextVideo();
+    if (event.data === 150 || event.data === 101 || event.data === 100) {
+        if (player && typeof player.stopVideo === 'function') {
+            try { player.stopVideo(); } catch (e) {}
+        }
+        setTimeout(() => {
+            if (player && typeof player.nextVideo === 'function') {
+                player.nextVideo();
+            }
+        }, 900);
     }
 }
 

@@ -672,6 +672,7 @@ export default function Home({ session }: { session: Session | null }) {
   // REFS PARA CONTROLE DE API (NON-STOP)
   const playerRef = useRef<any>(null);
   const vimeoPlayerRef = useRef<any>(null);
+  const ytErrorTimeoutRef = useRef<any>(null);
   const channelListRef = useRef<any[]>([]);
   const currentIndexRef = useRef(0);
   const lastVideoIdRef = useRef<string | null>(null);
@@ -738,9 +739,13 @@ export default function Home({ session }: { session: Session | null }) {
       playerRef.current?.pauseVideo();
       if (ytWrapper) {
         ytWrapper.style.display = 'none';
+        ytWrapper.style.zIndex = '1';
+        ytWrapper.style.pointerEvents = 'none';
       }
       if (ytContainer) {
         ytContainer.style.display = 'none';
+        ytContainer.style.zIndex = '1';
+        ytContainer.style.pointerEvents = 'none';
       }
 
       // 2. Vimeo obrigatoriamente visível com 100% de largura e altura
@@ -764,16 +769,25 @@ export default function Home({ session }: { session: Session | null }) {
         vimeoPlayer.style.display = 'none';
       }
 
-      // 2. YouTube exibido normalmente com 100% de largura e altura
+      // 2. YouTube exibido normalmente com 100% de largura e altura (strict pointer-events: none e z-index: 1)
       if (ytWrapper) {
         ytWrapper.style.display = 'block';
         ytWrapper.style.width = '100%';
         ytWrapper.style.height = '100%';
+        ytWrapper.style.zIndex = '1';
+        ytWrapper.style.pointerEvents = 'none';
       }
       if (ytContainer) {
         ytContainer.style.display = 'block';
         ytContainer.style.width = '100%';
         ytContainer.style.height = '100%';
+        ytContainer.style.zIndex = '1';
+        ytContainer.style.pointerEvents = 'none';
+      }
+      const ytIframe = document.querySelector('#yt-player iframe, iframe#yt-player') as HTMLElement;
+      if (ytIframe) {
+        ytIframe.style.pointerEvents = 'none';
+        ytIframe.style.zIndex = '1';
       }
     }
   };
@@ -876,13 +890,11 @@ export default function Home({ session }: { session: Session | null }) {
     fetchGuideData();
     checkResumeState();
 
-    if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
-      document.head.appendChild(tag);
-    }
+    let checkVimeo: any = null;
 
-    window.onYouTubeIframeAPIReady = () => {
+    const initYouTubePlayer = () => {
+      if (!window.YT || !window.YT.Player) return;
+      if (playerRef.current) return;
       playerRef.current = new window.YT.Player('yt-player', {
         height: '100%', width: '100%',
         playerVars: {
@@ -908,10 +920,21 @@ export default function Home({ session }: { session: Session | null }) {
             }
           },
           'onStateChange': onPlayerStateChange,
-          'onError': () => handleVideoEnd()
+          'onError': onPlayerError
         }
       });
     };
+
+    if (window.YT && window.YT.Player) {
+      initYouTubePlayer();
+    } else {
+      window.onYouTubeIframeAPIReady = initYouTubePlayer;
+      if (!window.YT) {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+      }
+    }
 
     // Inicializa Vimeo quando o script global já tiver carregado
     // O script é carregado via index.html, então pode já estar pronto
@@ -919,15 +942,54 @@ export default function Home({ session }: { session: Session | null }) {
       initVimeoPlayer();
     } else {
       // Aguarda o script carregar (carregado via index.html)
-      const checkVimeo = setInterval(() => {
+      checkVimeo = setInterval(() => {
         if (window.Vimeo) {
           clearInterval(checkVimeo);
           initVimeoPlayer();
         }
       }, 200);
-      return () => clearInterval(checkVimeo);
     }
+
+    return () => {
+      if (checkVimeo) clearInterval(checkVimeo);
+      if (ytErrorTimeoutRef.current) {
+        clearTimeout(ytErrorTimeoutRef.current);
+        ytErrorTimeoutRef.current = null;
+      }
+    };
   }, []);
+
+  function onPlayerError(event: any) {
+    const errorCode = event?.data;
+    console.warn("YouTube Player Error (un-embeddable 101/150 or failure):", errorCode);
+
+    // 1. Force the player to stop if instance is available to cleanly resolve internal error state
+    if (playerRef.current) {
+      try {
+        if (typeof playerRef.current.stopVideo === 'function') {
+          playerRef.current.stopVideo();
+        }
+      } catch (err) {
+        console.warn("Could not stop YouTube player on error:", err);
+      }
+    }
+
+    // 2. Conditionally trigger the CRT static/noise interference effect on the top-level TV screen wrapper
+    // to visually mask the YouTube native error screen from the user
+    setShowStatic(true);
+
+    // 3. Wrap the nextVideo() (handleVideoEnd) state change function inside a setTimeout of 800ms to 1000ms (900ms)
+    // This allows the YouTube IFrame API to cleanly resolve its internal error state before React forces the re-render with the new video ID.
+    if (ytErrorTimeoutRef.current) {
+      clearTimeout(ytErrorTimeoutRef.current);
+    }
+
+    ytErrorTimeoutRef.current = setTimeout(() => {
+      handleVideoEnd();
+      setShowStatic(false);
+      ytErrorTimeoutRef.current = null;
+    }, 900);
+  }
 
   function onPlayerStateChange(event: any) {
     const YT_STATE = window.YT.PlayerState;
@@ -951,6 +1013,7 @@ export default function Home({ session }: { session: Session | null }) {
       setStatus("TUNING...");
     }
   };
+
 
   function startCreditsMonitor() {
     if (window.creditsInterval) clearInterval(window.creditsInterval);
@@ -1162,6 +1225,10 @@ export default function Home({ session }: { session: Session | null }) {
   };
 
   const loadChannelContent = async (playlistName: string, targetId: string | null = null) => {
+    if (ytErrorTimeoutRef.current) {
+      clearTimeout(ytErrorTimeoutRef.current);
+      ytErrorTimeoutRef.current = null;
+    }
     setShowStatic(true);
     setTimeout(() => setShowStatic(false), 500);
     setCurrentChannelName(playlistName);
@@ -1304,6 +1371,10 @@ export default function Home({ session }: { session: Session | null }) {
   }
 
   function handleVideoEnd() {
+    if (ytErrorTimeoutRef.current) {
+      clearTimeout(ytErrorTimeoutRef.current);
+      ytErrorTimeoutRef.current = null;
+    }
     const list = channelListRef.current;
     const currIdx = currentIndexRef.current;
     const history = playedHistoryRef.current[currentChannelName] || [];
@@ -1998,6 +2069,7 @@ export default function Home({ session }: { session: Session | null }) {
                         #yt-player iframe,
                         iframe#yt-player {
                           pointer-events: none !important;
+                          z-index: 1 !important;
                         }
                       `}</style>
                       <div
@@ -2007,6 +2079,7 @@ export default function Home({ session }: { session: Session | null }) {
                           position: 'relative',
                           width: '100%',
                           height: '100%',
+                          zIndex: 1,
                           pointerEvents: 'none',
                         }}
                       ></div>
@@ -2072,7 +2145,17 @@ export default function Home({ session }: { session: Session | null }) {
                       </div>
                     )}
 
-                    {showStatic && <div className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-100 bg-repeat active"></div>}
+                    {/* Visual Transition: CRT Static/Noise Interference Effect (Masks YouTube error & transitions) */}
+                    {showStatic && (
+                      <div
+                        className="absolute inset-0 z-[35] pointer-events-none crt-static-screen overflow-hidden"
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        <div className="vhs-noise opacity-90 pointer-events-none" />
+                        <div className="vhs-tracking pointer-events-none" />
+                        <div className="absolute inset-0 scanlines opacity-60 pointer-events-none" />
+                      </div>
+                    )}
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
                       {/* Unified Morphological Container: Watermark <-> OSD Signal Hijack */}
