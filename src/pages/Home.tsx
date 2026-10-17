@@ -128,9 +128,9 @@ export type PlaylistItem = {
   description_pt?: string | null;
   description_en?: string | null;
   description_es?: string | null;
-  osd_messages_pt?: string[] | null;
-  osd_messages_en?: string[] | null;
-  osd_messages_es?: string[] | null;
+  osd_messages_pt?: string[];
+  osd_messages_en?: string[];
+  osd_messages_es?: string[];
   marca_dagua_url?: string | null;
   marca_dagua_escala?: number | null;
   videos?: any[];
@@ -1126,7 +1126,10 @@ export default function Home({ session }: { session: Session | null }) {
   };
 
   async function fetchGuideData() {
-    const { data } = await supabase.from('playlists').select('*').order('name');
+    const { data } = await supabase
+      .from('playlists')
+      .select('*, osd_messages_pt, osd_messages_en, osd_messages_es')
+      .order('name');
     if (data) {
       setPlaylists(data);
       playlistsRef.current = data;
@@ -1176,7 +1179,7 @@ export default function Home({ session }: { session: Session | null }) {
     }
     supabase
       .from('playlists')
-      .select('*')
+      .select('*, osd_messages_pt, osd_messages_en, osd_messages_es')
       .eq('name', currentChannelName)
       .maybeSingle()
       .then(({ data }) => {
@@ -1634,12 +1637,19 @@ export default function Home({ session }: { session: Session | null }) {
                     }}
                     onChannelUpdated={() => {
                       fetchGuideData();
-                      // Re-fetch watermark for current channel
+                      // Re-fetch watermark & channel record for current channel
                       if (currentChannelName) {
-                        supabase.from('playlists').select('marca_dagua_url, marca_dagua_escala').eq('name', currentChannelName).maybeSingle()
+                        supabase
+                          .from('playlists')
+                          .select('*, osd_messages_pt, osd_messages_en, osd_messages_es')
+                          .eq('name', currentChannelName)
+                          .maybeSingle()
                           .then(({ data }) => {
-                            setCurrentChannelWatermark(data?.marca_dagua_url || null);
-                            setCurrentChannelWatermarkScale(parseScale(data?.marca_dagua_escala));
+                            if (data) {
+                              setCurrentChannelRecord(data);
+                              setCurrentChannelWatermark(data?.marca_dagua_url || null);
+                              setCurrentChannelWatermarkScale(parseScale(data?.marca_dagua_escala));
+                            }
                           });
                       }
                     }}
