@@ -1472,7 +1472,7 @@ export default function AdminPanel({
                       <div className="p-3 w-10 text-center">ID</div>
                       <div className="p-3 flex-1">ARTISTA / MÚSICA / ÁLBUM</div>
                       <div className="p-3 w-40 hidden sm:block">DETALHES (ANO/DIR)</div>
-                      <div className="p-3 w-24 text-center">AÇÃO</div>
+                      <div className="p-3 w-20 text-center">AÇÃO</div>
                     </div>
                   </div>
                   
@@ -1560,7 +1560,7 @@ export default function AdminPanel({
                                   )}
                                 </div>
                               </div>
-                              <div className="p-3 w-32 text-center flex-shrink-0 flex items-center justify-center gap-1.5">
+                              <div className="p-3 w-20 text-center flex-shrink-0 flex flex-col items-center justify-center gap-1.5">
                                 {item.video_id && (
                                   <button 
                                     type="button" 
@@ -1568,7 +1568,7 @@ export default function AdminPanel({
                                       e.stopPropagation();
                                       handleOpenOriginalSignal(item.video_id);
                                     }}
-                                    className="bg-yellow-400/90 hover:bg-yellow-300 text-black border border-yellow-400 p-2 font-mono-tech font-black transition-all uppercase text-[10px] flex items-center justify-center rounded-sm shadow-[0_0_6px_rgba(250,204,21,0.3)] hover:shadow-[0_0_10px_rgba(250,204,21,0.6)] cursor-pointer"
+                                    className="w-8 h-8 bg-yellow-400/90 hover:bg-yellow-300 text-black border border-yellow-400 font-mono-tech font-black transition-all uppercase text-[10px] flex items-center justify-center rounded-sm shadow-[0_0_6px_rgba(250,204,21,0.3)] hover:shadow-[0_0_10px_rgba(250,204,21,0.6)] cursor-pointer"
                                     title="Abrir sinal original no YouTube/Vimeo"
                                   >
                                     ↗
@@ -1586,7 +1586,7 @@ export default function AdminPanel({
                                   });
                                   setIsEditing(true);
                                   if (onEdit) onEdit(String(item.id));
-                                }} className="text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/50 p-2 font-bold transition-all uppercase text-xs flex items-center justify-center rounded-sm group/btn" title="EDIT RECORD">
+                                }} className="w-8 h-8 text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/50 font-bold transition-all uppercase text-xs flex items-center justify-center rounded-sm group/btn" title="EDIT RECORD">
                                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70 group-hover/btn:opacity-100"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 </button>
                               </div>
