@@ -1606,6 +1606,19 @@ export default function Home({ session }: { session: Session | null }) {
   const isCavityMode = isManualMode && manualZoomLevel === 1;
   const isFloatingPip = isManualMode && manualZoomLevel > 1;
 
+  const activeWatermarkUrl = currentChannelWatermark || activeChannel?.marca_dagua_url || (activeChannel as any)?.watermark_url || null;
+  const isVideoWatermark = Boolean(
+    activeWatermarkUrl && (
+      activeWatermarkUrl.toLowerCase().endsWith('.mp4') ||
+      activeWatermarkUrl.toLowerCase().endsWith('.webm') ||
+      activeWatermarkUrl.toLowerCase().endsWith('.mov') ||
+      activeWatermarkUrl.toLowerCase().endsWith('.ogg') ||
+      /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(activeWatermarkUrl)
+    )
+  );
+  const isImageWatermark = Boolean(activeWatermarkUrl && !isVideoWatermark);
+  const effectiveWatermarkScale = currentChannelWatermarkScale || parseScale(activeChannel?.marca_dagua_escala || (activeChannel as any)?.watermark_scale) || 1.0;
+
   return (
     <div className="bg-neutral-950 h-screen w-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
 
@@ -2371,59 +2384,42 @@ export default function Home({ session }: { session: Session | null }) {
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
                       {/* Unified Morphological Container: Watermark <-> OSD Signal Hijack */}
-                      <div className={`watermark-osd-container pointer-events-none select-none ${osdActive ? 'is-hijacked' : ''} ${osdGlitch ? 'has-glitch' : ''}`}>
+                      <div className={`watermark-osd-container pointer-events-none select-none ${osdActive ? 'is-hijacked' : ''} ${osdGlitch ? 'has-glitch' : ''} ${isImageWatermark && !osdGlitch && !osdActive ? 'is-image' : ''}`}>
                         {osdGlitch ? (
-                          <div className="osd-glitch-text pointer-events-none select-none">
+                          <div className="osd-glitch-text font-mono text-yellow-400 pointer-events-none select-none">
                             {osdGlitch}
                           </div>
                         ) : (
                           <>
                             {/* Static Watermark (smoothly shrinks and fades when hijacked) */}
-                            {currentChannelWatermark && (
+                            {activeWatermarkUrl && (
                               <div
                                 className="watermark-inner pointer-events-none select-none"
                                 style={{
-                                  transform: `scale(${currentChannelWatermarkScale || 1.0})`,
+                                  transform: `scale(${effectiveWatermarkScale})`,
+                                  transformOrigin: 'top right',
                                 }}
                               >
-                                {currentChannelWatermark.toLowerCase().endsWith('.mp4') ||
-                                currentChannelWatermark.toLowerCase().endsWith('.webm') ||
-                                currentChannelWatermark.toLowerCase().endsWith('.mov') ||
-                                currentChannelWatermark.toLowerCase().endsWith('.ogg') ||
-                                /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(currentChannelWatermark) ? (
+                                {isVideoWatermark ? (
                                   <video
-                                    key={currentChannelWatermark}
-                                    src={currentChannelWatermark}
+                                    key={activeWatermarkUrl}
+                                    src={activeWatermarkUrl}
                                     autoPlay
                                     loop
                                     muted
                                     playsInline
-                                    className="watermark-overlay pointer-events-none"
+                                    className="watermark-media h-[clamp(25px,4.5vmin,50px)] w-auto object-contain opacity-80 pointer-events-none"
                                     style={{
-                                      maxWidth: '100%',
-                                      maxHeight: '65px',
-                                      width: 'auto',
-                                      height: 'auto',
-                                      objectFit: 'contain',
-                                      opacity: 0.82,
-                                      pointerEvents: 'none',
                                       filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
                                     }}
                                   />
                                 ) : (
                                   <img
-                                    key={currentChannelWatermark}
-                                    src={currentChannelWatermark}
-                                    alt="marca d'água"
-                                    className="watermark-overlay pointer-events-none"
+                                    key={activeWatermarkUrl}
+                                    src={activeWatermarkUrl}
+                                    alt="watermark"
+                                    className="watermark-media h-[clamp(25px,4vmin,45px)] w-auto object-contain opacity-75 hover:opacity-100 transition-opacity pointer-events-none select-none"
                                     style={{
-                                      maxWidth: '100%',
-                                      maxHeight: '65px',
-                                      width: 'auto',
-                                      height: 'auto',
-                                      objectFit: 'contain',
-                                      opacity: 0.82,
-                                      pointerEvents: 'none',
                                       filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45))',
                                     }}
                                   />
@@ -2432,7 +2428,7 @@ export default function Home({ session }: { session: Session | null }) {
                             )}
 
                             {/* OSD Signal Hijack Content (smoothly fades & expands in when hijacked) */}
-                            <div className="osd-content-inner font-mono-tech pointer-events-none select-none">
+                            <div className={`osd-content-inner font-mono-tech pointer-events-none select-none ${!osdActive ? 'hidden' : ''}`}>
                               {osdPhase === 'cue' ? (
                                 <div className="osd-cue-banner py-1 select-none pointer-events-none">
                                   <span className="osd-cue-beacon shrink-0" />
@@ -2459,7 +2455,7 @@ export default function Home({ session }: { session: Session | null }) {
                       </div>
 
                       {/* Fallback channel name label when NO watermark is configured and NOT hijacked */}
-                      {!currentChannelWatermark && !osdActive && !osdGlitch && currentChannelName ? (
+                      {!activeWatermarkUrl && !osdActive && !osdGlitch && currentChannelName ? (
                         <div className="absolute top-4 right-6 text-right font-['Jost',sans-serif] pointer-events-none z-[65]">
                           <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''} font-['Jost',sans-serif]`}>
                             {playlistParts.length > 1 ? (
