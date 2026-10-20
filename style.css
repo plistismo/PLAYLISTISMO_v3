@@ -1238,3 +1238,38 @@ iframe#yt-player {
     border-color: #fbbf24;
     box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
 }
+
+/* ============================================================
+   ID STUDIO — PROCEDURAL GENERATIVE WATERMARK ANIMATIONS
+   ============================================================ */
+@keyframes idStudioSlowFlicker {
+    0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px currentColor); }
+    42% { opacity: 1; }
+    43% { opacity: 0.35; filter: none; }
+    44% { opacity: 0.9; }
+    76% { opacity: 1; }
+    77% { opacity: 0.2; }
+    78% { opacity: 1; }
+    91% { opacity: 0.8; }
+    92% { opacity: 0.4; }
+    93% { opacity: 1; }
+}
+
+.id-studio-anim-flicker {
+    animation: idStudioSlowFlicker 3.2s infinite ease-in-out;
+}
+
+@keyframes idStudioVhsTracking {
+    0% { transform: translateY(0) skewX(0deg); }
+    25% { transform: translateY(-1.5px) skewX(-1.5deg); }
+    27% { transform: translateY(1.5px) skewX(2deg); }
+    29% { transform: translateY(0) skewX(0deg); }
+    70% { transform: translateY(0) skewX(0deg); }
+    72% { transform: translateY(-2px) skewX(-2.5deg); }
+    74% { transform: translateY(2px) skewX(1.8deg); }
+    76% { transform: translateY(0) skewX(0deg); }
+}
+
+.id-studio-anim-vhs {
+    animation: idStudioVhsTracking 2.6s infinite ease-in-out;
+}

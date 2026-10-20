@@ -133,6 +133,7 @@ export type PlaylistItem = {
   osd_messages_es?: string[];
   marca_dagua_url?: string | null;
   marca_dagua_escala?: number | null;
+  watermark_config?: any;
   videos?: any[];
   [key: string]: any;
 };
@@ -481,6 +482,7 @@ export default function Home({ session }: { session: Session | null }) {
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [currentChannelWatermark, setCurrentChannelWatermark] = useState<string | null>(null);
   const [currentChannelWatermarkScale, setCurrentChannelWatermarkScale] = useState<number>(1.0);
+  const [currentChannelWatermarkConfig, setCurrentChannelWatermarkConfig] = useState<any>(null);
 
   // ── Multi-Language & OSD Signal Hijack State (Part 1 & Part 2) ──
   const [activeLang, setActiveLang] = useState<'pt' | 'en' | 'es'>('pt');
@@ -1251,6 +1253,7 @@ export default function Home({ session }: { session: Session | null }) {
     if (!currentChannelName) {
       setCurrentChannelWatermark(null);
       setCurrentChannelWatermarkScale(1.0);
+      setCurrentChannelWatermarkConfig(null);
       setCurrentChannelRecord(null);
       return;
     }
@@ -1264,10 +1267,12 @@ export default function Home({ session }: { session: Session | null }) {
           setCurrentChannelRecord(data);
           setCurrentChannelWatermark(data.marca_dagua_url || null);
           setCurrentChannelWatermarkScale(parseScale(data.marca_dagua_escala));
+          setCurrentChannelWatermarkConfig(data.watermark_config || null);
         } else {
           setCurrentChannelRecord(null);
           setCurrentChannelWatermark(null);
           setCurrentChannelWatermarkScale(1.0);
+          setCurrentChannelWatermarkConfig(null);
         }
       });
   }, [currentChannelName]);
@@ -1606,6 +1611,19 @@ export default function Home({ session }: { session: Session | null }) {
   const isCavityMode = isManualMode && manualZoomLevel === 1;
   const isFloatingPip = isManualMode && manualZoomLevel > 1;
 
+  const activeWatermarkConfig = useMemo(() => {
+    const raw = currentChannelWatermarkConfig || activeChannel?.watermark_config;
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+    return raw;
+  }, [currentChannelWatermarkConfig, activeChannel?.watermark_config]);
+
   const activeWatermarkUrl = currentChannelWatermark || activeChannel?.marca_dagua_url || (activeChannel as any)?.watermark_url || null;
   const isVideoWatermark = Boolean(
     activeWatermarkUrl && (
@@ -1617,6 +1635,7 @@ export default function Home({ session }: { session: Session | null }) {
     )
   );
   const isImageWatermark = Boolean(activeWatermarkUrl && !isVideoWatermark);
+  const isGenerativeWatermark = Boolean(activeWatermarkConfig);
   const effectiveWatermarkScale = currentChannelWatermarkScale || parseScale(activeChannel?.marca_dagua_escala || (activeChannel as any)?.watermark_scale) || 1.0;
 
   return (
@@ -1739,6 +1758,7 @@ export default function Home({ session }: { session: Session | null }) {
                               setCurrentChannelRecord(data);
                               setCurrentChannelWatermark(data?.marca_dagua_url || null);
                               setCurrentChannelWatermarkScale(parseScale(data?.marca_dagua_escala));
+                              setCurrentChannelWatermarkConfig(data?.watermark_config || null);
                             }
                           });
                       }
@@ -2227,6 +2247,86 @@ export default function Home({ session }: { session: Session | null }) {
                   <div className={`relative w-full h-full overflow-hidden bg-black ${
                     isManualMode ? 'rounded-xl' : 'rounded-[16px] md:rounded-[40px]'
                   } ${isOn ? 'crt-turn-on' : ''}`}>
+                    {/* SVG Optical Filters for Generative Channel Watermarks */}
+                    <svg className="hidden absolute w-0 h-0 pointer-events-none" aria-hidden="true" style={{ width: 0, height: 0, position: 'absolute' }}>
+                      <defs>
+                        {/* 1. rgb-split: using <feOffset> and <feMerge> to shift Red and Blue channels */}
+                        <filter id="rgb-split" x="-20%" y="-20%" width="140%" height="140%">
+                          <feColorMatrix
+                            in="SourceGraphic"
+                            type="matrix"
+                            values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
+                            result="red"
+                          />
+                          <feOffset in="red" dx="-4" dy="0" result="red-offset" />
+                          <feColorMatrix
+                            in="SourceGraphic"
+                            type="matrix"
+                            values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
+                            result="green"
+                          />
+                          <feColorMatrix
+                            in="SourceGraphic"
+                            type="matrix"
+                            values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
+                            result="blue"
+                          />
+                          <feOffset in="blue" dx="4" dy="0" result="blue-offset" />
+                          <feBlend in="red-offset" in2="green" mode="screen" result="rg" />
+                          <feBlend in="rg" in2="blue-offset" mode="screen" result="rgb" />
+                          <feMerge>
+                            <feMergeNode in="rgb" />
+                            <feMergeNode in="SourceGraphic" opacity="0.35" />
+                          </feMerge>
+                        </filter>
+
+                        {/* 2. heavy-glitch: using <feTurbulence> and <feDisplacementMap> */}
+                        <filter id="heavy-glitch" x="-20%" y="-20%" width="140%" height="140%">
+                          <feTurbulence type="fractalNoise" baseFrequency="0.04 0.95" numOctaves={2} result="noise" />
+                          <feDisplacementMap
+                            in="SourceGraphic"
+                            in2="noise"
+                            scale="18"
+                            xChannelSelector="R"
+                            yChannelSelector="G"
+                            result="displaced"
+                          />
+                          <feMerge>
+                            <feMergeNode in="displaced" />
+                          </feMerge>
+                        </filter>
+
+                        {/* 3. liquid-morph: using <feGaussianBlur> and <feColorMatrix> */}
+                        <filter id="liquid-morph" x="-20%" y="-20%" width="140%" height="140%">
+                          <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+                          <feColorMatrix
+                            in="blur"
+                            type="matrix"
+                            values="1 0 0 0 0
+                                    0 1 0 0 0
+                                    0 0 1 0 0
+                                    0 0 0 20 -8"
+                            result="goo"
+                          />
+                          <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+                        </filter>
+
+                        {/* 4. data-mosh: using <feTurbulence> and <feDisplacementMap> */}
+                        <filter id="data-mosh" x="-20%" y="-20%" width="140%" height="140%">
+                          <feTurbulence type="turbulence" baseFrequency="0.08 0.02" numOctaves={3} result="moshNoise" />
+                          <feDisplacementMap in="SourceGraphic" in2="moshNoise" scale="22" xChannelSelector="B" yChannelSelector="R" result="moshed" />
+                          <feColorMatrix
+                            in="moshed"
+                            type="matrix"
+                            values="1.2 0 0 0 0
+                                    0 0.9 0 0 0
+                                    0 0 1.3 0 0
+                                    0 0 0 1 0"
+                          />
+                        </filter>
+                      </defs>
+                    </svg>
+
                     {/* YouTube Player Wrapper (Visual Shield: pointer-events-none completely blocks iframe hover bug) */}
                     <div
                       id="yt-player-wrapper"
@@ -2384,15 +2484,61 @@ export default function Home({ session }: { session: Session | null }) {
 
                     <div className="absolute inset-0 z-[60] pointer-events-none" style={{ opacity: isOn ? 1 : 0 }}>
                       {/* Unified Morphological Container: Watermark <-> OSD Signal Hijack */}
-                      <div className={`watermark-osd-container pointer-events-none select-none ${osdActive ? 'is-hijacked' : ''} ${osdGlitch ? 'has-glitch' : ''} ${isImageWatermark && !osdGlitch && !osdActive ? 'is-image' : ''}`}>
+                      <div className={`watermark-osd-container pointer-events-none select-none ${osdActive ? 'is-hijacked' : ''} ${osdGlitch ? 'has-glitch' : ''} ${(isImageWatermark || isGenerativeWatermark) && !osdGlitch && !osdActive ? 'is-image' : ''}`}>
                         {osdGlitch ? (
                           <div className="osd-glitch-text font-mono text-yellow-400 pointer-events-none select-none">
                             {osdGlitch}
                           </div>
                         ) : (
                           <>
-                            {/* Static Watermark (smoothly shrinks and fades when hijacked) */}
-                            {activeWatermarkUrl && (
+                            {/* Generative Procedural Watermark (ID Studio Recipe) */}
+                            {activeWatermarkConfig ? (
+                              <div
+                                className="watermark-inner pointer-events-none select-none"
+                                style={{
+                                  transform: `scale(${effectiveWatermarkScale})`,
+                                  transformOrigin: 'top right',
+                                  overflow: 'visible',
+                                }}
+                              >
+                                <div
+                                  className={`id-studio-watermark select-none text-right font-black tracking-wider leading-none uppercase ${
+                                    activeWatermarkConfig.blendMode?.startsWith('mix-blend-')
+                                      ? activeWatermarkConfig.blendMode
+                                      : `mix-blend-${activeWatermarkConfig.blendMode || 'normal'}`
+                                  } ${
+                                    activeWatermarkConfig.fontFamily === 'font-sans'
+                                      ? "font-sans font-['Jost',sans-serif]"
+                                      : activeWatermarkConfig.fontFamily === 'font-serif'
+                                      ? 'font-serif'
+                                      : "font-mono font-['Space_Mono',monospace]"
+                                  } ${
+                                    activeWatermarkConfig.animation === 'slow-flicker'
+                                      ? 'id-studio-anim-flicker'
+                                      : activeWatermarkConfig.animation === 'vhs-tracking'
+                                      ? 'id-studio-anim-vhs'
+                                      : ''
+                                  }`}
+                                  style={{
+                                    color: activeWatermarkConfig.primaryColor || '#FFFF00',
+                                    mixBlendMode: (activeWatermarkConfig.blendMode || 'normal').replace('mix-blend-', '') as any,
+                                    filter: activeWatermarkConfig.svgFilter && activeWatermarkConfig.svgFilter !== 'none'
+                                      ? `url(#${activeWatermarkConfig.svgFilter})`
+                                      : undefined,
+                                  }}
+                                >
+                                  <div className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-widest leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
+                                    {activeWatermarkConfig.textPrimary || ' '}
+                                  </div>
+                                  {activeWatermarkConfig.textSecondary && (
+                                    <div className="text-xs sm:text-sm md:text-base font-semibold tracking-wider leading-tight opacity-90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] mt-0.5">
+                                      {activeWatermarkConfig.textSecondary}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : activeWatermarkUrl ? (
+                              /* Static Media Watermark (smoothly shrinks and fades when hijacked) */
                               <div
                                 className="watermark-inner pointer-events-none select-none"
                                 style={{
@@ -2425,7 +2571,7 @@ export default function Home({ session }: { session: Session | null }) {
                                   />
                                 )}
                               </div>
-                            )}
+                            ) : null}
 
                             {/* OSD Signal Hijack Content (smoothly fades & expands in when hijacked) */}
                             <div className={`osd-content-inner font-mono-tech pointer-events-none select-none ${!osdActive ? 'hidden' : ''}`}>
@@ -2455,7 +2601,7 @@ export default function Home({ session }: { session: Session | null }) {
                       </div>
 
                       {/* Fallback channel name label when NO watermark is configured and NOT hijacked */}
-                      {!activeWatermarkUrl && !osdActive && !osdGlitch && currentChannelName ? (
+                      {!activeWatermarkConfig && !activeWatermarkUrl && !osdActive && !osdGlitch && currentChannelName ? (
                         <div className="absolute top-4 right-6 text-right font-['Jost',sans-serif] pointer-events-none z-[65]">
                           <div className={`osd-futuristic visible ${setupBump.bumpClass} ${currentChannelName.length > 20 ? 'osd-compact' : ''} font-['Jost',sans-serif]`}>
                             {playlistParts.length > 1 ? (

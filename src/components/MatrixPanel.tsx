@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { Virtuoso } from 'react-virtuoso';
 import { sanitizeHTML } from '../lib/sanitize.ts';
-import IdStudio from './IdStudio.tsx';
+import IdStudio, { IdStudioConfig } from './IdStudio.tsx';
 
 // ─── Normalização de Texto (Ignora acentos e maiúsculas/minúsculas) ─────────
 export const normalizarTexto = (str: any): string => {
@@ -91,6 +91,7 @@ export type ChannelEntry = {
   osd_messages_es?: string[] | null;
   marca_dagua_url?: string;
   marca_dagua_escala?: number;
+  watermark_config?: IdStudioConfig | any;
 };
 
 // ─── OSD Helpers (Parse linebreaks and format) ─────────────────────────────
@@ -197,6 +198,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
   const [watermarkFile, setWatermarkFile] = useState<File | null>(null);
   const [currentWatermarkUrl, setCurrentWatermarkUrl] = useState('');
   const [watermarkScale, setWatermarkScale] = useState<number>(1.0);
+  const [formWatermarkConfig, setFormWatermarkConfig] = useState<IdStudioConfig | null>(null);
   const [isSavingChannel, setIsSavingChannel] = useState(false);
   const [isNewChannel, setIsNewChannel] = useState(false);
   const [existingGroups, setExistingGroups] = useState<string[]>([]);
@@ -292,6 +294,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
 
     setCurrentWatermarkUrl(ch.marca_dagua_url || '');
     setWatermarkScale(parseChannelScale(ch.marca_dagua_escala));
+    setFormWatermarkConfig(ch.watermark_config || null);
     setWatermarkFile(null);
     setIsNewChannel(false);
     setVideoSearch('');
@@ -317,6 +320,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     setFormOsdEs('');
     setCurrentWatermarkUrl('');
     setWatermarkScale(1.0);
+    setFormWatermarkConfig(null);
     setWatermarkFile(null);
     setIsNewChannel(true);
     setVideos([]);
@@ -464,12 +468,13 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
       osd_messages_es: osdEsArray,
       marca_dagua_url: watermarkUrl || null,
       marca_dagua_escala: Number(watermarkScale) || 1.0,
+      watermark_config: formWatermarkConfig || null,
     };
 
     if (isNewChannel) {
       const { data, error } = await supabase.from('playlists').insert([payload]).select().single();
       if (error) {
-        if (error.message?.includes('column') && (error.message.includes('description_') || error.message.includes('osd_messages_'))) {
+        if (error.message?.includes('column') && (error.message.includes('description_') || error.message.includes('osd_messages_') || error.message.includes('watermark_config'))) {
           showChannelMsg(`ERRO: Execute a migration SQL no Supabase para criar as novas colunas! (${error.message})`, true);
         } else {
           showChannelMsg(`ERRO: ${error.message}`, true);
@@ -494,7 +499,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
         .eq('id', canalAtualId);
 
       if (error) {
-        if (error.message?.includes('column') && (error.message.includes('description_') || error.message.includes('osd_messages_'))) {
+        if (error.message?.includes('column') && (error.message.includes('description_') || error.message.includes('osd_messages_') || error.message.includes('watermark_config'))) {
           showChannelMsg(`ERRO: Execute a migration SQL no Supabase para criar as novas colunas! (${error.message})`, true);
         } else {
           showChannelMsg(`ERRO: ${error.message}`, true);
@@ -521,6 +526,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
           osd_messages_es: osdEsArray,
           marca_dagua_url: watermarkUrl || undefined,
           marca_dagua_escala: Number(watermarkScale) || 1.0,
+          watermark_config: formWatermarkConfig || undefined,
         };
 
         // 1. Atualiza imediatamente a lista local da sidebar esquerda sem F5
@@ -1211,6 +1217,36 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
                   <span>3.0x</span>
                 </div>
 
+                {/* Status da Marca D'água Procedural (ID Studio) */}
+                {formWatermarkConfig && (
+                  <div className="mt-2.5 p-2.5 bg-yellow-400/10 border border-yellow-400/30 rounded text-xs space-y-1.5 font-mono">
+                    <div className="flex items-center justify-between">
+                      <span className="text-yellow-400 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
+                        <span>⚡</span>
+                        <span>ID STUDIO CONFIG ATIVA</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setFormWatermarkConfig(null)}
+                        className="text-[10px] text-red-400 hover:text-red-300 transition-colors"
+                        title="Remover marca procedural (volta para estática/padrão)"
+                      >
+                        ✕ Remover
+                      </button>
+                    </div>
+                    <div className="text-[11px] text-white/90">
+                      ID: <strong style={{ color: formWatermarkConfig.primaryColor }}>{formWatermarkConfig.textPrimary} {formWatermarkConfig.textSecondary}</strong>
+                    </div>
+                    <div className="text-[9px] text-white/50 flex flex-wrap gap-2">
+                      <span>Cor: {formWatermarkConfig.primaryColor}</span>
+                      <span>Fonte: {formWatermarkConfig.fontFamily}</span>
+                      <span>Filtro: {formWatermarkConfig.svgFilter}</span>
+                      <span>Blend: {formWatermarkConfig.blendMode}</span>
+                      <span>Anim: {formWatermarkConfig.animation}</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* ID Studio Visual Builder Shortcut */}
                 <button
                   type="button"
@@ -1219,7 +1255,7 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
                   title="Abrir estúdio visual para criação de marca d'água procedural"
                 >
                   <span className="text-yellow-400 font-bold">⚡</span>
-                  <span>ABRIR NO ID STUDIO (VISUAL BUILDER)</span>
+                  <span>{formWatermarkConfig ? 'EDITAR NO ID STUDIO' : 'CRIAR NO ID STUDIO (BUILDER)'}</span>
                 </button>
               </div>
 
@@ -1453,8 +1489,15 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
     </div>
         ) : (
           <IdStudio
-            initialPrimaryText={formTitle ? formTitle.split(':')[0].trim() : (selectedChannel?.name ? selectedChannel.name.split(':')[0].trim() : 'NEW')}
-            initialSecondaryText={formTitle && formTitle.includes(':') ? formTitle.split(':')[1].trim() : (selectedChannel?.name && selectedChannel.name.includes(':') ? selectedChannel.name.split(':')[1].trim() : 'CHANNEL')}
+            initialPrimaryText={formWatermarkConfig?.textPrimary || (formTitle ? formTitle.split(':')[0].trim() : (selectedChannel?.name ? selectedChannel.name.split(':')[0].trim() : 'NEW'))}
+            initialSecondaryText={formWatermarkConfig?.textSecondary !== undefined ? formWatermarkConfig.textSecondary : (formTitle && formTitle.includes(':') ? formTitle.split(':')[1].trim() : (selectedChannel?.name && selectedChannel.name.includes(':') ? selectedChannel.name.split(':')[1].trim() : 'CHANNEL'))}
+            initialConfig={formWatermarkConfig}
+            channelName={formTitle || selectedChannel?.name}
+            onApplyToChannel={(newConfig) => {
+              setFormWatermarkConfig(newConfig);
+              setActiveMainTab('channels');
+              showChannelMsg(`CONFIGURAÇÃO DO ID STUDIO APLICADA AO CANAL! CLIQUE EM SALVAR PARA GRAVAR.`);
+            }}
             onBackToMatrix={() => setActiveMainTab('channels')}
           />
         )}

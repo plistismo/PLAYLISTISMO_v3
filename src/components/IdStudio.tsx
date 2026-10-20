@@ -7,30 +7,36 @@ export interface IdStudioConfig {
   fontFamily: 'font-mono' | 'font-sans' | 'font-serif';
   primaryColor: string;
   blendMode: 'mix-blend-normal' | 'mix-blend-difference' | 'mix-blend-overlay' | 'normal' | 'difference' | 'overlay';
-  svgFilter: 'none' | 'rgb-split' | 'liquid-morph' | 'heavy-glitch';
+  svgFilter: 'none' | 'rgb-split' | 'liquid-morph' | 'heavy-glitch' | 'data-mosh';
   animation: 'none' | 'slow-flicker' | 'vhs-tracking';
 }
 
 interface IdStudioProps {
   initialPrimaryText?: string;
   initialSecondaryText?: string;
+  initialConfig?: Partial<IdStudioConfig> | null;
+  channelName?: string;
+  onApplyToChannel?: (config: IdStudioConfig) => void;
   onBackToMatrix?: () => void;
 }
 
 export default function IdStudio({
   initialPrimaryText = 'NEW',
   initialSecondaryText = 'CHANNEL',
+  initialConfig,
+  channelName,
+  onApplyToChannel,
   onBackToMatrix,
 }: IdStudioProps) {
   // ── Local Watermark Configuration Recipe State ─────────────────────────────
   const [idConfig, setIdConfig] = useState<IdStudioConfig>({
-    textPrimary: initialPrimaryText || 'NEW',
-    textSecondary: initialSecondaryText || 'CHANNEL',
-    fontFamily: 'font-mono', // options: font-mono, font-sans (Jost), font-serif
-    primaryColor: '#FFFF00',
-    blendMode: 'mix-blend-normal', // options: normal, difference, overlay
-    svgFilter: 'none', // options: none, rgb-split, liquid-morph, heavy-glitch
-    animation: 'none', // options: none, slow-flicker, vhs-tracking
+    textPrimary: initialConfig?.textPrimary || initialPrimaryText || 'NEW',
+    textSecondary: initialConfig?.textSecondary !== undefined ? initialConfig.textSecondary : (initialSecondaryText || 'CHANNEL'),
+    fontFamily: initialConfig?.fontFamily || 'font-mono',
+    primaryColor: initialConfig?.primaryColor || '#FFFF00',
+    blendMode: initialConfig?.blendMode || 'mix-blend-normal',
+    svgFilter: initialConfig?.svgFilter || 'none',
+    animation: initialConfig?.animation || 'none',
   });
 
   // UI state for additional testing / conveniences
@@ -154,6 +160,16 @@ export default function IdStudio({
             <span className="text-xs font-mono font-bold text-yellow-400 animate-pulse">
               ✓ {copyFeedback}
             </span>
+          )}
+          {onApplyToChannel && (
+            <button
+              onClick={() => onApplyToChannel(idConfig)}
+              className="px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider bg-yellow-400 text-black hover:bg-yellow-300 rounded shadow-[0_0_12px_rgba(255,255,0,0.4)] transition-all flex items-center gap-1.5"
+              title={channelName ? `Aplicar configuração ao canal "${channelName}"` : 'Aplicar configuração ao canal'}
+            >
+              <span>💾</span>
+              <span>APLICAR AO CANAL</span>
+            </button>
           )}
           <button
             onClick={handleCopyRecipe}
@@ -335,6 +351,7 @@ export default function IdStudio({
                   <option value="rgb-split">rgb-split (Chromatic Aberration / feOffset + feMerge)</option>
                   <option value="liquid-morph">liquid-morph (Gooey Threshold / feGaussianBlur + feColorMatrix)</option>
                   <option value="heavy-glitch">heavy-glitch (Broadcast Tear / feTurbulence + feDisplacementMap)</option>
+                  <option value="data-mosh">data-mosh (Glitch Displace / feTurbulence + feDisplacementMap)</option>
                 </select>
               </div>
 
@@ -666,6 +683,20 @@ export default function IdStudio({
                       result="goo"
                     />
                     <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+                  </filter>
+
+                  {/* 4. data-mosh: using <feTurbulence> and <feDisplacementMap> */}
+                  <filter id="data-mosh" x="-20%" y="-20%" width="140%" height="140%">
+                    <feTurbulence type="turbulence" baseFrequency="0.08 0.02" numOctaves={3} result="moshNoise" />
+                    <feDisplacementMap in="SourceGraphic" in2="moshNoise" scale="22" xChannelSelector="B" yChannelSelector="R" result="moshed" />
+                    <feColorMatrix
+                      in="moshed"
+                      type="matrix"
+                      values="1.2 0 0 0 0
+                              0 0.9 0 0 0
+                              0 0 1.3 0 0
+                              0 0 0 1 0"
+                    />
                   </filter>
                 </defs>
               </svg>

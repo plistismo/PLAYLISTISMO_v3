@@ -42,3 +42,9 @@ UPDATE playlists
   SET description_pt = descricao
   WHERE (description_pt IS NULL OR description_pt = '')
     AND (descricao IS NOT NULL AND descricao != '');
+
+-- 5. Generative Watermark Recipe Configuration (ID Studio)
+-- Armazena o JSON completo da receita procedural gerada no ID Studio
+ALTER TABLE playlists
+  ADD COLUMN IF NOT EXISTS watermark_config JSONB;
+
