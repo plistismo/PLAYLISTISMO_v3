@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.ts';
 import { Session } from '@supabase/supabase-js';
 import { Virtuoso } from 'react-virtuoso';
 import { sanitizeHTML } from '../lib/sanitize.ts';
+import IdStudio from './IdStudio.tsx';
 
 // ─── Normalização de Texto (Ignora acentos e maiúsculas/minúsculas) ─────────
 export const normalizarTexto = (str: any): string => {
@@ -169,6 +170,8 @@ interface MatrixPanelProps {
 }
 
 export default function MatrixPanel({ session, currentChannelName, onEditVideo, onChannelUpdated }: MatrixPanelProps) {
+  // ── Main Tab Navigation (Channels & Curation vs ID Studio) ──
+  const [activeMainTab, setActiveMainTab] = useState<'channels' | 'id_studio'>('channels');
 
   // ── Channel list state ──
   const [channels, setChannels] = useState<ChannelEntry[]>([]);
@@ -619,7 +622,51 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="matrix-panel flex h-full font-jost">
+    <div className="flex flex-col h-full font-jost overflow-hidden">
+      {/* ── Top Navigation Bar: Channels & Curation vs ID Studio ── */}
+      <div className="shrink-0 flex items-center justify-between px-5 py-2.5 bg-[#010805] border-b border-matrix-border/30 select-none">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('channels')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold uppercase tracking-widest transition-all rounded-sm border ${
+              activeMainTab === 'channels'
+                ? 'bg-matrix-accent/15 border-matrix-accent text-matrix-accent shadow-[0_0_10px_rgba(0,255,136,0.25)]'
+                : 'bg-black/40 border-matrix-border/20 text-white/50 hover:text-white/80 hover:border-matrix-border/50'
+            }`}
+          >
+            <span>⬡</span>
+            <span>CANAIS & CURADORIA</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('id_studio')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold uppercase tracking-widest transition-all rounded-sm border ${
+              activeMainTab === 'id_studio'
+                ? 'bg-yellow-400/20 border-yellow-400 text-yellow-300 shadow-[0_0_12px_rgba(255,255,0,0.3)]'
+                : 'bg-black/40 border-matrix-border/20 text-white/50 hover:text-yellow-400/90 hover:border-yellow-400/40'
+            }`}
+          >
+            <span className="text-yellow-400">⚡</span>
+            <span>ID STUDIO</span>
+            <span className="text-[9px] px-1.5 py-0.2 bg-yellow-400/20 text-yellow-300 rounded font-mono border border-yellow-400/30 hidden sm:inline">
+              VISUAL BUILDER
+            </span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 text-[10px] font-mono text-matrix-label/40 uppercase tracking-widest hidden md:flex">
+          <span>MATRIX ADMIN AREA</span>
+          <span>•</span>
+          <span className="text-yellow-400/70">SAFE MODE</span>
+        </div>
+      </div>
+
+      {/* ── Main Workspace Content ── */}
+      <div className="flex-1 overflow-hidden">
+        {activeMainTab === 'channels' ? (
+          <div className="matrix-panel flex h-full font-jost">
 
       {/* ══════════════════════════════════════════════════════════
           SIDEBAR ESQUERDA — CHANNEL EDITOR
@@ -1163,6 +1210,17 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
                   <span>1.0x (padrão)</span>
                   <span>3.0x</span>
                 </div>
+
+                {/* ID Studio Visual Builder Shortcut */}
+                <button
+                  type="button"
+                  onClick={() => setActiveMainTab('id_studio')}
+                  className="w-full mt-3 py-2 px-3 text-[11px] font-mono font-bold uppercase tracking-wider bg-yellow-400/10 border border-yellow-400/40 text-yellow-300 hover:bg-yellow-400/20 hover:border-yellow-400 transition-all flex items-center justify-center gap-2 rounded-sm"
+                  title="Abrir estúdio visual para criação de marca d'água procedural"
+                >
+                  <span className="text-yellow-400 font-bold">⚡</span>
+                  <span>ABRIR NO ID STUDIO (VISUAL BUILDER)</span>
+                </button>
               </div>
 
               {/* Action Buttons */}
@@ -1392,6 +1450,15 @@ export default function MatrixPanel({ session, currentChannelName, onEditVideo, 
           </div>
         )}
       </section>
+    </div>
+        ) : (
+          <IdStudio
+            initialPrimaryText={formTitle ? formTitle.split(':')[0].trim() : (selectedChannel?.name ? selectedChannel.name.split(':')[0].trim() : 'NEW')}
+            initialSecondaryText={formTitle && formTitle.includes(':') ? formTitle.split(':')[1].trim() : (selectedChannel?.name && selectedChannel.name.includes(':') ? selectedChannel.name.split(':')[1].trim() : 'CHANNEL')}
+            onBackToMatrix={() => setActiveMainTab('channels')}
+          />
+        )}
+      </div>
     </div>
   );
 }
