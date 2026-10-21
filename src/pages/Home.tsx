@@ -1789,17 +1789,51 @@ export default function Home({ session }: { session: Session | null }) {
                   : 'max-h-0 opacity-0 mb-0 -translate-y-6 pointer-events-none'
               }`}
             >
-              <div className="bg-neutral-950/95 backdrop-blur-md border border-neutral-800 border-b-2 border-b-amber-500/40 rounded-2xl p-2 md:p-3 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_1px_1px_rgba(245,158,11,0.18)] relative font-jost max-h-[50vh] flex flex-col overflow-hidden">
+              {/* Shell PCB: Solid dark board #0d120f with double border & 4 corner screws */}
+              <div className="pcb-routing-form pcb-shell relative bg-[#0d120f] border-2 border-[#22382c] rounded-2xl p-2 md:p-3 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_0_20px_rgba(0,0,0,0.85)] max-h-[50vh] flex flex-col overflow-hidden">
                 
+                {/* Inner double border (thin neon green line inset) */}
+                <div className="absolute inset-1.5 md:inset-2 pointer-events-none rounded-xl border border-[#7de87d]/40 z-10" />
+
+                {/* 4 Precision PCB Corner Screws */}
+                <div className="absolute top-2 left-2 z-20 pointer-events-none" title="Mounting Screw TL">
+                  <div className="w-3.5 h-3.5 rounded-full border border-[#3e5b47] bg-[#080d09] flex items-center justify-center shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+                    <div className="w-2 h-2 rounded-full border border-[#527a5e] bg-[#142017] flex items-center justify-center">
+                      <div className="w-1.5 h-[1px] bg-[#7de87d]/80 rounded-[0.5px]"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute top-2 right-2 z-20 pointer-events-none" title="Mounting Screw TR">
+                  <div className="w-3.5 h-3.5 rounded-full border border-[#3e5b47] bg-[#080d09] flex items-center justify-center shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+                    <div className="w-2 h-2 rounded-full border border-[#527a5e] bg-[#142017] flex items-center justify-center">
+                      <div className="w-1.5 h-[1px] bg-[#7de87d]/80 rounded-[0.5px]"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bottom-2 left-2 z-20 pointer-events-none" title="Mounting Screw BL">
+                  <div className="w-3.5 h-3.5 rounded-full border border-[#3e5b47] bg-[#080d09] flex items-center justify-center shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+                    <div className="w-2 h-2 rounded-full border border-[#527a5e] bg-[#142017] flex items-center justify-center">
+                      <div className="w-1.5 h-[1px] bg-[#7de87d]/80 rounded-[0.5px]"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="absolute bottom-2 right-2 z-20 pointer-events-none" title="Mounting Screw BR">
+                  <div className="w-3.5 h-3.5 rounded-full border border-[#3e5b47] bg-[#080d09] flex items-center justify-center shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+                    <div className="w-2 h-2 rounded-full border border-[#527a5e] bg-[#142017] flex items-center justify-center">
+                      <div className="w-1.5 h-[1px] bg-[#7de87d]/80 rounded-[0.5px]"></div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Header Visor do Hardware */}
-                <div className="flex items-center justify-between border-b border-amber-500/40 pb-1.5 mb-2 shrink-0">
+                <div className="flex items-center justify-between border-b border-[#7de87d]/35 pb-1.5 mb-2 shrink-0 px-2 relative z-20">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse"></span>
-                    <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.25em] text-amber-300 font-jost">
+                    <span className="w-2 h-2 rounded-full bg-[#ffcc00] shadow-[0_0_8px_#ffcc00] animate-pulse"></span>
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.25em] text-[#ffcc00] font-jost">
                       SERVICE MODE // {adminEditId ? `EDIT UNIT #${adminEditId}` : 'NEW UNIT CALIBRATION'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2 md:gap-2.5">
                     {/* Bypass Button: Abrir Sinal Original */}
                     {currentVideoData?.video_id && (
                       <button
@@ -1811,7 +1845,7 @@ export default function Home({ session }: { session: Session | null }) {
                           const url = isVimeo ? `https://vimeo.com/${vid}` : `https://www.youtube.com/watch?v=${vid}`;
                           window.open(url, '_blank');
                         }}
-                        className="bg-yellow-400 hover:bg-yellow-300 text-black border border-yellow-300 px-2.5 py-1 rounded-sm font-mono-tech font-black text-[9px] md:text-[10px] uppercase tracking-wider shadow-[0_0_10px_rgba(250,204,21,0.4)] hover:shadow-[0_0_14px_rgba(250,204,21,0.6)] active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                        className="bg-[#ffcc00] hover:bg-[#ffe040] text-black border border-[#ffcc00] px-2.5 py-0.5 rounded-sm font-mono-tech font-black text-[9px] md:text-[10px] uppercase tracking-wider shadow-[0_0_10px_rgba(255,204,0,0.4)] hover:shadow-[0_0_14px_rgba(255,204,0,0.6)] active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
                         title="Abrir sinal original na plataforma externa (YouTube / Vimeo) para extração de metadados"
                       >
                         <span className="text-[10px]">↗</span>
@@ -1820,8 +1854,8 @@ export default function Home({ session }: { session: Session | null }) {
                     )}
 
                     {/* Auto-Fetch Metadata Toggle */}
-                    <div className="flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded border border-amber-900/40 font-jost">
-                      <label htmlFor="toggle-autofetch-drawer" className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
+                    <div className="flex items-center gap-1.5 bg-[#090e0b] px-2 py-0.5 rounded border border-[#2b4134] font-jost">
+                      <label htmlFor="toggle-autofetch-drawer" className="text-[9px] md:text-[10px] text-[#ffcc00]/90 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
                         Auto-Fetch Metadata
                       </label>
                       <button
@@ -1830,14 +1864,14 @@ export default function Home({ session }: { session: Session | null }) {
                         onClick={() => setAutoFetchMetadata(prev => !prev)}
                         className={`relative w-7 h-3.5 rounded-full border transition-all duration-300 focus:outline-none ${
                           autoFetchMetadata
-                            ? 'bg-amber-500 border-amber-400'
-                            : 'bg-black border-amber-900/50'
+                            ? 'bg-[#7de87d]/30 border-[#7de87d]'
+                            : 'bg-[#0d120f] border-[#2b4134]'
                         }`}
                         aria-pressed={autoFetchMetadata}
                         title="Alternar busca automática de metadados ao colar Video ID"
                       >
                         <span
-                          className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-transform duration-300 ${
+                          className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-[#ffcc00] shadow-[0_0_6px_#ffcc00] transition-transform duration-300 ${
                             autoFetchMetadata ? 'translate-x-3.5' : 'translate-x-0'
                           }`}
                         />
@@ -1845,8 +1879,8 @@ export default function Home({ session }: { session: Session | null }) {
                     </div>
 
                     {/* Josefin Font Toggle */}
-                    <div className="flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded border border-amber-900/40 font-jost">
-                      <label htmlFor="toggle-josefin-drawer" className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
+                    <div className="flex items-center gap-1.5 bg-[#090e0b] px-2 py-0.5 rounded border border-[#2b4134] font-jost">
+                      <label htmlFor="toggle-josefin-drawer" className="text-[9px] md:text-[10px] text-[#ffcc00]/90 uppercase font-bold tracking-wider font-jost cursor-pointer select-none">
                         Josefin Sans
                       </label>
                       <button
@@ -1855,14 +1889,14 @@ export default function Home({ session }: { session: Session | null }) {
                         onClick={() => setUseJosefinFont(prev => !prev)}
                         className={`relative w-7 h-3.5 rounded-full border transition-all duration-300 focus:outline-none ${
                           useJosefinFont
-                            ? 'bg-amber-500 border-amber-400'
-                            : 'bg-black border-amber-900/50'
+                            ? 'bg-[#7de87d]/30 border-[#7de87d]'
+                            : 'bg-[#0d120f] border-[#2b4134]'
                         }`}
                         aria-pressed={useJosefinFont}
                         title="Alternar fonte dos créditos para Josefin Sans"
                       >
                         <span
-                          className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-white shadow transition-transform duration-300 ${
+                          className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-[#ffcc00] shadow-[0_0_6px_#ffcc00] transition-transform duration-300 ${
                             useJosefinFont ? 'translate-x-3.5' : 'translate-x-0'
                           }`}
                         />
@@ -1871,7 +1905,7 @@ export default function Home({ session }: { session: Session | null }) {
 
                     <button
                       onClick={() => setIsEditDrawerOpen(false)}
-                      className="text-amber-500 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-black/50 hover:bg-amber-900/60 border border-amber-700/30 transition-colors font-jost"
+                      className="text-[#ffcc00] hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-[#090e0b] hover:bg-[#1b2b20] border border-[#2b4134] hover:border-[#7de87d] transition-colors font-jost cursor-pointer"
                       title="Fechar Painel de Edição"
                     >
                       ✕
@@ -1879,9 +1913,8 @@ export default function Home({ session }: { session: Session | null }) {
                   </div>
                 </div>
 
-                {/* Hardware Display Rebaixado (shadow-inner) */}
-                <div className="bg-neutral-900 border-2 border-black rounded-xl p-2 md:p-3 shadow-[inset_0_4px_18px_rgba(0,0,0,0.95)] relative font-jost flex-1 min-h-0 flex flex-col overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 via-yellow-400 via-amber-500 to-orange-500 opacity-80"></div>
+                {/* Form Body seamlessly integrated in PCB Shell */}
+                <div className="relative font-jost flex-1 min-h-0 flex flex-col overflow-hidden px-1 md:px-2 z-20">
                   
                   <AdminPanel
                     session={session}

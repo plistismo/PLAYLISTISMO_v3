@@ -718,18 +718,37 @@ export default function AdminPanel({
 
   if (displayMode === 'drawer') {
     return (
-      <div className="flex flex-col w-full h-full max-h-full text-neutral-100 font-jost font-['Jost',sans-serif] overflow-hidden [&_.rich-text-input]:!font-jost [&_.rich-text-input]:!text-neutral-100 [&_.rich-text-input]:!normal-case [&_.rich-text-input]:!bg-black [&_.rich-text-input]:!border-amber-500/30 [&_.rich-text-input]:focus:!border-amber-400 [&_label]:!font-jost [&_label]:!text-amber-500/80 [&_label]:!tracking-wider">
+      <div className="pcb-routing-form flex flex-col w-full h-full max-h-full text-neutral-100 font-jost overflow-hidden relative">
         {statusMsg.show && (
-          <div className={`p-1.5 px-3 mb-2 text-center text-xs md:text-sm font-bold border rounded font-jost shrink-0 ${statusMsg.isError ? 'bg-red-900/80 text-white border-red-500' : 'bg-amber-900/40 text-amber-300 border-amber-500'}`}>
+          <div className={`p-1.5 px-3 mb-2 text-center text-xs md:text-sm font-bold border rounded-md font-jost shrink-0 ${statusMsg.isError ? 'bg-red-950/80 text-red-300 border-red-500/80' : 'bg-[#0d120f] text-[#ffcc00] border-[#7de87d]'}`}>
             {statusMsg.text}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden font-jost">
-          {/* Scrollable Form Body: horizontal grids with compact inputs */}
-          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-2 pr-1 pb-1">
-            {/* Row 1: Artist & Track (prominent side-by-side) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden font-jost relative">
+          {/* Scrollable Form Body: horizontal grids with compact inputs and circuit traces */}
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-2 pr-1 pb-1 relative">
+            {/* Row 1: Artist & Track (with 45° PCB trace connecting them) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 relative">
+              {/* The 45-degree PCB Trace connecting ARTISTA to MÚSICA */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-16 pointer-events-none z-10 hidden sm:flex items-center justify-center">
+                <svg className="w-16 h-full" viewBox="0 0 64 64" fill="none" preserveAspectRatio="none">
+                  {/* Trace 1: from ARTISTA right at y=22, horizontal to x=24, 45° bend to (38, 36), horizontal to MÚSICA left at y=36 */}
+                  <path d="M 0,22 L 24,22 L 38,36 L 64,36" stroke="#7de87d" strokeWidth="1.5" />
+                  <circle cx="24" cy="22" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                  <circle cx="24" cy="22" r="1" fill="#7de87d" />
+                  <circle cx="38" cy="36" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                  <circle cx="38" cy="36" r="1" fill="#7de87d" />
+
+                  {/* Trace 2: top parallel trace */}
+                  <path d="M 0,14 L 20,14 L 32,26 L 64,26" stroke="#7de87d" strokeWidth="1" strokeOpacity="0.7" />
+                  <circle cx="20" cy="14" r="1.5" fill="#7de87d" />
+
+                  {/* Trace 3: bottom angled line */}
+                  <path d="M 0,48 L 26,48 L 40,34 L 64,34" stroke="#7de87d" strokeWidth="1" strokeOpacity="0.5" />
+                </svg>
+              </div>
+
               <div className="relative">
                 <RichTextInput
                   label="ARTISTA *"
@@ -739,10 +758,10 @@ export default function AdminPanel({
                   onFocus={() => setActiveField('artista')}
                   placeholder="Ex: Oasis"
                   compact
-                  icon="🎤"
+                  icon="●"
                 />
                 {activeField === 'artista' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-36 overflow-y-auto custom-scrollbar rounded-sm font-jost">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-[#0d120f] border border-[#7de87d] z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded-md font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -751,7 +770,7 @@ export default function AdminPanel({
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="px-2.5 py-1.5 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
+                        className="px-2.5 py-1.5 hover:bg-[#142017] cursor-pointer text-white hover:text-[#ffcc00] font-jost text-sm border-b border-[#22382c] last:border-0"
                       >
                         {val}
                       </div>
@@ -768,13 +787,28 @@ export default function AdminPanel({
                   onChange={val => setFormData({ ...formData, musica: val })}
                   placeholder="Ex: Wonderwall"
                   compact
-                  icon="🎼"
+                  icon="●"
                 />
               </div>
             </div>
 
+            {/* PCB Trace Bus Channel between Row 1 and Row 2 */}
+            <div className="relative h-3 -my-0.5 overflow-hidden pointer-events-none z-10 flex items-center">
+              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 12" fill="none">
+                <path d="M 0,6 L 310,6 L 316,2 L 474,2 L 480,6 L 800,6" stroke="#7de87d" strokeWidth="1.5" />
+                <path d="M 20,10 L 290,10 L 294,12 L 496,12 L 500,10 L 780,10" stroke="#7de87d" strokeWidth="1" strokeOpacity="0.6" />
+                <circle cx="30" cy="6" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                <circle cx="30" cy="6" r="1" fill="#7de87d" />
+                <circle cx="310" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
+                <circle cx="480" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
+                <circle cx="620" cy="6" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                <circle cx="620" cy="6" r="1" fill="#7de87d" />
+                <circle cx="770" cy="10" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
+              </svg>
+            </div>
+
             {/* Row 2: Album, Year (Ano 4-digit), and Direção */}
-            <div className="flex flex-col sm:flex-row items-end gap-2">
+            <div className="flex flex-col sm:flex-row items-end gap-2 relative">
               <div className="flex-1 min-w-0 w-full sm:w-auto relative">
                 <RichTextInput
                   label="ÁLBUM"
@@ -784,10 +818,10 @@ export default function AdminPanel({
                   onFocus={() => setActiveField('album')}
                   placeholder="(What's the Story) Morning Glory?"
                   compact
-                  icon="💽"
+                  icon="●"
                 />
                 {activeField === 'album' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-36 overflow-y-auto custom-scrollbar rounded-sm font-jost">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-[#0d120f] border border-[#7de87d] z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded-md font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -796,7 +830,7 @@ export default function AdminPanel({
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="px-2.5 py-1.5 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
+                        className="px-2.5 py-1.5 hover:bg-[#142017] cursor-pointer text-white hover:text-[#ffcc00] font-jost text-sm border-b border-[#22382c] last:border-0"
                       >
                         {val}
                       </div>
@@ -805,10 +839,18 @@ export default function AdminPanel({
                 )}
               </div>
 
+              {/* PCB Trace connecting ÁLBUM to ANO */}
+              <div className="hidden sm:flex items-center justify-center w-3 h-8 shrink-0 pointer-events-none -mx-1 mb-1.5">
+                <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                  <path d="M 0,6 L 12,6" stroke="#7de87d" strokeWidth="1.5" />
+                  <circle cx="6" cy="6" r="1.8" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                </svg>
+              </div>
+
               {/* Ano Input - Constrained to 4 digits: w-20 max-w-[5.5rem] */}
-              <div className="w-20 sm:w-24 shrink-0">
-                <label className="block text-[9px] md:text-[10px] text-amber-500/80 uppercase mb-0.5 font-bold tracking-wider font-jost flex items-center gap-1">
-                  <span>📅</span> ANO
+              <div className="w-20 sm:w-24 shrink-0 relative">
+                <label className="block text-[10px] text-[#ffcc00] uppercase mb-0.5 font-bold tracking-wider font-jost flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#ffcc00] inline-block" /> ANO
                 </label>
                 <input 
                   type="text" 
@@ -820,9 +862,18 @@ export default function AdminPanel({
                     const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                     setFormData({...formData, ano: val});
                   }} 
-                  className="w-full px-2 py-1.5 bg-black border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-sm md:text-base text-center text-neutral-100 placeholder:text-neutral-600 font-jost font-bold tracking-wider rounded-sm min-h-[34px]" 
+                  className="w-full px-2 py-1.5 bg-[#0d120f] border border-[#7de87d] outline-none focus:border-[#a3f7a3] focus:shadow-[0_0_8px_rgba(125,232,125,0.4)] text-sm md:text-base text-center text-white placeholder:text-[#3b5744] font-jost font-bold tracking-wider rounded-md min-h-[34px]" 
                   placeholder="1995" 
                 />
+              </div>
+
+              {/* PCB Trace connecting ANO to DIREÇÃO with strict 45° bend */}
+              <div className="hidden sm:flex items-center justify-center w-5 h-8 shrink-0 pointer-events-none -mx-1 mb-1.5">
+                <svg className="w-5 h-6" viewBox="0 0 20 24" fill="none">
+                  <path d="M 0,16 L 6,16 L 14,8 L 20,8" stroke="#7de87d" strokeWidth="1.5" />
+                  <circle cx="6" cy="16" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                  <circle cx="14" cy="8" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                </svg>
               </div>
 
               <div className="flex-1 min-w-0 w-full sm:w-auto relative">
@@ -834,10 +885,10 @@ export default function AdminPanel({
                   onFocus={() => setActiveField('direcao')}
                   placeholder="Diretor do Videoclipe"
                   compact
-                  icon="🎬"
+                  icon="●"
                 />
                 {activeField === 'direcao' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-neutral-950 border border-amber-500/50 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.8)] max-h-36 overflow-y-auto custom-scrollbar rounded-sm font-jost">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-[#0d120f] border border-[#7de87d] z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded-md font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -846,7 +897,7 @@ export default function AdminPanel({
                           setActiveField(null);
                           setSuggestions([]);
                         }}
-                        className="px-2.5 py-1.5 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-sm border-b border-amber-900/20 last:border-0"
+                        className="px-2.5 py-1.5 hover:bg-[#142017] cursor-pointer text-white hover:text-[#ffcc00] font-jost text-sm border-b border-[#22382c] last:border-0"
                       >
                         {val}
                       </div>
@@ -854,20 +905,40 @@ export default function AdminPanel({
                   </div>
                 )}
               </div>
+
+              {/* PCB Trace extending from DIREÇÃO to right margin */}
+              <div className="hidden sm:flex items-center justify-center w-5 h-8 shrink-0 pointer-events-none mb-1.5">
+                <svg className="w-5 h-4" viewBox="0 0 20 16" fill="none">
+                  <path d="M 0,8 L 14,8" stroke="#7de87d" strokeWidth="1.5" />
+                  <circle cx="14" cy="8" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                  <circle cx="14" cy="8" r="1" fill="#7de87d" />
+                </svg>
+              </div>
+            </div>
+
+            {/* PCB Trace Bus Channel between Row 2 and Row 3 */}
+            <div className="relative h-3 -my-0.5 overflow-hidden pointer-events-none z-10 flex items-center">
+              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 12" fill="none">
+                <path d="M 10,6 L 260,6 L 266,10 L 534,10 L 540,6 L 790,6" stroke="#7de87d" strokeWidth="1.5" />
+                <circle cx="260" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
+                <circle cx="540" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
+                <circle cx="680" cy="6" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                <circle cx="680" cy="6" r="1" fill="#7de87d" />
+              </svg>
             </div>
 
             {/* Row 3: Video ID + Multi-Playlist / Canais */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-start relative">
               {/* Video ID */}
               <div className="sm:col-span-5">
                 <div className="flex items-center justify-between mb-0.5 gap-2">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <label className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost flex items-center gap-1 shrink-0">
-                      <span>📺</span> VIDEO ID
+                    <label className="text-[10px] text-[#ffcc00] uppercase font-bold tracking-wider font-jost flex items-center gap-1 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#ffcc00]" /> VIDEO ID
                     </label>
                     {/* Auto-Fetch Metadata Toggle */}
                     <label 
-                      className="inline-flex items-center gap-1 cursor-pointer select-none px-1.5 py-0.5 rounded bg-black/70 border border-amber-900/40 hover:border-amber-600/50 transition-colors"
+                      className="inline-flex items-center gap-1 cursor-pointer select-none px-1.5 py-0.5 rounded bg-[#0d120f] border border-[#2b4134] hover:border-[#7de87d]/50 transition-colors"
                       title="Auto-Fetch Metadata: Sincroniza metadados do Supabase automaticamente ao colar"
                     >
                       <input
@@ -878,15 +949,15 @@ export default function AdminPanel({
                       />
                       <div className={`w-4 h-2 rounded-full border transition-all duration-200 relative ${
                         autoFetchMetadata 
-                          ? 'bg-amber-600 border-amber-400' 
-                          : 'bg-neutral-900 border-neutral-700'
+                          ? 'bg-[#7de87d]/40 border-[#7de87d]' 
+                          : 'bg-[#080d09] border-[#2b4134]'
                       }`}>
                         <div className={`w-1 h-1 rounded-full transition-all duration-200 absolute top-0.5 ${
-                          autoFetchMetadata ? 'left-2.5 bg-amber-100 shadow-[0_0_3px_#f59e0b]' : 'left-0.5 bg-neutral-400'
+                          autoFetchMetadata ? 'left-2.5 bg-[#ffcc00] shadow-[0_0_4px_#ffcc00]' : 'left-0.5 bg-[#435e4e]'
                         }`} />
                       </div>
                       <span className={`text-[8px] md:text-[9px] font-mono tracking-tight uppercase whitespace-nowrap ${
-                        autoFetchMetadata ? 'text-amber-400 font-semibold' : 'text-neutral-500'
+                        autoFetchMetadata ? 'text-[#ffcc00] font-semibold' : 'text-[#435e4e]'
                       }`}>
                         Auto-Fetch Metadata
                       </span>
@@ -895,8 +966,8 @@ export default function AdminPanel({
                   {formData.video_id.trim() && (
                     <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border font-jost shrink-0 ${
                       /^\d+$/.test(formData.video_id.trim())
-                        ? 'bg-cyan-950/60 text-cyan-400 border-cyan-500/40'
-                        : 'bg-red-950/60 text-red-400 border-red-500/40'
+                        ? 'bg-[#0d120f] text-cyan-400 border-cyan-500/50'
+                        : 'bg-[#0d120f] text-red-400 border-red-500/50'
                     }`}>
                       {/^\d+$/.test(formData.video_id.trim()) ? '🟦 Vimeo' : '🟥 YouTube'}
                     </span>
@@ -908,25 +979,25 @@ export default function AdminPanel({
                     value={formData.video_id} 
                     onChange={e => setFormData({...formData, video_id: e.target.value})} 
                     onPaste={handleVideoIdPaste}
-                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-black border border-amber-500/30 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40 text-sm text-neutral-100 placeholder:text-neutral-600 font-jost rounded-sm min-h-[34px]" 
+                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-[#0d120f] border border-[#7de87d] outline-none focus:border-[#a3f7a3] focus:shadow-[0_0_8px_rgba(125,232,125,0.4)] text-sm text-white placeholder:text-[#3b5744] font-jost rounded-md min-h-[34px]" 
                     placeholder="6hzrDeceEKc / 76979871" 
                   />
                   <button
                     type="button"
                     onClick={handlePasteVideoId}
-                    className="bg-amber-950/40 text-amber-400 border border-amber-500/40 px-2 hover:bg-amber-500 hover:text-black transition-all flex items-center justify-center rounded-sm font-jost shrink-0 min-h-[34px] text-xs relative"
+                    className="bg-[#0d120f] text-[#7de87d] border border-[#7de87d] px-2 hover:bg-[#142017] hover:text-[#ffcc00] transition-all flex items-center justify-center rounded-md font-jost shrink-0 min-h-[34px] text-xs relative cursor-pointer"
                     title="Colar Video ID (Paste)"
                   >
-                    {videoIdPasted ? <span className="text-emerald-400 font-bold">✓</span> : '📋'}
+                    {videoIdPasted ? <span className="text-[#ffcc00] font-bold">✓</span> : '📋'}
                     {isSyncingMetadata && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#ffcc00] animate-ping" />
                     )}
                   </button>
                   {onPreview && (
                     <button 
                       type="button" 
                       onClick={() => onPreview(formData.video_id)} 
-                      className="bg-cyan-900/30 text-cyan-400 border border-cyan-500/50 px-2.5 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-1 rounded-sm font-jost shrink-0"
+                      className="bg-[#0d120f] text-cyan-400 border border-cyan-500/50 hover:border-cyan-400 px-2.5 hover:bg-[#142017] hover:text-cyan-300 transition-all flex items-center gap-1 rounded-md font-jost shrink-0 min-h-[34px] cursor-pointer"
                       title="PREVIEW VIDEO"
                     >
                       <span className="text-xs">▶</span>
@@ -937,7 +1008,7 @@ export default function AdminPanel({
                     type="button"
                     id="btn-open-original-signal-drawer"
                     onClick={() => handleOpenOriginalSignal()}
-                    className="bg-yellow-400 hover:bg-yellow-300 text-black border border-yellow-300 px-2.5 hover:shadow-[0_0_12px_rgba(250,204,21,0.6)] active:translate-y-0.5 transition-all flex items-center gap-1.5 rounded-sm font-mono-tech font-black shrink-0 min-h-[34px] text-[10px] md:text-xs uppercase tracking-wider cursor-pointer"
+                    className="bg-[#ffcc00] hover:bg-[#ffe040] text-black border border-[#ffcc00] px-2.5 hover:shadow-[0_0_12px_rgba(255,204,0,0.6)] active:translate-y-0.5 transition-all flex items-center gap-1.5 rounded-md font-mono-tech font-black shrink-0 min-h-[34px] text-[10px] md:text-xs uppercase tracking-wider cursor-pointer"
                     title="Abrir sinal original na plataforma externa (YouTube / Vimeo) para extração de metadados"
                   >
                     <span className="text-xs">↗</span>
@@ -949,22 +1020,27 @@ export default function AdminPanel({
               {/* Multi-Playlist section */}
               <div className="sm:col-span-7">
                 <div className="flex items-center justify-between mb-0.5">
-                  <label className="text-[9px] md:text-[10px] text-amber-500/80 uppercase font-bold tracking-wider font-jost flex items-center gap-1">
-                    <span>📡</span> CANAIS (PLAYLISTS)
+                  <label className="text-[10px] text-[#ffcc00] uppercase font-bold tracking-wider font-jost flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#ffcc00]" /> CANAIS (PLAYLISTS)
                   </label>
-                  {currentPlaylists.length > 0 && (
-                    <span className="text-[9px] text-neutral-400 font-mono">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] text-[#7de87d]/80 font-mono">
                       {currentPlaylists.length} vinculado(s)
                     </span>
-                  )}
+                    <svg className="w-7 h-3 pointer-events-none hidden sm:block" viewBox="0 0 28 12" fill="none">
+                      <path d="M 0,6 L 20,6" stroke="#7de87d" strokeWidth="1.2" />
+                      <circle cx="20" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
+                      <circle cx="20" cy="6" r="0.8" fill="#7de87d" />
+                    </svg>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5 min-h-[34px] p-1 bg-black/60 border border-amber-900/40 rounded-sm">
+                <div className="flex flex-wrap items-center gap-1.5 min-h-[34px] p-1 bg-[#0d120f] border border-[#7de87d] rounded-md">
                   {/* Current Playlists in Database */}
                   {currentPlaylists.map(pl => (
                     <span 
                       key={pl} 
-                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-neutral-900 text-neutral-300 border border-neutral-700/60 text-[10px] font-jost rounded-full shrink-0 group/curpl"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#121c15] text-[#7de87d] border border-[#7de87d]/60 text-[10px] font-jost rounded-full shrink-0 group/curpl"
                     >
                       <span>{pl}</span>
                       <button 
@@ -974,7 +1050,7 @@ export default function AdminPanel({
                           e.stopPropagation();
                           handleRemoveChannel(pl);
                         }}
-                        className="text-neutral-400 hover:text-red-400 transition-colors text-xs leading-none ml-0.5 p-0.5 rounded hover:bg-neutral-800"
+                        className="text-[#7de87d]/70 hover:text-red-400 transition-colors text-xs leading-none ml-0.5 p-0.5 rounded hover:bg-[#1b2b20]"
                         title={`Desvincular canal "${pl}"`}
                       >
                         ×
@@ -984,7 +1060,7 @@ export default function AdminPanel({
 
                   {/* New Playlists to Add */}
                   {newPlaylistsToAdd.map(pl => (
-                    <span key={pl} className="flex items-center gap-1 px-2 py-0.5 bg-amber-950/60 text-amber-300 border border-amber-500/50 text-[10px] font-jost rounded-full shrink-0">
+                    <span key={pl} className="flex items-center gap-1 px-2 py-0.5 bg-[#121c15] text-[#ffcc00] border border-[#ffcc00]/70 text-[10px] font-jost rounded-full shrink-0">
                       <span>{pl}</span>
                       <button 
                         type="button" 
@@ -1019,11 +1095,11 @@ export default function AdminPanel({
                       onFocus={() => {
                         if (playlistSearch.length > 0) setShowPlaylistDropdown(true);
                       }}
-                      className="w-full px-2 py-0.5 bg-transparent border-none outline-none text-xs text-neutral-100 placeholder:text-neutral-600 font-jost" 
+                      className="w-full px-2 py-0.5 bg-transparent border-none outline-none text-xs text-white placeholder:text-[#3b5744] font-jost" 
                       placeholder="+ Vincular canal..." 
                     />
                     {showPlaylistDropdown && playlistSuggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-neutral-950 border border-amber-500/50 z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.8)] max-h-36 overflow-y-auto custom-scrollbar rounded-sm font-jost">
+                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-[#0d120f] border border-[#7de87d] z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded-md font-jost">
                         {playlistSuggestions.map((pl, i) => (
                           <div 
                             key={i} 
@@ -1032,7 +1108,7 @@ export default function AdminPanel({
                               setPlaylistSearch('');
                               setShowPlaylistDropdown(false);
                             }}
-                            className="px-2.5 py-1.5 hover:bg-amber-900/40 cursor-pointer text-neutral-100 hover:text-amber-300 font-jost text-xs border-b border-amber-900/20 last:border-0"
+                            className="px-2.5 py-1.5 hover:bg-[#142017] cursor-pointer text-white hover:text-[#ffcc00] font-jost text-xs border-b border-[#22382c] last:border-0"
                           >
                             {pl}
                           </div>
@@ -1046,38 +1122,67 @@ export default function AdminPanel({
           </div>
 
           {/* Action Button Row - Pinned at bottom, always visible within drawer */}
-          <div className="shrink-0 flex items-center gap-2 pt-2 border-t border-amber-500/30">
-            <button 
-              type="submit" 
-              disabled={isSaving} 
-              className="flex-1 py-1.5 md:py-2 bg-amber-900/40 border border-amber-500 text-amber-400 hover:bg-amber-500 hover:text-black font-bold text-xl md:text-2xl tracking-widest transition-all shadow-[0_0_12px_rgba(217,119,6,0.25)] active:translate-y-0.5 rounded-sm uppercase font-vt323"
-            >
-              {isSaving ? "TRANSMITTING..." : (isEditing ? "UPDATE RECORDS" : "COMMIT TO DB")}
-            </button>
-            {isEditing && (
+          <div className="shrink-0 flex items-center gap-2 pt-2 border-t border-[#7de87d]/30 relative z-20">
+            {/* UPDATE RECORDS - PCI Slot Style with 45° Chamfered Border & Flanking Traces */}
+            <div className="flex-1 pcb-chamfer-border">
+              <button 
+                type="submit" 
+                disabled={isSaving} 
+                className="w-full py-1.5 md:py-2 px-3 bg-[#0d120f] hover:bg-[#142017] text-[#ffcc00] hover:text-[#ffe040] font-bold text-xl md:text-2xl tracking-[0.25em] transition-all shadow-[0_0_15px_rgba(255,204,0,0.2)] active:translate-y-0.5 uppercase font-vt323 flex items-center justify-center gap-2 md:gap-4 group cursor-pointer"
+              >
+                {/* Left PCI Bus Traces with strict 45° bends */}
+                <svg className="w-12 md:w-24 h-6 shrink-0 hidden sm:block pointer-events-none" viewBox="0 0 70 24" fill="none">
+                  <path d="M 0,6 L 30,6 L 42,18 L 70,18" stroke="#7de87d" strokeWidth="1.5" />
+                  <path d="M 0,12 L 26,12 L 36,22 L 70,22" stroke="#7de87d" strokeWidth="1" strokeOpacity="0.7" />
+                  <circle cx="5" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                  <circle cx="5" cy="12" r="1.5" fill="#7de87d" />
+                </svg>
+
+                <span className="drop-shadow-[0_0_8px_rgba(255,204,0,0.5)]">
+                  {isSaving ? "TRANSMITTING..." : "UPDATE RECORDS"}
+                </span>
+
+                {/* Right PCI Bus Traces with strict 45° bends */}
+                <svg className="w-12 md:w-24 h-6 shrink-0 hidden sm:block pointer-events-none" viewBox="0 0 70 24" fill="none">
+                  <path d="M 70,6 L 40,6 L 28,18 L 0,18" stroke="#7de87d" strokeWidth="1.5" />
+                  <path d="M 70,12 L 44,12 L 34,22 L 0,22" stroke="#7de87d" strokeWidth="1" strokeOpacity="0.7" />
+                  <circle cx="65" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
+                  <circle cx="65" cy="12" r="1.5" fill="#7de87d" />
+                </svg>
+              </button>
+            </div>
+
+            {/* + NEW UNIT button */}
+            <div className="pcb-chamfer-border shrink-0">
               <button 
                 type="button" 
                 onClick={clearForm} 
-                className="px-3 py-1.5 md:py-2 bg-black/60 border border-amber-900/50 text-amber-400/90 hover:text-amber-200 hover:bg-amber-950/60 font-vt323 text-lg md:text-xl tracking-wider rounded-sm uppercase transition-all shrink-0"
+                className="px-3 md:px-4 py-1.5 md:py-2 bg-[#0d120f] hover:bg-[#142017] text-[#ffcc00] hover:text-white font-vt323 text-lg md:text-xl tracking-wider uppercase transition-all flex items-center justify-center cursor-pointer"
                 title="Limpar formulário para criar nova unidade"
               >
-                + New Unit
+                + NEW UNIT
               </button>
-            )}
+            </div>
+
+            {/* CLOSE DRAWER button */}
             {onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-3 md:px-4 py-1.5 md:py-2 bg-zinc-900/80 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-all text-lg md:text-xl font-vt323 tracking-wider rounded-sm uppercase shrink-0"
-              >
-                Close Drawer
-              </button>
+              <div className="pcb-chamfer-border shrink-0">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-3 md:px-4 py-1.5 md:py-2 bg-[#0d120f] hover:bg-[#142017] text-zinc-300 hover:text-white font-vt323 text-lg md:text-xl tracking-wider uppercase transition-all flex items-center justify-center cursor-pointer"
+                >
+                  CLOSE DRAWER
+                </button>
+              </div>
             )}
           </div>
         </form>
       </div>
     );
   }
+
+
 
   return (
     <div id="tv-admin-panel" className="flex flex-col h-full text-amber-500 font-vt323 bg-black border-l-2 border-amber-800/50 shadow-[-20px_0_50px_rgba(0,0,0,0.9)] overflow-hidden">
