@@ -726,42 +726,23 @@ export default function AdminPanel({
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden font-jost relative">
-          {/* Scrollable Form Body: horizontal grids with compact inputs and circuit traces */}
+          {/* Scrollable Form Body: Dynamic Flexbox rows with inline PCB trace connectors */}
           <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-2 pr-1 pb-1 relative">
-            {/* Row 1: Artist & Track (with 45° PCB trace connecting them) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 relative">
-              {/* The 45-degree PCB Trace connecting ARTISTA to MÚSICA */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-16 pointer-events-none z-10 hidden sm:flex items-center justify-center">
-                <svg className="w-16 h-full" viewBox="0 0 64 64" fill="none" preserveAspectRatio="none">
-                  {/* Trace 1: from ARTISTA right at y=22, horizontal to x=24, 45° bend to (38, 36), horizontal to MÚSICA left at y=36 */}
-                  <path d="M 0,22 L 24,22 L 38,36 L 64,36" stroke="#7de87d" strokeWidth="1.5" />
-                  <circle cx="24" cy="22" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
-                  <circle cx="24" cy="22" r="1" fill="#7de87d" />
-                  <circle cx="38" cy="36" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
-                  <circle cx="38" cy="36" r="1" fill="#7de87d" />
-
-                  {/* Trace 2: top parallel trace */}
-                  <path d="M 0,14 L 20,14 L 32,26 L 64,26" stroke="#7de87d" strokeWidth="1" strokeOpacity="0.7" />
-                  <circle cx="20" cy="14" r="1.5" fill="#7de87d" />
-
-                  {/* Trace 3: bottom angled line */}
-                  <path d="M 0,48 L 26,48 L 40,34 L 64,34" stroke="#7de87d" strokeWidth="1" strokeOpacity="0.5" />
-                </svg>
-              </div>
-
-              <div className="relative">
+            {/* Row 1: Artist & Track with Inline Flexbox PCB Trace Connector */}
+            <div className="flex flex-col sm:flex-row items-end gap-1 sm:gap-0 relative">
+              {/* ARTISTA Input */}
+              <div className="flex-1 min-w-0 w-full sm:w-auto relative">
                 <RichTextInput
-                  label="ARTISTA *"
+                  label="● ARTISTA *"
                   field="artista"
                   value={formData.artista}
                   onChange={val => setFormData({ ...formData, artista: val })}
                   onFocus={() => setActiveField('artista')}
                   placeholder="Ex: Oasis"
                   compact
-                  icon="●"
                 />
                 {activeField === 'artista' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-[#0d120f] border border-[#7de87d] z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded-md font-jost">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-[#7de87d] z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -779,49 +760,40 @@ export default function AdminPanel({
                 )}
               </div>
 
-              <div className="relative">
+              {/* Inline Flexbox PCB Trace Connector between ARTISTA and MÚSICA */}
+              <div className="hidden sm:flex flex-1 max-w-[60px] items-center justify-between mx-2 mb-4 h-0 border-b border-[#7de87d] shrink-0">
+                <div className="w-1 h-1 rounded-full bg-[#7de87d] -ml-1"></div>
+                <div className="w-1 h-1 rounded-full bg-[#7de87d] -mr-1"></div>
+              </div>
+
+              {/* MÚSICA Input */}
+              <div className="flex-1 min-w-0 w-full sm:w-auto relative">
                 <RichTextInput
-                  label="MÚSICA *"
+                  label="● MÚSICA *"
                   field="musica"
                   value={formData.musica}
                   onChange={val => setFormData({ ...formData, musica: val })}
                   placeholder="Ex: Wonderwall"
                   compact
-                  icon="●"
                 />
               </div>
             </div>
 
-            {/* PCB Trace Bus Channel between Row 1 and Row 2 */}
-            <div className="relative h-3 -my-0.5 overflow-hidden pointer-events-none z-10 flex items-center">
-              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 12" fill="none">
-                <path d="M 0,6 L 310,6 L 316,2 L 474,2 L 480,6 L 800,6" stroke="#7de87d" strokeWidth="1.5" />
-                <path d="M 20,10 L 290,10 L 294,12 L 496,12 L 500,10 L 780,10" stroke="#7de87d" strokeWidth="1" strokeOpacity="0.6" />
-                <circle cx="30" cy="6" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
-                <circle cx="30" cy="6" r="1" fill="#7de87d" />
-                <circle cx="310" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
-                <circle cx="480" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
-                <circle cx="620" cy="6" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
-                <circle cx="620" cy="6" r="1" fill="#7de87d" />
-                <circle cx="770" cy="10" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
-              </svg>
-            </div>
-
-            {/* Row 2: Album, Year (Ano 4-digit), and Direção */}
-            <div className="flex flex-col sm:flex-row items-end gap-2 relative">
+            {/* Row 2: Album, Year (Ano 4-digit), and Direção with Inline Flexbox PCB Trace Connectors */}
+            <div className="flex flex-col sm:flex-row items-end gap-1 sm:gap-0 relative">
+              {/* ÁLBUM */}
               <div className="flex-1 min-w-0 w-full sm:w-auto relative">
                 <RichTextInput
-                  label="ÁLBUM"
+                  label="● ÁLBUM"
                   field="album"
                   value={formData.album}
                   onChange={val => setFormData({ ...formData, album: val })}
                   onFocus={() => setActiveField('album')}
                   placeholder="(What's the Story) Morning Glory?"
                   compact
-                  icon="●"
                 />
                 {activeField === 'album' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-[#0d120f] border border-[#7de87d] z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded-md font-jost">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-[#7de87d] z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -839,19 +811,19 @@ export default function AdminPanel({
                 )}
               </div>
 
-              {/* PCB Trace connecting ÁLBUM to ANO */}
-              <div className="hidden sm:flex items-center justify-center w-3 h-8 shrink-0 pointer-events-none -mx-1 mb-1.5">
-                <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                  <path d="M 0,6 L 12,6" stroke="#7de87d" strokeWidth="1.5" />
-                  <circle cx="6" cy="6" r="1.8" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
-                </svg>
+              {/* Inline Flexbox PCB Trace Connector between ÁLBUM and ANO */}
+              <div className="hidden sm:flex flex-1 max-w-[40px] items-center justify-between mx-2 mb-4 h-0 border-b border-[#7de87d] shrink-0">
+                <div className="w-1 h-1 rounded-full bg-[#7de87d] -ml-1"></div>
+                <div className="w-1 h-1 rounded-full bg-[#7de87d] -mr-1"></div>
               </div>
 
-              {/* Ano Input - Constrained to 4 digits: w-20 max-w-[5.5rem] */}
+              {/* ANO Input */}
               <div className="w-20 sm:w-24 shrink-0 relative">
-                <label className="block text-[10px] text-[#ffcc00] uppercase mb-0.5 font-bold tracking-wider font-jost flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#ffcc00] inline-block" /> ANO
-                </label>
+                <div className="flex justify-between items-end mb-0.5">
+                  <label className="text-[10px] text-[#ffcc00] uppercase font-bold tracking-wider font-jost flex items-center gap-1">
+                    ● ANO
+                  </label>
+                </div>
                 <input 
                   type="text" 
                   inputMode="numeric"
@@ -862,33 +834,30 @@ export default function AdminPanel({
                     const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                     setFormData({...formData, ano: val});
                   }} 
-                  className="w-full px-2 py-1.5 bg-[#0d120f] border border-[#7de87d] outline-none focus:border-[#a3f7a3] focus:shadow-[0_0_8px_rgba(125,232,125,0.4)] text-sm md:text-base text-center text-white placeholder:text-[#3b5744] font-jost font-bold tracking-wider rounded-md min-h-[34px]" 
+                  className="w-full px-2 py-1.5 bg-black border border-[#7de87d] outline-none focus:border-[#ffcc00] focus:ring-1 focus:ring-[#ffcc00] focus:shadow-[0_0_8px_rgba(255,204,0,0.6)] text-sm md:text-base text-center text-white placeholder:text-neutral-600 font-jost font-bold tracking-wider rounded min-h-[34px] transition-all" 
                   placeholder="1995" 
                 />
               </div>
 
-              {/* PCB Trace connecting ANO to DIREÇÃO with strict 45° bend */}
-              <div className="hidden sm:flex items-center justify-center w-5 h-8 shrink-0 pointer-events-none -mx-1 mb-1.5">
-                <svg className="w-5 h-6" viewBox="0 0 20 24" fill="none">
-                  <path d="M 0,16 L 6,16 L 14,8 L 20,8" stroke="#7de87d" strokeWidth="1.5" />
-                  <circle cx="6" cy="16" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
-                  <circle cx="14" cy="8" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
-                </svg>
+              {/* Inline Flexbox PCB Trace Connector between ANO and DIREÇÃO */}
+              <div className="hidden sm:flex flex-1 max-w-[40px] items-center justify-between mx-2 mb-4 h-0 border-b border-[#7de87d] shrink-0">
+                <div className="w-1 h-1 rounded-full bg-[#7de87d] -ml-1"></div>
+                <div className="w-1 h-1 rounded-full bg-[#7de87d] -mr-1"></div>
               </div>
 
+              {/* DIREÇÃO */}
               <div className="flex-1 min-w-0 w-full sm:w-auto relative">
                 <RichTextInput
-                  label="DIREÇÃO"
+                  label="● DIREÇÃO"
                   field="direcao"
                   value={formData.direcao}
                   onChange={val => setFormData({ ...formData, direcao: val })}
                   onFocus={() => setActiveField('direcao')}
                   placeholder="Diretor do Videoclipe"
                   compact
-                  icon="●"
                 />
                 {activeField === 'direcao' && suggestions.length > 0 && (
-                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-[#0d120f] border border-[#7de87d] z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded-md font-jost">
+                  <div ref={dropdownRef} className="absolute left-0 right-0 top-full mt-1 bg-black border border-[#7de87d] z-50 shadow-[0_10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded font-jost">
                     {suggestions.map((val, i) => (
                       <div 
                         key={i} 
@@ -905,40 +874,20 @@ export default function AdminPanel({
                   </div>
                 )}
               </div>
-
-              {/* PCB Trace extending from DIREÇÃO to right margin */}
-              <div className="hidden sm:flex items-center justify-center w-5 h-8 shrink-0 pointer-events-none mb-1.5">
-                <svg className="w-5 h-4" viewBox="0 0 20 16" fill="none">
-                  <path d="M 0,8 L 14,8" stroke="#7de87d" strokeWidth="1.5" />
-                  <circle cx="14" cy="8" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
-                  <circle cx="14" cy="8" r="1" fill="#7de87d" />
-                </svg>
-              </div>
-            </div>
-
-            {/* PCB Trace Bus Channel between Row 2 and Row 3 */}
-            <div className="relative h-3 -my-0.5 overflow-hidden pointer-events-none z-10 flex items-center">
-              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 12" fill="none">
-                <path d="M 10,6 L 260,6 L 266,10 L 534,10 L 540,6 L 790,6" stroke="#7de87d" strokeWidth="1.5" />
-                <circle cx="260" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
-                <circle cx="540" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
-                <circle cx="680" cy="6" r="2.5" fill="#0d120f" stroke="#7de87d" strokeWidth="1.2" />
-                <circle cx="680" cy="6" r="1" fill="#7de87d" />
-              </svg>
             </div>
 
             {/* Row 3: Video ID + Multi-Playlist / Canais */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-start relative">
+            <div className="flex flex-col sm:flex-row items-end gap-1 sm:gap-0 relative">
               {/* Video ID */}
-              <div className="sm:col-span-5">
+              <div className="w-full sm:w-[42%] min-w-0">
                 <div className="flex items-center justify-between mb-0.5 gap-2">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <label className="text-[10px] text-[#ffcc00] uppercase font-bold tracking-wider font-jost flex items-center gap-1 shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#ffcc00]" /> VIDEO ID
+                      ● VIDEO ID
                     </label>
                     {/* Auto-Fetch Metadata Toggle */}
                     <label 
-                      className="inline-flex items-center gap-1 cursor-pointer select-none px-1.5 py-0.5 rounded bg-[#0d120f] border border-[#2b4134] hover:border-[#7de87d]/50 transition-colors"
+                      className="inline-flex items-center gap-1 cursor-pointer select-none px-1.5 py-0.5 rounded bg-black border border-[#2b4134] hover:border-[#7de87d]/50 transition-colors"
                       title="Auto-Fetch Metadata: Sincroniza metadados do Supabase automaticamente ao colar"
                     >
                       <input
@@ -966,8 +915,8 @@ export default function AdminPanel({
                   {formData.video_id.trim() && (
                     <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border font-jost shrink-0 ${
                       /^\d+$/.test(formData.video_id.trim())
-                        ? 'bg-[#0d120f] text-cyan-400 border-cyan-500/50'
-                        : 'bg-[#0d120f] text-red-400 border-red-500/50'
+                        ? 'bg-black text-cyan-400 border-cyan-500/50'
+                        : 'bg-black text-red-400 border-red-500/50'
                     }`}>
                       {/^\d+$/.test(formData.video_id.trim()) ? '🟦 Vimeo' : '🟥 YouTube'}
                     </span>
@@ -979,13 +928,13 @@ export default function AdminPanel({
                     value={formData.video_id} 
                     onChange={e => setFormData({...formData, video_id: e.target.value})} 
                     onPaste={handleVideoIdPaste}
-                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-[#0d120f] border border-[#7de87d] outline-none focus:border-[#a3f7a3] focus:shadow-[0_0_8px_rgba(125,232,125,0.4)] text-sm text-white placeholder:text-[#3b5744] font-jost rounded-md min-h-[34px]" 
+                    className="flex-1 min-w-0 px-2.5 py-1.5 bg-black border border-[#7de87d] outline-none focus:border-[#ffcc00] focus:ring-1 focus:ring-[#ffcc00] focus:shadow-[0_0_8px_rgba(255,204,0,0.6)] text-sm text-white placeholder:text-neutral-600 font-jost rounded min-h-[34px] transition-all" 
                     placeholder="6hzrDeceEKc / 76979871" 
                   />
                   <button
                     type="button"
                     onClick={handlePasteVideoId}
-                    className="bg-[#0d120f] text-[#7de87d] border border-[#7de87d] px-2 hover:bg-[#142017] hover:text-[#ffcc00] transition-all flex items-center justify-center rounded-md font-jost shrink-0 min-h-[34px] text-xs relative cursor-pointer"
+                    className="bg-black text-[#7de87d] border border-[#7de87d] px-2 hover:bg-[#142017] hover:text-[#ffcc00] hover:border-[#ffcc00] transition-all flex items-center justify-center rounded font-jost shrink-0 min-h-[34px] text-xs relative cursor-pointer"
                     title="Colar Video ID (Paste)"
                   >
                     {videoIdPasted ? <span className="text-[#ffcc00] font-bold">✓</span> : '📋'}
@@ -997,7 +946,7 @@ export default function AdminPanel({
                     <button 
                       type="button" 
                       onClick={() => onPreview(formData.video_id)} 
-                      className="bg-[#0d120f] text-cyan-400 border border-cyan-500/50 hover:border-cyan-400 px-2.5 hover:bg-[#142017] hover:text-cyan-300 transition-all flex items-center gap-1 rounded-md font-jost shrink-0 min-h-[34px] cursor-pointer"
+                      className="bg-black text-cyan-400 border border-cyan-500/50 hover:border-cyan-400 px-2.5 hover:bg-[#142017] hover:text-cyan-300 transition-all flex items-center gap-1 rounded font-jost shrink-0 min-h-[34px] cursor-pointer"
                       title="PREVIEW VIDEO"
                     >
                       <span className="text-xs">▶</span>
@@ -1008,7 +957,7 @@ export default function AdminPanel({
                     type="button"
                     id="btn-open-original-signal-drawer"
                     onClick={() => handleOpenOriginalSignal()}
-                    className="bg-[#ffcc00] hover:bg-[#ffe040] text-black border border-[#ffcc00] px-2.5 hover:shadow-[0_0_12px_rgba(255,204,0,0.6)] active:translate-y-0.5 transition-all flex items-center gap-1.5 rounded-md font-mono-tech font-black shrink-0 min-h-[34px] text-[10px] md:text-xs uppercase tracking-wider cursor-pointer"
+                    className="bg-[#ffcc00] hover:bg-[#ffe040] text-black border border-[#ffcc00] px-2.5 hover:shadow-[0_0_12px_rgba(255,204,0,0.6)] active:translate-y-0.5 transition-all flex items-center gap-1.5 rounded font-mono-tech font-black shrink-0 min-h-[34px] text-[10px] md:text-xs uppercase tracking-wider cursor-pointer"
                     title="Abrir sinal original na plataforma externa (YouTube / Vimeo) para extração de metadados"
                   >
                     <span className="text-xs">↗</span>
@@ -1017,25 +966,26 @@ export default function AdminPanel({
                 </div>
               </div>
 
+              {/* Inline Flexbox PCB Trace Connector between VIDEO ID and CANAIS */}
+              <div className="hidden sm:flex flex-1 max-w-[40px] items-center justify-between mx-2 mb-4 h-0 border-b border-[#7de87d] shrink-0">
+                <div className="w-1 h-1 rounded-full bg-[#7de87d] -ml-1"></div>
+                <div className="w-1 h-1 rounded-full bg-[#7de87d] -mr-1"></div>
+              </div>
+
               {/* Multi-Playlist section */}
-              <div className="sm:col-span-7">
+              <div className="flex-1 min-w-0 w-full sm:w-auto">
                 <div className="flex items-center justify-between mb-0.5">
                   <label className="text-[10px] text-[#ffcc00] uppercase font-bold tracking-wider font-jost flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#ffcc00]" /> CANAIS (PLAYLISTS)
+                    ● CANAIS (PLAYLISTS)
                   </label>
-                  <div className="flex items-center gap-1.5">
+                  {currentPlaylists.length > 0 && (
                     <span className="text-[9px] text-[#7de87d]/80 font-mono">
                       {currentPlaylists.length} vinculado(s)
                     </span>
-                    <svg className="w-7 h-3 pointer-events-none hidden sm:block" viewBox="0 0 28 12" fill="none">
-                      <path d="M 0,6 L 20,6" stroke="#7de87d" strokeWidth="1.2" />
-                      <circle cx="20" cy="6" r="2" fill="#0d120f" stroke="#7de87d" strokeWidth="1" />
-                      <circle cx="20" cy="6" r="0.8" fill="#7de87d" />
-                    </svg>
-                  </div>
+                  )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5 min-h-[34px] p-1 bg-[#0d120f] border border-[#7de87d] rounded-md">
+                <div className="flex flex-wrap items-center gap-1.5 min-h-[34px] p-1 bg-black border border-[#7de87d] focus-within:border-[#ffcc00] focus-within:ring-1 focus-within:ring-[#ffcc00] focus-within:shadow-[0_0_8px_rgba(255,204,0,0.6)] rounded transition-all">
                   {/* Current Playlists in Database */}
                   {currentPlaylists.map(pl => (
                     <span 
@@ -1095,11 +1045,11 @@ export default function AdminPanel({
                       onFocus={() => {
                         if (playlistSearch.length > 0) setShowPlaylistDropdown(true);
                       }}
-                      className="w-full px-2 py-0.5 bg-transparent border-none outline-none text-xs text-white placeholder:text-[#3b5744] font-jost" 
+                      className="w-full px-2 py-0.5 bg-transparent border-none outline-none text-xs text-white placeholder:text-neutral-600 font-jost" 
                       placeholder="+ Vincular canal..." 
                     />
                     {showPlaylistDropdown && playlistSuggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-[#0d120f] border border-[#7de87d] z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded-md font-jost">
+                      <div className="absolute left-0 right-0 bottom-full mb-1 bg-black border border-[#7de87d] z-[60] shadow-[0_-10px_30px_rgba(0,0,0,0.9)] max-h-36 overflow-y-auto custom-scrollbar rounded font-jost">
                         {playlistSuggestions.map((pl, i) => (
                           <div 
                             key={i} 

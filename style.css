@@ -1289,35 +1289,41 @@ iframe#yt-player {
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.95), inset 0 0 25px rgba(0, 0, 0, 0.85);
 }
 
-/* Clean Tech Inputs: Solid dark background with thin, sharp neon green borders */
+/* Clean Tech Inputs (The Sockets): Pure black #000000 with neon green borders */
 .pcb-routing-form .rich-text-input,
 .pcb-routing-form input[type="text"],
+.pcb-routing-form textarea,
+.pcb-routing-form select,
 .pcb-routing-form .pcb-input {
-    background-color: #0d120f !important;
-    border: 1.5px solid #7de87d !important;
-    border-radius: 6px !important;
+    background-color: #000000 !important;
+    border: 1px solid #7de87d !important;
+    border-radius: 4px !important;
     color: #ffffff !important;
     box-shadow: none !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* Active / Focus States (Crucial): Bright yellow focus ring */
 .pcb-routing-form .rich-text-input:focus,
+.pcb-routing-form .rich-text-input:focus-within,
 .pcb-routing-form input[type="text"]:focus,
+.pcb-routing-form textarea:focus,
+.pcb-routing-form select:focus,
 .pcb-routing-form .pcb-input:focus,
-.pcb-routing-form .rich-text-input:focus-within {
-    border-color: #a3f7a3 !important;
-    box-shadow: 0 0 10px rgba(125, 232, 125, 0.4) !important;
+.pcb-routing-form .pcb-input:focus-within {
+    border-color: #ffcc00 !important;
     outline: none !important;
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.6) !important;
 }
 
 /* Placeholder inside PCB inputs */
 .pcb-routing-form input::placeholder {
-    color: #3b5744 !important;
+    color: rgba(255, 255, 255, 0.3) !important;
     font-weight: 400 !important;
 }
 
 .pcb-routing-form .rich-text-input:empty:before {
-    color: #3b5744 !important;
+    color: rgba(255, 255, 255, 0.3) !important;
     font-weight: 400 !important;
 }
 
@@ -1332,9 +1338,16 @@ iframe#yt-player {
     text-transform: uppercase !important;
 }
 
+/* Active label glow when group is focused */
+.pcb-routing-form .group:focus-within label,
+.pcb-routing-form .group:focus-within .pcb-label {
+    color: #ffcc00 !important;
+    text-shadow: 0 0 6px rgba(255, 204, 0, 0.5) !important;
+}
+
 /* RichTextInput toolbar buttons in PCB drawer */
 .pcb-routing-form .group .bg-black {
-    background-color: #0d120f !important;
+    background-color: #000000 !important;
     border-color: #2b4134 !important;
 }
 
