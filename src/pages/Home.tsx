@@ -544,7 +544,7 @@ export default function Home({ session }: { session: Session | null }) {
 
     // Safely parse OSD message array for active language, with fallback to PT or other available languages
     // Aggressive Parsing Logic: Grab raw data with active language & PT fallback
-    const rawData = lang === 'en' ? (ch.osd_messages_en || ch.osd_messages_pt)
+    const rawData: any = lang === 'en' ? (ch.osd_messages_en || ch.osd_messages_pt)
       : lang === 'es' ? (ch.osd_messages_es || ch.osd_messages_pt)
       : (ch.osd_messages_pt || ch.osd_messages_en || ch.osd_messages_es);
 
@@ -712,6 +712,115 @@ export default function Home({ session }: { session: Session | null }) {
   const currentIndexRef = useRef(0);
   const lastVideoIdRef = useRef<string | null>(null);
 
+  // YouTube Masking & Settled Tracking (prevents native UI freeze & buffering flash)
+  const [isYtSettled, setIsYtSettled] = useState(true);
+  const isSwitchingVideoRef = useRef(false);
+  const ytSettleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const ytSafetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Permanently enforce pointer-events: none, tabIndex: -1 and blur on the YouTube iframe
+  const enforceIframeUnfocused = useCallback(() => {
+    try {
+      const iframes = document.querySelectorAll<HTMLIFrameElement>(
+        '#yt-player-wrapper iframe, iframe#yt-player, #yt-player'
+      );
+      iframes.forEach((iframe) => {
+        iframe.style.setProperty('pointer-events', 'none', 'important');
+        iframe.setAttribute('tabindex', '-1');
+        iframe.tabIndex = -1;
+        iframe.setAttribute('aria-hidden', 'true');
+        iframe.blur();
+      });
+      if (playerRef.current && typeof playerRef.current.getIframe === 'function') {
+        const ytIframe = playerRef.current.getIframe();
+        if (ytIframe) {
+          ytIframe.style.setProperty('pointer-events', 'none', 'important');
+          ytIframe.setAttribute('tabindex', '-1');
+          ytIframe.tabIndex = -1;
+          ytIframe.setAttribute('aria-hidden', 'true');
+          ytIframe.blur?.();
+        }
+      }
+      window.focus();
+      if (
+        document.activeElement &&
+        (document.activeElement.tagName === 'IFRAME' ||
+          document.activeElement === document.querySelector('#yt-player-wrapper iframe'))
+      ) {
+        (document.activeElement as HTMLElement).blur?.();
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const beginTrackSwitch = useCallback(() => {
+    isSwitchingVideoRef.current = true;
+    setIsYtSettled(false);
+    setShowStatic(true);
+    enforceIframeUnfocused();
+
+    if (ytSettleTimeoutRef.current) {
+      clearTimeout(ytSettleTimeoutRef.current);
+      ytSettleTimeoutRef.current = null;
+    }
+    if (ytSafetyTimeoutRef.current) {
+      clearTimeout(ytSafetyTimeoutRef.current);
+    }
+    // Safety fallback: if YouTube stays buffering > 5s, reveal cleanly
+    ytSafetyTimeoutRef.current = setTimeout(() => {
+      setIsYtSettled(true);
+      setShowStatic(false);
+      isSwitchingVideoRef.current = false;
+      enforceIframeUnfocused();
+    }, 5000);
+  }, [enforceIframeUnfocused]);
+
+  // Ensure pointer-events: none and tabIndex={-1} are permanently & unconditionally set on the YouTube iframe
+  useEffect(() => {
+    const wrapper = document.getElementById('yt-player-wrapper');
+    if (!wrapper) return;
+
+    const configureIframe = (iframe: HTMLElement) => {
+      iframe.style.setProperty('pointer-events', 'none', 'important');
+      iframe.setAttribute('tabindex', '-1');
+      (iframe as any).tabIndex = -1;
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.blur?.();
+    };
+
+    const iframes = wrapper.querySelectorAll('iframe');
+    iframes.forEach(configureIframe);
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          wrapper.querySelectorAll('iframe').forEach(configureIframe);
+        } else if (mutation.type === 'attributes') {
+          const target = mutation.target as HTMLElement;
+          if (target.tagName === 'IFRAME') {
+            if (target.getAttribute('tabindex') !== '-1') {
+              target.setAttribute('tabindex', '-1');
+              (target as any).tabIndex = -1;
+            }
+            if (target.style.pointerEvents !== 'none') {
+              target.style.setProperty('pointer-events', 'none', 'important');
+            }
+          }
+        }
+      }
+    });
+
+    observer.observe(wrapper, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['tabindex', 'style']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   // Plataforma ativa: 'youtube' | 'vimeo'
   const [activePlatform, setActivePlatform] = useState<'youtube' | 'vimeo'>('youtube');
   const activePlatformRef = useRef<'youtube' | 'vimeo'>('youtube');
@@ -771,7 +880,7 @@ export default function Home({ session }: { session: Session | null }) {
     }
 
     // Grab raw data directly from the active channel's object (Matrix database data)
-    const rawData = (activeLang === 'en' && activeChannel.osd_messages_en)
+    const rawData: any = (activeLang === 'en' && activeChannel.osd_messages_en)
       ? activeChannel.osd_messages_en
       : (activeLang === 'es' && activeChannel.osd_messages_es)
       ? activeChannel.osd_messages_es
@@ -840,7 +949,7 @@ export default function Home({ session }: { session: Session | null }) {
       return;
     }
 
-    const rawData = (activeLang === 'en' && activeChannel?.osd_messages_en)
+    const rawData: any = (activeLang === 'en' && activeChannel?.osd_messages_en)
       ? activeChannel.osd_messages_en
       : (activeLang === 'es' && activeChannel?.osd_messages_es)
       ? activeChannel.osd_messages_es
@@ -942,9 +1051,13 @@ export default function Home({ session }: { session: Session | null }) {
       }
       const ytIframe = document.querySelector('#yt-player iframe, iframe#yt-player') as HTMLElement;
       if (ytIframe) {
-        ytIframe.style.pointerEvents = 'none';
+        ytIframe.style.setProperty('pointer-events', 'none', 'important');
+        ytIframe.setAttribute('tabindex', '-1');
+        ytIframe.tabIndex = -1;
         ytIframe.style.zIndex = '1';
+        ytIframe.blur();
       }
+      enforceIframeUnfocused();
     }
   };
 
@@ -1069,6 +1182,7 @@ export default function Home({ session }: { session: Session | null }) {
         events: {
           'onReady': () => {
             setIsReady(true);
+            enforceIframeUnfocused();
             const isVimeo = currentVideoData?.plataforma === 'vimeo' || /^\d+$/.test(String(currentVideoData?.video_id || ''));
             if (isVimeo) {
               syncPlayerVisibility('vimeo');
@@ -1113,6 +1227,14 @@ export default function Home({ session }: { session: Session | null }) {
         clearTimeout(ytErrorTimeoutRef.current);
         ytErrorTimeoutRef.current = null;
       }
+      if (ytSettleTimeoutRef.current) {
+        clearTimeout(ytSettleTimeoutRef.current);
+        ytSettleTimeoutRef.current = null;
+      }
+      if (ytSafetyTimeoutRef.current) {
+        clearTimeout(ytSafetyTimeoutRef.current);
+        ytSafetyTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -1134,6 +1256,7 @@ export default function Home({ session }: { session: Session | null }) {
     // 2. Conditionally trigger the CRT static/noise interference effect on the top-level TV screen wrapper
     // to visually mask the YouTube native error screen from the user
     setShowStatic(true);
+    setIsYtSettled(false);
 
     // 3. Wrap the nextVideo() (handleVideoEnd) state change function inside a setTimeout of 800ms to 1000ms (900ms)
     // This allows the YouTube IFrame API to cleanly resolve its internal error state before React forces the re-render with the new video ID.
@@ -1143,19 +1266,40 @@ export default function Home({ session }: { session: Session | null }) {
 
     ytErrorTimeoutRef.current = setTimeout(() => {
       handleVideoEnd();
-      setShowStatic(false);
       ytErrorTimeoutRef.current = null;
     }, 900);
   }
 
   function onPlayerStateChange(event: any) {
-    const YT_STATE = window.YT.PlayerState;
+    const YT_STATE = window.YT?.PlayerState || {
+      UNSTARTED: -1,
+      ENDED: 0,
+      PLAYING: 1,
+      PAUSED: 2,
+      BUFFERING: 3,
+      CUED: 5
+    };
+
+    enforceIframeUnfocused();
+
     if (event.data === YT_STATE.PLAYING) {
       setIsPlaying(true);
       setStatus("");
       startCreditsMonitor();
+
+      if (isSwitchingVideoRef.current || !isYtSettled) {
+        // Video has reached PLAYING state; allow 600ms to settle and fade out native splash/title
+        if (ytSettleTimeoutRef.current) clearTimeout(ytSettleTimeoutRef.current);
+        ytSettleTimeoutRef.current = setTimeout(() => {
+          setIsYtSettled(true);
+          setShowStatic(false);
+          isSwitchingVideoRef.current = false;
+          enforceIframeUnfocused();
+        }, 600);
+      }
     } else if (event.data === YT_STATE.PAUSED) {
       setIsPlaying(false);
+      // Native YouTube video stays visible when paused (no opaque overlay, no zoom)
     } else if (event.data === YT_STATE.ENDED) {
       setIsPlaying(false);
       if (isAdminSidebarOpen && adminEditId) {
@@ -1168,6 +1312,10 @@ export default function Home({ session }: { session: Session | null }) {
       }
     } else if (event.data === YT_STATE.BUFFERING) {
       setStatus("TUNING...");
+      if (isSwitchingVideoRef.current) {
+        setShowStatic(true);
+        setIsYtSettled(false);
+      }
     }
   };
 
@@ -1311,12 +1459,17 @@ export default function Home({ session }: { session: Session | null }) {
         vimeoPlayerRef.current?.pause();
         setIsPlaying(false);
         setShowPlaylistLabel(false);
+        setShowStatic(false);
+        setIsYtSettled(true);
+        if (ytSettleTimeoutRef.current) clearTimeout(ytSettleTimeoutRef.current);
+        if (ytSafetyTimeoutRef.current) clearTimeout(ytSafetyTimeoutRef.current);
       }
       return next;
     });
   };
 
   const togglePlayPause = () => {
+    enforceIframeUnfocused();
     if (!isOn) {
       togglePower();
       return;
@@ -1344,6 +1497,7 @@ export default function Home({ session }: { session: Session | null }) {
           playerRef.current.playVideo();
           setIsPlaying(true);
         }
+        enforceIframeUnfocused();
       }
     }
   };
@@ -1392,8 +1546,7 @@ export default function Home({ session }: { session: Session | null }) {
       clearTimeout(ytErrorTimeoutRef.current);
       ytErrorTimeoutRef.current = null;
     }
-    setShowStatic(true);
-    setTimeout(() => setShowStatic(false), 500);
+    beginTrackSwitch();
     setCurrentChannelName(playlistName);
     triggerBump(playlistName);
     const cat = Object.keys(channelsByCategory).find(k => channelsByCategory[k].some((p: any) => p.name === playlistName));
@@ -1467,10 +1620,14 @@ export default function Home({ session }: { session: Session | null }) {
       }
     } else if (isReady && playerRef.current) {
       vimeoPlayerRef.current?.pause();
-      playerRef.current.loadVideoById({ videoId: cleanId, suggestedQuality: 'hd720' });
+      beginTrackSwitch();
+      playerRef.current.loadVideoById({ videoId: cleanId, startSeconds: 0, suggestedQuality: 'hd720' });
       lastVideoIdRef.current = cleanId;
       playerRef.current.playVideo();
       startCreditsMonitor();
+      enforceIframeUnfocused();
+      setTimeout(enforceIframeUnfocused, 100);
+      setTimeout(enforceIframeUnfocused, 300);
     }
   };
 
@@ -1499,6 +1656,8 @@ export default function Home({ session }: { session: Session | null }) {
 
     if (platform === 'vimeo') {
       // --- VIMEO ---
+      setIsYtSettled(true);
+      setShowStatic(false);
       if (vimeoPlayerRef.current && videoId !== lastVideoIdRef.current) {
         console.log('CARREGANDO VÍDEO VIMEO:', videoId);
         playerRef.current?.pauseVideo(); // para o YouTube
@@ -1515,12 +1674,16 @@ export default function Home({ session }: { session: Session | null }) {
       }
     } else {
       // --- YOUTUBE ---
-      if (isReady && playerRef.current) {
+      if (isReady && playerRef.current && typeof playerRef.current.loadVideoById === 'function') {
         vimeoPlayerRef.current?.pause(); // para o Vimeo
         if (videoId !== lastVideoIdRef.current) {
           console.log('CARREGANDO VÍDEO YOUTUBE:', videoId);
-          playerRef.current.loadVideoById({ videoId, suggestedQuality: 'hd720' });
+          beginTrackSwitch();
+          playerRef.current.loadVideoById({ videoId, startSeconds: 0, suggestedQuality: 'hd720' });
           lastVideoIdRef.current = videoId;
+          enforceIframeUnfocused();
+          setTimeout(enforceIframeUnfocused, 100);
+          setTimeout(enforceIframeUnfocused, 300);
         }
         if (isOn) playerRef.current.playVideo();
       }
@@ -1538,6 +1701,7 @@ export default function Home({ session }: { session: Session | null }) {
       clearTimeout(ytErrorTimeoutRef.current);
       ytErrorTimeoutRef.current = null;
     }
+    beginTrackSwitch();
     const list = channelListRef.current;
     const currIdx = currentIndexRef.current;
     const history = playedHistoryRef.current[currentChannelName] || [];
@@ -1969,8 +2133,11 @@ export default function Home({ session }: { session: Session | null }) {
                         syncPlayerVisibility('youtube');
                         if (playerRef.current) {
                           if (targetId && targetId !== lastVideoIdRef.current) {
-                            playerRef.current.loadVideoById({ videoId: targetId, suggestedQuality: 'hd720' });
+                            beginTrackSwitch();
+                            playerRef.current.loadVideoById({ videoId: targetId, startSeconds: 0, suggestedQuality: 'hd720' });
                             lastVideoIdRef.current = targetId;
+                            enforceIframeUnfocused();
+                            setTimeout(enforceIframeUnfocused, 100);
                           } else {
                             playerRef.current?.seekTo(0);
                           }
@@ -2371,6 +2538,8 @@ export default function Home({ session }: { session: Session | null }) {
                         zIndex: 1,
                         display: activePlatform === 'youtube' ? 'block' : 'none',
                         pointerEvents: 'none',
+                        opacity: isYtSettled ? 1 : 0,
+                        transition: 'opacity 300ms ease-in-out',
                       }}
                     >
                       <style>{`
@@ -2385,6 +2554,8 @@ export default function Home({ session }: { session: Session | null }) {
                       `}</style>
                       <div
                         id="yt-player"
+                        tabIndex={-1}
+                        aria-hidden="true"
                         className="w-full h-full pointer-events-none"
                         style={{
                           position: 'relative',
@@ -2442,7 +2613,12 @@ export default function Home({ session }: { session: Session | null }) {
                         zIndex: 25,
                         pointerEvents: 'auto',
                       }}
-                      onClick={togglePlayPause}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        enforceIframeUnfocused();
+                        togglePlayPause();
+                      }}
                     />
 
                     {isBumping && (
