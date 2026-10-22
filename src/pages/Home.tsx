@@ -1242,32 +1242,41 @@ export default function Home({ session }: { session: Session | null }) {
     const errorCode = event?.data;
     console.warn("YouTube Player Error (un-embeddable 101/150 or failure):", errorCode);
 
-    // 1. Force the player to stop if instance is available to cleanly resolve internal error state
-    if (playerRef.current) {
-      try {
-        if (typeof playerRef.current.stopVideo === 'function') {
-          playerRef.current.stopVideo();
-        }
-      } catch (err) {
-        console.warn("Could not stop YouTube player on error:", err);
+    // 1. Immediately force the player to stop playback and physically tear down the internal error state
+    try {
+      if (event?.target && typeof event.target.stopVideo === 'function') {
+        event.target.stopVideo();
+      } else if (playerRef.current && typeof playerRef.current.stopVideo === 'function') {
+        playerRef.current.stopVideo();
       }
+    } catch (err) {
+      console.warn("Could not stop YouTube player on error:", err);
     }
 
-    // 2. Conditionally trigger the CRT static/noise interference effect on the top-level TV screen wrapper
-    // to visually mask the YouTube native error screen from the user
-    setShowStatic(true);
+    // 2. The 'Repaint' Flush:
+    // Strictly set #yt-player-wrapper opacity to 0 and trigger CRT static effect (showStatic).
+    // The wrapper must only return to opacity 1 once the NEXT video successfully fires PLAYING (1).
+    isSwitchingVideoRef.current = true;
     setIsYtSettled(false);
+    setShowStatic(true);
+    enforceIframeUnfocused();
 
-    // 3. Wrap the nextVideo() (handleVideoEnd) state change function inside a setTimeout of 800ms to 1000ms (900ms)
-    // This allows the YouTube IFrame API to cleanly resolve its internal error state before React forces the re-render with the new video ID.
+    const wrapper = document.getElementById('yt-player-wrapper');
+    if (wrapper) {
+      wrapper.style.opacity = '0';
+    }
+
+    // 3. Clear any existing error timeout
     if (ytErrorTimeoutRef.current) {
       clearTimeout(ytErrorTimeoutRef.current);
     }
 
+    // 4. Critical 150ms delay: gives the YouTube iframe enough time to physically tear down the error UI layer
+    // from its DOM before the new video ID is injected into loadVideoById.
     ytErrorTimeoutRef.current = setTimeout(() => {
       handleVideoEnd();
       ytErrorTimeoutRef.current = null;
-    }, 900);
+    }, 150);
   }
 
   function onPlayerStateChange(event: any) {
@@ -1295,6 +1304,10 @@ export default function Home({ session }: { session: Session | null }) {
           setShowStatic(false);
           isSwitchingVideoRef.current = false;
           enforceIframeUnfocused();
+          const wrapper = document.getElementById('yt-player-wrapper');
+          if (wrapper) {
+            wrapper.style.opacity = '1';
+          }
         }, 600);
       }
     } else if (event.data === YT_STATE.PAUSED) {
