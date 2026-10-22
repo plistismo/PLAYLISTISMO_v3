@@ -474,6 +474,7 @@ export default function Home({ session }: { session: Session | null }) {
   const [adminEditId, setAdminEditId] = useState<string | null>(null);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [playerRebuildKey, setPlayerRebuildKey] = useState(0);
   const [lastSavedRecord, setLastSavedRecord] = useState<VideoData | null>(null);
   const [useJosefinFont, setUseJosefinFont] = useState(false);
   const [autoFetchMetadata, setAutoFetchMetadata] = useState(true);
@@ -717,6 +718,11 @@ export default function Home({ session }: { session: Session | null }) {
   const isSwitchingVideoRef = useRef(false);
   const ytSettleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const ytSafetyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Trampolines for stable event dispatch across re-renders
+  const onPlayerErrorRef = useRef<(event: any) => void>(() => {});
+  const onPlayerStateChangeRef = useRef<(event: any) => void>(() => {});
+  const handleVideoEndRef = useRef<() => void>(() => {});
 
   // Permanently enforce pointer-events: none, tabIndex: -1 and blur on the YouTube iframe
   const enforceIframeUnfocused = useCallback(() => {
@@ -1158,14 +1164,39 @@ export default function Home({ session }: { session: Session | null }) {
   useEffect(() => {
     fetchGuideData();
     checkResumeState();
+  }, []);
 
+  // Inicializa Vimeo quando o script global já tiver carregado
+  useEffect(() => {
     let checkVimeo: any = null;
+    if (window.Vimeo) {
+      initVimeoPlayer();
+    } else {
+      checkVimeo = setInterval(() => {
+        if (window.Vimeo) {
+          clearInterval(checkVimeo);
+          initVimeoPlayer();
+        }
+      }, 200);
+    }
+    return () => {
+      if (checkVimeo) clearInterval(checkVimeo);
+    };
+  }, []);
 
+  // YouTube Player Lifecycle — Bimodal Teardown: Re-initializes on playerRebuildKey change
+  useEffect(() => {
     const initYouTubePlayer = () => {
       if (!window.YT || !window.YT.Player) return;
       if (playerRef.current) return;
+
+      const vidToPreload = currentVideoDataRef.current?.video_id;
+      const isYt = activePlatformRef.current === 'youtube' && vidToPreload && !/^\d+$/.test(String(vidToPreload));
+
       playerRef.current = new window.YT.Player('yt-player', {
-        height: '100%', width: '100%',
+        height: '100%',
+        width: '100%',
+        ...(isYt && isOn ? { videoId: String(vidToPreload) } : {}),
         playerVars: {
           controls: 0,
           disablekb: 1,
@@ -1183,15 +1214,23 @@ export default function Home({ session }: { session: Session | null }) {
           'onReady': () => {
             setIsReady(true);
             enforceIframeUnfocused();
-            const isVimeo = currentVideoData?.plataforma === 'vimeo' || /^\d+$/.test(String(currentVideoData?.video_id || ''));
+            const isVimeo = currentVideoDataRef.current?.plataforma === 'vimeo' || /^\d+$/.test(String(currentVideoDataRef.current?.video_id || ''));
             if (isVimeo) {
               syncPlayerVisibility('vimeo');
             } else if (isOn) {
-              playCurrentVideo();
+              const vidToPlay = currentVideoDataRef.current?.video_id;
+              if (vidToPlay && playerRef.current && typeof playerRef.current.loadVideoById === 'function') {
+                if (vidToPlay !== lastVideoIdRef.current) {
+                  playerRef.current.loadVideoById({ videoId: String(vidToPlay), startSeconds: 0, suggestedQuality: 'hd720' });
+                  lastVideoIdRef.current = String(vidToPlay);
+                }
+              } else {
+                playCurrentVideo();
+              }
             }
           },
-          'onStateChange': onPlayerStateChange,
-          'onError': onPlayerError
+          'onStateChange': (event: any) => onPlayerStateChangeRef.current(event),
+          'onError': (event: any) => onPlayerErrorRef.current(event)
         }
       });
     };
@@ -1207,22 +1246,7 @@ export default function Home({ session }: { session: Session | null }) {
       }
     }
 
-    // Inicializa Vimeo quando o script global já tiver carregado
-    // O script é carregado via index.html, então pode já estar pronto
-    if (window.Vimeo) {
-      initVimeoPlayer();
-    } else {
-      // Aguarda o script carregar (carregado via index.html)
-      checkVimeo = setInterval(() => {
-        if (window.Vimeo) {
-          clearInterval(checkVimeo);
-          initVimeoPlayer();
-        }
-      }, 200);
-    }
-
     return () => {
-      if (checkVimeo) clearInterval(checkVimeo);
       if (ytErrorTimeoutRef.current) {
         clearTimeout(ytErrorTimeoutRef.current);
         ytErrorTimeoutRef.current = null;
@@ -1236,26 +1260,13 @@ export default function Home({ session }: { session: Session | null }) {
         ytSafetyTimeoutRef.current = null;
       }
     };
-  }, []);
+  }, [playerRebuildKey]);
 
   function onPlayerError(event: any) {
     const errorCode = event?.data;
     console.warn("YouTube Player Error (un-embeddable 101/150 or failure):", errorCode);
 
-    // 1. Immediately force the player to stop playback and physically tear down the internal error state
-    try {
-      if (event?.target && typeof event.target.stopVideo === 'function') {
-        event.target.stopVideo();
-      } else if (playerRef.current && typeof playerRef.current.stopVideo === 'function') {
-        playerRef.current.stopVideo();
-      }
-    } catch (err) {
-      console.warn("Could not stop YouTube player on error:", err);
-    }
-
-    // 2. The 'Repaint' Flush:
-    // Strictly set #yt-player-wrapper opacity to 0 and trigger CRT static effect (showStatic).
-    // The wrapper must only return to opacity 1 once the NEXT video successfully fires PLAYING (1).
+    // 1. Trigger the visual mask (strictly opacity 0 and CRT static screen)
     isSwitchingVideoRef.current = true;
     setIsYtSettled(false);
     setShowStatic(true);
@@ -1266,15 +1277,30 @@ export default function Home({ session }: { session: Session | null }) {
       wrapper.style.opacity = '0';
     }
 
-    // 3. Clear any existing error timeout
+    // 2. Destroy the corrupted instance physically from the DOM
+    if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+      try {
+        playerRef.current.destroy();
+      } catch (err) {
+        console.warn("Could not destroy YouTube player on error:", err);
+      }
+    }
+
+    // 3. Clear player instance ref & ready state
+    playerRef.current = null;
+    setIsReady(false);
+
+    // 4. Force DOM reset: remount fresh <div id="yt-player" key={playerRebuildKey}>
+    setPlayerRebuildKey(prev => prev + 1);
+
+    // 5. Clear any existing error timeout
     if (ytErrorTimeoutRef.current) {
       clearTimeout(ytErrorTimeoutRef.current);
     }
 
-    // 4. Critical 150ms delay: gives the YouTube iframe enough time to physically tear down the error UI layer
-    // from its DOM before the new video ID is injected into loadVideoById.
+    // 6. Set timeout (150ms) to call handleVideoEnd() so it advances to the next track
     ytErrorTimeoutRef.current = setTimeout(() => {
-      handleVideoEnd();
+      handleVideoEndRef.current();
       ytErrorTimeoutRef.current = null;
     }, 150);
   }
@@ -1321,7 +1347,7 @@ export default function Home({ session }: { session: Session | null }) {
         playerRef.current?.playVideo();
       } else {
         console.log("NON-STOP: VÍDEO ENCERRADO");
-        handleVideoEnd();
+        handleVideoEndRef.current();
       }
     } else if (event.data === YT_STATE.BUFFERING) {
       setStatus("TUNING...");
@@ -1330,7 +1356,14 @@ export default function Home({ session }: { session: Session | null }) {
         setIsYtSettled(false);
       }
     }
-  };
+  }
+
+  // Update event trampolines on every render
+  useEffect(() => {
+    onPlayerErrorRef.current = onPlayerError;
+    onPlayerStateChangeRef.current = onPlayerStateChange;
+    handleVideoEndRef.current = handleVideoEnd;
+  });
 
 
   function startCreditsMonitor() {
@@ -1636,7 +1669,6 @@ export default function Home({ session }: { session: Session | null }) {
       beginTrackSwitch();
       playerRef.current.loadVideoById({ videoId: cleanId, startSeconds: 0, suggestedQuality: 'hd720' });
       lastVideoIdRef.current = cleanId;
-      playerRef.current.playVideo();
       startCreditsMonitor();
       enforceIframeUnfocused();
       setTimeout(enforceIframeUnfocused, 100);
@@ -1697,8 +1729,9 @@ export default function Home({ session }: { session: Session | null }) {
           enforceIframeUnfocused();
           setTimeout(enforceIframeUnfocused, 100);
           setTimeout(enforceIframeUnfocused, 300);
+        } else if (isOn) {
+          playerRef.current.playVideo();
         }
-        if (isOn) playerRef.current.playVideo();
       }
     }
   }, [currentVideoData, isReady]);
@@ -1717,7 +1750,8 @@ export default function Home({ session }: { session: Session | null }) {
     beginTrackSwitch();
     const list = channelListRef.current;
     const currIdx = currentIndexRef.current;
-    const history = playedHistoryRef.current[currentChannelName] || [];
+    const channelName = currentChannelNameRef.current || currentChannelName;
+    const history = playedHistoryRef.current[channelName] || [];
 
     if (list.length === 0) return;
 
@@ -1735,7 +1769,7 @@ export default function Home({ session }: { session: Session | null }) {
       console.log("SHUFFLE: Selecionando vídeo não tocado:", nextVideo.musica);
     } else {
       // Ciclo completo! Resetamos o histórico do canal
-      console.log("SHUFFLE: Ciclo completo. Resetando histórico para:", currentChannelName);
+      console.log("SHUFFLE: Ciclo completo. Resetando histórico para:", channelName);
       
       // Filtra para não repetir o mesmo vídeo imediatamente se houver mais de um
       const others = list.length > 1 ? list.filter((_, i) => i !== currIdx) : list;
@@ -1743,22 +1777,24 @@ export default function Home({ session }: { session: Session | null }) {
       nextVideo = list[nextIndex];
 
       // Limpa histórico e começa novo ciclo com o novo vídeo
-      setPlayedHistory(prev => ({ ...prev, [currentChannelName]: [nextVideo.video_id] }));
+      setPlayedHistory(prev => ({ ...prev, [channelName]: [nextVideo.video_id] }));
       setCurrentIndex(nextIndex);
       setCurrentVideoData(nextVideo);
-      triggerBump(currentChannelName);
+      currentVideoDataRef.current = nextVideo;
+      triggerBump(channelName);
       return;
     }
 
     // Atualiza estado e histórico
     setPlayedHistory(prev => ({
       ...prev,
-      [currentChannelName]: [...(prev[currentChannelName] || []), nextVideo.video_id]
+      [channelName]: [...(prev[channelName] || []), nextVideo.video_id]
     }));
     
     setCurrentIndex(nextIndex);
     setCurrentVideoData(nextVideo);
-    triggerBump(currentChannelName);
+    currentVideoDataRef.current = nextVideo;
+    triggerBump(channelName);
   };
 
   const changeGroup = (direction: number) => {
@@ -2567,6 +2603,7 @@ export default function Home({ session }: { session: Session | null }) {
                       `}</style>
                       <div
                         id="yt-player"
+                        key={playerRebuildKey}
                         tabIndex={-1}
                         aria-hidden="true"
                         className="w-full h-full pointer-events-none"
