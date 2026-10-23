@@ -173,6 +173,87 @@ export function generateInterceptedSignals(videos: any[] | null | undefined): st
   return shuffled.slice(0, 4);
 }
 
+// ─── Telemetry Visor: Connector Formatter & Fluid Data Node Component ──────
+
+/**
+ * Utility function for Telemetry Visor Data Nodes:
+ * Formats Artist and Track strings dynamically.
+ * Detects collaboration connectors matching: ft., feat., &, x, vs.
+ * Renders these tokens as lowercase, normal font weight (not bold), and slightly muted (opacity-60),
+ * while entity names remain uppercase and bold.
+ */
+export const formatTelemetryConnectors = (rawText: string): string => {
+  if (!rawText) return '';
+
+  // Clean any pre-existing connector span tags if present
+  let text = rawText.replace(/<span\b[^>]*>(.*?)<\/span>/gi, '$1');
+
+  // Split by HTML tags to only transform text nodes, preserving HTML integrity
+  const parts = text.split(/(<[^>]+>)/g);
+
+  // Match collaboration connectors: ft., feat., &, x, vs. (and case variations / ft / feat / vs)
+  const connectorRegex = /(?:(?<=[\s(]|^)(?:feat\.|ft\.|vs\.|feat\b|ft\b|vs\b|&amp;|&)(?=[\s)]|$)|(?<=\S+\s+)[xX](?=\s+\S+))/gi;
+
+  for (let i = 0; i < parts.length; i += 2) {
+    if (!parts[i]) continue;
+    parts[i] = parts[i].replace(connectorRegex, (match) => {
+      const lower = match.toLowerCase() === '&amp;' ? '&' : match.toLowerCase();
+      return `<span class="lowercase font-normal opacity-60 inline-block font-jost" style="text-transform: lowercase; font-weight: 400; opacity: 0.6;">${lower}</span>`;
+    });
+  }
+
+  return parts.join('');
+};
+
+interface TelemetryDataNodeProps {
+  emoji: string;
+  label: string;
+  value?: string;
+  colorClass?: string;
+  isConnectorField?: boolean;
+}
+
+const TelemetryDataNode: React.FC<TelemetryDataNodeProps> = ({
+  emoji,
+  label,
+  value,
+  colorClass = 'text-[#ffff00]',
+  isConnectorField = false,
+}) => {
+  if (!value || !value.trim()) return null;
+
+  const formattedHtml = isConnectorField
+    ? formatTelemetryConnectors(sanitizeHTML(value))
+    : sanitizeHTML(value);
+
+  return (
+    <div
+      className="telemetry-data-node w-fit inline-flex items-center gap-3 px-3.5 py-1.5 sm:py-2 bg-[#0a0f0c]/90 backdrop-blur-sm border border-[#7de87d]/30 shadow-[0_4px_12px_rgba(0,0,0,0.6)] hover:border-[#7de87d]/70 transition-all font-jost select-none group"
+      style={{
+        clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)',
+      }}
+      title={`${label}: ${value.replace(/<[^>]+>/g, '')}`}
+    >
+      {/* LED Indicator + Emoji */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <div className="w-[6px] h-[6px] min-w-[6px] min-h-[6px] rounded-full bg-[#7de87d] shadow-[0_0_6px_#7de87d] animate-pulse shrink-0" />
+        <span className="text-sm sm:text-base select-none leading-none shrink-0" role="img" aria-label={label}>
+          {emoji}
+        </span>
+      </div>
+
+      {/* Inline Separator */}
+      <span className="text-[#7de87d]/40 font-light select-none shrink-0">|</span>
+
+      {/* Value */}
+      <div
+        className={`${colorClass} text-sm sm:text-base font-bold uppercase tracking-wide truncate max-w-[260px] sm:max-w-[360px] md:max-w-xl font-jost`}
+        dangerouslySetInnerHTML={{ __html: formattedHtml }}
+      />
+    </div>
+  );
+};
+
 // ─── Dedicated Black Terminal Screen Component for Channel Guide ───────────
 
 interface TerminalManifestoProps {
@@ -2209,27 +2290,27 @@ export default function Home({ session }: { session: Session | null }) {
               id="tv-drawer-info"
               className={`w-full shrink-0 overflow-hidden transition-all duration-500 ease-in-out font-jost ${
                 isInfoOpen
-                  ? 'max-h-[32vh] opacity-100 mb-2 md:mb-3 translate-y-0'
+                  ? 'max-h-[42vh] md:max-h-[36vh] opacity-100 mb-2 md:mb-3 translate-y-0'
                   : 'max-h-0 opacity-0 mb-0 -translate-y-6 pointer-events-none'
               }`}
             >
-              <div className="bg-[#15171a] border-2 border-[#2b3038] rounded-2xl p-2.5 md:p-4 shadow-[0_16px_36px_rgba(0,0,0,0.9),inset_0_1px_1px_rgba(255,255,255,0.12)] relative font-jost max-h-[32vh] flex flex-col overflow-hidden">
+              <div className="bg-[#0d120f] border-2 border-[#22382c] rounded-2xl p-2.5 md:p-3.5 shadow-[0_20px_45px_rgba(0,0,0,0.95),inset_0_0_20px_rgba(0,0,0,0.85)] relative font-jost max-h-[42vh] md:max-h-[36vh] flex flex-col overflow-hidden">
                 
                 {/* Header Visor do Hardware */}
-                <div className="flex items-center justify-between border-b border-[#2b3038] pb-2.5 mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse"></span>
-                    <span className="text-[11px] md:text-xs font-black uppercase tracking-[0.25em] text-zinc-300 font-jost">
+                <div className="flex items-center justify-between border-b border-[#22382c] pb-2 mb-2.5 shrink-0 relative z-20">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#7de87d] shadow-[0_0_8px_#7de87d] animate-pulse"></span>
+                    <span className="text-[11px] md:text-xs font-black uppercase tracking-[0.25em] text-[#7de87d] font-jost">
                       TELEMETRY VISOR // PLAYING NOW
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] md:text-xs text-amber-400 font-mono font-bold uppercase tracking-wider font-jost bg-black/60 px-2 py-0.5 rounded border border-amber-500/30">
+                    <span className="text-[10px] md:text-xs text-amber-400 font-bold uppercase tracking-wider font-jost bg-black/60 px-2 py-0.5 rounded border border-amber-500/30">
                       CH: {currentChannelName || 'OFFLINE'}
                     </span>
                     <button
                       onClick={() => setIsInfoOpen(false)}
-                      className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-black/50 hover:bg-red-900/60 border border-white/10 transition-colors font-jost"
+                      className="text-zinc-400 hover:text-white text-xs font-bold px-2 py-0.5 rounded bg-black/50 hover:bg-red-900/60 border border-white/10 transition-colors font-jost cursor-pointer"
                       title="Fechar Painel Info"
                     >
                       ✕
@@ -2237,79 +2318,227 @@ export default function Home({ session }: { session: Session | null }) {
                   </div>
                 </div>
 
-                {/* Hardware Display Rebaixado (shadow-inner) */}
-                <div className="bg-neutral-900 border-2 border-black rounded-xl p-3 md:p-4 shadow-[inset_0_4px_18px_rgba(0,0,0,0.95)] relative font-jost">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-green-400 via-cyan-400 via-pink-400 to-orange-500 opacity-70"></div>
+                {/* Hardware Display Rebaixado: Main Content Area */}
+                <div className="relative overflow-hidden bg-[#070c09] border-2 border-black/80 rounded-xl p-3.5 md:p-4 shadow-[inset_0_4px_24px_rgba(0,0,0,0.95)] font-jost min-h-[90px] flex items-center">
                   
+                  {/* Subtle top edge neon gradient highlight */}
+                  <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-transparent via-[#7de87d]/40 to-transparent pointer-events-none z-10" />
+
+                  {/* ── LAYER 0: SVG Animated PCB Background ── */}
+                  <svg
+                    className="absolute inset-0 w-full h-full pointer-events-none z-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 1000 200"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <style>{`
+                        @keyframes telemetryPcbPulse {
+                          0% { stroke-dashoffset: 400; }
+                          100% { stroke-dashoffset: 0; }
+                        }
+                        .telemetry-pcb-pulse-green {
+                          animation: telemetryPcbPulse 3s linear infinite;
+                          filter: drop-shadow(0 0 4px #7de87d) drop-shadow(0 0 8px rgba(125, 232, 125, 0.6));
+                        }
+                        .telemetry-pcb-pulse-yellow {
+                          animation: telemetryPcbPulse 2.8s linear infinite;
+                          filter: drop-shadow(0 0 4px #ffcc00) drop-shadow(0 0 8px rgba(255, 204, 0, 0.6));
+                        }
+                      `}</style>
+                    </defs>
+
+                    {/* Circuit Board Traces (45-degree & 90-degree lines extending from edges) */}
+                    <path
+                      d="M 0 35 H 140 L 175 70 H 460 L 495 105 H 780 L 815 140 H 1000"
+                      fill="none"
+                      stroke="#184a22"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <path
+                      d="M 0 165 H 180 L 225 120 H 480 L 515 85 H 740 L 775 50 H 1000"
+                      fill="none"
+                      stroke="#184a22"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <path
+                      d="M 280 0 V 30 L 320 70 H 600 L 640 110 H 870 L 900 140 H 1000"
+                      fill="none"
+                      stroke="#184a22"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <path
+                      d="M 120 200 V 150 L 160 110 H 380 L 415 75 H 680 L 710 45 H 1000"
+                      fill="none"
+                      stroke="#184a22"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <path
+                      d="M 0 95 H 90 L 130 135 H 340 L 375 170 H 650 L 680 200"
+                      fill="none"
+                      stroke="#184a22"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+
+                    {/* Precision PCB Vias / Solder Joint Pads */}
+                    <circle cx="175" cy="70" r="3" fill="#070c09" stroke="#184a22" strokeWidth="1.5" />
+                    <circle cx="495" cy="105" r="3" fill="#070c09" stroke="#184a22" strokeWidth="1.5" />
+                    <circle cx="225" cy="120" r="3" fill="#070c09" stroke="#184a22" strokeWidth="1.5" />
+                    <circle cx="515" cy="85" r="3" fill="#070c09" stroke="#184a22" strokeWidth="1.5" />
+                    <circle cx="640" cy="110" r="3" fill="#070c09" stroke="#184a22" strokeWidth="1.5" />
+                    <circle cx="380" cy="110" r="3" fill="#070c09" stroke="#184a22" strokeWidth="1.5" />
+                    <circle cx="340" cy="135" r="3" fill="#070c09" stroke="#184a22" strokeWidth="1.5" />
+
+                    {/* Data Pulse Streaming Layers (Neon Green #7de87d & Neon Yellow #ffcc00) */}
+                    <path
+                      d="M 0 35 H 140 L 175 70 H 460 L 495 105 H 780 L 815 140 H 1000"
+                      fill="none"
+                      stroke="#7de87d"
+                      strokeWidth="2"
+                      strokeDasharray="20 180"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      className="telemetry-pcb-pulse-green"
+                      style={{ animationDelay: '0s' }}
+                    />
+                    <path
+                      d="M 0 165 H 180 L 225 120 H 480 L 515 85 H 740 L 775 50 H 1000"
+                      fill="none"
+                      stroke="#ffcc00"
+                      strokeWidth="2"
+                      strokeDasharray="16 184"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      className="telemetry-pcb-pulse-yellow"
+                      style={{ animationDelay: '0.8s' }}
+                    />
+                    <path
+                      d="M 280 0 V 30 L 320 70 H 600 L 640 110 H 870 L 900 140 H 1000"
+                      fill="none"
+                      stroke="#7de87d"
+                      strokeWidth="2"
+                      strokeDasharray="25 175"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      className="telemetry-pcb-pulse-green"
+                      style={{ animationDelay: '1.5s' }}
+                    />
+                    <path
+                      d="M 120 200 V 150 L 160 110 H 380 L 415 75 H 680 L 710 45 H 1000"
+                      fill="none"
+                      stroke="#ffcc00"
+                      strokeWidth="2"
+                      strokeDasharray="15 185"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      className="telemetry-pcb-pulse-yellow"
+                      style={{ animationDelay: '0.4s' }}
+                    />
+                    <path
+                      d="M 0 95 H 90 L 130 135 H 340 L 375 170 H 650 L 680 200"
+                      fill="none"
+                      stroke="#7de87d"
+                      strokeWidth="2"
+                      strokeDasharray="18 182"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      className="telemetry-pcb-pulse-green"
+                      style={{ animationDelay: '2.1s' }}
+                    />
+                  </svg>
+
+                  {/* ── LAYER 1: Fluid Data Nodes Layout ── */}
                   {currentVideoData ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {/* ARTIST */}
-                      {currentVideoData.artista && (
-                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center">
-                          <span className="text-[9px] text-amber-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
-                            <span>🎤</span> ARTIST
-                          </span>
-                          <div
-                            className="text-[#ffff00] text-base md:text-lg font-bold uppercase truncate tracking-wide drop-shadow-[0_0_8px_rgba(255,255,0,0.25)] font-jost"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.artista) }}
-                          />
-                        </div>
+                    <div className="flex flex-wrap gap-4 relative z-10 w-full items-center">
+                      {/* ARTIST NODE */}
+                      <TelemetryDataNode
+                        emoji="🎤"
+                        label="ARTIST"
+                        value={currentVideoData.artista}
+                        colorClass="text-[#ffff00] drop-shadow-[0_0_8px_rgba(255,255,0,0.3)]"
+                        isConnectorField={true}
+                      />
+
+                      {/* TRACK NODE */}
+                      <TelemetryDataNode
+                        emoji="🎼"
+                        label="TRACK"
+                        value={currentVideoData.musica}
+                        colorClass="text-[#00ff88] drop-shadow-[0_0_8px_rgba(0,255,136,0.3)]"
+                        isConnectorField={true}
+                      />
+
+                      {/* ALBUM NODE */}
+                      <TelemetryDataNode
+                        emoji="💽"
+                        label="ALBUM"
+                        value={currentVideoData.album}
+                        colorClass="text-[#00ffff] drop-shadow-[0_0_6px_rgba(0,255,255,0.25)]"
+                        isConnectorField={false}
+                      />
+
+                      {/* RELEASE / YEAR NODE */}
+                      <TelemetryDataNode
+                        emoji="📅"
+                        label="RELEASE"
+                        value={currentVideoData.ano}
+                        colorClass="text-[#ff77ff] drop-shadow-[0_0_6px_rgba(255,119,255,0.25)]"
+                        isConnectorField={false}
+                      />
+
+                      {/* DIRECTOR NODE */}
+                      <TelemetryDataNode
+                        emoji="🎬"
+                        label="DIRECTOR"
+                        value={currentVideoData.direcao}
+                        colorClass="text-[#ffaa00] drop-shadow-[0_0_6px_rgba(255,170,0,0.25)]"
+                        isConnectorField={true}
+                      />
+
+                      {/* GENRE NODE (if available) */}
+                      {currentVideoData.genero && (
+                        <TelemetryDataNode
+                          emoji="🏷️"
+                          label="GENRE"
+                          value={currentVideoData.genero}
+                          colorClass="text-[#a3e635] drop-shadow-[0_0_6px_rgba(163,230,53,0.25)]"
+                          isConnectorField={false}
+                        />
                       )}
 
-                      {/* TRACK */}
-                      {currentVideoData.musica && (
-                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center">
-                          <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
-                            <span>🎼</span> TRACK
-                          </span>
-                          <div
-                            className="text-[#00ff00] text-base md:text-lg font-bold uppercase truncate tracking-wide drop-shadow-[0_0_8px_rgba(0,255,0,0.25)] font-jost"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.musica) }}
-                          />
-                        </div>
-                      )}
-
-                      {/* ALBUM */}
-                      {currentVideoData.album && (
-                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center">
-                          <span className="text-[9px] text-cyan-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
-                            <span>💽</span> ALBUM
-                          </span>
-                          <div
-                            className="text-[#00ffff] text-sm md:text-base font-semibold uppercase truncate tracking-wide font-jost"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.album) }}
-                          />
-                        </div>
-                      )}
-
-                      {/* RELEASE */}
-                      {currentVideoData.ano && (
-                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center">
-                          <span className="text-[9px] text-fuchsia-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
-                            <span>📅</span> RELEASE
-                          </span>
-                          <div
-                            className="text-[#ff00ff] text-sm md:text-base font-semibold uppercase truncate tracking-wide font-jost"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.ano) }}
-                          />
-                        </div>
-                      )}
-
-                      {/* DIRECTOR */}
-                      {currentVideoData.direcao && (
-                        <div className="bg-black/60 p-3 rounded-lg border border-white/10 shadow-inner flex flex-col justify-center sm:col-span-2 lg:col-span-2">
-                          <span className="text-[9px] text-orange-400 font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-1.5 font-jost">
-                            <span>🎬</span> DIRECTOR
-                          </span>
-                          <div
-                            className="text-[#ff8800] text-sm md:text-base font-semibold uppercase truncate tracking-wide font-jost"
-                            dangerouslySetInnerHTML={{ __html: sanitizeHTML(currentVideoData.direcao) }}
-                          />
-                        </div>
+                      {/* REGION / COUNTRY NODE (if available) */}
+                      {currentVideoData.pais && (
+                        <TelemetryDataNode
+                          emoji="🌐"
+                          label="REGION"
+                          value={currentVideoData.pais}
+                          colorClass="text-[#38bdf8] drop-shadow-[0_0_6px_rgba(56,189,248,0.25)]"
+                          isConnectorField={false}
+                        />
                       )}
                     </div>
                   ) : (
-                    <div className="py-6 text-center text-zinc-500 uppercase tracking-widest text-xs font-bold font-jost">
+                    <div className="py-6 text-center text-zinc-500 uppercase tracking-widest text-xs font-bold font-jost relative z-10 w-full">
                       [ NENHUM SINAL DE VÍDEO ATIVO // REPRODUÇÃO EM ESPERA ]
                     </div>
                   )}
@@ -3021,6 +3250,7 @@ export default function Home({ session }: { session: Session | null }) {
                         Info
                       </span>
                       <button
+                        id="btn-info-drawer-toggle"
                         onClick={(e) => { e.stopPropagation(); setIsInfoOpen(prev => !prev); }}
                         className={`${
                           activeSkin === 'y2k'

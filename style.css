@@ -1414,3 +1414,27 @@ iframe#yt-player {
         0 7px
     );
 }
+
+/* Telemetry Visor: Animated PCB Circuit Pulses & Cyberpunk Data Nodes */
+@keyframes telemetryDataPulse {
+    0% {
+        stroke-dashoffset: 400;
+    }
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+.telemetry-pcb-pulse-green {
+    animation: telemetryDataPulse 3s linear infinite;
+    filter: drop-shadow(0 0 4px #7de87d) drop-shadow(0 0 8px rgba(125, 232, 125, 0.6));
+}
+
+.telemetry-pcb-pulse-yellow {
+    animation: telemetryDataPulse 2.8s linear infinite;
+    filter: drop-shadow(0 0 4px #ffcc00) drop-shadow(0 0 8px rgba(255, 204, 0, 0.6));
+}
+
+.telemetry-data-node {
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
