@@ -28,7 +28,7 @@ export default function App() {
   }, []);
 
   if (loading) {
-    return <div className="bg-[#050505] min-h-screen flex items-center justify-center text-[#00ff00] font-vt323 text-2xl animate-pulse tracking-widest">INITIALIZING...</div>;
+    return <div className="bg-[#0a0f0c] min-h-screen w-full flex items-center justify-center text-[#00ff00] font-vt323 text-2xl animate-pulse tracking-widest">INITIALIZING...</div>;
   }
 
   return (

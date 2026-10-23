@@ -1852,11 +1852,11 @@ export default function Home({ session }: { session: Session | null }) {
   const effectiveWatermarkScale = currentChannelWatermarkScale || parseScale(activeChannel?.marca_dagua_escala || (activeChannel as any)?.watermark_scale) || 1.0;
 
   return (
-    <div className="bg-neutral-950 h-screen w-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
+    <div className="bg-[#0a0f0c] min-h-screen w-full h-screen overflow-hidden flex items-center justify-center selection:bg-yellow-400 selection:text-black font-sans transition-all duration-500">
 
       {/* Admin Panel — bipartite layout: TV column + right frequency list */}
 
-      <main className={`relative z-10 w-screen h-screen overflow-hidden bg-neutral-950 flex flex-col md:flex-row transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'layout-admin-open' : 'layout-admin-closed'}`}>
+      <main className={`relative z-10 w-full min-h-screen h-screen overflow-hidden bg-[#0a0f0c] flex flex-col md:flex-row transition-all duration-500 ease-in-out ${isAdminSidebarOpen ? 'layout-admin-open' : 'layout-admin-closed'}`}>
 
         {/* MAIN PANEL: TV & CONTROLS */}
         <section className="flex-1 flex flex-col min-w-0 min-h-0 h-full p-4 items-center justify-center transition-all duration-500 relative overflow-hidden">

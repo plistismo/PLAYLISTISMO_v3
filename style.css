@@ -3,6 +3,7 @@
 /* Custom Fonts & Base */
 body {
     font-family: 'VT323', monospace;
+    background-color: #0a0f0c;
 }
 
 .font-pixel {
