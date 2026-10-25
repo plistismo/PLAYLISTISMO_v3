@@ -44,17 +44,12 @@ export const spread01 = {
       </div>
       
       <div class="mb-6">
-        <h4 class="font-bold text-gray-900 mb-1 uppercase tracking-wide">■ AVISO OPERACIONAL</h4>
-        <p class="text-sm text-gray-800 leading-relaxed">A gente transmite, você sintoniza. Sem pausa, sem <em>skip</em>, sem métrica de vaidade. A sintonia é travada direto no nosso sinal pirata e a transmissão é bruta.</p>
-        <ul class="list-disc pl-5 mt-2 text-sm text-gray-800 font-medium space-y-1">
-          <li>Alimentação: 120V / 240V Bivolt Automático</li>
-          <li>Sincronia: Tempo real. O que tá no ar, tá no ar.</li>
-          <li>Risco de Vício: Altíssimo.</li>
-        </ul>
+        <h4 class="font-bold text-gray-900 mb-1.5 uppercase tracking-wide font-mono-tech">■ MODO DE OPERAÇÃO: VJ TÉCNICO</h4>
+        <p class="text-sm text-gray-800 leading-relaxed font-medium">A transmissão é passiva, mas o controle do sinal é todo seu. Assuma a posição de VJ Técnico: opere as chaves de frequência, cruze os cabos temporais e recombine a história da música e do audiovisual. Inspirado nas máquinas e sintetizadores analógicos, aqui você não apenas assiste à televisão — você roteia a matriz.</p>
       </div>
 
       <div class="mt-8 border-t border-gray-400 pt-4">
-        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide">■ ENGENHARIA DE TRANSMISSÃO</h4>
+        <h4 class="font-bold text-gray-900 mb-2 uppercase tracking-wide font-mono-tech">■ ENGENHARIA DE TRANSMISSÃO</h4>
         <p class="text-sm text-gray-800 font-medium"><strong>Sinal & Curadoria:</strong> áddri</p>
         <p class="text-sm text-gray-800 font-medium"><strong>Chassi do Sistema:</strong> React, Tailwind, Supabase</p>
         <p class="text-sm text-gray-800 font-medium"><strong>Ano de Lançamento:</strong> 2026</p>
@@ -69,24 +64,39 @@ export const spread01 = {
     title: "PLAYLISTISMO CRT-90",
     subtitle: "MANUAL DO PROPRIETÁRIO",
     content: `
-      <div class="mb-6 border-b-2 border-gray-900 pb-2">
-        <span class="bg-gray-900 text-gray-100 text-xs px-2 py-1 font-bold uppercase tracking-widest">Guia de Sobrevivência Audiovisual</span>
+      <div class="mb-2 pb-1 border-b border-gray-900/60">
+        <span class="bg-gray-900 text-gray-100 text-[11px] px-2 py-0.5 font-bold uppercase tracking-widest font-mono-tech">Guia de Sobrevivência Audiovisual</span>
       </div>
-      <p class="text-base text-gray-800 leading-relaxed font-semibold">
+      <p class="text-xs sm:text-[13px] text-gray-800 leading-snug font-semibold mb-2">
         Instruções, arquitetura da máquina e a filosofia por trás do tubo de imagem do seu receptor CRT-90.
       </p>
       
-      <div class="mt-8">
-        <h4 class="font-bold text-blue-900 mb-2 uppercase tracking-wide">■ ESPECIFICAÇÕES DO PROJETO</h4>
-        <p class="text-sm text-gray-800 font-bold uppercase tracking-widest leading-relaxed">
-          MÓDULO: MN-CRT90-V3<br/>
-          ARQUIVO VIVO - EDIÇÃO 1996<br/>
-          CÓDIGO DE ÉTICA: ARQUIVISMO DE GUERRILHA
+      <div class="mb-2">
+        <h4 class="font-bold text-blue-900 mb-1 uppercase tracking-wide font-mono-tech text-xs sm:text-[13px]">■ ARQUITETURA DE ROTEAMENTO (PATCH BAY)</h4>
+        <p class="text-xs sm:text-[13px] text-gray-800 leading-snug font-medium mb-1">
+          Nossa grade flui continuamente, mas a chave seletora obedece ao seu patch. Trate o Guia de Canais como seu painel modular:
+        </p>
+        <ul class="space-y-0.5 text-xs sm:text-[13px] text-gray-800 font-medium mb-1 pl-0.5 leading-snug">
+          <li class="flex items-start gap-1">
+            <span class="text-blue-900 font-bold">•</span>
+            <span><strong class="font-mono-tech text-gray-900">[ DATATAPE ]</strong>: Arquivo histórico e estreias mensais.</span>
+          </li>
+          <li class="flex items-start gap-1">
+            <span class="text-blue-900 font-bold">•</span>
+            <span><strong class="font-mono-tech text-gray-900">[ TEMPO ]</strong>: Fatias cronológicas e viagens de década.</span>
+          </li>
+          <li class="flex items-start gap-1">
+            <span class="text-blue-900 font-bold">•</span>
+            <span><strong class="font-mono-tech text-gray-900">[ ZONAS ]</strong> &amp; <strong class="font-mono-tech text-gray-900">[ FREQUÊNCIAS ]</strong>: Filtros de sinal por gênero, BPM e mood.</span>
+          </li>
+        </ul>
+        <p class="text-xs sm:text-[13px] text-gray-800 leading-snug font-medium">
+          Sintonize, conecte os chips e feche o circuito.
         </p>
       </div>
 
-      <div class="mt-8 p-4 bg-gray-200 border-l-4 border-gray-900">
-        <p class="text-sm italic font-bold text-gray-900 leading-relaxed">
+      <div class="p-2 sm:p-2.5 bg-gray-200 border-l-4 border-gray-900">
+        <p class="text-xs sm:text-[13px] italic font-bold text-gray-900 leading-snug">
           « O algoritmo só te mostra o que você já é. A transmissão te joga na cara o que você nem sabia que curtia. »
         </p>
       </div>
